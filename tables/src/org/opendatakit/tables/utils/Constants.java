@@ -124,6 +124,7 @@ public class Constants {
     public static final String TABLE_PREFERENCE = "tagTablePreference";
     public static final String COLUMN_PREFERENCE = "tagColumnPreference";
     public static final String COLOR_RULE_LIST = "tagColorRuleList";
+    public static final String EDIT_COLOR_RULE = "tagEditColorRule";
   }
 
   public static class PreferenceKeys {
@@ -159,6 +160,16 @@ public class Constants {
       public static final String WIDTH = "column_pref_column_width";
       public static final String COLOR_RULES = "column_pref_color_rules";
       public static final String ELEMENT_NAME = "column_pref_element_name";
+    }
+    
+    public static class ColorRule {
+      public static final String COMPARISON_TYPE = "pref_color_rule_comp_type";
+      public static final String RULE_VALUE = "pref_color_rule_value";
+      public static final String TEXT_COLOR = "pref_color_rule_text_color";
+      public static final String BACKGROUND_COLOR =
+          "pref_color_rule_background_color";
+      public static final String SAVE = "pref_color_rule_save";
+      public static final String ELEMENT_KEY = "pref_color_rule_element_key";
     }
   }
   

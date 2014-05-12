@@ -4,6 +4,7 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.tables.fragments.ColorRuleListFragment;
 import org.opendatakit.tables.fragments.ColumnListFragment;
 import org.opendatakit.tables.fragments.ColumnPreferenceFragment;
+import org.opendatakit.tables.fragments.EditColorRuleFragment;
 import org.opendatakit.tables.fragments.TablePreferenceFragment;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -102,6 +103,62 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
         .commit();
   }
   
+  /**
+   * Show the fragment to edit color rules.
+   * @param colorRuleGroupType
+   * @param elementKey should be null if the color rule group is not of type
+   * {@link ColorRuleGroup.Type#COLUMN}
+   * @param rulePosition
+   */
+  public void showEditColorRuleFragmentForExistingRule(
+      ColorRuleGroup.Type colorRuleGroupType,
+      String elementKey,
+      int rulePosition) {
+    this.helperShowEditColorRuleFragment(
+        false,
+        colorRuleGroupType,
+        elementKey,
+        rulePosition);
+  }
+  
+  public void showEditColorRuleFragmentForNewRule(
+      ColorRuleGroup.Type colorRuleGroupType,
+      String elementKey) {
+    this.helperShowEditColorRuleFragment(
+        true,
+        colorRuleGroupType,
+        elementKey,
+        EditColorRuleFragment.INVALID_RULE_POSITION);
+  }
+  
+  private void helperShowEditColorRuleFragment(
+      boolean isNewRule,
+      ColorRuleGroup.Type colorRuleGroupType,
+      String elementKey,
+      int rulePosition) {
+    this.mElementKeyOfDisplayedColumn = elementKey;
+    // So much state is stored in this that we're just going to always create
+    // a new one for now.
+    EditColorRuleFragment fragment = null;
+    if (isNewRule) {
+      fragment = EditColorRuleFragment.newInstanceForNewRule(
+          colorRuleGroupType,
+          elementKey);
+    } else {
+      fragment = EditColorRuleFragment.newInstanceForExistingRule(
+          colorRuleGroupType,
+          elementKey,
+          rulePosition);
+    }
+    FragmentManager fragmentManager = this.getFragmentManager();
+    fragmentManager.beginTransaction().replace(
+        android.R.id.content,
+        fragment,
+        Constants.FragmentTags.EDIT_COLOR_RULE)
+      .addToBackStack(null)
+      .commit();
+  }
+  
   public void showColorRuleListFragment(
       String elementKey,
       ColorRuleGroup.Type colorRuleGroupType) {
@@ -189,6 +246,14 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     ColumnListFragment result = (ColumnListFragment) 
         fragmentManager.findFragmentByTag(
             Constants.FragmentTags.COLUMN_LIST);
+    return result;
+  }
+  
+  EditColorRuleFragment findEditColorRuleFragment() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    EditColorRuleFragment result = (EditColorRuleFragment)
+        fragmentManager.findFragmentByTag(
+            Constants.FragmentTags.EDIT_COLOR_RULE);
     return result;
   }
   

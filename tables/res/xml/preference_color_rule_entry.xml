@@ -1,23 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
-    <!-- Display and change the user-defined name of the list view. -->
+	<ListPreference
+	    android:key="pref_color_rule_element_key"
+	    android:persistent="false"
+	    android:title="@string/element_key" />
     <ListPreference
-        android:key="pref_comp_type"
+        android:key="pref_color_rule_comp_type"
+        android:persistent="false"
         android:title="@string/comparison_type" />
-    <!-- Display and select a file for that list view. -->
-    <!-- Display and change the user-defined name of the list view. -->
-    <org.opendatakit.tables.preferences.EditNameDialogPreference
-        android:key="pref_value"
+    <EditTextPreference
+        android:key="pref_color_rule_value"
         android:title="@string/value"
-        android:dialogLayout="@layout/edit_listview_name_dialog"
-        android:positiveButtonText="@string/ok"
-        android:negativeButtonText="@string/cancel" />
+        android:persistent="false" />
     <org.opendatakit.tables.preferences.EditColorPreference
-        android:key="pref_text_color"
+        android:key="pref_color_rule_text_color"
+        android:persistent="false"
         android:title="@string/text_color" />
-    <org.opendatakit.tables.prefences.EditColorPreference
-        android:key="pref_background_color"
+    <org.opendatakit.tables.preferences.EditColorPreference
+        android:key="pref_color_rule_background_color"
+        android:persistent="false"
         android:title="@string/background_color" />
+    <Preference
+        android:key="pref_color_rule_save"
+        android:persistent="false"
+        android:title="@string/save" />
     
         
     
