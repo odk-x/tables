@@ -2,6 +2,7 @@ package org.opendatakit.tables.fragments;
 
 import java.io.File;
 
+import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
@@ -198,7 +199,20 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
   private void initializeTableColorRules() {
     Preference tableColorPref = this.findPreference(
         Constants.PreferenceKeys.Table.TABLE_COLOR_RULES);
-    // TODO:
+    tableColorPref.setOnPreferenceClickListener(
+        new OnPreferenceClickListener() {
+      
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        // pop in the list of columns.
+        TableLevelPreferencesActivity activity =
+            (TableLevelPreferencesActivity) getActivity();
+        activity.showColorRuleListFragment(
+            null,
+            ColorRuleGroup.Type.TABLE);
+        return false;
+      }
+    });
   }
 
   private void initializeListFile() {
@@ -242,7 +256,20 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
   private void initializeStatusColorRules() {
     Preference statusColorPref = this.findPreference(
         Constants.PreferenceKeys.Table.STATUS_COLOR_RULES);
-    // TODO:
+    statusColorPref.setOnPreferenceClickListener(
+        new OnPreferenceClickListener() {
+      
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        // pop in the list of columns.
+        TableLevelPreferencesActivity activity =
+            (TableLevelPreferencesActivity) getActivity();
+        activity.showColorRuleListFragment(
+            null,
+            ColorRuleGroup.Type.STATUS_COLUMN);
+        return false;
+      }
+    });
   }
 
   private void initializeMapColorRule() {
@@ -289,7 +316,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         TableLevelPreferencesActivity activity =
             (TableLevelPreferencesActivity) getActivity();
         activity.showColumnListFragment();
-        return true;
+        return false;
       }
     });
   }

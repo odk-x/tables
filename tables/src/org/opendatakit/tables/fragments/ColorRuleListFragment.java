@@ -257,7 +257,6 @@ public class ColorRuleListFragment extends ListFragment {
       newList.addAll(ColorRuleUtil.getDefaultSyncStateColorRules());
       this.mColorRuleGroup.replaceColorRuleList(newList);
       this.mColorRuleGroup.saveRuleList();
-      this.mColorRuleGroup.getColorRules().clear();
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     case COLUMN:
@@ -307,19 +306,6 @@ public class ColorRuleListFragment extends ListFragment {
       throw new IllegalArgumentException(
           "unrecognized color rule group type: " + type);
     }
-    return result;
-  }
-  
-  /**
-   * Retrieve the list of {@link ColorRule}s for the given type. If the type
-   * is {@link ColorRuleGroup.Type#COLUMN}, relies on the element key having
-   * been set in the hosting activity.
-   * @param type
-   * @return
-   */
-  List<ColorRule> retrieveColorRulesForType(ColorRuleGroup.Type type) {
-    ColorRuleGroup colorRuleGroup = this.retrieveColorRuleGroup();
-    List<ColorRule> result = colorRuleGroup.getColorRules();
     return result;
   }
   

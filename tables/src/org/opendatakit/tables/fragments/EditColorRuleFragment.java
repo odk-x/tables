@@ -150,11 +150,11 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
       break;
     case TABLE:
       this.mColorRuleGroup =
-        ColorRuleGroup.getStatusColumnRuleGroup(tableProperties);
+        ColorRuleGroup.getTableColorRuleGroup(tableProperties);
       break;
     case STATUS_COLUMN:
       this.mColorRuleGroup =
-      ColorRuleGroup.getTableColorRuleGroup(tableProperties);
+      ColorRuleGroup.getStatusColumnRuleGroup(tableProperties);
       break;
     default:
       throw new IllegalArgumentException(
