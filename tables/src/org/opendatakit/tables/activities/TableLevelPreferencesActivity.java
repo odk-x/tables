@@ -10,6 +10,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 
 import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
 
 
@@ -65,7 +66,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
       ColorRuleGroup.Type colorRuleGroupType =
         IntentUtil.retrieveColorRuleTypeFromBundle(
             this.getIntent().getExtras());
-      this.showColorRuleListFragment(elementKey, colorRuleGroupType);
+      this.showColorRuleListFragment(elementKey, colorRuleGroupType, false);
       break;
     default:
       throw new IllegalArgumentException(
@@ -160,9 +161,22 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
       .commit();
   }
   
+  /**
+   * Wrapper around {@link showColorRuleListFragment} with addToBackStack set
+   * to true.
+   * @param elementKey
+   * @param colorRuleGroupType
+   */
   public void showColorRuleListFragment(
       String elementKey,
       ColorRuleGroup.Type colorRuleGroupType) {
+    this.showColorRuleListFragment(elementKey, colorRuleGroupType, true);
+  }
+  
+  public void showColorRuleListFragment(
+      String elementKey,
+      ColorRuleGroup.Type colorRuleGroupType,
+      boolean addToBackStack) {
     this.mElementKeyOfDisplayedColumn = elementKey;
     this.mCurrentFragmentType = FragmentType.COLOR_RULE_LIST;
     ColorRuleListFragment colorRuleListFragment =
@@ -172,12 +186,16 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
           this.createColorRuleListFragment(colorRuleGroupType);
     }
     FragmentManager fragmentManager = this.getFragmentManager();
-    fragmentManager.beginTransaction().replace(
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    fragmentTransaction.replace(
         android.R.id.content,
         colorRuleListFragment,
-        Constants.FragmentTags.COLOR_RULE_LIST)
-      .addToBackStack(null)
-      .commit();
+        Constants.FragmentTags.COLOR_RULE_LIST);
+    if (addToBackStack) {
+      fragmentTransaction.addToBackStack(null);
+    }
+    fragmentTransaction.commit();
   }
   
   TablePreferenceFragment createTablePreferenceFragment() {
