@@ -1,5 +1,6 @@
 package org.opendatakit.tables.utils;
 
+import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
@@ -92,6 +93,27 @@ public class IntentUtil {
     }
     String fileName = bundle.getString(Constants.IntentKeys.FILE_NAME);
     return fileName;
+  }
+  
+  /**
+   * Return the {@link ColorRuleGroup.Type} from the bundle. Convenience method
+   * for calling {@link Bundle#get(String)} with
+   * {@link Constants.IntentKeys#COLOR_RULE_TYPE} and parsing the resultant
+   * value.
+   * @param bundle
+   * @return
+   */
+  public static ColorRuleGroup.Type retrieveColorRuleTypeFromBundle(
+      Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    String typeStr = bundle.getString(Constants.IntentKeys.COLOR_RULE_TYPE);
+    if (typeStr == null) {
+      return null;
+    } else {
+      return ColorRuleGroup.Type.valueOf(typeStr);
+    }
   }
 
   /**
@@ -318,6 +340,21 @@ public class IntentUtil {
   public static void addAppNameToBundle(Bundle bundle, String appName) {
     if (bundle != null && appName != null) {
       bundle.putString(Constants.IntentKeys.APP_NAME, appName);
+    }
+  }
+  
+  /**
+   * Add tye name of type to the bundle keyed to
+   * {@link Constants.IntentKeys#COLOR_RULE_TYPE}. If bundle or type is null,
+   * does nothing.
+   * @param bundle
+   * @param type
+   */
+  public static void addColorRuleGroupTypeToBundle(
+      Bundle bundle,
+      ColorRuleGroup.Type type) {
+    if (bundle != null && type != null) {
+      bundle.putString(Constants.IntentKeys.COLOR_RULE_TYPE, type.name());
     }
   }
   

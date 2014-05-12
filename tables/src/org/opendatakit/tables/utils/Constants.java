@@ -65,6 +65,7 @@ public class Constants {
     /** The name of the graph view that should be displayed. */
     public static final String GRAPH_NAME = "graphName";
     public static final String ELEMENT_KEY = "elementKey";
+    public static final String COLOR_RULE_TYPE = "colorRuleType";
     /**
      * The {@link TableLevelPreferencesActivity.FragmentType} that should be
      * displayed when launching a {@link TableLevelPreferencesActivity}.
@@ -122,6 +123,7 @@ public class Constants {
     public static final String COLUMN_LIST = "tagColumnList";
     public static final String TABLE_PREFERENCE = "tagTablePreference";
     public static final String COLUMN_PREFERENCE = "tagColumnPreference";
+    public static final String COLOR_RULE_LIST = "tagColorRuleList";
   }
 
   public static class PreferenceKeys {

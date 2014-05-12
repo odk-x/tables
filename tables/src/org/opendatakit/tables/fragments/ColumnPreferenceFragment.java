@@ -1,5 +1,6 @@
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
@@ -88,6 +89,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     this.initializeDisplayName();
     this.initializeElementKey();
     this.initializeElementName();
+    this.initializeColorRule();
   }
 
   private void initializeDisplayName() {
@@ -144,6 +146,25 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
       }
     });
 
+  }
+  
+  private void initializeColorRule() {
+    Preference pref =
+        this.findPreference(Constants.PreferenceKeys.Column.COLOR_RULES);
+    pref.setOnPreferenceClickListener(
+        new Preference.OnPreferenceClickListener() {
+      
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        TableLevelPreferencesActivity activity =
+            (TableLevelPreferencesActivity) getActivity();
+        activity.showColorRuleListFragment(
+            retrieveColumnProperties().getElementKey(),
+            ColorRuleGroup.Type.COLUMN);
+        return true;
+      }
+      
+    });
   }
 
 }

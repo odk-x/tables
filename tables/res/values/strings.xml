@@ -11,6 +11,7 @@
 	<string name="element_name">Element Name</string>
 	<string name="column_type">Column Type</string>
 	<string name="column_width">Column Width</string>
+	<string name="no_color_rules">No Color Rules</string>
 	<string name="edit_color_rules">Edit Color Rules</string>
 	<string name="box_stem_settings_title">Box-Stem Graph Settings</string>
 	<string name="impossible_box_stem">At least one number column is required for box-stem graphs.</string>
