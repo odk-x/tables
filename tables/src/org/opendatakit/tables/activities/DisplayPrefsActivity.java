@@ -7,7 +7,6 @@ import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.preferences.SliderPreference;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.OutputUtil;
 

@@ -5,7 +5,6 @@ import java.util.List;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 
 import android.util.Log;
@@ -40,7 +39,7 @@ public class GraphData {
     this.kvsh = tableProperties.getKeyValueStoreHelper(
         LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
     this.aspectHelper = kvsh.getAspectHelper(this.graphString);
-// TODO 
+// TODO
 //    if (potentialGraphName != null) {
 //      this.aspectHelper = saveGraphToName(potentialGraphName);
 //    }

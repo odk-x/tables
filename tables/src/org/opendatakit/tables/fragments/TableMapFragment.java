@@ -9,7 +9,6 @@ import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 
-import android.annotation.SuppressLint;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.res.Configuration;
@@ -27,7 +26,7 @@ import android.view.ViewGroup;
  */
 public class TableMapFragment extends AbsTableDisplayFragment implements
     TableMapInnerFragmentListener {
-  
+
   private static final String TAG = TableMapFragment.class.getSimpleName();
 
   /** The key for the Key-Value Store Partition for the TableMapFragment. */
@@ -44,7 +43,7 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
     super.onCreate(savedInstanceState);
     Log.d(TAG, "[onCreate]");
   }
-  
+
   /**
    * Create the inner map fragment that will be displayed.
    * @return
@@ -53,7 +52,7 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
     TableMapInnerFragment result = new TableMapInnerFragment();
     return result;
   }
-  
+
   /**
    * Create the list fragment that will be displayed.
    * @param listViewFileName the file name of the list view that will be
@@ -85,7 +84,7 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
       return inflater.inflate(R.layout.map_fragment, container, false);
     }
   }
-  
+
   @Override
   public void onDestroyView() {
     FragmentManager fragmentManager = this.getFragmentManager();

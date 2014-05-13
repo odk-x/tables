@@ -30,7 +30,6 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
