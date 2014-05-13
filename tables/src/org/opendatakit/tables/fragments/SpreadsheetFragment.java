@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
@@ -19,7 +18,6 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.ColorRuleManagerActivity;
 import org.opendatakit.tables.activities.ConflictResolutionRowActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
@@ -350,19 +348,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         init();
         return true;
     case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
-      Intent i = new Intent(
+      String elementKey = this.spreadsheetTable
+        .getColumnByIndex(this.mLastHeaderCellMenued)
+        .getElementKey();
+      ActivityUtil.launchTablePreferenceActivityToEditColumnColorRules(
           this.getActivity(),
-          ColorRuleManagerActivity.class);
-      i.putExtra(
-          Constants.IntentKeys.APP_NAME,
-          getTableProperties().getAppName());
-      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY,
-          spreadsheetTable.getColumnByIndex(this.mLastHeaderCellMenued).getElementKey());
-      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-          getTableProperties().getTableId());
-      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
-          ColorRuleGroup.Type.COLUMN.name());
-      startActivity(i);
+          this.getAppName(),
+          this.getTableProperties().getTableId(),
+          elementKey);
     default:
       Log.e(TAG, "unrecognized menu item selected: " + item.getItemId());
       return super.onContextItemSelected(item);

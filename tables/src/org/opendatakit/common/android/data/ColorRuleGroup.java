@@ -172,11 +172,13 @@ public class ColorRuleGroup {
     }
 
     /**
-     * Replace the list of rules that define this ColumnColorRuler.
+     * Replace the list of rules that define this ColumnColorRuler. Does so
+     * while retaining the same reference as was originally held.
      * @param newRules
      */
     public void replaceColorRuleList(List<ColorRule> newRules) {
-      this.ruleList = newRules;
+      this.ruleList.clear();
+      this.ruleList.addAll(newRules);
     }
 
     /**
