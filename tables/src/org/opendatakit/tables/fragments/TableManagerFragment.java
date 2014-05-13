@@ -173,16 +173,10 @@ public class TableManagerFragment extends ListFragment {
       AlertDialog confirmDeleteAlert;
       // Prompt an alert box
       AlertDialog.Builder alert = new AlertDialog.Builder(this.getActivity());
-      if (tpOfSelectedItem.isSharedTable()) {
-        alert.setTitle(getString(R.string.confirm_remove_table)).setMessage(
-            getString(
-                R.string.are_you_sure_remove_table,
-                tpOfSelectedItem.getLocalizedDisplayName()));
-      } else {
-        alert.setTitle(getString(R.string.confirm_delete_table)).setMessage(
-            getString(R.string.are_you_sure_delete_table,
-                tpOfSelectedItem.getLocalizedDisplayName()));
-      }
+      alert.setTitle(getString(R.string.confirm_remove_table)).setMessage(
+          getString(
+              R.string.are_you_sure_remove_table,
+              tpOfSelectedItem.getLocalizedDisplayName()));
       // OK Action => delete the table
       alert.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {

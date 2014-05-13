@@ -18,7 +18,6 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.JoinColumn;
@@ -31,7 +30,6 @@ import org.opendatakit.tables.views.MultipleChoiceSettingDialog;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.content.Context;
-import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;

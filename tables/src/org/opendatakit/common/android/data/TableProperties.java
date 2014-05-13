@@ -33,7 +33,6 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.provider.DataTableColumns;
@@ -302,7 +301,6 @@ public class TableProperties {
   // TODO lastSyncTime should probably eventually be an int?
   // keeping as a string for now to minimize errors.
   private String lastSyncTime;
-  private SyncState syncState;
   private boolean transactioning;
   /*
    * The fields that are in the key value store.
@@ -324,7 +322,7 @@ public class TableProperties {
   private TableProperties(Context context, String appName, SQLiteDatabase db, String tableId,
       String dbTableName, String displayName, ArrayList<String> columnOrder,
       ArrayList<String> groupByColumns, String sortColumn, String sortOrder, String indexColumn,
-      SyncTag syncTag, String lastSyncTime, TableViewType defaultViewType, SyncState syncState,
+      SyncTag syncTag, String lastSyncTime, TableViewType defaultViewType,
       boolean transactioning) {
     this.context = context;
     this.appName = appName;
@@ -355,7 +353,6 @@ public class TableProperties {
     this.syncTag = syncTag;
     this.lastSyncTime = lastSyncTime;
     this.defaultViewType = defaultViewType;
-    this.syncState = syncState;
     this.transactioning = transactioning;
     this.tableKVSH = this.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
 
@@ -526,13 +523,6 @@ public class TableProperties {
    */
   private static TableProperties constructPropertiesFromMap(Context context, String appName,
       SQLiteDatabase db, Map<String, String> props) {
-    // first we have to get the appropriate type for the non-string fields.
-    String syncStateStr = props.get(TableDefinitionsColumns.SYNC_STATE);
-    if (syncStateStr == null) {
-      // we don't have any entry for this table
-      return null;
-    }
-    SyncState syncState = SyncState.valueOf(syncStateStr);
     String transactioningStr = props.get(TableDefinitionsColumns.TRANSACTIONING);
     int transactioningInt = Integer.parseInt(transactioningStr);
     boolean transactioning = DataHelper.intToBool(transactioningInt);
@@ -594,7 +584,7 @@ public class TableProperties {
         props.get(TableDefinitionsColumns.DB_TABLE_NAME), props.get(KEY_DISPLAY_NAME), columnOrder,
         groupByCols, props.get(KEY_SORT_COLUMN), props.get(KEY_SORT_ORDER),
         props.get(KEY_INDEX_COLUMN), SyncTag.valueOf(props.get(TableDefinitionsColumns.SYNC_TAG)),
-        props.get(TableDefinitionsColumns.LAST_SYNC_TIME), defaultViewType, syncState,
+        props.get(TableDefinitionsColumns.LAST_SYNC_TIME), defaultViewType,
         transactioning);
   }
 
@@ -661,19 +651,6 @@ public class TableProperties {
     } finally {
       // TODO: fix the when to close problem
       // db.close();
-    }
-  }
-
-  public boolean isSharedTable() {
-    KeyValueStoreManager kvsm = new KeyValueStoreManager();
-    KeyValueStoreSync syncKVSM = kvsm.getSyncStoreForTable(tableId);
-    SQLiteDatabase db = null;
-    try {
-      db = getReadableDatabase();
-      boolean isSetToSync = syncKVSM.isSetToSync(db);
-      return (isSetToSync && (syncState == SyncState.rest || syncState == SyncState.updating));
-    } finally {
-      db.close();
     }
   }
 
@@ -1482,35 +1459,6 @@ public class TableProperties {
     } finally {
       db.endTransaction();
       db.close();
-    }
-  }
-
-  /**
-   * @return the synchronization state
-   */
-  public SyncState getSyncState() {
-    return syncState;
-  }
-
-  /**
-   * Sets the table's synchronization state. Can only move to or from the REST
-   * state (e.g., no skipping straight from INSERTING to UPDATING).
-   *
-   * @param state
-   *          the new synchronization state
-   */
-  public void setSyncState(SyncState state) {
-    if (state == SyncState.rest || this.syncState == SyncState.rest) {
-      SQLiteDatabase db = getWritableDatabase();
-      try {
-        db.beginTransaction();
-        TableDefinitions.setValue(db, tableId, TableDefinitionsColumns.SYNC_STATE, state.name());
-        this.syncState = state;
-        db.setTransactionSuccessful();
-      } finally {
-        db.endTransaction();
-        db.close();
-      }
     }
   }
 

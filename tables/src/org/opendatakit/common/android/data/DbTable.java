@@ -473,23 +473,66 @@ public class DbTable {
     /**
      * Called when the schema on the server has changed w.r.t. the schema on
      * the device. In this case, we do not know whether the rows on the device
-     * match those on the server. Reset all rows to 'insert' to ensure they
-     * are sync'd to the server.
+     * match those on the server.
+     *
+     * Reset all 'conflicting' rows to their original local state (updating or deleting).
+     * Leave all 'deleting' rows in 'deleting' state.
+     * Leave all 'updating' rows in 'updating' state.
+     * Reset all 'rest' rows to 'insert' to ensure they are sync'd to the server.
      */
-    public void changeRestRowsToInserting() {
+    public void changeDataRowsToInsertingState() {
 
       StringBuilder b = new StringBuilder();
+
+      // remove server conflicting rows
+      b.setLength(0);
+      b.append("DELETE FROM ").append(tp.getDbTableName()).append(" WHERE ").append(DataTableColumns.SYNC_STATE)
+      .append(" =? AND ").append(DataTableColumns.CONFLICT_TYPE).append(" IN (?, ?)");
+
+      String sqlConflictingServer = b.toString();
+      String argsConflictingServer[] = {
+          SyncState.conflicting.name(),
+          Integer.toString(ConflictType.SERVER_DELETED_OLD_VALUES),
+          Integer.toString(ConflictType.SERVER_UPDATED_UPDATED_VALUES)
+      };
+
+      // update local delete conflicts to deletes
+      b.setLength(0);
+      b.append("UPDATE ").append(tp.getDbTableName()).append(" SET ").append(DataTableColumns.SYNC_STATE)
+      .append(" =?, ").append(DataTableColumns.CONFLICT_TYPE).append(" = null WHERE ")
+      .append(DataTableColumns.CONFLICT_TYPE).append(" = ?");
+
+      String sqlConflictingLocalDeleting = b.toString();
+      String argsConflictingLocalDeleting[] = {
+          SyncState.deleting.name(),
+          Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES)
+      };
+
+      // update local update conflicts to updates
+      String sqlConflictingLocalUpdating = sqlConflictingLocalDeleting;
+      String argsConflictingLocalUpdating[] = {
+          SyncState.updating.name(),
+          Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES)
+      };
+
+      // reset all 'rest' rows to 'insert'
+      b.setLength(0);
       b.append("UPDATE ").append(tp.getDbTableName()).append(" SET ").append(DataTableColumns.SYNC_STATE)
       .append(" =? WHERE ").append(DataTableColumns.SYNC_STATE).append(" =?");
-      String sql = b.toString();
-      String args[] = {
+
+      String sqlRest = b.toString();
+      String argsRest[] = {
           SyncState.inserting.name(),
           SyncState.rest.name()
       };
+
       SQLiteDatabase db = tp.getWritableDatabase();
       try {
         db.beginTransaction();
-        db.execSQL(sql, args);
+        db.execSQL(sqlConflictingServer, argsConflictingServer);
+        db.execSQL(sqlConflictingLocalDeleting, argsConflictingLocalDeleting);
+        db.execSQL(sqlConflictingLocalUpdating, argsConflictingLocalUpdating);
+        db.execSQL(sqlRest, argsRest);
         db.setTransactionSuccessful();
       } finally {
         db.endTransaction();
