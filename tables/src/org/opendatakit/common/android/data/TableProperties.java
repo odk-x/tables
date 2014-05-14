@@ -459,8 +459,11 @@ public class TableProperties {
   private static TableProperties constructPropertiesFromMap(Context context, String appName,
       SQLiteDatabase db, Map<String, String> props) {
     String transactioningStr = props.get(TableDefinitionsColumns.TRANSACTIONING);
-    int transactioningInt = Integer.parseInt(transactioningStr);
-    boolean transactioning = DataHelper.intToBool(transactioningInt);
+    boolean transactioning = false;
+    if ( transactioningStr != null ) {
+      int transactioningInt = Integer.parseInt(transactioningStr);
+      transactioning = DataHelper.intToBool(transactioningInt);
+    }
     String columnOrderValue = props.get(KEY_COLUMN_ORDER);
     String defaultViewTypeStr = props.get(KEY_DEFAULT_VIEW_TYPE);
     TableViewType defaultViewType;
