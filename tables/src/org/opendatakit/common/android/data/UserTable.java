@@ -294,16 +294,23 @@ public class UserTable {
       }
       return raw;
     } else if ( type == ColumnType.DATE ) {
+      if (raw.length() == 0 ) {
+        return raw;
+      }
       DateTime d = du.parseDateTimeFromDb(raw);
       return dateFormatter.print(d);
     } else if ( type == ColumnType.DATETIME ) {
+      if (raw.length() == 0 ) {
+        return raw;
+      }
       DateTime d = du.parseDateTimeFromDb(raw);
       return dateTimeFormatter.print(d);
     } else if ( type == ColumnType.TIME ) {
+      if (raw.length() == 0 ) {
+        return raw;
+      }
       DateTime d = du.parseDateTimeFromDb(raw);
       return timeFormatter.print(d);
-    } else if ( type == ColumnType.TABLE_JOIN ) {
-      return raw;
     } else {
       return raw;
     }
@@ -398,7 +405,6 @@ public class UserTable {
      *         in the table, returns null.
      */
     public String getDataOrMetadataByElementKey(String elementKey) {
-      List<String> adminColumns = DbTable.getAdminColumns();
       String result;
       Integer cell = UserTable.this.mElementKeyToIndex.get(elementKey);
       if ( cell == null ) {
@@ -408,6 +414,23 @@ public class UserTable {
       result = this.mRowData[cell];
       if (result == null) {
         result = "";
+      }
+      ColumnProperties cp = UserTable.this.mTp.getColumnByElementKey(elementKey);
+      if ( cp != null &&
+           cp.getColumnType() == ColumnType.NUMBER &&
+           result.indexOf('.') != -1 ) {
+        // trim trailing zeros on numbers (leaving the last one)
+        int lnz = result.length()-1;
+        while ( lnz > 0 && result.charAt(lnz) == '0' ) {
+          lnz--;
+        }
+        if ( lnz >= result.length()-2 ) {
+          // ended in non-zero or x0
+          return result;
+        } else {
+          // ended in 0...0
+          return result.substring(0, lnz+2);
+        }
       }
       return result;
     }

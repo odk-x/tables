@@ -281,13 +281,8 @@ public class NameUtil {
     Set<String> existingIds = new HashSet<String>();
     Set<String> dbTableNames = new HashSet<String>();
 
-    TableProperties[] tableProps;
-
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName);
-    for ( TableProperties tp : tableProps ) {
-      existingIds.add(tp.getTableId());
-      dbTableNames.add(tp.getDbTableName());
-    }
+    existingIds.addAll(TableProperties.getAllTableIds(context, appName));
+    dbTableNames.addAll(TableProperties.getAllDbTableNames(context, appName));
 
     if ( !existingIds.contains(baseName) && !dbTableNames.contains(baseName) ) {
       return baseName;

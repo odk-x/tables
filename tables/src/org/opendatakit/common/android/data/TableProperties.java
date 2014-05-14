@@ -246,6 +246,34 @@ public class TableProperties {
     }
   }
 
+  public static List<String> getAllTableIds(Context context, String appName) {
+    ODKFileUtils.assertDirectoryStructure(appName);
+    SQLiteDatabase db = null;
+    try {
+      DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
+      db = dh.getReadableDatabase();
+      return TableDefinitions.getAllTableIds(db);
+    } finally {
+      if (db != null) {
+        db.close();
+      }
+    }
+  }
+
+  public static List<String> getAllDbTableNames(Context context, String appName) {
+    ODKFileUtils.assertDirectoryStructure(appName);
+    SQLiteDatabase db = null;
+    try {
+      DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
+      db = dh.getReadableDatabase();
+      return TableDefinitions.getAllDbTableNames(db);
+    } finally {
+      if (db != null) {
+        db.close();
+      }
+    }
+  }
+
   /***********************************
    * The fields that make up a TableProperties object.
    ***********************************/
@@ -422,6 +450,9 @@ public class TableProperties {
       mapProps.putAll(kvsMap);
       mapProps.putAll(tableDefinitionsMap);
 
+      if (mapProps.get(TableDefinitionsColumns.TABLE_ID) == null) {
+        mapProps.put(TableDefinitionsColumns.TABLE_ID, tableId);
+      }
       if (mapProps.get(KEY_DISPLAY_NAME) == null) {
         mapProps.put(KEY_DISPLAY_NAME, tableId);
       }

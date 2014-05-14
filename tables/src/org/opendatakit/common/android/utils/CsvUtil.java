@@ -380,9 +380,9 @@ public class CsvUtil {
    *
    * @param importListener
    * @param tableId
-   * @return
+   * @return either the updated TableProperties or null if an error occurs
    */
-  public boolean updateTablePropertiesFromCsv(ImportListener importListener, String tableId) {
+  public TableProperties updateTablePropertiesFromCsv(ImportListener importListener, String tableId) {
 
     Log.i(TAG, "updateTablePropertiesFromCsv: tableId: " + tableId );
 
@@ -523,7 +523,7 @@ public class CsvUtil {
       } catch (IOException e) {
       }
 
-      TableProperties tp = TableProperties.getTablePropertiesForTable(context, appName, tableId);
+      TableProperties tp = TableProperties.refreshTablePropertiesForTable(context, appName, tableId);
       if ( tp != null ) {
         // confirm that the column definitions are unchanged...
         if ( tp.getAllColumns().size() != columns.size() ) {
@@ -580,9 +580,9 @@ public class CsvUtil {
         }
         tp.addMetaDataEntries(kvsEntries, false);
       }
-      return true;
+      return TableProperties.refreshTablePropertiesForTable(context, displayName, tableId);
     } catch (IOException e) {
-      return false;
+      return null;
     } finally {
       try {
         input.close();
@@ -613,14 +613,10 @@ public class CsvUtil {
    */
   public boolean importSeparable(ImportListener importListener, String tableId, String fileQualifier, boolean createIfNotPresent) {
 
-    TableProperties tp = TableProperties.getTablePropertiesForTable(context, appName, tableId);
+    TableProperties tp = TableProperties.refreshTablePropertiesForTable(context, appName, tableId);
     if ( tp == null ) {
       if ( createIfNotPresent ) {
-        if ( !updateTablePropertiesFromCsv(importListener, tableId) ) {
-          return false;
-        }
-        // and now load the TP we just defined...
-        tp = TableProperties.getTablePropertiesForTable(context, appName, tableId);
+        tp = updateTablePropertiesFromCsv(importListener, tableId);
         if ( tp == null ) {
           return false;
         }

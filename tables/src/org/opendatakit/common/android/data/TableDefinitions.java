@@ -218,6 +218,28 @@ public class TableDefinitions {
     }
   }
 
+  public static List<String> getAllDbTableNames(SQLiteDatabase db) {
+    Cursor c = null;
+    try {
+        c = db.query(true,  DB_BACKING_NAME, new String[] { TableDefinitionsColumns.DB_TABLE_NAME },
+                null, null, null, null, null, null);
+       List<String> tableNames = new ArrayList<String>();
+       int dbTableNameIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.DB_TABLE_NAME);
+       if ( c.getCount() > 0 ) {
+         c.moveToFirst();
+         do {
+           String tableName = c.getString(dbTableNameIndex);
+           tableNames.add(tableName);
+         } while ( c.moveToNext() );
+       }
+       return tableNames;
+    } finally {
+      if ( c != null && !c.isClosed()) {
+         c.close();
+      }
+    }
+  }
+
   /**
    * Remove the given tableId from the TableDefinitions table. This does NOT
    * handle any of the necessary deletion of the table's information in other

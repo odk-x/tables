@@ -384,6 +384,7 @@ public class ColumnProperties {
     Map<String, ColumnProperties> elementKeyToColumnProperties = new HashMap<String, ColumnProperties>();
     for (int i = 0; i < elementKeys.size(); i++) {
       ColumnProperties cp = getColumnProperties(db, tp, elementKeys.get(i));
+      if ( cp == null ) continue;
       elementKeyToColumnProperties.put(elementKeys.get(i), cp);
     }
     return elementKeyToColumnProperties;
@@ -410,6 +411,8 @@ public class ColumnProperties {
     // Get the ColumnDefinition entries
     Map<String, String> columnDefinitionsMap = ColumnDefinitions.getColumnDefinitionFields(db,
         tp.getTableId(), elementKey);
+
+    if ( columnDefinitionsMap.size() == 0 ) return null;
 
     return constructPropertiesFromMap(tp, elementKey, columnDefinitionsMap, kvsMap);
   }

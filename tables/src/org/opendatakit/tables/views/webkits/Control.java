@@ -84,18 +84,6 @@ public class Control {
   }
 
   /**
-   * Retrieve the {@link TableProperties} for all the user-defined tables in
-   * the database.
-   * @return
-   */
-  TableProperties[] retrieveTablePropertiesForAllTables() {
-    TableProperties[] result = TableProperties.getTablePropertiesForAll(
-        this.mActivity,
-        this.mAppName);
-    return result;
-  }
-
-  /**
    * Start the detail view.
    * @param tableId
    * @param rowId
@@ -433,11 +421,9 @@ public class Control {
    * @see {@link ControlIf#getAllTableIds()}
    */
   public String getAllTableIds() {
-    TableProperties[] tpAll = this.retrieveTablePropertiesForAllTables();
     ArrayList<String> tableIdsList = new ArrayList<String>();
-    for ( TableProperties tp : tpAll ) {
-      tableIdsList.add(tp.getTableId());
-    }
+    tableIdsList.addAll(TableProperties.getAllTableIds(this.mActivity, this.mAppName));
+
     JSONArray result = new JSONArray(tableIdsList);
     return result.toString();
   }
