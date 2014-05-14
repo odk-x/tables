@@ -33,6 +33,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
@@ -48,6 +49,7 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.util.Log;
 
@@ -677,11 +679,13 @@ public class CsvUtil {
         // clear value map
         valueMap.clear();
 
+        boolean foundId = false;
         for ( int i = 0 ; i < columnsInFileLength ; ++i ) {
           if ( i > rowLength ) break;
           String column = columnsInFile[i];
           String tmp = row[i];
           if ( DataTableColumns.ID.equals(column) && (tmp != null && tmp.length() != 0) ) {
+            foundId = true;
             v_id = tmp;
           }
           if ( DataTableColumns.FORM_ID.equals(column) && (tmp != null && tmp.length() != 0) ) {
@@ -713,16 +717,62 @@ public class CsvUtil {
           }
         }
 
+        // TODO: should resolve this properly when we have conflict rows and
+        // uncommitted edits. For now, we just add our csv import to those, rather
+        // than resolve the problems.
+        SyncState syncState = null;
+        if ( foundId ) {
+          syncState = dbTable.getRowSyncState(v_id);
+        }
         /**
          * Insertion will set the SYNC_STATE to inserting.
          *
          * If the table is sync'd to the server, this will cause one
          * sync interaction with the server to confirm that the server
          * also has this record.
+         *
+         * If a record with this same rowId already exists, if it is
+         * in an inserting sync state, we update it here. Otherwise,
+         * if there were any local changes, we leave the row unchanged.
          */
-        dbTable.addRow(v_id, v_form_id, v_locale,
-            v_savepoint_type, v_savepoint_timestamp, v_savepoint_creator,
-            v_row_etag, v_filter_type, v_filter_value, valueMap);
+        if ( syncState != null ) {
+
+          ContentValues cv = new ContentValues();
+          if (v_id != null) {
+            cv.put(DataTableColumns.ID, v_id);
+          }
+          for (String column : valueMap.keySet()) {
+           if ( column != null ) {
+              cv.put(column, valueMap.get(column));
+           }
+          }
+
+          // The admin columns get added here
+          cv.put(DataTableColumns.FORM_ID, v_form_id);
+          cv.put(DataTableColumns.LOCALE, v_locale);
+          cv.put(DataTableColumns.SAVEPOINT_TYPE, v_savepoint_type);
+          cv.put(DataTableColumns.SAVEPOINT_TIMESTAMP, v_savepoint_timestamp);
+          cv.put(DataTableColumns.SAVEPOINT_CREATOR, v_savepoint_creator);
+          cv.put(DataTableColumns.ROW_ETAG, v_row_etag);
+          cv.put(DataTableColumns.FILTER_TYPE, v_filter_type);
+          cv.put(DataTableColumns.FILTER_VALUE, v_filter_value);
+
+
+          cv.put(DataTableColumns.SYNC_STATE, SyncState.inserting.name());
+
+          if ( syncState == SyncState.inserting ) {
+            // we do the actual update here
+            dbTable.actualUpdateRowByRowId(v_id, cv);
+          }
+          // otherwise, do NOT update the row.
+
+        } else {
+
+          dbTable.addRow(v_id, v_form_id, v_locale,
+              v_savepoint_type, v_savepoint_timestamp, v_savepoint_creator,
+              v_row_etag, v_filter_type, v_filter_value, valueMap);
+
+        }
       }
       cr.close();
       return true;

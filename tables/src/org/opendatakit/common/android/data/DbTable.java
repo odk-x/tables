@@ -329,6 +329,45 @@ public class DbTable {
       return rawSqlQuery(SQL_WHERE_FOR_SINGLE_ROW, sqlSelectionArgs, null, null, null, null);
     }
 
+    public SyncState getRowSyncState(String rowId) {
+      String[] sqlSelectionArgs = {rowId};
+      SQLiteDatabase db = null;
+      Cursor c = null;
+      try {
+        StringBuilder s = new StringBuilder();
+        s.append("SELECT ").append(DataTableColumns.SYNC_STATE)
+         .append(" FROM ").append(this.tp.getDbTableName())
+         .append(" WHERE ").append(SQL_WHERE_FOR_SINGLE_ROW);
+        String sqlQuery = s.toString();
+        db = tp.getReadableDatabase();
+        c = db.rawQuery(sqlQuery, sqlSelectionArgs);
+        if ( c.getCount() == 0 ) {
+          return null;
+        }
+        if ( c.getCount() > 1 ) {
+          // UGH -- bad state!
+          Log.e(TAG, "Multiple records for this row!");
+          return null;
+        }
+        c.moveToFirst();
+        int idxSyncState = c.getColumnIndexOrThrow(DataTableColumns.SYNC_STATE);
+        String value = c.getString(idxSyncState);
+        if ( value == null ) {
+          Log.e(TAG, "Unexpected null value for sync state");
+          return null;
+        }
+        return SyncState.valueOf(value);
+      } finally {
+        if ( c != null && !c.isClosed() ) {
+          c.close();
+        }
+        if ( db != null ) {
+          db.close();
+        }
+      }
+
+    }
+
     public ConflictTable getConflictTable() {
       // The new protocol for syncing is as follows:
       // local rows and server rows both have SYNC_STATE=CONFLICT.
