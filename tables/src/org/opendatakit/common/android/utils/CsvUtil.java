@@ -526,6 +526,10 @@ public class CsvUtil {
       }
 
       TableProperties tp = TableProperties.refreshTablePropertiesForTable(context, appName, tableId);
+      if ( tp.getDbTableName() == null ) {
+        tp = null;
+      }
+
       if ( tp != null ) {
         // confirm that the column definitions are unchanged...
         if ( tp.getAllColumns().size() != columns.size() ) {
@@ -582,7 +586,11 @@ public class CsvUtil {
         }
         tp.addMetaDataEntries(kvsEntries, false);
       }
-      return TableProperties.refreshTablePropertiesForTable(context, displayName, tableId);
+      tp = TableProperties.refreshTablePropertiesForTable(context, displayName, tableId);
+      if ( tp.getDbTableName() == null ) {
+        tp = null;
+      }
+      return tp;
     } catch (IOException e) {
       return null;
     } finally {
@@ -616,6 +624,10 @@ public class CsvUtil {
   public boolean importSeparable(ImportListener importListener, String tableId, String fileQualifier, boolean createIfNotPresent) {
 
     TableProperties tp = TableProperties.refreshTablePropertiesForTable(context, appName, tableId);
+    if ( tp.getDbTableName() == null ) {
+      tp = null;
+    }
+
     if ( tp == null ) {
       if ( createIfNotPresent ) {
         tp = updateTablePropertiesFromCsv(importListener, tableId);
