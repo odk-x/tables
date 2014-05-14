@@ -77,9 +77,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
       return true;
     }
     boolean processFile = false;
-    if ( !init.exists() ) {
-      processFile = false;
-    } else if ( !completedFile.exists() ) {
+    if ( !completedFile.exists() ) {
       processFile = true;
     } else {
       String initMd5 = ODKFileUtils.getMd5Hash(init);

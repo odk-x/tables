@@ -53,8 +53,10 @@ public class MainActivity extends AbsBaseActivity implements
   protected void onResume() {
     super.onResume();
     // Check to see if we need to initialize.
+    File init = new File(ODKFileUtils.getTablesInitializationFile(mAppName));
     File completedFile = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(this.getAppName()));
-    if (!completedFile.exists()) {
+    if (init.exists() && (!completedFile.exists() ||
+        !ODKFileUtils.getMd5Hash(init).equals(ODKFileUtils.getMd5Hash(completedFile))) ) {
       this.startInitializationTask();
     }
   }
