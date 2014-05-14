@@ -21,6 +21,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -206,7 +207,35 @@ public class TableDisplayActivity extends AbsTableActivity
     default:
       return super.onOptionsItemSelected(item);
     }
-  };
+  }
+  
+  @Override
+  protected void onActivityResult(
+      int requestCode,
+      int resultCode,
+      Intent data) {
+    switch (requestCode) {
+    // For now, we will just refresh the table if something could have changed.
+    case Constants.RequestCodes.ADD_ROW_COLLECT:
+    case Constants.RequestCodes.ADD_ROW_SURVEY:
+    case Constants.RequestCodes.EDIT_ROW_COLLECT:
+    case Constants.RequestCodes.EDIT_ROW_SURVEY:
+      if (resultCode == Activity.RESULT_OK) {
+        Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
+        this.refreshDataTable();
+        // We also want to cause the fragments to redraw themselves, as their
+        // data may have changed.
+        this.refreshDisplayFragment();
+      } else {
+        Log.d(
+            TAG,
+            "[onActivityResult] result canceled, not refreshing backing " +
+              "table");
+      }
+      break;
+    }
+    super.onActivityResult(requestCode, resultCode, data);
+  }
   
   /**
    * Disable or enable those menu items corresponding to view types that are
@@ -276,28 +305,36 @@ public class TableDisplayActivity extends AbsTableActivity
      super.onStart();
      Log.i(TAG, "[onStart]");
   }
+  
+  protected void refreshDisplayFragment() {
+    this.helperInitializeDisplayFragment(true);
+  }
+  
+  protected void initializeDisplayFragment() {
+    this.helperInitializeDisplayFragment(false);
+  }
 
   /**
    * Initialize the correct display fragment based on the result of
    * {@link #retrieveTableIdFromIntent()}. Initializes Spreadsheet if none
    * is present in Intent.
    */
-  protected void initializeDisplayFragment() {
+  private void helperInitializeDisplayFragment(boolean createNew) {
     switch (this.mCurrentFragmentType) {
     case SPREADSHEET:
-      this.showSpreadsheetFragment();
+      this.showSpreadsheetFragment(createNew);
       break;
     case DETAIL:
-      this.showDetailFragment();
+      this.showDetailFragment(createNew);
       break;
     case GRAPH_MANAGER:
-      this.showGraphFragment();
+      this.showGraphFragment(createNew);
       break;
     case LIST:
-      this.showListFragment();
+      this.showListFragment(createNew);
       break;
     case MAP:
-      this.showMapFragment();
+      this.showMapFragment(createNew);
       break;
     case GRAPH_VIEW:
       String graphName =
@@ -307,7 +344,7 @@ public class TableDisplayActivity extends AbsTableActivity
             TAG,
             "[initializeDisplayFragment] graph name not present in bundle");
       }
-      this.showGraphViewFragment(graphName);
+      this.showGraphViewFragment(graphName, createNew);
       break;
     default:
       Log.e(TAG, "ViewFragmentType not recognized: " +
@@ -456,18 +493,26 @@ public class TableDisplayActivity extends AbsTableActivity
         this.getIntent().getExtras());
     return result;
   }
-
+  
   /**
    * Show the spreadsheet fragment, creating a new one if it doesn't yet exist.
    */
   public void showSpreadsheetFragment() {
+    this.showSpreadsheetFragment(false);
+  }
+
+  /**
+   * Show the spreadsheet fragment.
+   * @param createNew
+   */
+  public void showSpreadsheetFragment(boolean createNew) {
     this.setCurrentFragmentType(ViewFragmentType.SPREADSHEET);
     this.updateChildViewVisibility(ViewFragmentType.SPREADSHEET);
     FragmentManager fragmentManager = this.getFragmentManager();
     // Try to retrieve one already there.
     SpreadsheetFragment spreadsheetFragment = (SpreadsheetFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.SPREADSHEET);
-    if (spreadsheetFragment == null) {
+    if (spreadsheetFragment == null || createNew) {
       spreadsheetFragment = this.createSpreadsheetFragment();
     }
     FragmentTransaction fragmentTransaction =
@@ -476,9 +521,6 @@ public class TableDisplayActivity extends AbsTableActivity
         R.id.activity_table_display_activity_one_pane_content,
         spreadsheetFragment,
         Constants.FragmentTags.SPREADSHEET);
-//    this.handleMenuForViewFragmentType(
-//        ViewFragmentType.SPREADSHEET,
-//        fragmentTransaction);
     fragmentTransaction.commit();
   }
   
@@ -490,8 +532,12 @@ public class TableDisplayActivity extends AbsTableActivity
     SpreadsheetFragment result = new SpreadsheetFragment();
     return result;
   }
-
+  
   public void showMapFragment() {
+    this.showMapFragment(false);
+  }
+
+  public void showMapFragment(boolean createNew) {
     this.setCurrentFragmentType(ViewFragmentType.MAP);
     this.updateChildViewVisibility(ViewFragmentType.MAP);
     // Set the list view file name.
@@ -507,16 +553,16 @@ public class TableDisplayActivity extends AbsTableActivity
     TableMapInnerFragment innerMapFragment = (TableMapInnerFragment)
         fragmentManager.findFragmentByTag(
             Constants.FragmentTags.MAP_INNER_MAP);
-    if (mapListViewFragment == null) {
-      Log.d(TAG, "[showMapFragment] no map list fragment found, creating new");
+    if (mapListViewFragment == null || createNew) {
+      Log.d(TAG, "[showMapFragment] creating new map list fragment");
       mapListViewFragment = this.createMapListViewFragment(fileName);
     } else {
       Log.d(TAG, "[showMapFragment] existing map list fragment found");
     }
-    if (innerMapFragment == null) {
+    if (innerMapFragment == null || createNew) {
       Log.d(
           TAG,
-          "[showMapFragment] no inner map fragment found, creating new");
+          "[showMapFragment] creating new inner map fragment");
       innerMapFragment = this.createInnerMapFragment();
     } else {
       Log.d(TAG, "[showMapFragment] existing inner map fragment found");
@@ -533,9 +579,6 @@ public class TableDisplayActivity extends AbsTableActivity
             R.id.map_view_inner_map,
             innerMapFragment,
             Constants.FragmentTags.MAP_INNER_MAP);
-//    this.handleMenuForViewFragmentType(
-//        ViewFragmentType.MAP,
-//        fragmentTransaction);
     fragmentTransaction.commit();
   }
   
@@ -563,8 +606,12 @@ public class TableDisplayActivity extends AbsTableActivity
     result.setArguments(listArguments);
     return result;
   }
-
+  
   public void showListFragment() {
+    this.showListFragment(false);
+  }
+
+  public void showListFragment(boolean createNew) {
     this.setCurrentFragmentType(ViewFragmentType.LIST);
     this.updateChildViewVisibility(ViewFragmentType.LIST);
     // Try to use a passed file name. If one doesn't exist, try to use the
@@ -577,7 +624,7 @@ public class TableDisplayActivity extends AbsTableActivity
     FragmentManager fragmentManager = this.getFragmentManager();
     ListViewFragment listViewFragment = (ListViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.LIST);
-    if (listViewFragment == null) {
+    if (listViewFragment == null || createNew) {
       listViewFragment = this.createListViewFragment(fileName);
     } 
     FragmentTransaction fragmentTransaction =
@@ -586,9 +633,6 @@ public class TableDisplayActivity extends AbsTableActivity
         R.id.activity_table_display_activity_one_pane_content,
         listViewFragment,
         Constants.FragmentTags.LIST);
-//    this.handleMenuForViewFragmentType(
-//        ViewFragmentType.LIST,
-//        fragmentTransaction);
     fragmentTransaction.commit();
   }
   
@@ -603,15 +647,19 @@ public class TableDisplayActivity extends AbsTableActivity
     result.setArguments(arguments);
     return result;
   }
-
+  
   public void showGraphFragment() {
+    this.showGraphFragment(false);
+  }
+
+  public void showGraphFragment(boolean createNew) {
     this.setCurrentFragmentType(ViewFragmentType.GRAPH_MANAGER);
     this.updateChildViewVisibility(ViewFragmentType.GRAPH_MANAGER);
     FragmentManager fragmentManager = this.getFragmentManager();
     // Try to retrieve the fragment if it already exists.
     GraphManagerFragment graphManagerFragment = (GraphManagerFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_MANAGER);
-    if (graphManagerFragment == null) {
+    if (graphManagerFragment == null || createNew) {
       graphManagerFragment = this.createGraphManagerFragment();
     }
     FragmentTransaction fragmentTransaction =
@@ -620,9 +668,6 @@ public class TableDisplayActivity extends AbsTableActivity
         R.id.activity_table_display_activity_one_pane_content,
         graphManagerFragment,
         Constants.FragmentTags.GRAPH_MANAGER);
-//    this.handleMenuForViewFragmentType(
-//        ViewFragmentType.GRAPH_MANAGER,
-//        fragmentTransaction);
     fragmentTransaction.commit();
   }
   
@@ -634,8 +679,12 @@ public class TableDisplayActivity extends AbsTableActivity
     GraphManagerFragment result = new GraphManagerFragment();
     return result;
   }
-
+  
   public void showGraphViewFragment(String graphName) {
+    this.showGraphViewFragment(graphName, false);
+  }
+
+  public void showGraphViewFragment(String graphName, boolean createNew) {
     Log.d(TAG, "[showGraphViewFragment] graph name: " + graphName);
     this.setCurrentFragmentType(ViewFragmentType.GRAPH_VIEW);
     this.updateChildViewVisibility(ViewFragmentType.GRAPH_VIEW);
@@ -643,7 +692,7 @@ public class TableDisplayActivity extends AbsTableActivity
     FragmentManager fragmentManager = this.getFragmentManager();
     GraphViewFragment graphViewFragment = (GraphViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_VIEW);
-    if (graphViewFragment == null) {
+    if (graphViewFragment == null || createNew) {
       graphViewFragment = this.createGraphViewFragment(graphName);
     } else {
       // Add the value to the existing fragment so it displays the correct
@@ -658,9 +707,6 @@ public class TableDisplayActivity extends AbsTableActivity
         R.id.activity_table_display_activity_one_pane_content,
         graphViewFragment,
         Constants.FragmentTags.GRAPH_VIEW);
-//    this.handleMenuForViewFragmentType(
-//        ViewFragmentType.GRAPH_VIEW,
-//        fragmentTransaction);
     fragmentTransaction.commit();
   }
   
@@ -676,9 +722,12 @@ public class TableDisplayActivity extends AbsTableActivity
     result.setArguments(arguments);
     return result;
   }
-
-
+  
   public void showDetailFragment() {
+    this.showDetailFragment(false);
+  }
+
+  public void showDetailFragment(boolean createNew) {
     this.setCurrentFragmentType(ViewFragmentType.DETAIL);
     this.updateChildViewVisibility(ViewFragmentType.DETAIL);
     FragmentManager fragmentManager = this.getFragmentManager();
@@ -695,7 +744,7 @@ public class TableDisplayActivity extends AbsTableActivity
     DetailViewFragment detailViewFragment = (DetailViewFragment)
         fragmentManager.findFragmentByTag(
             Constants.FragmentTags.DETAIL_FRAGMENT);
-    if (detailViewFragment == null) {
+    if (detailViewFragment == null || createNew) {
       detailViewFragment = this.createDetailViewFragment(fileName, rowId);
     }
     FragmentTransaction fragmentTransaction =
@@ -704,9 +753,6 @@ public class TableDisplayActivity extends AbsTableActivity
         R.id.activity_table_display_activity_one_pane_content,
         detailViewFragment,
         Constants.FragmentTags.DETAIL_FRAGMENT);
-//    this.handleMenuForViewFragmentType(
-//        ViewFragmentType.DETAIL,
-//        fragmentTransaction);
     fragmentTransaction.commit();
   }
   

@@ -28,8 +28,7 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   public static final String DEFAULT_TABLE_ID = TestConstants.DEFAULT_TABLE_ID;
   public static final SQLQueryStruct DEFAULT_SQL_QUERY_STRUCT = 
       TestConstants.getSQLQueryStructMock();
-  public static final UserTable DEFAULT_USER_TABLE = 
-      TestConstants.getUserTableMock();
+  public static final UserTable DEFAULT_USER_TABLE = null;
   
   public static String APP_NAME = DEFAULT_APP_NAME;
   public static TableProperties TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
@@ -90,6 +89,13 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   }
   
   @Override
+  protected void refreshDisplayFragment() {
+    if (BUILD_DISPLAY_FRAGMENT) {
+      super.refreshDisplayFragment();
+    }
+  }
+  
+  @Override
   DetailViewFragment createDetailViewFragment(String fileName, String rowId) {
     return DETAIL_VIEW_FRAGMENT;
   }
@@ -134,7 +140,7 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
     TABLE_ID = DEFAULT_TABLE_ID;
     TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
     SQL_QUERY_STRUCT = DEFAULT_SQL_QUERY_STRUCT;
-    USER_TABLE = DEFAULT_USER_TABLE;
+    USER_TABLE = TestConstants.getUserTableMock();
     BUILD_MENU_FRAGMENT = DEFAULT_BUILD_MENU_FRAGMENT;
     BUILD_DISPLAY_FRAGMENT = DEFAULT_BUILD_DISPLAY_FRAGMENT;
     SPREADSHEET_FRAGMENT = null;

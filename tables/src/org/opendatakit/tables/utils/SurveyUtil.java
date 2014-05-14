@@ -312,8 +312,9 @@ public class SurveyUtil {
    */
   public static void launchSurveyToAddRow(Activity activityToAwaitReturn, Intent surveyAddIntent,
                                           TableProperties tp) {
-    Log.e(TAG, "[launchSurveyToAddRow] not currently waiting for return");
-    activityToAwaitReturn.startActivity(surveyAddIntent);
+    activityToAwaitReturn.startActivityForResult(
+        surveyAddIntent,
+        Constants.RequestCodes.ADD_ROW_SURVEY);
   }
   
   /**
@@ -383,8 +384,9 @@ public class SurveyUtil {
    */
   public static void launchSurveyToEditRow(Activity activityToAwaitReturn, Intent surveyEditIntent,
                                            TableProperties tp, String rowId) {
-    Log.e(TAG, "[launchSurveyToEditRow] not currently waiting for return");
-    activityToAwaitReturn.startActivity(surveyEditIntent);
+    activityToAwaitReturn.startActivityForResult(
+        surveyEditIntent,
+        Constants.RequestCodes.EDIT_ROW_SURVEY);
   }
 
   /**

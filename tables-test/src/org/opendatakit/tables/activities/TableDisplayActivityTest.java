@@ -8,6 +8,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.fragments.DetailViewFragment;
@@ -16,13 +17,17 @@ import org.opendatakit.tables.fragments.GraphViewFragment;
 import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.MapListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
+import org.opendatakit.tables.fragments.SpreadsheetFragmentStub;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowLog;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -113,6 +118,110 @@ public class TableDisplayActivityTest {
   @Test
   public void activityIsCreatedSuccessfully() {
     assertThat(this.activity).isNotNull();
+  }
+  
+  /**
+   * After adding a row with collect, the table backing the object should be
+   * refreshed to ensure that any potential rows are added.
+   */
+  @Test
+  public void backingTableIsRefereshedOnSuccessfulCollectAddReturn() {
+    this.helperAssertRefreshedTableForReturn(
+        Constants.RequestCodes.ADD_ROW_COLLECT,
+        Activity.RESULT_OK,
+        true);
+  }
+  
+  @Test
+  public void backingTableIsRefreshedOnSuccessfulSurveyAddReturn() {
+    this.helperAssertRefreshedTableForReturn(
+        Constants.RequestCodes.ADD_ROW_SURVEY,
+        Activity.RESULT_OK,
+        true);
+  }
+  
+  @Test
+  public void backingTableIsRefreshedOnSuccessfulCollectEditReturn() {
+    this.helperAssertRefreshedTableForReturn(
+        Constants.RequestCodes.EDIT_ROW_COLLECT, 
+        Activity.RESULT_OK,
+        true);
+  }
+  
+  @Test
+  public void backingTableIsRefreshedOnSuccessfulSurveyEditReturn() {
+    this.helperAssertRefreshedTableForReturn(
+        Constants.RequestCodes.EDIT_ROW_SURVEY,
+        Activity.RESULT_OK,
+        true);
+  }
+  
+  @Test
+  public void backingTableIsNotRefreshedOnCanceledCollectAddReturn() {
+    this.helperAssertRefreshedTableForReturn(
+        Constants.RequestCodes.ADD_ROW_COLLECT,
+        Activity.RESULT_CANCELED,
+        false);
+  }
+  
+  @Test
+  public void backingTableIsNotRefreshedOnCanceledSurveyAddReturn() {
+    this.helperAssertRefreshedTableForReturn(
+        Constants.RequestCodes.ADD_ROW_SURVEY,
+        Activity.RESULT_CANCELED,
+        false);
+  }
+  
+  @Test
+  public void backingTableIsNotRefreshedOnCanceledCollectEditReturn() {
+    this.helperAssertRefreshedTableForReturn(
+        Constants.RequestCodes.EDIT_ROW_COLLECT, 
+        Activity.RESULT_CANCELED,
+        false);
+  }
+  
+  @Test
+  public void backingTableIsNotRefreshedOnCanceledSurveyEditReturn() {
+    this.helperAssertRefreshedTableForReturn(
+        Constants.RequestCodes.EDIT_ROW_SURVEY,
+        Activity.RESULT_CANCELED,
+        false);
+  }
+  
+  /**
+   * Performs assertions for the cases where you have returned launched an
+   * activity and are checking if the {@link UserTable} backing the fragment
+   * was refreshed. The activity it launches is just a meaningless stub
+   * activity to try and keep things decoupled.
+   * @param requestCode the request code you launched the intent with
+   * @param resultCode the response the activity gives you
+   * @param didRefresh true if the table should be different, false if it
+   * should be the same
+   */
+  private void helperAssertRefreshedTableForReturn(
+      int requestCode,
+      int resultCode,
+      boolean didRefresh) {
+    UserTable startingUserTable = TableDisplayActivityStub.USER_TABLE;
+    Intent intent = new Intent(activity, AbsBaseActivityStub.class);
+    activity.startActivityForResult(
+        intent,
+        requestCode);
+    // Swap in a new user table that will be called when "retrieveUserTable"
+    // is invoked.
+    UserTable newUserTable = TestConstants.getUserTableMock();
+    TableDisplayActivityStub.USER_TABLE = newUserTable;
+    shadowOf(activity).receiveResult(
+        intent,
+        resultCode,
+        new Intent());
+    if (didRefresh) {
+      org.fest.assertions.api.Assertions.assertThat(startingUserTable)
+        .isNotSameAs(activity.getUserTable());
+    } else {
+      org.fest.assertions.api.Assertions.assertThat(startingUserTable)
+        .isSameAs(activity.getUserTable());
+    }
   }
   
   @Test

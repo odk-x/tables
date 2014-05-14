@@ -193,6 +193,8 @@ public class Constants {
     public static final int LAUNCH_GRAPH_MANAGER = 14;
     public static final int LAUNCH_COLUMN_LIST = 15;
     public static final int LAUNCH_COLOR_RULE_LIST = 16;
+    public static final int ADD_ROW_SURVEY = 17;
+    public static final int EDIT_ROW_SURVEY = 18;
   }
   
   /**
