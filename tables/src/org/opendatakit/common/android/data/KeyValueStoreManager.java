@@ -147,17 +147,6 @@ class KeyValueStoreManager {
   public static final String WHERE_SQL_KEY_VALUE = KeyValueStoreColumns.KEY + " = ? " + " and " +
       KeyValueStoreColumns.VALUE + " = ? ";
 
-  // The columns to be selected when initializing KeyStoreValueDefault.
-  private static final String[] INIT_COLUMNS = {
-    KeyValueStoreColumns.TABLE_ID,
-    KeyValueStoreColumns.PARTITION,
-    KeyValueStoreColumns.ASPECT,
-    KeyValueStoreColumns.KEY,
-    KeyValueStoreColumns.VALUE_TYPE,
-    KeyValueStoreColumns.VALUE
-  };
-
-
   /**
    * Compare the two {@link OdkTablesKeyValueStoreEntry} objects based on
    * their partition, aspect, and key, in that order. Must be from the same
@@ -202,16 +191,6 @@ class KeyValueStoreManager {
   }
 
   /**
-   * Return a key value store object for the sync properties for the given
-   * table id.
-   * @param tableId
-   * @return
-   */
-  public KeyValueStoreSync getSyncStoreForTable(String tableId) {
-    return new KeyValueStoreSync(DataModelDatabaseHelper.KEY_VALULE_STORE_SYNC_TABLE_NAME, tableId);
-  }
-
-  /**
    * Get all the tableIds from the specified store.
    * @param db
    * @param typeOfStore
@@ -229,77 +208,6 @@ class KeyValueStoreManager {
     		c.close();
     	}
     }
-  }
-
-  /**
-   * Return a list of the table ids who have isSetToSync set to true in the
-   * sync KVS.
-   * @param db
-   * @return
-   */
-  public List<String> getSynchronizedTableIds(SQLiteDatabase db) {
-    // We want a query returning the TABLE_UUID where the key is the
-    // sync state string and the value is true.
-    Cursor c = null;
-    try {
-	    c = getTableIdsWithKeyValue(db, DataModelDatabaseHelper.KEY_VALULE_STORE_SYNC_TABLE_NAME,
-	        KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), "1");
-	    return getTableIdsFromCursor(c);
-    } finally {
-    	if ( c != null && !c.isClosed()) {
-    		c.close();
-    	}
-    }
-  }
-
-  /**
-   * Add the isSetToSynch key to the sync properties key value store for the
-   * given table. The value is initialized to 0, or false. If the key already
-   * exists in the sync KVS, nothing happens.
-   * @param tableId
-   */
-  public void addIsSetToSyncToSyncKVSForTable(SQLiteDatabase db, String tableId) {
-    KeyValueStore syncKVS = this.getSyncStoreForTable(tableId);
-    try {
-	    // Note! If there ever becomes another way to
-	    // add entries to the server key value store, you must be sure to add the
-	    // is set to sync key to the sync store.
-	    List<String> isSetToSyncKey = new ArrayList<String>();
-	    isSetToSyncKey.add(KeyValueStoreSync.SyncPropertiesKeys
-	        .IS_SET_TO_SYNC.getKey());
-	    List<OdkTablesKeyValueStoreEntry> currentIsSetToSync =
-	        syncKVS.getEntriesForKeys(db, KeyValueStoreSync.KVS_PARTITION,
-	            KeyValueStoreSync.KVS_ASPECT, isSetToSyncKey);
-	    if (currentIsSetToSync.size() == 0) {
-	      // we add the value.
-	      OdkTablesKeyValueStoreEntry newEntry =
-	          new OdkTablesKeyValueStoreEntry();
-	      newEntry.key =
-	          KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey();
-	      newEntry.tableId = tableId;
-	      newEntry.type = ColumnType.INTEGER.name();
-	      newEntry.value = "0";
-	      List<OdkTablesKeyValueStoreEntry> newKey =
-	          new ArrayList<OdkTablesKeyValueStoreEntry>();
-	      newKey.add(newEntry);
-	      syncKVS.addEntriesToStore(db, newKey);
-	    }
-    } finally {
-    }
-  }
-
-  /*
-   * This does a simple query for all the tables that have rows where the
-   * key and the value equal the passed in parameters.
-   */
-  private Cursor getTableIdsWithKeyValue(SQLiteDatabase db, String storeName,
-      String key, String value) {
-    Cursor c = db.query(storeName,
-        new String[] {KeyValueStoreColumns.TABLE_ID},
-        WHERE_SQL_KEY_VALUE,
-        new String[] {key, value},
-        null, null, null);
-    return c;
   }
 
   /*

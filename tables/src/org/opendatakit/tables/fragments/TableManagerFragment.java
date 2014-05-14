@@ -83,10 +83,12 @@ public class TableManagerFragment extends ListFragment {
           Constants.RequestCodes.LAUNCH_IMPORT_EXPORT);
       return true;
     case R.id.menu_table_manager_sync:
+//      OdkSyncServiceProxy proxy = new OdkSyncServiceProxy(this.getActivity());
+//      proxy.synchronizeFromServer(appName);
       Intent syncIntent = new Intent();
       syncIntent.setComponent(new ComponentName(
           "org.opendatakit.sync",
-          "org.opendatakit.sync.activities.Aggregate"));
+          "org.opendatakit.sync.activities.SyncActivity"));
       syncIntent.setAction(Intent.ACTION_DEFAULT);
       syncIntent.putExtras(bundle);
       baseActivity.startActivityForResult(

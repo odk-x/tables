@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.CsvUtil;
@@ -68,50 +69,50 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
 
   @Override
   protected synchronized Boolean doInBackground(Void... params) {
+
+    File init = new File(ODKFileUtils.getTablesInitializationFile(mAppName));
+    File completedFile = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(mAppName));
+    if ( !init.exists() ) {
+      // no initialization file -- we are done!
+      return true;
+    }
+    boolean processFile = false;
+    if ( !init.exists() ) {
+      processFile = false;
+    } else if ( !completedFile.exists() ) {
+      processFile = true;
+    } else {
+      String initMd5 = ODKFileUtils.getMd5Hash(init);
+      String completedFileMd5 = ODKFileUtils.getMd5Hash(completedFile);
+      processFile = !initMd5.equals(completedFileMd5);
+    }
+    if ( !processFile ) {
+      // we are done!
+      return true;
+    }
+
     Properties prop = new Properties();
     try {
-      String pathToConfigFile = ODKFileUtils.getTablesConfigurationFile(mAppName);
-      File config = new File(pathToConfigFile);
-      prop.load(new FileInputStream(config));
+      prop.load(new FileInputStream(init));
     } catch (IOException ex) {
       ex.printStackTrace();
       return false;
     }
 
+    // assume if we load it, we have processed it.
+
+    // We shouldn't really do this, but it avoids an infinite
+    // recycle if there is an error during the processing of the
+    // file.
+    try {
+      FileUtils.copyFile(init, completedFile);
+    } catch (IOException e) {
+      e.printStackTrace();
+      // ignore this.
+    }
+
     // prop was loaded
     if (prop != null) {
-      // This is an unpleasant solution. We're currently saving the file
-      // time as used the instant a properties file is loaded. In theory
-      // it seems like this should only be saved AFTER the file is
-      // successfully used. This is not being done for several reasons.
-      // First, despite my best efforts to get the DialogFragments and
-      // asynctasks to play nice, somehow it still is not consistently
-      // finding the InitializeTaskDialogFragment in onCreate. It usually,
-      // usually does, but this is seriously annoying to not work
-      // consistently. I can't find a good reason as to why.
-      // Second, say that a config attempt did fail, perhaps causing a
-      // force close. Without this fix, it would consistently crash,
-      // trying each time to load the same misconfigured config file. This
-      // is similarly unacceptable. So, this seems a way to try and avoid
-      // both problems, while perhaps eliminating a very annoying problem.
-      // However, it still feels like a hack, and I wish the AsyncTask/
-      // Fragment situation wasn't so damned irritating.
-      File completedFile = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(mAppName));
-      if (!completedFile.exists()) {
-        FileOutputStream ofs;
-        try {
-          completedFile.getParentFile().mkdirs();
-          ofs = new FileOutputStream(completedFile, false);
-          ofs.write(0);
-          ofs.flush();
-          ofs.close();
-        } catch (FileNotFoundException e) {
-          e.printStackTrace();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
-
       String table_keys = prop.getProperty(TOP_LEVEL_KEY_TABLE_KEYS);
 
       // table_keys is defined

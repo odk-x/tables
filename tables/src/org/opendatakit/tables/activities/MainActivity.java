@@ -73,6 +73,9 @@ public class MainActivity extends AbsBaseActivity implements
     initializeTaskDialogFragment.show(
         fragmentManager,
         InitializeTaskDialogFragment.TAG_FRAGMENT);
+    // fire off the initializeTask
+    Void v = null;
+    initializeTask.execute(v);
   }
 
   @Override

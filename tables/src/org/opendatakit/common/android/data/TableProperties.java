@@ -231,6 +231,7 @@ public class TableProperties {
    * @return
    */
   public static TableProperties[] getTablePropertiesForAll(Context context, String appName) {
+    ODKFileUtils.assertDirectoryStructure(appName);
     SQLiteDatabase db = null;
     try {
       DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
@@ -238,43 +239,6 @@ public class TableProperties {
       ensureActiveTableIdMapLoaded(context, appName, db);
       Map<String, TableProperties> activeTableIdMap = activeAppNameTableIdMap.get(appName);
       return activeTableIdMap.values().toArray(new TableProperties[activeTableIdMap.size()]);
-    } finally {
-      if (db != null) {
-        db.close();
-      }
-    }
-  }
-
-  /**
-   * Get the TableProperties for all the tables that have synchronized set to
-   * true in the sync KVS. typeOfStore tells you the KVS (active, default, or
-   * server) from which to construct the properties.
-   *
-   * @param dbh
-   * @param typeOfStore
-   *          the KVS from which to get the properties
-   * @return
-   */
-  public static TableProperties[] getTablePropertiesForSynchronizedTables(Context context,
-      String appName) {
-
-    SQLiteDatabase db = null;
-    try {
-      DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
-      db = dh.getReadableDatabase();
-      KeyValueStoreManager kvsm = new KeyValueStoreManager();
-      // don't do caching for other KVS's
-      List<String> synchedIds = kvsm.getSynchronizedTableIds(db);
-      TableProperties[] allProps = new TableProperties[synchedIds.size()];
-      for (int i = 0; i < synchedIds.size(); i++) {
-        String tableId = synchedIds.get(i);
-        Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId);
-        allProps[i] = constructPropertiesFromMap(context, appName, db, propPairs);
-        if (allProps[i] == null) {
-          throw new IllegalStateException("Unexpectedly missing " + tableId);
-        }
-      }
-      return allProps;
     } finally {
       if (db != null) {
         db.close();
@@ -363,35 +327,6 @@ public class TableProperties {
       this.columnOrder = getPersistedColumns();
     } else {
       this.columnOrder = columnOrder;
-    }
-  }
-
-  public KeyValueStoreSync getSyncStoreForTable() {
-    KeyValueStoreManager kvsm = getKeyValueStoreManager();
-    return kvsm.getSyncStoreForTable(getTableId());
-  }
-
-  public boolean isSetToSync() {
-    KeyValueStoreSync syncKVS = getSyncStoreForTable();
-    SQLiteDatabase db = null;
-    try {
-      db = getReadableDatabase();
-      return syncKVS.isSetToSync(db);
-    } finally {
-      db.close();
-    }
-  }
-
-  public void setIsSetToSync(boolean value) {
-    KeyValueStoreSync syncKVS = getSyncStoreForTable();
-    SQLiteDatabase db = getWritableDatabase();
-    try {
-      db.beginTransaction();
-      syncKVS.setIsSetToSync(db, value);
-      db.setTransactionSuccessful();
-    } finally {
-      db.endTransaction();
-      db.close();
     }
   }
 
@@ -725,8 +660,6 @@ public class TableProperties {
         TableDefinitions.deleteTableFromTableDefinitions(db, tableId);
         KeyValueStoreManager kvsm = new KeyValueStoreManager();
         kvsm.getStoreForTable(tableId).clearKeyValuePairs(db);
-        // remove it from sync store
-        kvsm.getSyncStoreForTable(tableId).clearKeyValuePairs(db);
         db.setTransactionSuccessful();
       } catch (Exception e) {
         e.printStackTrace();

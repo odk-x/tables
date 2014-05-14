@@ -560,9 +560,9 @@ public class DbTable {
         // UPDATE: I have used the KeyValueStoreSync to return the same value
         // as hilary was originally using. However, this might have to be
         // updated.
-        boolean isSetToSync = tp.isSetToSync();
-        if (isSetToSync && getSyncState(rowId) == SyncState.rest)
+        if (getSyncState(rowId) == SyncState.rest) {
           cv.put(DataTableColumns.SYNC_STATE, SyncState.updating.name());
+        }
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
@@ -646,30 +646,23 @@ public class DbTable {
      * deleted. Otherwise, actually deletes the row.
      */
     public void markDeleted(String rowId) {
-      boolean isSetToSync = tp.isSetToSync();
-      // hilary's original
-      //if (!tp.isSynchronized()) {
-      if (!isSetToSync) {
+      SyncState syncState = getSyncState(rowId);
+      if (syncState == SyncState.inserting) {
         deleteRowActual(rowId);
-      } else {
-        SyncState syncState = getSyncState(rowId);
-        if (syncState == SyncState.inserting) {
-          deleteRowActual(rowId);
-        } else if (syncState == SyncState.rest || syncState == SyncState.updating) {
-          String[] whereArgs = { rowId };
-          ContentValues values = new ContentValues();
-          values.put(DataTableColumns.SYNC_STATE, SyncState.deleting.name());
-          SQLiteDatabase db = tp.getWritableDatabase();
-          try {
-            db.beginTransaction();
-	          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
-	          values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
-	          db.update(tp.getDbTableName(), values, DataTableColumns.ID + " = ?", whereArgs);
-	          db.setTransactionSuccessful();
-          } finally {
-            db.endTransaction();
-            db.close();
-          }
+      } else if (syncState == SyncState.rest || syncState == SyncState.updating) {
+        String[] whereArgs = { rowId };
+        ContentValues values = new ContentValues();
+        values.put(DataTableColumns.SYNC_STATE, SyncState.deleting.name());
+        SQLiteDatabase db = tp.getWritableDatabase();
+        try {
+          db.beginTransaction();
+          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
+          values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+	       db.update(tp.getDbTableName(), values, DataTableColumns.ID + " = ?", whereArgs);
+	       db.setTransactionSuccessful();
+        } finally {
+          db.endTransaction();
+          db.close();
         }
       }
     }
