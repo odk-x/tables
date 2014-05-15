@@ -153,6 +153,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         dialog.dismiss();
+        mCallbacks.onImportsComplete();
       }
     });
     if (!success) {
@@ -168,7 +169,6 @@ public class InitializeTaskDialogFragment extends DialogFragment {
       builder.setTitle(getString(R.string.config_summary));
       builder.setMessage(successMessage);
     }
-    this.mCallbacks.onImportsComplete();
     AlertDialog resultDialog = builder.create();
     resultDialog.show();
   }
