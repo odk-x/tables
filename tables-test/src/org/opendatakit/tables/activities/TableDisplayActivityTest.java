@@ -17,7 +17,6 @@ import org.opendatakit.tables.fragments.GraphViewFragment;
 import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.MapListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
-import org.opendatakit.tables.fragments.SpreadsheetFragmentStub;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -35,16 +34,16 @@ import android.view.MenuItem;
 import android.view.View;
 
 /**
- * 
+ *
  * @author sudar.sam@gmail.com
  *
  */
 @RunWith(RobolectricTestRunner.class)
 public class TableDisplayActivityTest {
-  
+
   TableDisplayActivity activity;
   Menu menu;
-  
+
   @Before
   public void before() {
     ShadowLog.stream = System.out;
@@ -57,12 +56,12 @@ public class TableDisplayActivityTest {
     ShadowActivity shadowActivity = shadowOf(this.activity);
     this.menu = shadowActivity.getOptionsMenu();
   }
-  
+
   @After
   public void after() {
     TableDisplayActivityStub.resetState();
   }
-  
+
   /**
    * Calls
    * {@link #setupActivityWithViewTypeAndMock(ViewFragmentType, boolean)}.
@@ -72,7 +71,7 @@ public class TableDisplayActivityTest {
     TableDisplayActivityStub.BUILD_MENU_FRAGMENT = true;
     this.setupActivityWithViewTypeAndMock(fragmentType, true);
   }
-  
+
   /**
    * Set up the {@link TableDisplayActivityStub} to use the display fragment
    * specified by fragmentType. If buildDisplayFragment is true, it actually
@@ -92,7 +91,7 @@ public class TableDisplayActivityTest {
     intent.putExtras(extras);
     // Now handle the internal static state we're going to need.
     TableDisplayActivityStub.BUILD_DISPLAY_FRAGMENT = true;
-    TableDisplayActivityStub.SPREADSHEET_FRAGMENT = 
+    TableDisplayActivityStub.SPREADSHEET_FRAGMENT =
         mock(SpreadsheetFragment.class);
     TableDisplayActivityStub.LIST_VIEW_FRAGMENT =
         mock(ListViewFragment.class);
@@ -114,12 +113,12 @@ public class TableDisplayActivityTest {
         .visible()
         .get();
   }
-  
+
   @Test
   public void activityIsCreatedSuccessfully() {
     assertThat(this.activity).isNotNull();
   }
-  
+
   /**
    * After adding a row with collect, the table backing the object should be
    * refreshed to ensure that any potential rows are added.
@@ -131,7 +130,7 @@ public class TableDisplayActivityTest {
         Activity.RESULT_OK,
         true);
   }
-  
+
   @Test
   public void backingTableIsRefreshedOnSuccessfulSurveyAddReturn() {
     this.helperAssertRefreshedTableForReturn(
@@ -139,15 +138,15 @@ public class TableDisplayActivityTest {
         Activity.RESULT_OK,
         true);
   }
-  
+
   @Test
   public void backingTableIsRefreshedOnSuccessfulCollectEditReturn() {
     this.helperAssertRefreshedTableForReturn(
-        Constants.RequestCodes.EDIT_ROW_COLLECT, 
+        Constants.RequestCodes.EDIT_ROW_COLLECT,
         Activity.RESULT_OK,
         true);
   }
-  
+
   @Test
   public void backingTableIsRefreshedOnSuccessfulSurveyEditReturn() {
     this.helperAssertRefreshedTableForReturn(
@@ -155,7 +154,7 @@ public class TableDisplayActivityTest {
         Activity.RESULT_OK,
         true);
   }
-  
+
   @Test
   public void backingTableIsNotRefreshedOnCanceledCollectAddReturn() {
     this.helperAssertRefreshedTableForReturn(
@@ -163,7 +162,7 @@ public class TableDisplayActivityTest {
         Activity.RESULT_CANCELED,
         false);
   }
-  
+
   @Test
   public void backingTableIsNotRefreshedOnCanceledSurveyAddReturn() {
     this.helperAssertRefreshedTableForReturn(
@@ -171,15 +170,15 @@ public class TableDisplayActivityTest {
         Activity.RESULT_CANCELED,
         false);
   }
-  
+
   @Test
   public void backingTableIsNotRefreshedOnCanceledCollectEditReturn() {
     this.helperAssertRefreshedTableForReturn(
-        Constants.RequestCodes.EDIT_ROW_COLLECT, 
+        Constants.RequestCodes.EDIT_ROW_COLLECT,
         Activity.RESULT_CANCELED,
         false);
   }
-  
+
   @Test
   public void backingTableIsNotRefreshedOnCanceledSurveyEditReturn() {
     this.helperAssertRefreshedTableForReturn(
@@ -187,7 +186,7 @@ public class TableDisplayActivityTest {
         Activity.RESULT_CANCELED,
         false);
   }
-  
+
   /**
    * Performs assertions for the cases where you have returned launched an
    * activity and are checking if the {@link UserTable} backing the fragment
@@ -223,25 +222,25 @@ public class TableDisplayActivityTest {
         .isSameAs(activity.getUserTable());
     }
   }
-  
+
   @Test
   public void childrenVisibilityCorrectForSpreadsheet() {
     this.setupActivityWithViewTypeAndMock(ViewFragmentType.SPREADSHEET, true);
     this.assertOnePaneViewItemsCorrectVisibility();
   }
-  
+
   @Test
   public void childrenVisibilityCorrectForList() {
     this.setupActivityWithViewTypeAndMock(ViewFragmentType.LIST, true);
     this.assertOnePaneViewItemsCorrectVisibility();
   }
-  
+
   @Test
   public void childrenVisibilityCorrectForDetail() {
     this.setupActivityWithViewTypeAndMock(ViewFragmentType.DETAIL, true);
     this.assertOnePaneViewItemsCorrectVisibility();
   }
-  
+
   @Test
   public void childrenVisibilityCorrectForGraphManager() {
     this.setupActivityWithViewTypeAndMock(
@@ -249,52 +248,52 @@ public class TableDisplayActivityTest {
         true);
     this.assertOnePaneViewItemsCorrectVisibility();
   }
-  
+
   @Test
   public void childrenVisibilityCorrectForGraphView() {
     this.setupActivityWithViewTypeAndMock(ViewFragmentType.GRAPH_VIEW, true);
     this.assertOnePaneViewItemsCorrectVisibility();
   }
-  
+
   @Test
   public void childrenVisibilityCorrectForMap() {
     this.setupActivityWithViewTypeAndMock(ViewFragmentType.MAP, true);
     this.assertMapPaneItemsCorrectVisibility();
   }
-  
+
   @Test
   public void menuItemsCorrectForSpreadsheet() {
     this.setupActivityForMenuTest(ViewFragmentType.SPREADSHEET);
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.SPREADSHEET);
   }
-  
+
   @Test
   public void menuItemsCorrectForSpreadsheetAfterRecreation() {
     this.setupActivityForMenuTest(ViewFragmentType.SPREADSHEET);
     this.activity.recreate();
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.SPREADSHEET);
   }
-  
+
   @Test
   public void menuItemsCorrectForList() {
     this.setupActivityForMenuTest(ViewFragmentType.LIST);
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.LIST);
   }
-  
+
   @Test
   public void menuItemsCorrectForListAfterRecreation() {
     this.setupActivityForMenuTest(ViewFragmentType.LIST);
     this.activity.recreate();
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.LIST);
   }
-  
+
   @Test
   public void menuItemsCorrectForGraphManager() {
     this.setupActivityForMenuTest(ViewFragmentType.GRAPH_MANAGER);
     this.assertOptionsMenuCorrectForTopLevelView(
         ViewFragmentType.GRAPH_MANAGER);
   }
-  
+
   @Test
   public void menuItemsCorrectForGraphManagerAfterRecreation() {
     this.setupActivityForMenuTest(ViewFragmentType.GRAPH_MANAGER);
@@ -302,20 +301,20 @@ public class TableDisplayActivityTest {
     this.assertOptionsMenuCorrectForTopLevelView(
         ViewFragmentType.GRAPH_MANAGER);
   }
-  
+
   @Test
   public void menuItemsCorrectForMap() {
     this.setupActivityForMenuTest(ViewFragmentType.MAP);
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.MAP);
   }
-  
+
   @Test
   public void menutItemsCorrectForMapAfterRecreation() {
     this.setupActivityForMenuTest(ViewFragmentType.MAP);
     this.activity.recreate();
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.MAP);
   }
-  
+
   /**
    * Asserts that the options menu is correct for a top level view like list or
    * spreadsheet. I.e. asserts that you have the new content, select view, and
@@ -363,26 +362,26 @@ public class TableDisplayActivityTest {
           "Unrecognized view type: " + checkedItem);
     }
   }
-  
+
   @Test
   public void menuHasAdd() {
     MenuItem addItem = this.menu.findItem(R.id.top_level_table_menu_add);
     assertThat(addItem).isNotNull();
   }
-  
+
   @Test
   public void menuHasSelectView() {
     MenuItem selectView = this.getSelectViewItem();
     assertThat(selectView).isNotNull();
   }
-  
+
   @Test
   public void selectViewIsSubMenu() {
     MenuItem selectView = this.getSelectViewItem();
     // The submenu shouldn't return null if it is a submenu, as it should be.
     assertThat(selectView.getSubMenu()).isNotNull();
   }
-  
+
   /**
    * Get the {@link MenuItem} for selecting a view.
    * @return
@@ -392,7 +391,7 @@ public class TableDisplayActivityTest {
         this.menu.findItem(R.id.top_level_table_menu_select_view);
     return selectView;
   }
-  
+
   /**
    * Convenience method for calling {@link Menu#findItem(int)} on
    * {@link #menu}.
@@ -403,7 +402,7 @@ public class TableDisplayActivityTest {
     return this.menu.findItem(itemId);
   }
 
-  
+
   private void assertCorrectItemsChecked(
       boolean spreadsheetChecked,
       boolean listChecked,
@@ -444,15 +443,15 @@ public class TableDisplayActivityTest {
       assertThat(map).isNotChecked();
     }
   }
-  
+
   private void assertMapPaneItemsCorrectVisibility() {
     this.assertViewVisibility(false, true);
   }
-  
+
   private void assertOnePaneViewItemsCorrectVisibility() {
     this.assertViewVisibility(true, false);
   }
-  
+
   private void assertViewVisibility(
       boolean onePaneVisible,
       boolean mapContainerVisible) {
