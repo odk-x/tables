@@ -1024,7 +1024,24 @@ public class TableProperties {
         db.beginTransaction();
         // ensure that we have persisted this column's values
         cp.persistColumn(db);
-        db.execSQL("ALTER TABLE \"" + dbTableName + "\" ADD COLUMN \"" + cp.getElementKey() + "\"");
+        StringBuilder b = new StringBuilder();
+        b.append("ALTER TABLE \"").append(dbTableName).append("\"")
+         .append(" AND COLUMN \"").append(cp.getElementKey()).append("\" ");
+        ColumnType type = cp.getColumnType();
+        if ( type == ColumnType.STRING ) {
+          b.append("TEXT");
+        } else if ( type == ColumnType.INTEGER ) {
+          b.append("INTEGER");
+        } else if ( type == ColumnType.NUMBER ) {
+          b.append("REAL");
+        } else if ( type == ColumnType.BOOLEAN ) {
+          b.append("INTEGER"); // 0 and 1
+        } else {
+          b.append("TEXT"); // everything else
+        }
+        b.append(" NULL");
+        String sql = b.toString();
+        db.execSQL(sql);
         // use a copy of columnOrder for roll-back purposes
         List<String> newColumnOrder = this.getColumnOrder();
         if (cp.getDisplayVisible()) {
