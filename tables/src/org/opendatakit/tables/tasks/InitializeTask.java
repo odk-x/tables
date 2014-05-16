@@ -85,139 +85,10 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
     if (!ODKFileUtils.isConfiguredTablesApp(mAppName, Tables.getInstance().getVersionCodeString()) ) {
       publishProgress(mContext.getString(R.string.expansion_unzipping_begins), null);
 
-      AssetFileDescriptor fd = null;
-      try {
-        fd = mContext.getResources().openRawResourceFd(R.raw.zipfile);
-        final long size = fd.getLength() / 2L; // apparently over-counts by 2x?
-        InputStream rawInputStream = null;
-        try {
-          rawInputStream = fd.createInputStream();
-          ZipInputStream zipInputStream = null;
-          ZipEntry entry = null;
-          try {
+      extractFromRawZip(R.raw.frameworkzip, true, result);
+      extractFromRawZip(R.raw.assetszip, false, result);
 
-            // count the number of files in the zip
-            zipInputStream = new ZipInputStream(rawInputStream);
-            int totalFiles = 0;
-            while ((entry = zipInputStream.getNextEntry()) != null) {
-              message = null;
-              if (isCancelled()) {
-                message = "cancelled";
-                result.add(entry.getName() + " " + message);
-                break;
-              }
-              ++totalFiles;
-            }
-            zipInputStream.close();
-
-            // and re-open the stream, reading it this time...
-            fd = mContext.getResources().openRawResourceFd(R.raw.zipfile);
-            rawInputStream = fd.createInputStream();
-            zipInputStream = new ZipInputStream(rawInputStream);
-
-            long bytesProcessed = 0L;
-            long lastBytesProcessedThousands = 0L;
-            int nFiles = 0;
-            while ((entry = zipInputStream.getNextEntry()) != null) {
-              message = null;
-              if (isCancelled()) {
-                message = "cancelled";
-                result.add(entry.getName() + " " + message);
-                break;
-              }
-              ++nFiles;
-              File tempFile = new File(ODKFileUtils.getAppFolder(mAppName), entry.getName());
-              String formattedString = mContext.getString(R.string.expansion_unzipping_without_detail,
-                  entry.getName(), nFiles, totalFiles);
-              String detail;
-              if (entry.isDirectory()) {
-                detail = mContext.getString(R.string.expansion_create_dir_detail);
-                publishProgress(formattedString, detail);
-                tempFile.mkdirs();
-              } else {
-                int bufferSize = 8192;
-                OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile, false),
-                    bufferSize);
-                byte buffer[] = new byte[bufferSize];
-                int bread;
-                while ((bread = zipInputStream.read(buffer)) != -1) {
-                  bytesProcessed += bread;
-                  long curThousands = (bytesProcessed / 1000L);
-                  if ( curThousands != lastBytesProcessedThousands ) {
-                    detail = mContext.getString(R.string.expansion_unzipping_detail, bytesProcessed, size);
-                    publishProgress(formattedString, detail);
-                    lastBytesProcessedThousands = curThousands;
-                  }
-                  out.write(buffer, 0, bread);
-                }
-                out.flush();
-                out.close();
-
-                detail = mContext.getString(R.string.expansion_unzipping_detail, bytesProcessed, size);
-                publishProgress(formattedString, detail);
-              }
-              Log.i(TAG, "Extracted ZipEntry: " + entry.getName());
-
-              message = mContext.getString(R.string.success);
-              result.add(entry.getName() + " " + message);
-            }
-
-            ODKFileUtils.assertConfiguredTablesApp(mAppName, Tables.getInstance().getVersionCodeString());
-
-            String completionString = mContext.getString(R.string.expansion_unzipping_complete, totalFiles);
-            publishProgress(completionString, null);
-          } catch (IOException e) {
-            e.printStackTrace();
-            mPendingSuccess = false;
-            if (e.getCause() != null) {
-              message = e.getCause().getMessage();
-            } else {
-              message = e.getMessage();
-            }
-            if ( entry != null ) {
-              result.add(entry.getName() + " " + message);
-            } else {
-              result.add("Error accessing zipfile resource " + message);
-            }
-          } finally {
-            if (zipInputStream != null) {
-              try {
-                zipInputStream.close();
-              } catch (IOException e) {
-                e.printStackTrace();
-                Log.e(TAG, "Closing of ZipFile failed: " + e.toString());
-              }
-            }
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
-          mPendingSuccess = false;
-          if (e.getCause() != null) {
-            message = e.getCause().getMessage();
-          } else {
-            message = e.getMessage();
-          }
-          result.add("Error accessing zipfile resource " + message);
-        } finally {
-          if ( rawInputStream != null) {
-            try {
-              rawInputStream.close();
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-          }
-        }
-      } finally {
-        if ( fd != null ) {
-          try {
-            fd.close();
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        } else {
-          result.add("Error accessing zipfile resource.");
-        }
-      }
+      ODKFileUtils.assertConfiguredTablesApp(mAppName, Tables.getInstance().getVersionCodeString());
     }
 
 
@@ -389,6 +260,143 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
       }
     }
     return true;
+  }
+
+  private void  extractFromRawZip(int resourceId, boolean overwrite, ArrayList<String> result) {
+    String message = null;
+    AssetFileDescriptor fd = null;
+    try {
+      fd = mContext.getResources().openRawResourceFd(resourceId);
+      final long size = fd.getLength() / 2L; // apparently over-counts by 2x?
+      InputStream rawInputStream = null;
+      try {
+        rawInputStream = fd.createInputStream();
+        ZipInputStream zipInputStream = null;
+        ZipEntry entry = null;
+        try {
+
+          // count the number of files in the zip
+          zipInputStream = new ZipInputStream(rawInputStream);
+          int totalFiles = 0;
+          while ((entry = zipInputStream.getNextEntry()) != null) {
+            message = null;
+            if (isCancelled()) {
+              message = "cancelled";
+              result.add(entry.getName() + " " + message);
+              break;
+            }
+            ++totalFiles;
+          }
+          zipInputStream.close();
+
+          // and re-open the stream, reading it this time...
+          fd = mContext.getResources().openRawResourceFd(resourceId);
+          rawInputStream = fd.createInputStream();
+          zipInputStream = new ZipInputStream(rawInputStream);
+
+          long bytesProcessed = 0L;
+          long lastBytesProcessedThousands = 0L;
+          int nFiles = 0;
+          while ((entry = zipInputStream.getNextEntry()) != null) {
+            message = null;
+            if (isCancelled()) {
+              message = "cancelled";
+              result.add(entry.getName() + " " + message);
+              break;
+            }
+            ++nFiles;
+            File tempFile = new File(ODKFileUtils.getAppFolder(mAppName), entry.getName());
+            String formattedString = mContext.getString(R.string.expansion_unzipping_without_detail,
+                entry.getName(), nFiles, totalFiles);
+            String detail;
+            if (entry.isDirectory()) {
+              detail = mContext.getString(R.string.expansion_create_dir_detail);
+              publishProgress(formattedString, detail);
+              tempFile.mkdirs();
+            } else {
+              int bufferSize = 8192;
+              OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile, false),
+                  bufferSize);
+              byte buffer[] = new byte[bufferSize];
+              int bread;
+              while ((bread = zipInputStream.read(buffer)) != -1) {
+                bytesProcessed += bread;
+                long curThousands = (bytesProcessed / 1000L);
+                if ( curThousands != lastBytesProcessedThousands ) {
+                  detail = mContext.getString(R.string.expansion_unzipping_detail, bytesProcessed, size);
+                  publishProgress(formattedString, detail);
+                  lastBytesProcessedThousands = curThousands;
+                }
+                out.write(buffer, 0, bread);
+              }
+              out.flush();
+              out.close();
+
+              detail = mContext.getString(R.string.expansion_unzipping_detail, bytesProcessed, size);
+              publishProgress(formattedString, detail);
+            }
+            Log.i(TAG, "Extracted ZipEntry: " + entry.getName());
+
+            message = mContext.getString(R.string.success);
+            result.add(entry.getName() + " " + message);
+          }
+
+          ODKFileUtils.assertConfiguredTablesApp(mAppName, Tables.getInstance().getVersionCodeString());
+
+          String completionString = mContext.getString(R.string.expansion_unzipping_complete, totalFiles);
+          publishProgress(completionString, null);
+        } catch (IOException e) {
+          e.printStackTrace();
+          mPendingSuccess = false;
+          if (e.getCause() != null) {
+            message = e.getCause().getMessage();
+          } else {
+            message = e.getMessage();
+          }
+          if ( entry != null ) {
+            result.add(entry.getName() + " " + message);
+          } else {
+            result.add("Error accessing zipfile resource " + message);
+          }
+        } finally {
+          if (zipInputStream != null) {
+            try {
+              zipInputStream.close();
+            } catch (IOException e) {
+              e.printStackTrace();
+              Log.e(TAG, "Closing of ZipFile failed: " + e.toString());
+            }
+          }
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        mPendingSuccess = false;
+        if (e.getCause() != null) {
+          message = e.getCause().getMessage();
+        } else {
+          message = e.getMessage();
+        }
+        result.add("Error accessing zipfile resource " + message);
+      } finally {
+        if ( rawInputStream != null) {
+          try {
+            rawInputStream.close();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+    } finally {
+      if ( fd != null ) {
+        try {
+          fd.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      } else {
+        result.add("Error accessing zipfile resource.");
+      }
+    }
   }
 
   private String displayOverall;
