@@ -16,6 +16,7 @@
 package org.opendatakit.common.android.utils;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -232,7 +233,7 @@ public class NameUtil {
   public static boolean isValidUserDefinedDatabaseName(String name) {
     boolean matchHit = name.matches(PATTERN_VALID_USER_DEFINED_DB_NAME);
     // TODO: uppercase is bad...
-    boolean reserveHit = reservedNames.contains(name.toUpperCase());
+    boolean reserveHit = reservedNames.contains(name.toUpperCase(Locale.US));
     Log.d(TAG, "[isValidUserDefinedDatabaseName] " + name + ": " +
         (!reserveHit && matchHit));
     return (!reserveHit && matchHit);

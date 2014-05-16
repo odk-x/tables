@@ -15,6 +15,8 @@
 package org.opendatakit.tables.application;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
@@ -29,6 +31,8 @@ import fi.iki.elonen.SimpleWebServer;
 public class Tables extends Application {
 
   public static final String t = "Tables";
+
+  private Set<String> appNameHasBeenInitialized = new HashSet<String>();
   private SimpleWebServer server = null;
   private volatile Thread webServer = null;
 
@@ -60,6 +64,14 @@ public class Tables extends Application {
       }
       server = null;
     }
+  }
+
+  public boolean shouldRunInitializationTask(String appName) {
+    return !appNameHasBeenInitialized.contains(appName);
+  }
+
+  public void clearRunInitializationTask(String appName) {
+    appNameHasBeenInitialized.add(appName);
   }
 
   public String getVersionCodeString() {

@@ -39,7 +39,7 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 	  }
 
 	  @Override
-	  public void updateLineCount(String progressString) {
+	  public void updateProgressDetail(String progressString) {
 	    // TODO present progressString in a dialog
 	  }
 

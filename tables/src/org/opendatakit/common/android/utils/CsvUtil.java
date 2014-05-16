@@ -62,13 +62,14 @@ import android.util.Log;
  */
 public class CsvUtil {
 
+
   public interface ExportListener {
 
     public void exportComplete(boolean outcome);
   };
 
   public interface ImportListener {
-    public void updateLineCount(String progressString);
+    public void updateProgressDetail(String progressDetailString);
 
     public void importComplete(boolean outcome);
   }
@@ -135,14 +136,12 @@ public class CsvUtil {
     OutputStreamWriter output = null;
     try {
       // both files go under the output/csv directory...
-      File outputCsv = new File(new File(ODKFileUtils.getOutputFolder(appName)), "csv");
+      File outputCsv = new File(ODKFileUtils.getOutputTableCsvFile(appName, tp.getTableId(), fileQualifier));
       outputCsv.mkdirs();
 
       // emit properties files
-      File definitionCsv = new File( outputCsv, tp.getTableId() +
-          ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".definition.csv");
-      File propertiesCsv = new File( outputCsv, tp.getTableId() +
-          ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".properties.csv");
+      File definitionCsv = new File(ODKFileUtils.getOutputTableDefinitionCsvFile(appName, tp.getTableId(), fileQualifier));
+      File propertiesCsv = new File(ODKFileUtils.getOutputTablePropertiesCsvFile(appName, tp.getTableId(), fileQualifier));
 
       if ( !writePropertiesCsv(tp, definitionCsv, propertiesCsv) ) {
         return false;
@@ -206,8 +205,8 @@ public class CsvUtil {
    * @return
    */
   public boolean writePropertiesCsv(TableProperties tp) {
-    File definitionCsv = new File( new File(ODKFileUtils.getTablesFolder(appName,  tp.getTableId())), "definition.csv");
-    File propertiesCsv = new File( new File(ODKFileUtils.getTablesFolder(appName,  tp.getTableId())), "properties.csv");
+    File definitionCsv = new File(ODKFileUtils.getTableDefinitionCsvFile(appName, tp.getTableId()));
+    File propertiesCsv = new File(ODKFileUtils.getTablePropertiesCsvFile(appName, tp.getTableId()));
     return writePropertiesCsv(tp, definitionCsv, propertiesCsv);
   }
 
@@ -397,7 +396,7 @@ public class CsvUtil {
     InputStreamReader input = null;
     RFC4180CsvReader cr = null;
     try {
-      file = new File(new File(ODKFileUtils.getTablesFolder(appName, tableId)), "definition.csv");
+      file = new File(ODKFileUtils.getTableDefinitionCsvFile(appName, tableId));
       in = new FileInputStream(file);
       input = new InputStreamReader(in, CharEncoding.UTF_8);
       cr = new RFC4180CsvReader(input);
@@ -455,7 +454,7 @@ public class CsvUtil {
       } catch (IOException e) {
       }
 
-      file = new File(new File(ODKFileUtils.getTablesFolder(appName, tableId)), "properties.csv");
+      file = new File(ODKFileUtils.getTablePropertiesCsvFile(appName, tableId));
       in = new FileInputStream(file);
       input = new InputStreamReader(in, CharEncoding.UTF_8);
       cr = new RFC4180CsvReader(input);
@@ -586,7 +585,7 @@ public class CsvUtil {
         }
         tp.addMetaDataEntries(kvsEntries, false);
       }
-      tp = TableProperties.refreshTablePropertiesForTable(context, displayName, tableId);
+      tp = TableProperties.refreshTablePropertiesForTable(context, appName, tableId);
       if ( tp.getDbTableName() == null ) {
         tp = null;
       }
@@ -670,9 +669,14 @@ public class CsvUtil {
 
       Map<String,String> valueMap = new HashMap<String,String>();
 
+      int rowCount = 0;
       String[] row;
       for (;;) {
         row = cr.readNext();
+        rowCount++;
+        if ( rowCount % 5 == 0 ) {
+          importListener.updateProgressDetail("Row " + rowCount);
+        }
         if ( row == null || countUpToLastNonNullElement(row) == 0 ) {
           break;
         }

@@ -1026,7 +1026,7 @@ public class TableProperties {
         cp.persistColumn(db);
         StringBuilder b = new StringBuilder();
         b.append("ALTER TABLE \"").append(dbTableName).append("\"")
-         .append(" AND COLUMN \"").append(cp.getElementKey()).append("\" ");
+         .append(" ADD COLUMN \"").append(cp.getElementKey()).append("\" ");
         ColumnType type = cp.getColumnType();
         if ( type == ColumnType.STRING ) {
           b.append("TEXT");

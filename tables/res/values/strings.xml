@@ -114,6 +114,13 @@
 	<string name="title_root_element">Root Element</string>
 	<string name="configuring_tables">Configuring ODK Tables</string>
 	<string name="processing_file">processing file&#8230;</string>
+	<string name="expansion_unzipping_begins">Unzipping resources. Scanning zip directory.</string>
+	<string name="expansion_unzipping_without_detail">Unzipping resources. Extracting %1$s (%2$d of %3$d)</string>
+	<string name="expansion_create_dir_detail">Creating directory</string>
+	<string name="expansion_unzipping_detail">at byte %1$d out of %2$d overall</string>
+	<string name="expansion_unzipping_complete">Unzipping resources completed.</string>
+	<string name="scanning_for_table_definitions">Scanning for table definitions. Creating %1$s (%2$d of %3$d).</string>
+	<string name="importing_file_without_detail">Importing file (%1$d of %2$d): %3$s</string>
 	<string name="importing_file">Importing file (%1$d of %2$d): %3$s\n(%4$s)</string>
 	<string name="bad_config_properties_file">bad config.properties file</string>
 	<string name="error">error</string>

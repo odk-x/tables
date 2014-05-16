@@ -1,25 +1,40 @@
 package org.opendatakit.tables.tasks;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.CsvUtil;
 import org.opendatakit.common.android.utils.CsvUtil.ImportListener;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements ImportListener {
+public class InitializeTask extends AsyncTask<Void, String, Boolean> implements ImportListener {
+
   private static final String EMPTY_STRING = "";
 
   private static final String SPACE = " ";
@@ -36,17 +51,12 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
   private final Context mContext;
   private final String mAppName;
   private String filename;
-  private long fileModifiedTime;
-  private int fileCount;
-  private int curFileCount;
-  private String lineCount;
   private Map<String, Boolean> importStatus;
-  /** Holds the key to whether or not the table already exists. */
-  private Map<String, Boolean> mKeyToTableAlreadyExistsMap;
-  /** Stores the tables key to whether or not the file was found. */
-  private Map<String, Boolean> mKeyToFileNotFoundMap;
+  private Set<String> mFileNotFoundSet = new HashSet<String>();
   /** Stores the table's key to its filename. */
   private Map<String, String> mKeyToFileMap;
+
+  private boolean mPendingSuccess = false;
 
   public boolean caughtDuplicateTableException = false;
   public boolean problemImportingKVSEntries = false;
@@ -56,8 +66,6 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
     this.mContext = context;
     this.mAppName = appName;
     this.importStatus = new HashMap<String, Boolean>();
-    this.mKeyToTableAlreadyExistsMap = new HashMap<String, Boolean>();
-    this.mKeyToFileNotFoundMap = new HashMap<String, Boolean>();
     this.mKeyToFileMap = new HashMap<String, String>();
   }
 
@@ -68,6 +76,198 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
   @Override
   protected synchronized Boolean doInBackground(Void... params) {
 
+    // Verify that the APK version of the frameworks files matches that of this APK
+    mPendingSuccess = true;
+
+    String message = null;
+    ArrayList<String> result = new ArrayList<String>();
+
+    if (!ODKFileUtils.isConfiguredTablesApp(mAppName, Tables.getInstance().getVersionCodeString()) ) {
+      publishProgress(mContext.getString(R.string.expansion_unzipping_begins), null);
+
+      AssetFileDescriptor fd = null;
+      try {
+        fd = mContext.getResources().openRawResourceFd(R.raw.zipfile);
+        final long size = fd.getLength() / 2L; // apparently over-counts by 2x?
+        InputStream rawInputStream = null;
+        try {
+          rawInputStream = fd.createInputStream();
+          ZipInputStream zipInputStream = null;
+          ZipEntry entry = null;
+          try {
+
+            // count the number of files in the zip
+            zipInputStream = new ZipInputStream(rawInputStream);
+            int totalFiles = 0;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+              message = null;
+              if (isCancelled()) {
+                message = "cancelled";
+                result.add(entry.getName() + " " + message);
+                break;
+              }
+              ++totalFiles;
+            }
+            zipInputStream.close();
+
+            // and re-open the stream, reading it this time...
+            fd = mContext.getResources().openRawResourceFd(R.raw.zipfile);
+            rawInputStream = fd.createInputStream();
+            zipInputStream = new ZipInputStream(rawInputStream);
+
+            long bytesProcessed = 0L;
+            long lastBytesProcessedThousands = 0L;
+            int nFiles = 0;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+              message = null;
+              if (isCancelled()) {
+                message = "cancelled";
+                result.add(entry.getName() + " " + message);
+                break;
+              }
+              ++nFiles;
+              File tempFile = new File(ODKFileUtils.getAppFolder(mAppName), entry.getName());
+              String formattedString = mContext.getString(R.string.expansion_unzipping_without_detail,
+                  entry.getName(), nFiles, totalFiles);
+              String detail;
+              if (entry.isDirectory()) {
+                detail = mContext.getString(R.string.expansion_create_dir_detail);
+                publishProgress(formattedString, detail);
+                tempFile.mkdirs();
+              } else {
+                int bufferSize = 8192;
+                OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile, false),
+                    bufferSize);
+                byte buffer[] = new byte[bufferSize];
+                int bread;
+                while ((bread = zipInputStream.read(buffer)) != -1) {
+                  bytesProcessed += bread;
+                  long curThousands = (bytesProcessed / 1000L);
+                  if ( curThousands != lastBytesProcessedThousands ) {
+                    detail = mContext.getString(R.string.expansion_unzipping_detail, bytesProcessed, size);
+                    publishProgress(formattedString, detail);
+                    lastBytesProcessedThousands = curThousands;
+                  }
+                  out.write(buffer, 0, bread);
+                }
+                out.flush();
+                out.close();
+
+                detail = mContext.getString(R.string.expansion_unzipping_detail, bytesProcessed, size);
+                publishProgress(formattedString, detail);
+              }
+              Log.i(TAG, "Extracted ZipEntry: " + entry.getName());
+
+              message = mContext.getString(R.string.success);
+              result.add(entry.getName() + " " + message);
+            }
+
+            ODKFileUtils.assertConfiguredTablesApp(mAppName, Tables.getInstance().getVersionCodeString());
+
+            String completionString = mContext.getString(R.string.expansion_unzipping_complete, totalFiles);
+            publishProgress(completionString, null);
+          } catch (IOException e) {
+            e.printStackTrace();
+            mPendingSuccess = false;
+            if (e.getCause() != null) {
+              message = e.getCause().getMessage();
+            } else {
+              message = e.getMessage();
+            }
+            if ( entry != null ) {
+              result.add(entry.getName() + " " + message);
+            } else {
+              result.add("Error accessing zipfile resource " + message);
+            }
+          } finally {
+            if (zipInputStream != null) {
+              try {
+                zipInputStream.close();
+              } catch (IOException e) {
+                e.printStackTrace();
+                Log.e(TAG, "Closing of ZipFile failed: " + e.toString());
+              }
+            }
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+          mPendingSuccess = false;
+          if (e.getCause() != null) {
+            message = e.getCause().getMessage();
+          } else {
+            message = e.getMessage();
+          }
+          result.add("Error accessing zipfile resource " + message);
+        } finally {
+          if ( rawInputStream != null) {
+            try {
+              rawInputStream.close();
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+        }
+      } finally {
+        if ( fd != null ) {
+          try {
+            fd.close();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        } else {
+          result.add("Error accessing zipfile resource.");
+        }
+      }
+    }
+
+
+    ///////////////////////////////////////////
+    ///////////////////////////////////////////
+    ///////////////////////////////////////////
+    // Scan the tables directory, looking for tableIds with definition.csv files.
+    // If the tableId does not exist, try to create it using these files.
+    // If the tableId already exists, do nothing -- assume everything is up-to-date.
+    // This means we don't pick up properties.csv changes, but the definition.csv
+    // should never change. If properties.csv changes, we assume the process that
+    // changed it will be triggering a reload of it through other means.
+
+    CsvUtil util = new CsvUtil(mContext, mAppName);
+    File tablesDir = new File(ODKFileUtils.getTablesFolder(mAppName));
+    File[] tableIdDirs = tablesDir.listFiles(new FileFilter() {
+
+      @Override
+      public boolean accept(File pathname) {
+        return pathname.isDirectory();
+      }});
+
+    List<String> tableIds = TableProperties.getAllTableIds(mContext, mAppName);
+
+    for ( int i = 0 ; i < tableIdDirs.length ; ++i ) {
+      File tableIdDir = tableIdDirs[i];
+      String tableId = tableIdDir.getName();
+      if ( tableIds.contains(tableId) ) {
+        // assume it is up-to-date
+        continue;
+      }
+
+      File definitionCsv = new File(ODKFileUtils.getTableDefinitionCsvFile(mAppName, tableId));
+      File propertiesCsv = new File(ODKFileUtils.getTablePropertiesCsvFile(mAppName, tableId));
+      if ( definitionCsv.exists() && definitionCsv.isFile() &&
+          propertiesCsv.exists() && propertiesCsv.isFile() ) {
+
+        String formattedString = mContext.getString(R.string.scanning_for_table_definitions,
+                                                     tableId, (i+1), tableIdDirs.length);
+        String detail = mContext.getString(R.string.processing_file);
+        publishProgress(formattedString, detail);
+
+        util.updateTablePropertiesFromCsv(this, tableId);
+      }
+    }
+
+    ///////////////////////////////////////////
+    ///////////////////////////////////////////
+    ///////////////////////////////////////////
+    // and now process tables.init file
     File init = new File(ODKFileUtils.getTablesInitializationFile(mAppName));
     File completedFile = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(mAppName));
     if ( !init.exists() ) {
@@ -115,30 +315,27 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
       if (table_keys != null) {
         // remove spaces and split at commas to get key names
         String[] keys = table_keys.replace(SPACE, EMPTY_STRING).split(COMMA);
-        fileCount = keys.length;
-        curFileCount = 0;
+        int fileCount = keys.length;
+        int curFileCount = 0;
+        String detail = mContext.getString(R.string.processing_file);
 
         File file;
         CsvUtil cu = new CsvUtil(this.mContext, this.mAppName);
         for (String key : keys) {
-          lineCount = mContext.getString(R.string.processing_file);
           curFileCount++;
           filename = prop.getProperty(key + KEY_SUFFIX_CSV_FILENAME);
           this.importStatus.put(key, false);
           file = new File(ODKFileUtils.getAppFolder(mAppName), filename);
           this.mKeyToFileMap.put(key, filename);
           if (!file.exists()) {
-            this.mKeyToFileNotFoundMap.put(key, true);
+            mFileNotFoundSet.add(key);
             Log.i(TAG, "putting in file not found map true: " + key);
             continue;
-          } else {
-            this.mKeyToFileNotFoundMap.put(key, false);
-            Log.i(TAG, "putting in file not found map false: " + key);
-            // and proceed.
           }
 
           // update dialog message with current filename
-          publishProgress();
+          publishProgress(mContext.getString(R.string.importing_file_without_detail,
+              curFileCount, fileCount, filename), detail);
           ImportRequest request = null;
 
           // If the import file is in the assets/csv directory
@@ -174,7 +371,9 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
                   true);
               importStatus.put(key, success);
               if (success) {
-                publishProgress();
+                detail = mContext.getString(R.string.import_success);
+                publishProgress(mContext.getString(R.string.importing_file_without_detail,
+                    curFileCount, fileCount, filename), detail);
               }
             }
           }
@@ -192,24 +391,29 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
     return true;
   }
 
+  private String displayOverall;
+  private String displayDetail;
+
   @Override
-  protected void onProgressUpdate(Void... values) {
+  protected void onProgressUpdate(String... values) {
+    this.displayOverall = values[0];
+    this.displayDetail = values[1];
+
     if (mDialogFragment != null) {
-      mDialogFragment.updateProgress(curFileCount, fileCount, filename, lineCount);
+      mDialogFragment.updateProgress(displayOverall + (( displayDetail != null ) ? "\n(" + displayDetail + ")" : ""));
     } else {
-      Log.e(TAG, "dialog fragment is null! Not updating " + "progress.");
+      Log.e(TAG, "dialog fragment is null! Not updating progress.");
     }
   }
 
   @Override
-  public void updateLineCount(String lineCount) {
-    this.lineCount = lineCount;
-    publishProgress();
+  public void updateProgressDetail(String displayDetail) {
+    publishProgress(displayOverall, displayDetail);
   }
 
   @Override
   public void importComplete(boolean outcome) {
-    problemImportingKVSEntries = !outcome;
+    problemImportingKVSEntries = problemImportingKVSEntries || !outcome;
   }
 
   // dismiss ProgressDialog and create an AlertDialog with one
@@ -238,10 +442,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
         } else {
           // maybe there was an existing table already, maybe there were
           // just errors.
-          if (mKeyToTableAlreadyExistsMap.containsKey(key) && mKeyToTableAlreadyExistsMap.get(key)) {
-            Log.e(TAG, "table already exists map was true");
-            msg.append(mContext.getString(R.string.table_already_exists, key));
-          } else if (mKeyToFileNotFoundMap.containsKey(key) && mKeyToFileNotFoundMap.get(key)) {
+          if (mFileNotFoundSet.contains(key)) {
             // We'll first retrieve the file to which this key was pointing.
             String nameOfFile = mKeyToFileMap.get(key);
             Log.e(TAG, "file wasn't found: " + key);

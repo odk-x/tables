@@ -103,16 +103,11 @@ public class InitializeTaskDialogFragment extends DialogFragment {
 
   /**
    * Called by the task to update the dialog's progress.
-   * @param currentFileCount
-   * @param fileCount
-   * @param filename
-   * @param lineCount
+   * @param progressString
    */
-  public void updateProgress(int currentFileCount, int fileCount,
-      String filename, String lineCount) {
+  public void updateProgress(String progressString) {
     ProgressDialog dialog = (ProgressDialog) getDialog();
-    dialog.setMessage(getString(R.string.importing_file, currentFileCount,
-        fileCount, filename, lineCount));
+    dialog.setMessage(progressString);
   }
 
   public void onTaskFinishedWithErrors(boolean poorlyFormattedConfigFile) {

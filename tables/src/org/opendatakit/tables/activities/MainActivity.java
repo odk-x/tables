@@ -1,10 +1,8 @@
 package org.opendatakit.tables.activities;
 
-import java.io.File;
-
 import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.tasks.InitializeTask;
@@ -53,10 +51,7 @@ public class MainActivity extends AbsBaseActivity implements
   protected void onResume() {
     super.onResume();
     // Check to see if we need to initialize.
-    File init = new File(ODKFileUtils.getTablesInitializationFile(mAppName));
-    File completedFile = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(this.getAppName()));
-    if (init.exists() && (!completedFile.exists() ||
-        !ODKFileUtils.getMd5Hash(init).equals(ODKFileUtils.getMd5Hash(completedFile))) ) {
+    if ( Tables.getInstance().shouldRunInitializationTask(mAppName) ) {
       this.startInitializationTask();
     }
   }
@@ -78,6 +73,8 @@ public class MainActivity extends AbsBaseActivity implements
     // fire off the initializeTask
     Void v = null;
     initializeTask.execute(v);
+    // if initialization task dies, don't try to restart it...
+    Tables.getInstance().clearRunInitializationTask(mAppName);
   }
 
   @Override

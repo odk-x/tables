@@ -108,7 +108,7 @@ public class TableDisplayActivity extends AbsTableActivity
     Log.i(TAG, "[onResume]");
     this.initializeDisplayFragment();
   }
-  
+
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     // clear the menu so that we don't double inflate
@@ -135,7 +135,7 @@ public class TableDisplayActivity extends AbsTableActivity
     }
     return super.onCreateOptionsMenu(menu);
   }
-  
+
   /**
    * Retrieve the {@link PossibleTableViewTypes} representing the valid views
    * for this table.
@@ -144,7 +144,7 @@ public class TableDisplayActivity extends AbsTableActivity
   PossibleTableViewTypes retrievePossibleViewTypes() {
     return this.getTableProperties().getPossibleViewTypes();
   }
-  
+
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
@@ -208,7 +208,7 @@ public class TableDisplayActivity extends AbsTableActivity
       return super.onOptionsItemSelected(item);
     }
   }
-  
+
   @Override
   protected void onActivityResult(
       int requestCode,
@@ -217,9 +217,8 @@ public class TableDisplayActivity extends AbsTableActivity
     switch (requestCode) {
     // For now, we will just refresh the table if something could have changed.
     case Constants.RequestCodes.ADD_ROW_COLLECT:
-    case Constants.RequestCodes.ADD_ROW_SURVEY:
     case Constants.RequestCodes.EDIT_ROW_COLLECT:
-    case Constants.RequestCodes.EDIT_ROW_SURVEY:
+      // TODO: this is BROKEN! We need to parse Collect results!!!
       if (resultCode == Activity.RESULT_OK) {
         Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
         this.refreshDataTable();
@@ -233,10 +232,23 @@ public class TableDisplayActivity extends AbsTableActivity
               "table");
       }
       break;
+    case Constants.RequestCodes.ADD_ROW_SURVEY:
+    case Constants.RequestCodes.EDIT_ROW_SURVEY:
+      if (resultCode == Activity.RESULT_OK) {
+        Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
+      } else {
+        Log.d(
+            TAG,
+            "[onActivityResult] result canceled, refreshing backing table");
+      }
+      // always refresh, as survey may have done something
+      this.refreshDataTable();
+      this.refreshDisplayFragment();
+      break;
     }
     super.onActivityResult(requestCode, resultCode, data);
   }
-  
+
   /**
    * Disable or enable those menu items corresponding to view types that are
    * currently invalid or valid, respectively. The inflatedMenu must have
@@ -260,7 +272,7 @@ public class TableDisplayActivity extends AbsTableActivity
     mapItem.setEnabled(possibleViews.mapViewIsPossible());
     graphItem.setEnabled(possibleViews.graphViewIsPossible());
   }
-  
+
   /**
    * Selects the correct view type that is being displayed by the
    * {@link ITopLevelTableMenuActivity}.
@@ -305,11 +317,11 @@ public class TableDisplayActivity extends AbsTableActivity
      super.onStart();
      Log.i(TAG, "[onStart]");
   }
-  
+
   protected void refreshDisplayFragment() {
     this.helperInitializeDisplayFragment(true);
   }
-  
+
   protected void initializeDisplayFragment() {
     this.helperInitializeDisplayFragment(false);
   }
@@ -493,7 +505,7 @@ public class TableDisplayActivity extends AbsTableActivity
         this.getIntent().getExtras());
     return result;
   }
-  
+
   /**
    * Show the spreadsheet fragment, creating a new one if it doesn't yet exist.
    */
@@ -523,7 +535,7 @@ public class TableDisplayActivity extends AbsTableActivity
         Constants.FragmentTags.SPREADSHEET);
     fragmentTransaction.commit();
   }
-  
+
   /**
    * Create a {@link SpreadsheetFragment} to be displayed in the activity.
    * @return
@@ -532,7 +544,7 @@ public class TableDisplayActivity extends AbsTableActivity
     SpreadsheetFragment result = new SpreadsheetFragment();
     return result;
   }
-  
+
   public void showMapFragment() {
     this.showMapFragment(false);
   }
@@ -581,7 +593,7 @@ public class TableDisplayActivity extends AbsTableActivity
             Constants.FragmentTags.MAP_INNER_MAP);
     fragmentTransaction.commit();
   }
-  
+
   /**
    * Create the {@link TableMapInnerFragment} that will be displayed as the
    * map.
@@ -591,7 +603,7 @@ public class TableDisplayActivity extends AbsTableActivity
     TableMapInnerFragment result = new TableMapInnerFragment();
     return result;
   }
-  
+
   /**
    * Create the {@link MapListViewFragment} that will be displayed with the
    * map view.
@@ -606,7 +618,7 @@ public class TableDisplayActivity extends AbsTableActivity
     result.setArguments(listArguments);
     return result;
   }
-  
+
   public void showListFragment() {
     this.showListFragment(false);
   }
@@ -626,7 +638,7 @@ public class TableDisplayActivity extends AbsTableActivity
         fragmentManager.findFragmentByTag(Constants.FragmentTags.LIST);
     if (listViewFragment == null || createNew) {
       listViewFragment = this.createListViewFragment(fileName);
-    } 
+    }
     FragmentTransaction fragmentTransaction =
         fragmentManager.beginTransaction();
     fragmentTransaction.replace(
@@ -635,7 +647,7 @@ public class TableDisplayActivity extends AbsTableActivity
         Constants.FragmentTags.LIST);
     fragmentTransaction.commit();
   }
-  
+
   /**
    * Create a {@link ListViewFragment} to be used by the activity.
    * @param fileName the file name to be displayed
@@ -647,7 +659,7 @@ public class TableDisplayActivity extends AbsTableActivity
     result.setArguments(arguments);
     return result;
   }
-  
+
   public void showGraphFragment() {
     this.showGraphFragment(false);
   }
@@ -670,7 +682,7 @@ public class TableDisplayActivity extends AbsTableActivity
         Constants.FragmentTags.GRAPH_MANAGER);
     fragmentTransaction.commit();
   }
-  
+
   /**
    * Create a {@link GraphManagerFragment} that will be used by the activity.
    * @return
@@ -679,7 +691,7 @@ public class TableDisplayActivity extends AbsTableActivity
     GraphManagerFragment result = new GraphManagerFragment();
     return result;
   }
-  
+
   public void showGraphViewFragment(String graphName) {
     this.showGraphViewFragment(graphName, false);
   }
@@ -709,7 +721,7 @@ public class TableDisplayActivity extends AbsTableActivity
         Constants.FragmentTags.GRAPH_VIEW);
     fragmentTransaction.commit();
   }
-  
+
   /**
    * Create a {@link GraphViewFragment} to be added to the activity.
    * @param graphName
@@ -722,7 +734,7 @@ public class TableDisplayActivity extends AbsTableActivity
     result.setArguments(arguments);
     return result;
   }
-  
+
   public void showDetailFragment() {
     this.showDetailFragment(false);
   }
@@ -755,7 +767,7 @@ public class TableDisplayActivity extends AbsTableActivity
         Constants.FragmentTags.DETAIL_FRAGMENT);
     fragmentTransaction.commit();
   }
-  
+
   /**
    * Create a {@link DetailViewFragment} to be used with the fragments.
    * @param fileName
@@ -770,7 +782,7 @@ public class TableDisplayActivity extends AbsTableActivity
     result.setArguments(bundle);
     return result;
   }
-  
+
   /**
    * Update the content view's children visibility for viewFragmentType. This
    * is required due to the fact that not all the fragments make use of the
@@ -854,7 +866,7 @@ public class TableDisplayActivity extends AbsTableActivity
       mapListViewFragment.setMapListIndices(indexes);
     }
   }
-  
+
   /**
    * Find a {@link MapListViewFragment} that is associated with this activity.
    * If not present, returns null.
@@ -866,5 +878,5 @@ public class TableDisplayActivity extends AbsTableActivity
         fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
     return result;
   }
-  
+
 }
