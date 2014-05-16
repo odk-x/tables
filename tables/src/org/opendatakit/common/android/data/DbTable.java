@@ -196,7 +196,7 @@ public class DbTable {
             + DataTableColumns.FILTER_VALUE + " TEXT NULL,"
             + DataTableColumns.FORM_ID + " TEXT NULL,"
             + DataTableColumns.LOCALE + " TEXT NULL,"
-            + DataTableColumns.SAVEPOINT_TYPE + " TEXT NOT NULL,"
+            + DataTableColumns.SAVEPOINT_TYPE + " TEXT NULL,"
             + DataTableColumns.SAVEPOINT_TIMESTAMP + " TEXT NOT NULL,"
             + DataTableColumns.SAVEPOINT_CREATOR + " TEXT NULL"
             + colListBuilder.toString() + ")";
