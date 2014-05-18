@@ -51,8 +51,7 @@ public class BaseSyncProcessorTest {
     MockitoAnnotations.initMocks(this);
     Context context = new SpreadSheet();
     this.helper = DbHelper.getDbHelper(context, TableFileUtils.extractAppName());
-    SyncResult syncResult = new SyncResult();
-    this.processor = new SyncProcessor(helper, synchronizer, syncResult);
+    this.processor = new SyncProcessor(helper, synchronizer);
 
     setUpSynchronizer();
     createTable();
