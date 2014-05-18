@@ -25,6 +25,7 @@ import java.util.Set;
 
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 
 import android.content.ContentValues;
@@ -236,6 +237,29 @@ public class TableDefinitions {
     } finally {
       if ( c != null && !c.isClosed()) {
          c.close();
+      }
+    }
+  }
+
+  /**
+   * Test whether the given database table has savepoint checkpoints
+   *
+   * @param db
+   * @param dbTableName
+   * @return
+   */
+  public static boolean hasCheckpoints(SQLiteDatabase db, String dbTableName) {
+    Cursor c = null;
+    try {
+      c = db.rawQuery("SELECT COUNT(*) AS C FROM \"" + dbTableName + "\" WHERE " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL", null);
+      c.moveToFirst();
+      int idxC = c.getColumnIndex("C");
+      int value = c.getInt(idxC);
+      c.close();
+      return ( value != 0);
+    } finally {
+      if ( c != null && !c.isClosed()) {
+        c.close();
       }
     }
   }
