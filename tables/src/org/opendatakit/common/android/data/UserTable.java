@@ -328,6 +328,25 @@ public class UserTable {
     return this.mRows.size();
   }
 
+  public boolean hasCheckpointRows() {
+    for ( Row row : mRows ) {
+      String type = row.getDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE);
+      if ( type == null || type.length() == 0 ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean hasConflictRows() {
+    for ( Row row : mRows ) {
+      String conflictType = row.getDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE);
+      if ( conflictType != null && conflictType.length() != 0 ) {
+        return true;
+      }
+    }
+    return false;
+  }
   /**
    * Scan the rowIds to get the row number. As the rowIds are not sorted, this
    * is a potentially expensive operation, scanning the entire array, as well as

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp">
+
+    <TextView
+        android:id="@+id/conflict_resolution_deletion_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <RadioGroup
+        android:id="@+id/conflict_resolution_deleted_states_radio_group"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <RadioButton
+            android:id="@+id/conflict_resolution_radio_button_restore"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent" />
+
+        <RadioButton
+            android:id="@+id/conflict_resolution_radio_button_delete"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent" />
+
+    </RadioGroup>
+
+    <LinearLayout
+        android:id="@+id/conflict_resolution_row_activity_button_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/conflict_resolution_button_take_local"
+            android:text="@string/take_local"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="50" />
+
+        <Button
+            android:id="@+id/conflict_resolution_button_take_server"
+            android:text="@string/take_server"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="50"  />
+
+     </LinearLayout>
+
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>

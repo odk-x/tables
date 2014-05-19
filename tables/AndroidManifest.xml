@@ -82,7 +82,9 @@
         <activity android:name=".activities.TableActivity"/>
         <activity android:name=".activities.TableManager"/>
         <activity android:name=".activities.TablePropertiesManager"/>
-		<activity android:name=".activities.ConflictResolutionListActivity" />
+		<activity android:name=".activities.CheckpointResolutionListActivity" />
+		<activity android:name=".activities.CheckpointResolutionRowActivity" />
+        <activity android:name=".activities.ConflictResolutionListActivity" />
 		<activity android:name=".activities.ConflictResolutionRowActivity" />
         <activity android:name=".activities.GraphDisplayActivity" />
         <activity android:name=".activities.GraphManagerActivity"/>
