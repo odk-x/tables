@@ -45,10 +45,11 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 /**
- * The InnerMapFragment has the capability of showing a map. It displays markers
- * based off of location column set in the TableProperitiesManager Activity.
+ * The InnerMapFragment has the capability of showing a map. It displays
+ * markers for records in a database.
  *
  * @author Chris Gelon (cgelon)
+ * @author sudar.sam@gmail.com
  */
 public class TableMapInnerFragment extends MapFragment {
     
@@ -72,8 +73,8 @@ public class TableMapInnerFragment extends MapFragment {
    */
   private static final String SAVE_TARGET_LAT = "saveTargetLat";
   /**
-   * The longitude of the center position where the camera is looking. Used when
-   * saving the instance.
+   * The longitude of the center position where the camera is looking. Used
+   * when saving the instance.
    */
   private static final String SAVE_TARGET_LONG = "saveTargetLong";
   /** The zoom level of the camera. Used when saving the instance. */
@@ -97,7 +98,9 @@ public class TableMapInnerFragment extends MapFragment {
   /** The object that is listening in on events. */
   public TableMapInnerFragmentListener listener;
 
-  /** A mapping of all markers to index to determine which marker is selected. */
+  /**
+   * A mapping of all markers to index to determine which marker is selected.
+   */
   private Map<Marker, Integer> mMarkerIds;
 
   /** A set of all the visible markers. */
@@ -110,8 +113,8 @@ public class TableMapInnerFragment extends MapFragment {
   private ColorRuleGroup mColorGroup;
 
   /**
-   * This value is only set after the activity was saved and then reinstated. It
-   * is used to figure out which marker was selected before the activity was
+   * This value is only set after the activity was saved and then reinstated.
+   * It is used to figure out which marker was selected before the activity was
    * previously destroyed. It will be set to -1 if no index was selected.
    */
   private int mCurrentIndex;
@@ -120,14 +123,17 @@ public class TableMapInnerFragment extends MapFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     Log.d(TAG, "[onActivityCreated]");
-    mCurrentIndex = (savedInstanceState != null) ? savedInstanceState.getInt(SAVE_KEY_INDEX) : -1;
-//    init();
+    mCurrentIndex = (savedInstanceState != null) ?
+        savedInstanceState.getInt(SAVE_KEY_INDEX) :
+        -1;
     if (savedInstanceState != null) {
       savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
       getMap().moveCamera(
           CameraUpdateFactory.newLatLngZoom(
-              new LatLng(savedInstanceState.getDouble(SAVE_TARGET_LAT), savedInstanceState
-                  .getDouble(SAVE_TARGET_LONG)), savedInstanceState.getFloat(SAVE_ZOOM)));
+              new LatLng(
+                  savedInstanceState.getDouble(SAVE_TARGET_LAT),
+                  savedInstanceState.getDouble(SAVE_TARGET_LONG)),
+              savedInstanceState.getFloat(SAVE_ZOOM)));
     }
     getMap().setOnMapLongClickListener(getOnMapLongClickListener());
     getMap().setOnMapClickListener(getOnMapClickListener());
@@ -140,7 +146,9 @@ public class TableMapInnerFragment extends MapFragment {
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     Log.d(TAG, "[onSaveInstanceState]");
-    outState.putInt(SAVE_KEY_INDEX, (mCurrentMarker != null) ? mMarkerIds.get(mCurrentMarker) : -1);
+    outState.putInt(
+        SAVE_KEY_INDEX,
+        (mCurrentMarker != null) ? mMarkerIds.get(mCurrentMarker) : -1);
     CameraPosition pos = getMap().getCameraPosition();
     outState.putFloat(SAVE_ZOOM, pos.zoom);
     outState.putDouble(SAVE_TARGET_LAT, pos.target.latitude);
@@ -221,7 +229,8 @@ public class TableMapInnerFragment extends MapFragment {
       String colorColumnKey =
           kvsHelper.getString(TablePropertiesManager.KEY_COLOR_RULE_COLUMN);
       if (colorColumnKey != null) {
-        mColorGroup = ColorRuleGroup.getColumnColorRuleGroup(tp, colorColumnKey);
+        mColorGroup =
+            ColorRuleGroup.getColumnColorRuleGroup(tp, colorColumnKey);
       }
     }
   }
@@ -321,7 +330,8 @@ public class TableMapInnerFragment extends MapFragment {
     }
 
     if (firstLocation != null) {
-      getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
+      getMap().moveCamera(
+          CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
       getMap().setOnMarkerClickListener(getOnMarkerClickListener());
     }
   }
@@ -438,7 +448,9 @@ public class TableMapInnerFragment extends MapFragment {
         String[] parts = longitude.split(",");
         longitude = parts[1].trim();
       }
-      return new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
+      return new LatLng(
+          Double.parseDouble(latitude),
+          Double.parseDouble(longitude));
     } catch (Exception e) {
        Log.e(
            TAG,
@@ -652,8 +664,8 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   /**
-   * When a marker is clicked, set the index of the list fragment, and then show
-   * it. If that index is already selected, then hide it.
+   * When a marker is clicked, set the index of the list fragment, and then
+   * show it. If that index is already selected, then hide it.
    */
   private OnMarkerClickListener getOnMarkerClickListener() {
     return new OnMarkerClickListener() {
@@ -721,8 +733,8 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   /**
-   * Selects a marker, updating the marker list, and changing the marker's color
-   * to green. Makes the marker the currently selected marker.
+   * Selects a marker, updating the marker list, and changing the marker's
+   * color to green. Makes the marker the currently selected marker.
    *
    * @param marker
    *          The marker to be selected.
