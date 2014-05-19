@@ -393,12 +393,12 @@ public class DbTable {
           SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE, null,
           new String[] {syncStateConflictStr, conflictTypeLocalDeletedStr,
             conflictTypeLocalUpdatedStr}, null, null,
-          DataTableColumns.ID, null);
+          DataTableColumns.ID, "ASC");
       UserTable serverTable = getRawHelper(
           SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE, null,
           new String[] {syncStateConflictStr, conflictTypeServerDeletedStr,
             conflictTypeServerUpdatedStr}, null, null,
-          DataTableColumns.ID, null);
+          DataTableColumns.ID, "ASC");
       return new ConflictTable(localTable, serverTable);
     }
 

@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.data.ColorRule;
-import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColorRule.RuleType;
+import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.tables.R;
 
 import android.app.AlertDialog;

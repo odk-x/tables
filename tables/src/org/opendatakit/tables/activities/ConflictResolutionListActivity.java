@@ -1,8 +1,9 @@
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.ConflictTable;
+import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.utils.Constants;
@@ -22,58 +23,81 @@ import android.widget.ListView;
  */
 public class ConflictResolutionListActivity extends ListActivity {
 
+
   private static final String TAG =
       ConflictResolutionListActivity.class.getSimpleName();
 
-  private ConflictTable mConflictTable;
-  private ArrayAdapter<String> mAdapter;
+  private static final int RESOLVE_ROW_RESULT = 1;
+
+  private String mAppName;
+  private String mTableId;
+  private ArrayAdapter<ResolveRowEntry> mAdapter;
+
+  private static final class ResolveRowEntry {
+    final String rowId;
+    final String displayName;
+
+    ResolveRowEntry(String rowId, String displayName) {
+      this.rowId = rowId;
+      this.displayName = displayName;
+    }
+
+    public String toString() {
+      return displayName;
+    }
+  };
+
 
   @Override
   protected void onResume() {
     super.onResume();
     // Do this in on resume so that if we resolve a row it will be refreshed
     // when we come back.
-    String appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
-    if ( appName == null ) {
-      appName = TableFileUtils.getDefaultAppName();
+    mAppName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
+    if ( mAppName == null ) {
+      mAppName = TableFileUtils.getDefaultAppName();
     }
-    String tableId =
-        getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
+    mTableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
+
     TableProperties tableProperties =
-        TableProperties.getTablePropertiesForTable(this, appName, tableId);
+        TableProperties.getTablePropertiesForTable(this,mAppName, mTableId);
     DbTable dbTable = DbTable.getDbTable(tableProperties);
-    this.mConflictTable = dbTable.getConflictTable();
-    this.mAdapter = new ArrayAdapter<String>(
+    UserTable table = dbTable.rawSqlQuery(DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)",
+        new String[] { Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES),
+                       Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) }, null, null, DataTableColumns.ID, "ASC");
+    if ( table.getNumberOfRows() == 0 ) {
+      this.setResult(RESULT_OK);
+      finish();
+      return;
+    }
+
+    this.mAdapter = new ArrayAdapter<ResolveRowEntry>(
         getActionBar().getThemedContext(),
         android.R.layout.simple_list_item_1);
-    for (int i = 0; i < this.mConflictTable.getLocalTable().getNumberOfRows(); i++) {
-      Row localRow = this.mConflictTable.getLocalTable().getRowAtIndex(i);
-      Row serverRow = this.mConflictTable.getServerTable().getRowAtIndex(i);
+
+    for (int i = 0; i < table.getNumberOfRows(); i++) {
+      Row localRow = table.getRowAtIndex(i);
       String localRowId = localRow.getDataOrMetadataByElementKey(DataTableColumns.ID);
-      String serverRowId = serverRow.getDataOrMetadataByElementKey(DataTableColumns.ID);
-      if (!localRowId.equals(serverRowId)) {
-        Log.e(TAG, "row ids at same index are not the same! this is an " +
-            "error.");
-      }
-      this.mAdapter.add(localRowId);
+      ResolveRowEntry e = new ResolveRowEntry(localRowId, "Resolve Conflict w.r.t. Server Row " + i);
+      this.mAdapter.add(e);
     }
     this.setListAdapter(mAdapter);
   }
 
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+  }
 
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
     Log.e(TAG, "[onListItemClick] clicked position: " + position);
     Intent i = new Intent(this, ConflictResolutionRowActivity.class);
-    i.putExtra(Constants.IntentKeys.APP_NAME,
-        mConflictTable.getLocalTable().getTableProperties().getAppName());
-    i.putExtra(
-        Constants.IntentKeys.TABLE_ID,
-        mConflictTable.getLocalTable().getTableProperties().getTableId());
-    String rowId =
-        this.mConflictTable.getLocalTable().getRowAtIndex(position).getRowId();
-    i.putExtra(ConflictResolutionRowActivity.INTENT_KEY_ROW_ID, rowId);
-    this.startActivity(i);
+    i.putExtra(Constants.IntentKeys.APP_NAME, mAppName);
+    i.putExtra(Constants.IntentKeys.TABLE_ID, mTableId);
+    ResolveRowEntry e = this.mAdapter.getItem(position);
+    i.putExtra(ConflictResolutionRowActivity.INTENT_KEY_ROW_ID, e.rowId);
+    this.startActivityForResult(i, RESOLVE_ROW_RESULT);
   }
 
 }

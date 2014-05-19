@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
@@ -23,12 +24,11 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 
 /**
@@ -60,8 +60,8 @@ public class CheckpointResolutionRowActivity extends ListActivity
   private String mTableId;
   private String mRowId;
 
-  private Button mButtonTakeLocal;
-  private Button mButtonTakeServer;
+  private Button mButtonTakeOldest;
+  private Button mButtonTakeNewest;
   private List<ConflictColumn> mConflictColumns;
 
   /**
@@ -71,20 +71,10 @@ public class CheckpointResolutionRowActivity extends ListActivity
    * have to choose either to delete or to go ahead and actually restore and
    * then resolve it.
    */
-  private TextView mTextViewDeletionMessage;
-  /**
-   * The option saying they're going to restore and then resolve the conflicts.
-   */
-  private RadioGroup mRadioGroupDeletion;
-  private RadioButton mRadioButtonRestoreAndResolve;
-  /**
-   * The option saying they're going to delete it, possibly discarding any
-   * changes they'd made.
-   */
-  private RadioButton mRadioButtonDelete;
+  private TextView mTextViewCheckpointOverviewMessage;
 
-  private boolean mIsShowingTakeLocalDialog;
-  private boolean mIsShowingTakeServerDialog;
+  private boolean mIsShowingTakeNewestDialog;
+  private boolean mIsShowingTakeOldestDialog;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -94,18 +84,12 @@ public class CheckpointResolutionRowActivity extends ListActivity
       mAppName = TableFileUtils.getDefaultAppName();
     }
     this.setContentView(R.layout.checkpoint_resolution_row_activity);
-    this.mTextViewDeletionMessage = (TextView)
-        findViewById(R.id.conflict_resolution_deletion_message);
-    this.mRadioGroupDeletion = (RadioGroup)
-        findViewById(R.id.conflict_resolution_deleted_states_radio_group);
-    this.mRadioButtonRestoreAndResolve = (RadioButton)
-        findViewById(R.id.conflict_resolution_radio_button_restore);
-    this.mRadioButtonDelete = (RadioButton)
-        findViewById(R.id.conflict_resolution_radio_button_delete);
-    this.mButtonTakeLocal =
-        (Button) findViewById(R.id.conflict_resolution_button_take_local);
-    this.mButtonTakeServer =
-        (Button) findViewById(R.id.conflict_resolution_button_take_server);
+    this.mTextViewCheckpointOverviewMessage = (TextView)
+        findViewById(R.id.checkpoint_overview_message);
+    this.mButtonTakeOldest =
+        (Button) findViewById(R.id.take_oldest);
+    this.mButtonTakeNewest =
+        (Button) findViewById(R.id.take_newest);
 
     mTableId =
         getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
@@ -114,17 +98,33 @@ public class CheckpointResolutionRowActivity extends ListActivity
         TableProperties.getTablePropertiesForTable(this, mAppName, mTableId);
     DbTable dbTable = DbTable.getDbTable(tp);
 
-    UserTable conflictTable = dbTable.rawSqlQuery(DataTableColumns.ID + "=?", new String[] {mRowId}, null, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "ASC");
+    UserTable conflictTable = dbTable.rawSqlQuery(DataTableColumns.ID + "=?",
+        new String[] {mRowId}, null, null, DataTableColumns.SAVEPOINT_TIMESTAMP, "ASC");
     if ( conflictTable.getNumberOfRows() == 0 ) {
-      // another process resolved this?
+      // another process deleted this row?
+      setResult(RESULT_OK);
       finish();
+      return;
     }
+
     // the first row is the oldest -- it should be a COMPLETE or INCOMPLETE row
     // if it isn't, then this is a new row and the option is to delete it or
     // save as incomplete. Otherwise, it is to roll back or update to incomplete.
+
     Row rowStarting = conflictTable.getRowAtIndex(0);
     String type = rowStarting.getDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE);
-    boolean deleteEntirely = ( type == null || type.length() == 0 || conflictTable.getNumberOfRows() == 1 );
+    boolean deleteEntirely = ( type == null || type.length() == 0 );
+
+    if ( !deleteEntirely ) {
+      if ( conflictTable.getNumberOfRows() == 1 &&
+          ( SavepointTypeManipulator.isComplete(type) || SavepointTypeManipulator.isIncomplete(type) )) {
+        // something else seems to have resolved this?
+        setResult(RESULT_OK);
+        finish();
+        return;
+      }
+    }
+
     Row rowEnding = conflictTable.getRowAtIndex(conflictTable.getNumberOfRows()-1);
     //
     // And now we need to construct up the adapter.
@@ -152,7 +152,7 @@ public class CheckpointResolutionRowActivity extends ListActivity
       sections.add(newSection);
       String localValue = rowEnding.getDataOrMetadataByElementKey(elementKey);
       String serverValue = rowStarting.getDataOrMetadataByElementKey(elementKey);
-      if ((localValue == null && serverValue == null) ||
+      if (deleteEntirely || (localValue == null && serverValue == null) ||
     	  (localValue != null && localValue.equals(serverValue))) {
         // TODO: this doesn't compare actual equality of blobs if their display
         // text is the same.
@@ -176,7 +176,6 @@ public class CheckpointResolutionRowActivity extends ListActivity
         this.getActionBar().getThemedContext(), this, sections,
         noConflictColumns, mConflictColumns);
     this.setListAdapter(mAdapter);
-    this.onDecisionMade();
     // Here we'll handle the cases of whether or not rows were deleted. There
     // are three cases to consider:
     // 1) both rows were updated, neither is deleted. This is the normal case
@@ -187,35 +186,26 @@ public class CheckpointResolutionRowActivity extends ListActivity
     // conflict, there should be a conflict type. Therefore if we throw an
     // error that is fine, as we've violated an invariant.
 
-    this.mButtonTakeLocal.setOnClickListener(new DiscardOlderValuesAndMarkNewestAsIncompleteRowClickListener());
-    this.mButtonTakeServer.setOnClickListener(new DiscardNewerValuesAndRetainOldestInOriginalStateRowClickListener());
     if (!deleteEntirely) {
-      // User chooses to take the older (server) or newest (local) set of values.
-      // Hide the elements of the view relevant to deletion restoration.
-      mTextViewDeletionMessage.setVisibility(View.GONE);
-      mRadioGroupDeletion.setVisibility(View.GONE);
+      this.mButtonTakeNewest.setOnClickListener(new DiscardOlderValuesAndMarkNewestAsIncompleteRowClickListener());
+      this.mButtonTakeOldest.setOnClickListener(new DiscardNewerValuesAndRetainOldestInOriginalStateRowClickListener());
+      if ( SavepointTypeManipulator.isComplete(type) ) {
+        this.mTextViewCheckpointOverviewMessage.setText(getString(R.string.checkpoint_restore_complete_or_take_newest));
+        this.mButtonTakeOldest.setText(getString(R.string.checkpoint_take_oldest_finalized));
+      } else {
+        this.mTextViewCheckpointOverviewMessage.setText(getString(R.string.checkpoint_restore_incomplete_or_take_newest));
+        this.mButtonTakeOldest.setText(getString(R.string.checkpoint_take_oldest_incomplete));
+      }
       mAdapter.setConflictColumnsEnabled(false);
       mAdapter.notifyDataSetChanged();
     } else {
-      // User chooses to delete record (server) or take newest (local) set of values.
-      this.mTextViewDeletionMessage.setVisibility(View.VISIBLE);
-      this.mTextViewDeletionMessage.setText(
-          getString(R.string.conflict_server_was_deleted_explanation));
-      this.mRadioGroupDeletion.setVisibility(View.VISIBLE);
-      this.mRadioButtonRestoreAndResolve.setText(
-          getString(R.string.radio_button_message_restore_server_deleted));
-      this.mRadioButtonRestoreAndResolve.setOnClickListener(
-          new DiscardOlderValuesAndMarkNewestAsIncompleteRowClickListener());
-      this.mRadioButtonDelete.setText(
-          getString(R.string.radio_button_message_delete_server_deleted));
-      this.mRadioButtonDelete.setOnClickListener(
-          new DiscardAllValuesAndDeleteRowClickListener());
-      // Disable these, because can't yet take action on row.
-      mButtonTakeServer.setEnabled(false);
-      mButtonTakeLocal.setEnabled(false);
-      mAdapter.setConflictColumnsEnabled(false);
-      mAdapter.notifyDataSetChanged();
+      this.mButtonTakeNewest.setOnClickListener(new DiscardOlderValuesAndMarkNewestAsIncompleteRowClickListener());
+      this.mButtonTakeOldest.setOnClickListener(new DiscardAllValuesAndDeleteRowClickListener());
+      this.mTextViewCheckpointOverviewMessage.setText(getString(R.string.checkpoint_remove_or_take_newest));
+      this.mButtonTakeOldest.setText(getString(R.string.checkpoint_take_oldest_remove));
     }
+
+    this.onDecisionMade();
   }
 
   /*
@@ -234,9 +224,9 @@ public class CheckpointResolutionRowActivity extends ListActivity
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     outState.putBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG,
-        mIsShowingTakeLocalDialog);
+        mIsShowingTakeNewestDialog);
     outState.putBoolean(BUNDLE_KEY_SHOWING_SERVER_DIALOG,
-        mIsShowingTakeServerDialog);
+        mIsShowingTakeOldestDialog);
     // We also need to get the chosen values and decisions and save them so
     // that we don't lose information if they rotate the screen.
     Map<String, String> chosenValuesMap = mAdapter.getResolvedValues();
@@ -277,12 +267,12 @@ public class CheckpointResolutionRowActivity extends ListActivity
     if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_LOCAL_DIALOG)) {
       boolean wasShowingLocal =
           savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG);
-      if (wasShowingLocal) this.mButtonTakeLocal.performClick();
+      if (wasShowingLocal) this.mButtonTakeOldest.performClick();
     }
     if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_SERVER_DIALOG)) {
       boolean wasShowingServer =
           savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_SERVER_DIALOG);
-      if (wasShowingServer) this.mButtonTakeServer.performClick();
+      if (wasShowingServer) this.mButtonTakeNewest.performClick();
     }
     String[] valueKeys =
         savedInstanceState.getStringArray(BUNDLE_KEY_VALUE_KEYS);
@@ -317,6 +307,65 @@ public class CheckpointResolutionRowActivity extends ListActivity
 
   }
 
+  private class DiscardOlderValuesAndMarkNewestAsIncompleteRowClickListener implements View.OnClickListener {
+
+    @Override
+    public void onClick(View v) {
+      AlertDialog.Builder builder = new AlertDialog.Builder(
+          CheckpointResolutionRowActivity.this.getActionBar()
+          .getThemedContext());
+      builder.setMessage(getString(R.string.checkpoint_take_newest_warning));
+      builder.setPositiveButton(getString(R.string.yes),
+          new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              mIsShowingTakeNewestDialog = false;
+              TableProperties tp =
+                  TableProperties.getTablePropertiesForTable(
+                      CheckpointResolutionRowActivity.this, mAppName, mTableId);
+              SQLiteDatabase db = tp.getWritableDatabase();
+              try {
+                db.beginTransaction();
+                db.execSQL("UPDATE \"" + tp.getDbTableName() + "\" SET " +
+                    DataTableColumns.SAVEPOINT_TYPE + "= ? WHERE " +
+                    DataTableColumns.ID + "=?",
+                    new String[] { SavepointTypeManipulator.incomplete(), mRowId });
+                db.execSQL("DELETE FROM \"" + tp.getDbTableName() + "\" WHERE " +
+                    DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TIMESTAMP +
+                    " NOT IN (SELECT MAX(" + DataTableColumns.SAVEPOINT_TIMESTAMP + ") FROM \"" +
+                    tp.getDbTableName() + "\" WHERE " + DataTableColumns.ID + "=?)",
+                    new String[] { mRowId, mRowId });
+                db.setTransactionSuccessful();
+              } finally {
+                db.endTransaction();
+                db.close();
+              }
+              CheckpointResolutionRowActivity.this.finish();
+            }
+          });
+      builder.setCancelable(true);
+      builder.setNegativeButton(getString(R.string.cancel),
+          new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.cancel();
+            }
+          });
+      builder.setOnCancelListener(new OnCancelListener() {
+
+        @Override
+        public void onCancel(DialogInterface dialog) {
+          mIsShowingTakeNewestDialog = false;
+        }
+      });
+      mIsShowingTakeNewestDialog = true;
+      builder.create().show();
+    }
+
+  }
+
   private class DiscardAllValuesAndDeleteRowClickListener
       implements View.OnClickListener {
 
@@ -327,15 +376,13 @@ public class CheckpointResolutionRowActivity extends ListActivity
           CheckpointResolutionRowActivity.this.getActionBar()
           .getThemedContext());
       builder.setMessage(
-          getString(R.string.conflict_delete_local_confirmation_warning));
+          getString(R.string.checkpoint_delete_warning));
       builder.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-              // TODO: delete the local version.
-              // this will be a simple matter of deleting all the rows with the
-              // same rowid on the local device.
+              mIsShowingTakeOldestDialog = false;
               TableProperties tp =
                   TableProperties.getTablePropertiesForTable(
                       CheckpointResolutionRowActivity.this, mAppName, mTableId);
@@ -358,57 +405,13 @@ public class CheckpointResolutionRowActivity extends ListActivity
 
         @Override
         public void onCancel(DialogInterface dialog) {
-          // here we need to do nothing and UNCHECK the radiobutton.
-          mRadioButtonDelete.setChecked(false);
+          mIsShowingTakeOldestDialog = false;
           dialog.dismiss();
         }
       });
+      mIsShowingTakeOldestDialog = true;
       builder.create().show();
     }
-  }
-
-  private class DiscardOlderValuesAndMarkNewestAsIncompleteRowClickListener implements View.OnClickListener {
-
-    @Override
-    public void onClick(View v) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(
-          CheckpointResolutionRowActivity.this.getActionBar()
-          .getThemedContext());
-      builder.setMessage(getString(R.string.take_local_warning));
-      builder.setPositiveButton(getString(R.string.yes),
-          new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              mIsShowingTakeLocalDialog = false;
-              TableProperties tp =
-                  TableProperties.getTablePropertiesForTable(
-                      CheckpointResolutionRowActivity.this, mAppName, mTableId);
-              DbTable dbTable = DbTable.getDbTable(tp);
-              // TODO: discard all but newest and mark it as INCOMPLETE
-              CheckpointResolutionRowActivity.this.finish();
-            }
-          });
-      builder.setCancelable(true);
-      builder.setNegativeButton(getString(R.string.cancel),
-          new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              dialog.cancel();
-            }
-          });
-      builder.setOnCancelListener(new OnCancelListener() {
-
-        @Override
-        public void onCancel(DialogInterface dialog) {
-          mIsShowingTakeLocalDialog = false;
-        }
-      });
-      mIsShowingTakeLocalDialog = true;
-      builder.create().show();
-    }
-
   }
 
   private class DiscardNewerValuesAndRetainOldestInOriginalStateRowClickListener implements View.OnClickListener {
@@ -419,18 +422,29 @@ public class CheckpointResolutionRowActivity extends ListActivity
       AlertDialog.Builder builder = new AlertDialog.Builder(
           CheckpointResolutionRowActivity.this.getActionBar()
           .getThemedContext());
-      builder.setMessage(getString(R.string.take_server_warning));
+      builder.setMessage(getString(R.string.checkpoint_take_oldest_warning));
       builder.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-              mIsShowingTakeServerDialog = false;
+              mIsShowingTakeOldestDialog = false;
               TableProperties tp =
                   TableProperties.getTablePropertiesForTable(
                       CheckpointResolutionRowActivity.this, mAppName, mTableId);
               DbTable dbTable = DbTable.getDbTable(tp);
               // TODO: delete all but oldest non-null savepoint...
+              SQLiteDatabase db = tp.getWritableDatabase();
+              try {
+                db.beginTransaction();
+                db.execSQL("DELETE FROM \"" + tp.getDbTableName() + "\" WHERE " +
+                    DataTableColumns.ID + "=? AND " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL",
+                    new String[] { mRowId });
+                db.setTransactionSuccessful();
+              } finally {
+                db.endTransaction();
+                db.close();
+              }
               CheckpointResolutionRowActivity.this.finish();
             }
           });
@@ -447,10 +461,11 @@ public class CheckpointResolutionRowActivity extends ListActivity
 
         @Override
         public void onCancel(DialogInterface dialog) {
-          mIsShowingTakeServerDialog = false;
+          mIsShowingTakeOldestDialog = false;
+          dialog.dismiss();
         }
       });
-      mIsShowingTakeServerDialog = true;
+      mIsShowingTakeOldestDialog = true;
       builder.create().show();
     }
 

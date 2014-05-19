@@ -377,4 +377,17 @@
 	<string name="no_index">No assets/index.html</string>
 	<string name="failed_download_table">Failed to download table %1$s. Error: %2$s</string>
 	<string name="export_file_qualifier">Qualifier for exported csv files:</string>
+
+	<string name="checkpoint_restore_complete_or_take_newest">Restore to earlier Finalized state or Save checkpoint as Incomplete</string>
+	<string name="checkpoint_restore_incomplete_or_take_newest">Restore to previous Incomplete Save or Save checkpoint as Incomplete</string>
+	<string name="checkpoint_remove_or_take_newest">Discard or Save checkpoint as Incomplete</string>
+
+	<string name="checkpoint_take_oldest_remove">Discard</string>
+	<string name="checkpoint_take_oldest_finalized">Restore to Finalized State</string>
+	<string name="checkpoint_take_oldest_incomplete">Restore to Incomplete State</string>
+	<string name="checkpoint_take_newest">Update checkpoint to Incomplete State</string>
+
+	<string name="checkpoint_delete_warning">Delete entirely?</string>
+	<string name="checkpoint_take_oldest_warning">Discard all checkpointed changes?</string>
+	<string name="checkpoint_take_newest_warning">Save the checkpointed state as Incomplete and proceed?</string>
 </resources>

@@ -50,7 +50,7 @@ public class Tables extends Application {
         testing.start();
         server = testing;
       } catch (IOException e) {
-        Log.e("Tables.Thread.WebServer", "Exception: " + e.toString());
+        Log.d("Tables.Thread.WebServer", "Exception: " + e.toString());
       }
     }
   }

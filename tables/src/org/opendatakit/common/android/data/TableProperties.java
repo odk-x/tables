@@ -358,6 +358,60 @@ public class TableProperties {
     }
   }
 
+  /**
+   * Test whether the given database table has savepoint checkpoints
+   *
+   * @param db
+   * @param dbTableName
+   * @return
+   */
+  public boolean hasCheckpoints() {
+    SQLiteDatabase db = this.getReadableDatabase();
+    Cursor c = null;
+    try {
+      c = db.rawQuery("SELECT COUNT(*) AS C FROM \"" + dbTableName + "\" WHERE " + DataTableColumns.SAVEPOINT_TYPE + " IS NULL", null);
+      c.moveToFirst();
+      int idxC = c.getColumnIndex("C");
+      int value = c.getInt(idxC);
+      c.close();
+      return ( value != 0);
+    } finally {
+      if ( c != null && !c.isClosed()) {
+        c.close();
+      }
+      if ( db.isOpen() ) {
+        db.close();
+      }
+    }
+  }
+
+  /**
+   * Test whether the given database table has conflict rows
+   *
+   * @param db
+   * @param dbTableName
+   * @return
+   */
+  public boolean hasConflicts() {
+    SQLiteDatabase db = this.getReadableDatabase();
+    Cursor c = null;
+    try {
+      c = db.rawQuery("SELECT COUNT(*) AS C FROM \"" + dbTableName + "\" WHERE " + DataTableColumns.CONFLICT_TYPE + " IS NOT NULL", null);
+      c.moveToFirst();
+      int idxC = c.getColumnIndex("C");
+      int value = c.getInt(idxC);
+      c.close();
+      return ( value != 0);
+    } finally {
+      if ( c != null && !c.isClosed()) {
+        c.close();
+      }
+      if ( db.isOpen() ) {
+        db.close();
+      }
+    }
+  }
+
   public KeyValueStore getStoreForTable() {
     return getKeyValueStoreManager().getStoreForTable(this.tableId);
   }
