@@ -840,13 +840,6 @@ public class TableDisplayActivity extends AbsTableActivity
   }
 
   @Override
-  public void onHideList() {
-    Log.d(TAG, "[onHideList] called. Not set up.");
-//    View view = this.findViewById(R.id.map_view_list);
-//    view.setVisibility(View.GONE);
-  }
-
-  @Override
   public void onSetIndex(int i) {
     MapListViewFragment mapListViewFragment = this.findMapListViewFragment();
     if (mapListViewFragment == null) {

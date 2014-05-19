@@ -138,18 +138,6 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
   }
 
   @Override
-  public void onHideList() {
-    Log.d(TAG, "[onHideList]");
-    MapListViewFragment mapListViewFragment = this.getList();
-    if (mapListViewFragment == null) {
-      Log.e(TAG, "[onHideList] mapListViewFragment is null. Returning.");
-      return;
-    }
-    FragmentManager fragmentManager = this.getFragmentManager();
-    fragmentManager.beginTransaction().hide(mapListViewFragment).commit();
-  }
-
-  @Override
   public void onSetIndex(int i) {
     Log.d(TAG, "[onSetIndex]");
     if (!ActivityUtil.isTabletDevice(getActivity())) {

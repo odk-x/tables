@@ -1,6 +1,7 @@
 package org.opendatakit.tables.fragments;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.utils.Constants;
@@ -11,6 +12,7 @@ import org.opendatakit.tables.views.webkits.TableData;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
+import android.widget.Toast;
 
 /**
  * The list view that is displayed in a map.
@@ -31,6 +33,11 @@ public class MapListViewFragment extends ListViewFragment implements
   
   /** The indices of the rows that should be visible in the list view. */
   private ArrayList<Integer> mVisibleRowIndices;
+  
+  /**
+   * The index of an item that has been selected by the user.
+   */
+  private int mSelectedItemIndex;
   
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -72,11 +79,42 @@ public class MapListViewFragment extends ListViewFragment implements
     return result;
   }
   
+  /**
+   * Resets the webview (the list), and sets the visibility to visible.
+   */
+  private void resetView() {
+    if (this.getFileName() == null) {
+      // don't need to do anything, as the view won't be getting updated.
+      return;
+    }
+    WebView currentView = (WebView) this.getView();
+    // Replace the data object.
+    TableData tableData = this.createDataObject();
+    this.mTableDataReference = tableData;
+    currentView.addJavascriptInterface(
+        tableData.getJavascriptInterfaceWithWeakReference(),
+        Constants.JavaScriptHandles.DATA);
+    WebViewUtil.displayFileInWebView(
+        this.getActivity(),
+        this.getAppName(),
+        currentView,
+        this.getFileName());
+  }
+  
   @Override
   protected TableData createDataObject() {
     UserTable backingTable = this.getUserTable();
     TableData result = new TableData(backingTable);
     return result;
+  }
+  
+  /**
+   * 
+   * @return true if the user has selected a row that should be displayed as
+   * selected
+   */
+  private boolean itemIsSelected() {
+    return this.mSelectedItemIndex >= 0;
   }
   
   /**
@@ -91,21 +129,42 @@ public class MapListViewFragment extends ListViewFragment implements
       result = super.getUserTable();
     } else {
       // Return only the subset.
-      result = new UserTable(super.getUserTable(), getMapListIndices());
+      result = new UserTable(
+          super.getUserTable(),
+          this.createListOfIndicesToDisplay());
     }
     return result;
+  }
+  
+  /**
+   * Create the list of indices to be displayed in the list view to the user.
+   * The selected item index will be first, and will have only a single entry.
+   * @return
+   */
+  List<Integer> createListOfIndicesToDisplay() {
+    if (this.itemIsSelected()) {
+      List<Integer> result = new ArrayList<Integer>();
+      result.add(this.mSelectedItemIndex);
+      for (int i = 0; i < this.mVisibleRowIndices.size(); i++) {
+        int currentIndex = this.mVisibleRowIndices.get(i);
+        if (currentIndex != this.mSelectedItemIndex) {
+          result.add(currentIndex);
+        } else {
+          // already added to the list--don't add again.
+          continue;
+        }
+      }
+      return result;
+    } else {
+      return this.mVisibleRowIndices;
+    }
+    
   }
   
   @Override
   public void onResume() {
     super.onResume();
     Log.d(TAG, "[onResume]");
-  }
-
-  @Override
-  public void setMapListIndex(int index) {
-    // TODO Auto-generated method stub
-    
   }
 
   @Override
@@ -119,83 +178,27 @@ public class MapListViewFragment extends ListViewFragment implements
   }
   
   // TODO uncomment and implement
-//  /**
-//   * Resets the webview (the list), and sets the visibility to visible.
-//   */
-//  private void resetView() {
-//    if (mIndexes != null && mIndexes.size() > 0) {
-//      TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
-//      UserTable table = ((TableActivity) getActivity()).getTable();
-//      // Grab the key value store helper from the map fragment.
-//      final KeyValueStoreHelper kvsHelper = tp
-//          .getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
-//      // Find which file stores the html information for displaying
-//      // the list.
-//      String filename = kvsHelper.getString(TableMapFragment.KEY_FILENAME);
-//      if (filename == null) {
-//        Toast.makeText(getActivity(), getActivity().getString(R.string.list_view_file_not_set),
-//            Toast.LENGTH_LONG).show();
-//        return;
-//      }
-//      // Create the custom view and set it.
-//      CustomTableView view = CustomTableView.get(getActivity(), tp.getAppName(), table,
-//          filename, mIndexes, getFragmentManager()
-//          .findFragmentByTag(Constants.FragmentTags.MAP_INNER_MAP));
-//      view.display();
-//
-//      LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-//          LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
-//      mContainer.removeAllViews();
-//      mContainer.addView(view, params);
-//      WebViewClient client = new WebViewClient() {
-//        public void onPageFinished(WebView view, String url) {
-//          mContainer.setVisibility(View.VISIBLE);
-//        }
-//      };
-//
-//      view.setOnFinishedLoaded(client);
-//    }
-//  }
-//
-//  /**
-//   * Sets the index of the list view, which will be the row of the data wanting
-//   * to be displayed.
-//   */
-//  public void setMapListIndex(final int index) {
-//    if (mIndexes != null) {
-//      mIndexes.clear();
-//    }
-//    mIndexes = new ArrayList<Integer>();
-//    if (index >= 0) {
-//      mIndexes.add(index);
-//    }
-//    resetView();
-//  }
-//
-//  /**
-//   * Sets the indexes of the list view, which will be the rows of data wanting
-//   * to be displayed.
-//   */
-//  public void setMapListIndexes(ArrayList<Integer> indexes) {
-//    if (mIndexes != null) {
-//      mIndexes.clear();
-//    }
-//    mIndexes = indexes;
-//    resetView();
-//  }
-//
-//  /**
-//   * Sets the visibility of this fragment (will set the container's visibility).
-//   * Will only change the visibility if it isn't a tablet (this container is
-//   * always visible when run by a tablet).
-//   *
-//   * @param visibility
-//   *          The new visibility of the fragment (constants found in View).
-//   */
-//  public void setVisibility(int visibility) {
-//    if (!ActivityUtil.isTabletDevice(getActivity())) {
-//      mContainer.setVisibility(visibility);
-//    }
-//  }
+
+
+  /**
+   * Sets the index of the list view, which will be the row of the data wanting
+   * to be displayed.
+   */
+  public void setMapListIndex(final int index) {
+    this.mSelectedItemIndex = index;
+    this.resetView();
+  }
+
+  /**
+   * Sets the indexes of the list view, which will be the rows of data wanting
+   * to be displayed.
+   */
+  public void setMapListIndexes(ArrayList<Integer> indexes) {
+    if (this.mVisibleRowIndices != null) {
+      this.mVisibleRowIndices.clear();
+    }
+    this.mVisibleRowIndices.addAll(indexes);
+    this.resetView();
+  }
 
 }

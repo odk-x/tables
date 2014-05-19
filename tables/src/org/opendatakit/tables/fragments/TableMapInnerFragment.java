@@ -85,8 +85,6 @@ public class TableMapInnerFragment extends MapFragment {
    * inner fragment.
    */
   public interface TableMapInnerFragmentListener {
-    /** Called when the list view should disappear. */
-    void onHideList();
 
     /** Called when we want to set the index of the list view. */
     void onSetIndex(int i);
@@ -470,7 +468,6 @@ public class TableMapInnerFragment extends MapFragment {
       @Override
       public void onMapClick(LatLng point) {
         deselectCurrentMarker();
-        listener.onHideList();
       }
     };
   }
@@ -690,7 +687,6 @@ public class TableMapInnerFragment extends MapFragment {
           listener.onSetIndex(newIndex);
         } else {
           deselectCurrentMarker();
-          listener.onHideList();
         }
 
         return true;
