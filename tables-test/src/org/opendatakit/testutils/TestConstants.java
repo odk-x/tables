@@ -12,7 +12,9 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.tables.views.webkits.ControlIf;
 import org.opendatakit.tables.views.webkits.TableData;
+import org.opendatakit.tables.views.webkits.TableDataIf;
 
 import android.webkit.WebView;
 
@@ -83,8 +85,11 @@ public class TestConstants {
   }
 
   public static Control getControlMock() {
-    Control mock = mock(Control.class);
-    return mock;
+    Control result = mock(Control.class);
+    ControlIf interfaceMock = mock(ControlIf.class);
+    doReturn(interfaceMock).when(result)
+      .getJavascriptInterfaceWithWeakReference();
+    return result;
   }
   
   public static PossibleTableViewTypes getAllValidPossibleTableViewTypes() {
@@ -107,6 +112,10 @@ public class TestConstants {
   }
   
   public static TableData getTableDataMock() {
-    return mock(TableData.class);
+    TableData result = mock(TableData.class);
+    TableDataIf interfaceMock = mock(TableDataIf.class);
+    doReturn(interfaceMock).when(result)
+      .getJavascriptInterfaceWithWeakReference();
+    return result;
   }
 }

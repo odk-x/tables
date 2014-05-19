@@ -1,6 +1,7 @@
 package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
+import static org.robolectric.Robolectric.shadowOf;
 
 import org.junit.After;
 import org.junit.Before;
@@ -12,6 +13,7 @@ import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
+import org.robolectric.shadows.ShadowWebView;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -33,6 +35,11 @@ public class AbsWebTableFragmentTest {
   @After
   public void after() {
     TableDisplayActivityStub.resetState();
+  }
+  
+  private void setupFragmentWithDefaultFileName() {
+    AbsWebTableFragmentStub stub = new AbsWebTableFragmentStub();
+    this.doGlobalSetup(stub);
   }
   
   private void setupFragmentWithFileName(String fileName) {
