@@ -2,6 +2,7 @@ package org.opendatakit.tables.fragments;
 
 import static org.robolectric.Robolectric.shadowOf;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,6 +26,11 @@ public class ListViewFragmentTest {
   
   ListViewFragmentStub fragment;
   Activity activity;
+  
+  @After
+  public void after() {
+    ListViewFragmentStub.resetState();
+  }
   
   @Before
   public void setup() {

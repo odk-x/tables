@@ -12,7 +12,6 @@ import org.opendatakit.tables.views.webkits.TableData;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
-import android.widget.Toast;
 
 /**
  * The list view that is displayed in a map.
@@ -32,12 +31,12 @@ public class MapListViewFragment extends ListViewFragment implements
   private static final String INTENT_KEY_VISIBLE_INDICES = "keyVisibleIndices";
   
   /** The indices of the rows that should be visible in the list view. */
-  private ArrayList<Integer> mVisibleRowIndices;
+  protected ArrayList<Integer> mVisibleRowIndices;
   
   /**
    * The index of an item that has been selected by the user.
    */
-  private int mSelectedItemIndex;
+  protected int mSelectedItemIndex;
   
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -82,7 +81,7 @@ public class MapListViewFragment extends ListViewFragment implements
   /**
    * Resets the webview (the list), and sets the visibility to visible.
    */
-  private void resetView() {
+  void resetView() {
     if (this.getFileName() == null) {
       // don't need to do anything, as the view won't be getting updated.
       return;
