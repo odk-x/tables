@@ -432,7 +432,6 @@ public class CheckpointResolutionRowActivity extends ListActivity
               TableProperties tp =
                   TableProperties.getTablePropertiesForTable(
                       CheckpointResolutionRowActivity.this, mAppName, mTableId);
-              DbTable dbTable = DbTable.getDbTable(tp);
               // TODO: delete all but oldest non-null savepoint...
               SQLiteDatabase db = tp.getWritableDatabase();
               try {

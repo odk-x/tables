@@ -75,13 +75,21 @@ public class ConflictResolutionListActivity extends ListActivity {
         getActionBar().getThemedContext(),
         android.R.layout.simple_list_item_1);
 
+    ResolveRowEntry firstE = null;
     for (int i = 0; i < table.getNumberOfRows(); i++) {
       Row localRow = table.getRowAtIndex(i);
       String localRowId = localRow.getDataOrMetadataByElementKey(DataTableColumns.ID);
       ResolveRowEntry e = new ResolveRowEntry(localRowId, "Resolve Conflict w.r.t. Server Row " + i);
       this.mAdapter.add(e);
+      if ( firstE == null ) {
+        firstE = e;
+      }
     }
     this.setListAdapter(mAdapter);
+
+    if ( table.getNumberOfRows() == 1 ) {
+      launchRowResolution(firstE);
+    }
   }
 
   @Override
@@ -92,10 +100,14 @@ public class ConflictResolutionListActivity extends ListActivity {
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
     Log.e(TAG, "[onListItemClick] clicked position: " + position);
+    ResolveRowEntry e = this.mAdapter.getItem(position);
+    launchRowResolution(e);
+  }
+
+  private void launchRowResolution(ResolveRowEntry e) {
     Intent i = new Intent(this, ConflictResolutionRowActivity.class);
     i.putExtra(Constants.IntentKeys.APP_NAME, mAppName);
     i.putExtra(Constants.IntentKeys.TABLE_ID, mTableId);
-    ResolveRowEntry e = this.mAdapter.getItem(position);
     i.putExtra(ConflictResolutionRowActivity.INTENT_KEY_ROW_ID, e.rowId);
     this.startActivityForResult(i, RESOLVE_ROW_RESULT);
   }

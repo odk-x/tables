@@ -731,7 +731,7 @@ public class DbTable {
     public void deleteRowActual(String whereClause, String[] whereArgs) {
       SQLiteDatabase db = tp.getWritableDatabase();
       try {
-        db.beginTransaction();
+         db.beginTransaction();
       	db.delete(tp.getDbTableName(), whereClause, whereArgs);
       	db.setTransactionSuccessful();
       } finally {

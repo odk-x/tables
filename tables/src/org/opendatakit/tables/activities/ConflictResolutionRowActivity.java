@@ -29,8 +29,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -81,17 +79,7 @@ public class ConflictResolutionRowActivity extends ListActivity
    * have to choose either to delete or to go ahead and actually restore and
    * then resolve it.
    */
-  private TextView mTextViewDeletionMessage;
-  /**
-   * The option saying they're going to restore and then resolve the conflicts.
-   */
-  private RadioGroup mRadioGroupDeletion;
-  private RadioButton mRadioButtonRestoreAndResolve;
-  /**
-   * The option saying they're going to delete it, possibly discarding any
-   * changes they'd made.
-   */
-  private RadioButton mRadioButtonDelete;
+  private TextView mTextViewConflictMessage;
 
   private boolean mIsShowingTakeLocalDialog;
   private boolean mIsShowingTakeServerDialog;
@@ -105,23 +93,18 @@ public class ConflictResolutionRowActivity extends ListActivity
       appName = TableFileUtils.getDefaultAppName();
     }
     this.setContentView(R.layout.conflict_resolution_row_activity);
-    this.mTextViewDeletionMessage = (TextView)
-        findViewById(R.id.conflict_resolution_deletion_message);
-    this.mRadioGroupDeletion = (RadioGroup)
-        findViewById(R.id.conflict_resolution_deleted_states_radio_group);
-    this.mRadioButtonRestoreAndResolve = (RadioButton)
-        findViewById(R.id.conflict_resolution_radio_button_restore);
-    this.mRadioButtonDelete = (RadioButton)
-        findViewById(R.id.conflict_resolution_radio_button_delete);
+    this.mTextViewConflictMessage = (TextView)
+        findViewById(R.id.conflict_overview_message);
+
     this.mButtonTakeLocal =
-        (Button) findViewById(R.id.conflict_resolution_button_take_local);
-    this.mButtonTakeLocal.setOnClickListener(new TakeLocalClickListener());
+        (Button) findViewById(R.id.conflict_take_local);
     this.mButtonTakeServer =
-        (Button) findViewById(R.id.conflict_resolution_button_take_server);
-    this.mButtonTakeServer.setOnClickListener(new TakeServerClickListener());
+        (Button) findViewById(R.id.conflict_take_server);
+
     this.mButtonResolveRow =
         (Button) findViewById(R.id.conflict_resolution_button_resolve_row);
     this.mButtonResolveRow.setOnClickListener(new ResolveRowClickListener());
+
     String tableId =
         getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
     this.mRowId = getIntent().getStringExtra(INTENT_KEY_ROW_ID);
@@ -196,6 +179,8 @@ public class ConflictResolutionRowActivity extends ListActivity
     // Note that these calls should never return nulls, as whenever a row is in
     // conflict, there should be a conflict type. Therefore if we throw an
     // error that is fine, as we've violated an invariant.
+
+
     int localConflictType = Integer.parseInt(mLocal.getRowAtIndex(mRowNumber)
         .getDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
     int serverConflictType =
@@ -207,8 +192,13 @@ public class ConflictResolutionRowActivity extends ListActivity
           ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
       // Then it's a normal conflict. Hide the elements of the view relevant
       // to deletion restoration.
-      mTextViewDeletionMessage.setVisibility(View.GONE);
-      mRadioGroupDeletion.setVisibility(View.GONE);
+      mTextViewConflictMessage.setText(getString(R.string.conflict_resolve_or_choose));
+
+      this.mButtonTakeLocal.setOnClickListener(new TakeLocalClickListener());
+      this.mButtonTakeLocal.setText(getString(R.string.conflict_take_local_updates));
+      this.mButtonTakeServer.setOnClickListener(new TakeServerClickListener());
+      this.mButtonTakeServer.setText(getString(R.string.conflict_take_server_updates));
+      this.mButtonResolveRow.setVisibility(View.VISIBLE);
       this.onDecisionMade();
     } else if (localConflictType ==
           ConflictType.LOCAL_DELETED_OLD_VALUES &&
@@ -216,22 +206,19 @@ public class ConflictResolutionRowActivity extends ListActivity
           ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
       // Then the local row was deleted, but someone had inserted a newer
       // updated version on the server.
-      this.mTextViewDeletionMessage.setVisibility(View.VISIBLE);
-      this.mTextViewDeletionMessage.setText(
+      this.mTextViewConflictMessage.setText(
           getString(R.string.conflict_local_was_deleted_explanation));
-      this.mRadioGroupDeletion.setVisibility(View.VISIBLE);
-      this.mRadioButtonRestoreAndResolve.setText(
-          getString(R.string.radio_button_message_restore_local_deleted));
-      this.mRadioButtonRestoreAndResolve.setOnClickListener(
-          new RestoreDeletedClickListener());
-      this.mRadioButtonDelete.setOnClickListener(
+      this.mButtonTakeServer.setOnClickListener(
+          new TakeServerClickListener());
+      this.mButtonTakeServer.setText(
+          getString(R.string.conflict_restore_with_server_changes));
+      this.mButtonTakeLocal.setOnClickListener(
           new SetRowToDeleteOnServerListener());
-      this.mRadioButtonDelete.setText(
-          getString(R.string.radio_button_message_delete_local_deleted));
-      // Disable these, b/c can't yet take action on row.
-      mButtonTakeServer.setEnabled(false);
-      mButtonTakeLocal.setEnabled(false);
+      this.mButtonTakeLocal.setText(
+          getString(R.string.conflict_enforce_local_delete));
+
       mButtonResolveRow.setEnabled(false);
+      mButtonResolveRow.setVisibility(View.GONE);
       mAdapter.setConflictColumnsEnabled(false);
       mAdapter.notifyDataSetChanged();
     } else if (localConflictType ==
@@ -240,22 +227,19 @@ public class ConflictResolutionRowActivity extends ListActivity
           ConflictType.SERVER_DELETED_OLD_VALUES) {
       // Then the row was updated locally but someone had deleted it on the
       // server.
-      this.mTextViewDeletionMessage.setVisibility(View.VISIBLE);
-      this.mTextViewDeletionMessage.setText(
+      this.mTextViewConflictMessage.setText(
           getString(R.string.conflict_server_was_deleted_explanation));
-      this.mRadioGroupDeletion.setVisibility(View.VISIBLE);
-      this.mRadioButtonRestoreAndResolve.setText(
-          getString(R.string.radio_button_message_restore_server_deleted));
-      this.mRadioButtonRestoreAndResolve.setOnClickListener(
-          new RestoreDeletedClickListener());
-      this.mRadioButtonDelete.setText(
-          getString(R.string.radio_button_message_delete_server_deleted));
-      this.mRadioButtonDelete.setOnClickListener(
+      this.mButtonTakeLocal.setOnClickListener(
+          new TakeLocalClickListener());
+      this.mButtonTakeLocal.setText(
+          getString(R.string.conflict_restore_with_local_changes));
+      this.mButtonTakeServer.setText(
+          getString(R.string.conflict_apply_delete_from_server));
+      this.mButtonTakeServer.setOnClickListener(
           new DiscardChangesAndDeleteLocalListener());
-      // Disable these, because can't yet take action on row.
-      mButtonTakeServer.setEnabled(false);
-      mButtonTakeLocal.setEnabled(false);
+
       mButtonResolveRow.setEnabled(false);
+      mButtonResolveRow.setVisibility(View.GONE);
       mAdapter.setConflictColumnsEnabled(false);
       mAdapter.notifyDataSetChanged();
     } else {
@@ -397,23 +381,6 @@ public class ConflictResolutionRowActivity extends ListActivity
 
   }
 
-  /**
-   * Class handling the restore radio button. Should just make the normal
-   * actions available.
-   *
-   */
-  private class RestoreDeletedClickListener implements View.OnClickListener {
-
-    @Override
-    public void onClick(View v) {
-      // All we'll do is set everything to be enabled.
-      mButtonTakeLocal.setEnabled(true);
-      mButtonTakeServer.setEnabled(true);
-      onDecisionMade();
-    }
-
-  }
-
   private class DiscardChangesAndDeleteLocalListener
       implements View.OnClickListener {
 
@@ -433,6 +400,7 @@ public class ConflictResolutionRowActivity extends ListActivity
               // TODO: delete the local version.
               // this will be a simple matter of deleting all the rows with the
               // same rowid on the local device.
+              mIsShowingTakeServerDialog = false;
               DbTable dbTable =
                   DbTable.getDbTable(mLocal.getTableProperties());
               dbTable.deleteRowActual(mRowId);
@@ -453,11 +421,11 @@ public class ConflictResolutionRowActivity extends ListActivity
 
         @Override
         public void onCancel(DialogInterface dialog) {
-          // here we need to do nothing and UNCHECK the radiobutton.
-          mRadioButtonDelete.setChecked(false);
+          mIsShowingTakeServerDialog = false;
           dialog.dismiss();
         }
       });
+      mIsShowingTakeServerDialog = true;
       builder.create().show();
     }
   }
@@ -481,6 +449,7 @@ public class ConflictResolutionRowActivity extends ListActivity
               // We're going to discard the local changes by acting as if
               // takeServer was pressed. Then we're going to flag row as
               // deleted.
+              mIsShowingTakeLocalDialog = false;
               DbTable dbTable =
                   DbTable.getDbTable(mLocal.getTableProperties());
               Map<String, String> valuesToUse = new HashMap<String, String>();
@@ -507,25 +476,14 @@ public class ConflictResolutionRowActivity extends ListActivity
 
         @Override
         public void onCancel(DialogInterface dialog) {
-          // here we need to do nothing and UNCHECK the radiobutton.
-          mRadioButtonDelete.setChecked(false);
+          mIsShowingTakeLocalDialog = false;
           dialog.dismiss();
         }
       });
+      mIsShowingTakeLocalDialog = true;
       builder.create().show();
     }
 }
-
-  private class RestoreDeletedListener implements View.OnClickListener {
-
-    @Override
-    public void onClick(View v) {
-      mButtonTakeLocal.setEnabled(true);
-      mButtonTakeServer.setEnabled(true);
-      onDecisionMade();
-    }
-
-  }
 
   private class TakeLocalClickListener implements View.OnClickListener {
 

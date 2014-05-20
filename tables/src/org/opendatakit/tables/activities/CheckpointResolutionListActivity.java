@@ -78,13 +78,22 @@ public class CheckpointResolutionListActivity extends ListActivity {
       finish();
       return;
     }
+
+    ResolveRowEntry firstE = null;
     int i = 0;
     for ( String rowId : rowIds ) {
       ++i;
       ResolveRowEntry e = new ResolveRowEntry( rowId, "Resolve ODK Survey Checkpoint Record " + i);
       this.mAdapter.add(e);
+      if ( firstE == null ) {
+        firstE = e;
+      }
     }
     this.setListAdapter(mAdapter);
+
+    if ( rowIds.size() == 1 ) {
+      launchRowResolution(firstE);
+    }
   }
 
   @Override
@@ -96,6 +105,10 @@ public class CheckpointResolutionListActivity extends ListActivity {
   protected void onListItemClick(ListView l, View v, int position, long id) {
     ResolveRowEntry e = mAdapter.getItem(position);
     Log.e(TAG, "[onListItemClick] clicked position: " + position + " rowId: " + e.rowId);
+    launchRowResolution(e);
+  }
+
+  private void launchRowResolution(ResolveRowEntry e) {
     Intent i = new Intent(this, CheckpointResolutionRowActivity.class);
     i.putExtra(Constants.IntentKeys.APP_NAME, mAppName);
     i.putExtra(Constants.IntentKeys.TABLE_ID, mTableId);
