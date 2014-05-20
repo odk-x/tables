@@ -86,8 +86,15 @@ public class TableMapInnerFragment extends MapFragment {
    */
   public interface TableMapInnerFragmentListener {
 
-    /** Called when we want to set the index of the list view. */
-    void onSetIndex(int i);
+    /**
+     * Set the index of the marker that has been selected.
+     */
+    void onSetSelectedItemIndex(int i);
+    
+    /**
+     * Sets that no item is selected.
+     */
+    void setNoItemSelected();
 
     /** Called when we want to set the indexes of the list view. */
     void onSetInnerIndexes(ArrayList<Integer> indexes);
@@ -684,7 +691,7 @@ public class TableMapInnerFragment extends MapFragment {
           } else {
             selectMarker(arg0);
           }
-          listener.onSetIndex(newIndex);
+          listener.onSetSelectedItemIndex(newIndex);
         } else {
           deselectCurrentMarker();
         }
@@ -718,7 +725,7 @@ public class TableMapInnerFragment extends MapFragment {
    */
   public void focusOnMarker(Marker marker) {
     if (mCurrentMarker != marker) {
-      listener.onSetIndex(mMarkerIds.get(marker));
+      listener.onSetSelectedItemIndex(mMarkerIds.get(marker));
       deselectCurrentMarker();
       selectMarker(marker);
     }
@@ -755,6 +762,6 @@ public class TableMapInnerFragment extends MapFragment {
     mCurrentMarker.setIcon(
         BitmapDescriptorFactory.defaultMarker(getHueForRow(index)));
     mCurrentMarker = null;
-    listener.onSetIndex(-1);
+    listener.setNoItemSelected();
   }
 }

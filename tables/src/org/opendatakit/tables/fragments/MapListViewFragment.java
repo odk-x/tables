@@ -20,7 +20,7 @@ import android.webkit.WebView;
  *
  */
 public class MapListViewFragment extends ListViewFragment implements
-    IMapListViewCallbacks{
+    IMapListViewCallbacks {
   
   private static final String TAG = MapListViewFragment.class.getSimpleName();
   
@@ -29,21 +29,37 @@ public class MapListViewFragment extends ListViewFragment implements
    * fragment.
    */
   private static final String INTENT_KEY_VISIBLE_INDICES = "keyVisibleIndices";
+  /**
+   * Saves the index of the element that was selected.
+   */
+  private static final String INTENT_KEY_SELECTED_INDEX = "keySelectedIndex";
   
-  /** The indices of the rows that should be visible in the list view. */
-  protected ArrayList<Integer> mVisibleRowIndices;
+  /**
+   * The indices of the rows that should be visible in the list view. Must be
+   * an {@link ArrayList} so it can be placed in a {@link Bundle}.
+   */
+  protected ArrayList<Integer> mSubsetOfIndicesToDisplay;
+  
+  /** The indices of all the rows in the table. */
+  protected ArrayList<Integer> mAllRowIndices;
   
   /**
    * The index of an item that has been selected by the user.
    */
   protected int mSelectedItemIndex;
+  protected static final int INVALID_INDEX = -1;
   
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     if (savedInstanceState != null) {
-      mVisibleRowIndices =
+      mSubsetOfIndicesToDisplay =
           savedInstanceState.getIntegerArrayList(INTENT_KEY_VISIBLE_INDICES);
+      mSelectedItemIndex =
+          savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX);
+    } else {
+      this.mSelectedItemIndex = INVALID_INDEX;
+      this.mSubsetOfIndicesToDisplay = null;
     }
   }
   
@@ -52,7 +68,8 @@ public class MapListViewFragment extends ListViewFragment implements
     super.onSaveInstanceState(outState);
     outState.putIntegerArrayList(
         INTENT_KEY_VISIBLE_INDICES,
-        this.mVisibleRowIndices);
+        this.mSubsetOfIndicesToDisplay);
+    outState.putInt(INTENT_KEY_SELECTED_INDEX, this.mSelectedItemIndex);
   }
   
   @Override
@@ -82,6 +99,7 @@ public class MapListViewFragment extends ListViewFragment implements
    * Resets the webview (the list), and sets the visibility to visible.
    */
   void resetView() {
+    Log.d(TAG, "[resetView]");
     if (this.getFileName() == null) {
       // don't need to do anything, as the view won't be getting updated.
       return;
@@ -112,8 +130,17 @@ public class MapListViewFragment extends ListViewFragment implements
    * @return true if the user has selected a row that should be displayed as
    * selected
    */
-  private boolean itemIsSelected() {
-    return this.mSelectedItemIndex >= 0;
+  protected boolean itemIsSelected() {
+    return this.mSelectedItemIndex != INVALID_INDEX;
+  }
+  
+  /**
+   * 
+   * @return true if only a subset of the table should be displayed in the list
+   * view
+   */
+  protected boolean displayingSubsetOfTable() {
+    return this.mSubsetOfIndicesToDisplay != null;
   }
   
   /**
@@ -123,14 +150,23 @@ public class MapListViewFragment extends ListViewFragment implements
    */
   @Override
   UserTable getUserTable() {
+    // We may have to initialize this.
+    if (this.mAllRowIndices == null) {
+      this.mAllRowIndices = new ArrayList<Integer>();
+      for (int i = 0; i < super.getUserTable().getNumberOfRows(); i++) {
+        this.mAllRowIndices.add(i);
+      }
+    }
     UserTable result = null;
-    if (this.getMapListIndices() == null) {
+    List<Integer> indicesToDisplay = this.createListOfIndicesToDisplay();
+    if (indicesToDisplay == null) {
+      // then we display everything.
       result = super.getUserTable();
     } else {
       // Return only the subset.
       result = new UserTable(
           super.getUserTable(),
-          this.createListOfIndicesToDisplay());
+          indicesToDisplay);
     }
     return result;
   }
@@ -144,8 +180,15 @@ public class MapListViewFragment extends ListViewFragment implements
     if (this.itemIsSelected()) {
       List<Integer> result = new ArrayList<Integer>();
       result.add(this.mSelectedItemIndex);
-      for (int i = 0; i < this.mVisibleRowIndices.size(); i++) {
-        int currentIndex = this.mVisibleRowIndices.get(i);
+      // Now we iterate over either the subset of rows or all the rows.
+      List<Integer> indicesDisplayed = null;
+      if (this.displayingSubsetOfTable()) {
+        indicesDisplayed = this.mSubsetOfIndicesToDisplay;
+      } else {
+        indicesDisplayed = this.mAllRowIndices;
+      }
+      for (int i = 0; i < indicesDisplayed.size(); i++) {
+        int currentIndex = indicesDisplayed.get(i);
         if (currentIndex != this.mSelectedItemIndex) {
           result.add(currentIndex);
         } else {
@@ -155,7 +198,12 @@ public class MapListViewFragment extends ListViewFragment implements
       }
       return result;
     } else {
-      return this.mVisibleRowIndices;
+      // We do not need to worry about duplicates.
+      if (this.displayingSubsetOfTable()) {
+        return this.mSubsetOfIndicesToDisplay;
+      } else {
+        return this.mAllRowIndices;
+      }
     }
     
   }
@@ -167,36 +215,39 @@ public class MapListViewFragment extends ListViewFragment implements
   }
 
   @Override
-  public void setMapListIndices(ArrayList<Integer> indices) {
-    this.mVisibleRowIndices = indices;
+  public void setSubsetOfIndicesToDisplay(ArrayList<Integer> indices) {
+    this.mSubsetOfIndicesToDisplay = indices;
+    this.resetView();
   }
 
   @Override
   public ArrayList<Integer> getMapListIndices() {
-    return this.mVisibleRowIndices;
+    return this.mSubsetOfIndicesToDisplay;
   }
-  
-  // TODO uncomment and implement
-
 
   /**
    * Sets the index of the list view, which will be the row of the data wanting
    * to be displayed.
    */
-  public void setMapListIndex(final int index) {
+  @Override
+  public void setIndexOfSelectedItem(final int index) {
     this.mSelectedItemIndex = index;
     this.resetView();
   }
-
+  
   /**
-   * Sets the indexes of the list view, which will be the rows of data wanting
-   * to be displayed.
+   * Informs the list view that no item is selected. Resets the state after
+   * a call to {@link #setIndexOfSelectedItem(int)}.
    */
-  public void setMapListIndexes(ArrayList<Integer> indexes) {
-    if (this.mVisibleRowIndices != null) {
-      this.mVisibleRowIndices.clear();
-    }
-    this.mVisibleRowIndices.addAll(indexes);
+  @Override
+  public void setNoItemSelected() {
+    this.mSelectedItemIndex = INVALID_INDEX;
+    this.resetView();
+  }
+
+  @Override
+  public void setDisplayAllItems() {
+    this.mSubsetOfIndicesToDisplay = null;
     this.resetView();
   }
 

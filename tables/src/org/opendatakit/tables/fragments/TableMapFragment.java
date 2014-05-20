@@ -138,12 +138,12 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
   }
 
   @Override
-  public void onSetIndex(int i) {
+  public void onSetSelectedItemIndex(int i) {
     Log.d(TAG, "[onSetIndex]");
     if (!ActivityUtil.isTabletDevice(getActivity())) {
       MapListViewFragment list = getList();
       if (list != null) {
-        list.setMapListIndex(i);
+        list.setIndexOfSelectedItem(i);
       }
     }
   }
@@ -153,7 +153,16 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
     Log.d(TAG, "[onSetInnerIndexes]");
     MapListViewFragment list = getList();
     if (list != null) {
-      list.setMapListIndices(indexes);
+      list.setSubsetOfIndicesToDisplay(indexes);
+    }
+  }
+  
+
+  @Override
+  public void setNoItemSelected() {
+    MapListViewFragment list = getList();
+    if (list != null) {
+      list.setNoItemSelected();
     }
   }
 
@@ -177,4 +186,5 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.MAP;
   }
+
 }
