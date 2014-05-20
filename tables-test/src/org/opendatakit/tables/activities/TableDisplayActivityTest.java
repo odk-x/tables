@@ -164,11 +164,11 @@ public class TableDisplayActivityTest {
   }
 
   @Test
-  public void backingTableIsNotRefreshedOnCanceledSurveyAddReturn() {
+  public void backingTableIsRefreshedOnCanceledSurveyAddReturn() {
     this.helperAssertRefreshedTableForReturn(
         Constants.RequestCodes.ADD_ROW_SURVEY,
         Activity.RESULT_CANCELED,
-        false);
+        true);
   }
 
   @Test
@@ -180,11 +180,11 @@ public class TableDisplayActivityTest {
   }
 
   @Test
-  public void backingTableIsNotRefreshedOnCanceledSurveyEditReturn() {
+  public void backingTableIsRefreshedOnCanceledSurveyEditReturn() {
     this.helperAssertRefreshedTableForReturn(
         Constants.RequestCodes.EDIT_ROW_SURVEY,
         Activity.RESULT_CANCELED,
-        false);
+        true);
   }
 
   /**
