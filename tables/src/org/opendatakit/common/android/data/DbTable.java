@@ -393,12 +393,12 @@ public class DbTable {
           SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE, null,
           new String[] {syncStateConflictStr, conflictTypeLocalDeletedStr,
             conflictTypeLocalUpdatedStr}, null, null,
-          DataTableColumns.ID, null);
+          DataTableColumns.ID, "ASC");
       UserTable serverTable = getRawHelper(
           SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE, null,
           new String[] {syncStateConflictStr, conflictTypeServerDeletedStr,
             conflictTypeServerUpdatedStr}, null, null,
-          DataTableColumns.ID, null);
+          DataTableColumns.ID, "ASC");
       return new ConflictTable(localTable, serverTable);
     }
 
@@ -731,7 +731,7 @@ public class DbTable {
     public void deleteRowActual(String whereClause, String[] whereArgs) {
       SQLiteDatabase db = tp.getWritableDatabase();
       try {
-        db.beginTransaction();
+         db.beginTransaction();
       	db.delete(tp.getDbTableName(), whereClause, whereArgs);
       	db.setTransactionSuccessful();
       } finally {

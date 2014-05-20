@@ -106,7 +106,30 @@ public class TableDisplayActivity extends AbsTableActivity
   protected void onResume() {
     super.onResume();
     Log.i(TAG, "[onResume]");
-    this.initializeDisplayFragment();
+    TableProperties tableProperties = this.getTableProperties();
+    if ( tableProperties.hasCheckpoints() ) {
+      Intent i = new Intent(this,
+          CheckpointResolutionListActivity.class);
+      i.putExtra(Constants.IntentKeys.APP_NAME,
+          getAppName());
+      i.putExtra(
+          Constants.IntentKeys.TABLE_ID,
+          tableProperties.getTableId());
+      this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
+
+    } else if ( tableProperties.hasConflicts() ) {
+      Intent i = new Intent(this,
+          ConflictResolutionListActivity.class);
+      i.putExtra(Constants.IntentKeys.APP_NAME,
+          getAppName());
+      i.putExtra(
+          Constants.IntentKeys.TABLE_ID,
+          tableProperties.getTableId());
+      this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
+
+    } else {
+      this.initializeDisplayFragment();
+    }
   }
 
   @Override
@@ -215,6 +238,13 @@ public class TableDisplayActivity extends AbsTableActivity
       int resultCode,
       Intent data) {
     switch (requestCode) {
+    case Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
+    case Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER:
+      // these are no-ops on return, as the onResume() method will deal with
+      // any fall-out from them.
+      this.refreshDataTable();
+      this.refreshDisplayFragment();
+      break;
     // For now, we will just refresh the table if something could have changed.
     case Constants.RequestCodes.ADD_ROW_COLLECT:
     case Constants.RequestCodes.EDIT_ROW_COLLECT:

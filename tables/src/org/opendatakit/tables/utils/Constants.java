@@ -22,16 +22,16 @@ import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import android.graphics.Color;
 
 /**
- * 
+ *
  * @author sudar.sam@gmail.com
  * @author unknown
  *
  */
 public class Constants {
-  
+
   public static final int DEFAULT_TEXT_COLOR = Color.BLACK;
   public static final int DEFAULT_BACKGROUND_COLOR = Color.WHITE;
-  
+
   public static class HTML {
     /**
      * The default HTML to be displayed if no file name has been set.
@@ -39,13 +39,13 @@ public class Constants {
     public static final String NO_FILE_NAME = "<html><body>"
         + "<p>No filename has been specified.</p>" + "</body></html>";
   }
-  
+
   public static class MimeTypes {
     public static final String TEXT_HTML = "text/html";
   }
-  
 
-  
+
+
   /**
    * Intent keys to be used to communicate between activities.
    * @author sudar.sam@gmail.com
@@ -58,7 +58,7 @@ public class Constants {
      * Tells {@link TableDisplayActivity} what time of view it should be
      * displaying.
      */
-    public static final String TABLE_DISPLAY_VIEW_TYPE = 
+    public static final String TABLE_DISPLAY_VIEW_TYPE =
         "tableDisplayViewType";
     public static final String FILE_NAME = "filename";
     public static final String ROW_ID = "rowId";
@@ -105,7 +105,7 @@ public class Constants {
      */
     public static final String SQL_ORDER_BY_DIRECTION = "sqlOrderByDirection";
   }
-  
+
   public static class FragmentTags {
     /** Tag for {@link TopLevelTableMenuFragment} */
     public static final String TABLE_MENU = "tagTableMenuFragment";
@@ -128,7 +128,7 @@ public class Constants {
   }
 
   public static class PreferenceKeys {
-    
+
     /**
      * Preference keys for table-level preferences.
      * @author sudar.sam@gmail.com
@@ -142,7 +142,7 @@ public class Constants {
       public static final String DEFAULT_FORM = "table_pref_default_form";
       public static final String TABLE_COLOR_RULES =
           "table_pref_table_color_rules";
-      public static final String STATUS_COLOR_RULES = 
+      public static final String STATUS_COLOR_RULES =
           "table_pref_status_column_color_rules";
       public static final String MAP_COLOR_RULE = "table_pref_map_color_rule";
       public static final String LIST_FILE = "table_pref_list_file";
@@ -152,7 +152,7 @@ public class Constants {
       public static final String MAP_LIST_FILE = "table_pref_map_list_file";
       public static final String COLUMNS = "table_pref_columns";
     }
-    
+
     public static class Column {
       public static final String DISPLAY_NAME = "column_pref_display_name";
       public static final String ELEMENT_KEY = "column_pref_element_key";
@@ -161,7 +161,7 @@ public class Constants {
       public static final String COLOR_RULES = "column_pref_color_rules";
       public static final String ELEMENT_NAME = "column_pref_element_name";
     }
-    
+
     public static class ColorRule {
       public static final String COMPARISON_TYPE = "pref_color_rule_comp_type";
       public static final String RULE_VALUE = "pref_color_rule_value";
@@ -172,7 +172,7 @@ public class Constants {
       public static final String ELEMENT_KEY = "pref_color_rule_element_key";
     }
   }
-  
+
   public static class RequestCodes {
     public static final int DISPLAY_VIEW = 1;
     public static final int CHOOSE_DETAIL_FILE = 2;
@@ -195,8 +195,10 @@ public class Constants {
     public static final int LAUNCH_COLOR_RULE_LIST = 16;
     public static final int ADD_ROW_SURVEY = 17;
     public static final int EDIT_ROW_SURVEY = 18;
+    public static final int LAUNCH_CHECKPOINT_RESOLVER = 19;
+    public static final int LAUNCH_CONFLICT_RESOLVER = 20;
   }
-  
+
   /**
    * The names of the JavaScript interfaces that are attached to the window
    * object.

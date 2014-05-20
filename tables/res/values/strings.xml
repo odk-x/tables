@@ -377,4 +377,28 @@
 	<string name="no_index">No assets/index.html</string>
 	<string name="failed_download_table">Failed to download table %1$s. Error: %2$s</string>
 	<string name="export_file_qualifier">Qualifier for exported csv files:</string>
+
+	<string name="checkpoint_restore_complete_or_take_newest">Restore to earlier Finalized state or Save checkpoint as Incomplete</string>
+	<string name="checkpoint_restore_incomplete_or_take_newest">Restore to previous Incomplete Save or Save checkpoint as Incomplete</string>
+	<string name="checkpoint_remove_or_take_newest">Discard or Save checkpoint as Incomplete</string>
+
+	<string name="checkpoint_take_oldest_remove">Discard</string>
+	<string name="checkpoint_take_oldest_finalized">Restore to Finalized State</string>
+	<string name="checkpoint_take_oldest_incomplete">Restore to Incomplete State</string>
+	<string name="checkpoint_take_newest">Update checkpoint to Incomplete State</string>
+
+	<string name="checkpoint_delete_warning">Delete entirely?</string>
+	<string name="checkpoint_take_oldest_warning">Discard all checkpointed changes?</string>
+	<string name="checkpoint_take_newest_warning">Save the checkpointed state as Incomplete and proceed?</string>
+
+	<string name="conflict_resolve_or_choose">Choose to take local or server changes, or select individual values and resolve the row.</string>
+	<string name="conflict_take_local_updates">Take Local Version</string>
+	<string name="conflict_take_server_updates">Take Server Version</string>
+	<string name="conflict_take_blended_updates">Merge Changes as Indicated Below</string>
+
+	<string name="conflict_restore_with_server_changes">Restore local record with server updates</string>
+	<string name="conflict_restore_with_local_changes">Restore server record with local updates</string>
+	<string name="conflict_enforce_local_delete">Delete record on server</string>
+	<string name="conflict_apply_delete_from_server">Delete local record</string>
+
 </resources>
