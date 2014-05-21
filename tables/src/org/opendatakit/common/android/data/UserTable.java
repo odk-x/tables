@@ -31,7 +31,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.DataUtil;
 
@@ -283,7 +282,7 @@ public class UserTable {
         @SuppressWarnings("rawtypes")
         Map m = ODKFileUtils.mapper.readValue(raw, Map.class);
         String uriFragment = (String) m.get("uriFragment");
-        File f = FileProvider.getAsFile(context, mTp.getAppName(), uriFragment);
+        File f = ODKFileUtils.getAsFile(mTp.getAppName(), uriFragment);
         return f.getName();
       } catch (JsonParseException e) {
         e.printStackTrace();

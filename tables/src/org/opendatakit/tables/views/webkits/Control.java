@@ -13,7 +13,7 @@ import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.provider.FileProvider;
+import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utils.NameUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -527,7 +527,7 @@ public class Control {
    * @return
    */
   private String getBaseContentUri() {
-    Uri contentUri = FileProvider.getWebViewContentUri(this.mActivity);
+    Uri contentUri = UrlUtils.getWebViewContentUri(this.mActivity);
     contentUri = Uri.withAppendedPath(
         contentUri,
         Uri.encode(this.mAppName));
