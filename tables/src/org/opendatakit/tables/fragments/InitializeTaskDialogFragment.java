@@ -4,6 +4,7 @@ import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.tasks.InitializeTask;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -122,6 +123,15 @@ public class InitializeTaskDialogFragment extends DialogFragment {
    * the user.
    */
   public void onTaskFinishedSuccessfully(String message) {
+    if ( ( message == null || message.length() == 0 ) && (mCallbacks != null) ) {
+      // do not require an OK if everything went well
+      if (isResumed()) {
+        dismiss();
+      }
+      mTask = null;
+      mCallbacks.onImportsComplete();
+      return;
+    }
     onTaskFinished(true, false, message);
   }
 
@@ -139,6 +149,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
       		" were null! Not invoking.");
       return;
     }
+
     // Otherwise we create the alert dialog saying things went well.
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder.setCancelable(false);
