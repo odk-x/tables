@@ -401,4 +401,6 @@
 	<string name="conflict_enforce_local_delete">Delete record on server</string>
 	<string name="conflict_apply_delete_from_server">Delete local record</string>
 
+	<string name="open_join_table">Open Join Table</string>
+	<string name="edit_column_color_rules">Edit Column Color Rules</string>
 </resources>

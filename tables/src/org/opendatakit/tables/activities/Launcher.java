@@ -38,6 +38,9 @@ public class Launcher extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // android.os.Debug.waitForDebugger();
+
         String appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
         if ( appName == null ) {
           appName = TableFileUtils.getDefaultAppName();
@@ -75,8 +78,17 @@ public class Launcher extends Activity {
               appName,
               homeScreen);
           Log.d(TAG, "homescreen file exists and is set to be used.");
-          Intent i = (Intent) getIntent().clone();
-          i.setClass(this, WebViewActivity.class);
+
+          Uri data = getIntent().getData();
+          Bundle extras = getIntent().getExtras();
+
+          Intent i = new Intent(this, WebViewActivity.class);
+          if ( data != null ) {
+            i.setData(data);
+          }
+          if ( extras != null ) {
+            i.putExtras(extras);
+          }
           i.putExtra(Constants.IntentKeys.APP_NAME, appName);
           i.putExtra(Constants.IntentKeys.FILE_NAME, homescreenRelativePath);
           startActivity(i);
@@ -91,10 +103,20 @@ public class Launcher extends Activity {
             tableId = (new Preferences(this, appName)).getDefaultTableId();
           }
 
-          Intent i = (Intent) getIntent().clone();
-          i.setClass(this, MainActivity.class);
+          Uri data = getIntent().getData();
+          Bundle extras = getIntent().getExtras();
+
+          Intent i = new Intent(this, MainActivity.class);
+          if ( data != null ) {
+            i.setData(data);
+          }
+          if ( extras != null ) {
+            i.putExtras(extras);
+          }
           i.putExtra(Constants.IntentKeys.APP_NAME, appName);
-          i.putExtra(Constants.IntentKeys.TABLE_ID, tableId);
+          if ( tableId != null ) {
+            i.putExtra(Constants.IntentKeys.TABLE_ID, tableId);
+          }
           startActivity(i);
         }
         finish();

@@ -182,7 +182,7 @@ public class AndroidShortcuts extends Activity {
    * Returns the results to the calling intent.
    */
   private void returnShortcut(Choice choice) {
-    Intent shortcutIntent = new Intent(Intent.ACTION_MAIN);
+    Intent shortcutIntent = new Intent(Intent.ACTION_VIEW);
     shortcutIntent.putExtra(Constants.IntentKeys.APP_NAME, choice.appName);
     shortcutIntent.setData(choice.command);
 
