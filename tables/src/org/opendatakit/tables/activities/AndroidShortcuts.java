@@ -17,9 +17,11 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 import java.util.ArrayList;
 
-import org.opendatakit.common.android.provider.FileProvider;
+import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.provider.TablesProviderAPI;
+import org.opendatakit.tables.utils.Constants;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -27,6 +29,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -56,12 +59,14 @@ public class AndroidShortcuts extends Activity {
     public final Bitmap icon;
     public final Uri command;
     public final String name;
+    public final String appName;
 
-    public Choice(int iconResourceId, Bitmap icon, Uri command, String name) {
+    public Choice(int iconResourceId, Bitmap icon, Uri command, String name, String appName) {
       this.iconResourceId = iconResourceId;
       this.icon = icon;
       this.command = command;
       this.name = name;
+      this.appName = appName;
     }
   }
 
@@ -94,6 +99,7 @@ public class AndroidShortcuts extends Activity {
    */
   private void buildMenuList() {
     Bitmap appIcon = BitmapFactory.decodeResource(getResources(), R.drawable.tables_app);
+    Bitmap tableIcon = BitmapFactory.decodeResource(getResources(), R.drawable.tables_table);
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setTitle("Select ODK Shortcut");
@@ -103,8 +109,31 @@ public class AndroidShortcuts extends Activity {
     File[] directories = ODKFileUtils.getAppFolders();
     for (File app : directories) {
       String appName = app.getName();
-      Uri uri = Uri.withAppendedPath(FileProvider.getFileProviderContentUri(this), app.getName());
-      choices.add(new Choice(R.drawable.tables_app, appIcon, uri, appName));
+      Uri uri = Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName);
+      choices.add(new Choice(R.drawable.tables_app, appIcon, uri, appName, appName));
+
+      Cursor c = null;
+      try {
+        c = getContentResolver().query(
+            Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName), null, null, null,
+            null);
+
+        if (c != null && c.getCount() > 0) {
+          c.moveToPosition(-1);
+          while (c.moveToNext()) {
+            String tableName = app.getName() + " > "
+                + c.getString(c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
+            uri = Uri.withAppendedPath(
+                Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
+                c.getString(c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
+            choices.add(new Choice(R.drawable.tables_table, tableIcon, uri, tableName, appName));
+          }
+        }
+      } finally {
+        if (c != null) {
+          c.close();
+        }
+      }
     }
 
     builder.setAdapter(new ArrayAdapter<Choice>(this, R.layout.shortcut_item, choices) {
@@ -120,6 +149,7 @@ public class AndroidShortcuts extends Activity {
           row = convertView;
         }
         TextView vw = (TextView) row.findViewById(R.id.shortcut_title);
+        // Future: vw.setTextSize(Tables.getQuestionFontsize(getItem(position).appName));
         vw.setTextSize(18);
         vw.setText(getItem(position).name);
 
@@ -153,6 +183,7 @@ public class AndroidShortcuts extends Activity {
    */
   private void returnShortcut(Choice choice) {
     Intent shortcutIntent = new Intent(Intent.ACTION_VIEW);
+    shortcutIntent.putExtra(Constants.IntentKeys.APP_NAME, choice.appName);
     shortcutIntent.setData(choice.command);
 
     Intent intent = new Intent();

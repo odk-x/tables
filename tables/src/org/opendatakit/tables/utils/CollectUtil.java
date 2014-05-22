@@ -47,7 +47,6 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.common.android.utils.DataUtil;
@@ -439,8 +438,7 @@ public class CollectUtil {
               ODKFileUtils.mapper.readValue(value, Map.class);
             if ( ref != null ) {
               String uriFragment = ref.get("uriFragment");
-              File f = FileProvider.getAsFile(
-                  context,
+              File f = ODKFileUtils.getAsFile(
                   tp.getAppName(),
                   uriFragment);
               value = f.getName();

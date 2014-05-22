@@ -62,6 +62,21 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
   private static final String TAG = SpreadsheetFragment.class.getSimpleName();
 
+  private static final int MENU_ITEM_ID_HISTORY_IN = 0;
+  private static final int MENU_ITEM_ID_EDIT_CELL = 1;
+  private static final int MENU_ITEM_ID_DELETE_ROW = 2;
+  private static final int MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY = 3;
+  private static final int MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY = 4;
+  private static final int MENU_ITEM_ID_SET_COLUMN_AS_SORT = 5;
+  private static final int MENU_ITEM_ID_UNSET_COLUMN_AS_SORT = 6;
+  private static final int MENU_ITEM_ID_SET_AS_INDEXED_COL = 7;
+  private static final int MENU_ITEM_ID_UNSET_AS_INDEXED_COL = 8;
+  private static final int MENU_ITEM_ID_EDIT_ROW = 9;
+  // This should allow for the opening of a joined table.
+  private static final int MENU_ITEM_ID_OPEN_JOIN_TABLE = 10;
+  private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES = 11;
+  private static final int MENU_ITEM_ID_RESOLVE_ROW_CONFLICT = 12;
+
   private SpreadsheetUserTable spreadsheetTable;
 
   private int mLastDataCellMenued;
@@ -323,11 +338,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
           cell.row);
       // launch ODK Collect
       return true;
-    case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
+    case MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY:
         addGroupByColumn(spreadsheetTable.getColumnByIndex(this.mLastHeaderCellMenued));
         init();
         return true;
-    case MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME:
+    case MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY:
         removeGroupByColumn(spreadsheetTable.getColumnByIndex(this.mLastHeaderCellMenued));
         init();
         return true;
@@ -416,16 +431,16 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       ColumnProperties cp =
           spreadsheetTable.getColumnByIndex(this.mLastHeaderCellMenued);
       if (this.getTableProperties().isGroupByColumn(cp.getElementKey())) {
-          menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME,
-                  ContextMenu.NONE, "Unset as Prime");
+          menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY,
+                  ContextMenu.NONE, "Unset as Group By");
       } else if ((this.getTableProperties().getSortColumn() != null) &&
               this.getTableProperties().getSortColumn()
                       .equals(cp.getElementKey())) {
           menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_SORT,
                   ContextMenu.NONE, "Unset as Sort");
       } else {
-          menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_COLUMN_AS_PRIME,
-                  ContextMenu.NONE, "Set as Prime");
+          menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY,
+                  ContextMenu.NONE, "Set as Group By");
           menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_COLUMN_AS_SORT,
                   ContextMenu.NONE, "Set as Sort");
       }
@@ -438,7 +453,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       }
 
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES,
-          ContextMenu.NONE, MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES);
+          ContextMenu.NONE, getString(R.string.edit_column_color_rules));
 
   }
 
@@ -543,7 +558,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
          // column.
          if (cp.getColumnType() == ColumnType.TABLE_JOIN) {
            itemIds.add(MENU_ITEM_ID_OPEN_JOIN_TABLE);
-           itemLabels.add(MENU_ITEM_MSG_OPEN_JOIN_TABLE);
+           itemLabels.add(getString(R.string.open_join_table));
          }
          AlertDialog.Builder builder = new AlertDialog.Builder(
                  getActivity());
@@ -770,26 +785,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       setView(wrapper);
     }
   }
-
-
-  private static final int MENU_ITEM_ID_HISTORY_IN = 0;
-  private static final int MENU_ITEM_ID_EDIT_CELL = 1;
-  private static final int MENU_ITEM_ID_DELETE_ROW = 2;
-  private static final int MENU_ITEM_ID_SET_COLUMN_AS_PRIME = 3;
-  private static final int MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME = 4;
-  private static final int MENU_ITEM_ID_SET_COLUMN_AS_SORT = 5;
-  private static final int MENU_ITEM_ID_UNSET_COLUMN_AS_SORT = 6;
-  private static final int MENU_ITEM_ID_SET_AS_INDEXED_COL = 7;
-  private static final int MENU_ITEM_ID_UNSET_AS_INDEXED_COL = 8;
-  private static final int MENU_ITEM_ID_EDIT_ROW = 9;
-  // This should allow for the opening of a joined table.
-  private static final int MENU_ITEM_ID_OPEN_JOIN_TABLE = 10;
-  private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES = 11;
-  private static final int MENU_ITEM_ID_RESOLVE_ROW_CONFLICT = 12;
-  private static final String MENU_ITEM_MSG_OPEN_JOIN_TABLE =
-      "Open Join Table";
-  private static final String MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES =
-      "Edit Column Color Rules";
 
 
 }

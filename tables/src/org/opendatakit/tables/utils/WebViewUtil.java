@@ -29,8 +29,8 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.UrlUtils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -136,7 +136,7 @@ public class WebViewUtil {
       WebView webView,
       String fileName) {
     if (fileName != null) {
-      String webUrl = FileProvider.getAsWebViewUri(
+      String webUrl = UrlUtils.getAsWebViewUri(
           context,
           appName,
           fileName);

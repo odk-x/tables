@@ -10,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
@@ -21,15 +20,15 @@ import android.webkit.WebView;
 
 @RunWith(RobolectricTestRunner.class)
 public class MapListViewFragmentTest {
-    
+
   MapListViewFragmentStub fragment;
   Activity activity;
-  
+
   @After
   public void after() {
     MapListViewFragmentStub.resetState();
   }
-  
+
   @Before
   public void setupWithDefaults() {
     ShadowLog.stream = System.out;
@@ -42,7 +41,7 @@ public class MapListViewFragmentTest {
     this.fragment = stub;
     this.activity = this.fragment.getActivity();
   }
-    
+
   @Test
   public void indicesGeneratedInCorrectOrderWithNoSelectedItem() {
     // invalid position.
@@ -55,7 +54,7 @@ public class MapListViewFragmentTest {
     org.fest.assertions.api.Assertions.assertThat(resultIndices)
         .isEqualTo(target);
   }
-  
+
   /**
    * The selected item should be at the top of the list.
    */
@@ -71,7 +70,7 @@ public class MapListViewFragmentTest {
     org.fest.assertions.api.Assertions.assertThat(resultIndices)
         .isEqualTo(target);
   }
-  
+
   /**
    * The selected item should be at the top of the list and the duplicate
    * should be removed.
@@ -91,13 +90,13 @@ public class MapListViewFragmentTest {
     org.fest.assertions.api.Assertions.assertThat(resultIndices)
         .isEqualTo(target);
   }
-  
+
   @Test
   public void startsWithNoItemSelected() {
     org.fest.assertions.api.Assertions
       .assertThat(this.fragment.itemIsSelected()).isFalse();
   }
-  
+
   @Test
   public void settingIndexMakesItemSelected() {
     int selectedIndex = 5;
@@ -105,7 +104,7 @@ public class MapListViewFragmentTest {
     org.fest.assertions.api.Assertions
       .assertThat(this.fragment.itemIsSelected()).isTrue();
   }
-  
+
   @Test
   public void settingNoItemSelectedResetsState() {
     int selectedIndex = 10;
@@ -117,20 +116,20 @@ public class MapListViewFragmentTest {
     org.fest.assertions.api.Assertions
       .assertThat(this.fragment.itemIsSelected()).isFalse();
   }
-  
+
   @Test
   public void startsDisplayingAllIndices() {
     org.fest.assertions.api.Assertions
       .assertThat(this.fragment.displayingSubsetOfTable()).isFalse();
   }
-  
+
   @Test
   public void settingIndicesMakesDisplaySubset() {
     this.fragment.setSubsetOfIndicesToDisplay(this.getTestListInts());
     org.fest.assertions.api.Assertions
       .assertThat(this.fragment.displayingSubsetOfTable()).isTrue();
   }
-  
+
   @Test
   public void settingDisplayAllItemsUpdatesStateCorrectly() {
     this.fragment.setSubsetOfIndicesToDisplay(this.getTestListInts());
@@ -140,7 +139,7 @@ public class MapListViewFragmentTest {
     org.fest.assertions.api.Assertions
       .assertThat(this.fragment.displayingSubsetOfTable()).isFalse();
   }
-  
+
 //  For some reason this isn't passing, but is returning the same object.
 //  WebView issues?
 //  @Test
@@ -158,13 +157,13 @@ public class MapListViewFragmentTest {
 //    org.fest.assertions.api.Assertions.assertThat(originalDataObject)
 //        .isNotSameAs(newDataObject);
 //  }
-  
+
   private ShadowWebView getShadowWebView() {
     WebView webView = (WebView) this.fragment.getView();
     ShadowWebView result = shadowOf(webView);
     return result;
   }
-  
+
   private ArrayList<Integer> getTestListInts() {
     ArrayList<Integer> result = new ArrayList<Integer>();
     result.add(92);
