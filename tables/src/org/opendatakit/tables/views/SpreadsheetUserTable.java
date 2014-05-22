@@ -11,7 +11,6 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 
 import android.content.Context;
-import android.util.Log;
 
 /**
  * Wrapper class for UserTable that presents the table in the way that the
@@ -21,6 +20,7 @@ import android.util.Log;
  *
  */
 public class SpreadsheetUserTable {
+  @SuppressWarnings("unused")
   private static final String TAG = "SpreadsheetUserTable";
 
   private final String[] header;
