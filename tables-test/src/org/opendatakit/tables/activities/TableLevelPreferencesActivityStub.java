@@ -3,6 +3,8 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.testutils.TestConstants;
 
+import android.os.Bundle;
+
 
 /**
  * Basic stub for testing {@link TableLevelPreferencesActivity}. We need to do
@@ -26,10 +28,20 @@ public class TableLevelPreferencesActivityStub
       TestConstants.TABLES_DEFAULT_APP_NAME;
   public static final TableProperties DEFAULT_TABLE_PROPERTIES = null;
   public static final String DEFAULT_TABLE_ID = "testTableId";
+  public static final FragmentType DEFAULT_FRAGMENT_TYPE =
+      FragmentType.TABLE_PREFERENCE;
   
+  public static FragmentType FRAGMENT_TYPE = DEFAULT_FRAGMENT_TYPE;
   public static String APP_NAME = DEFAULT_APP_NAME;
   public static TableProperties TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
   public static String TABLE_ID = DEFAULT_TABLE_ID;
+  
+  public static void resetState() {
+    FRAGMENT_TYPE = DEFAULT_FRAGMENT_TYPE;
+    APP_NAME = DEFAULT_APP_NAME;
+    TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
+    TABLE_ID = DEFAULT_TABLE_ID;
+  }
   
   @Override
   TableProperties retrieveTablePropertiesForId(String tableId) {
@@ -44,6 +56,11 @@ public class TableLevelPreferencesActivityStub
   @Override
   String retrieveTableIdFromIntent() {
     return TABLE_ID;
+  }
+  
+  @Override
+  FragmentType retrieveFragmentTypeFromBundleOrActivity(Bundle savedInstanceState) {
+    return FRAGMENT_TYPE;
   }
   
 
