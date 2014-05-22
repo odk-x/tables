@@ -30,6 +30,7 @@ import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.SpreadsheetUserTable;
 import org.opendatakit.tables.views.SpreadsheetUserTable.SpreadsheetCell;
 import org.opendatakit.tables.views.SpreadsheetView;
+import org.opendatakit.tables.views.CellInfo;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -79,8 +80,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
   private SpreadsheetUserTable spreadsheetTable;
 
-  private int mLastDataCellMenued;
-  private int mLastHeaderCellMenued;
+  private CellInfo mLastDataCellMenued;
+  private CellInfo mLastHeaderCellMenued;
   /**
    * From Controller.
    */
@@ -339,15 +340,15 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       // launch ODK Collect
       return true;
     case MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY:
-        addGroupByColumn(spreadsheetTable.getColumnByIndex(this.mLastHeaderCellMenued));
+        addGroupByColumn(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
         init();
         return true;
     case MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY:
-        removeGroupByColumn(spreadsheetTable.getColumnByIndex(this.mLastHeaderCellMenued));
+        removeGroupByColumn(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
         init();
         return true;
     case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-        setColumnAsSort(spreadsheetTable.getColumnByIndex(this.mLastHeaderCellMenued));
+        setColumnAsSort(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
         init();
         return true;
     case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
@@ -355,7 +356,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         init();
         return true;
     case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-        setColumnAsIndexedCol(spreadsheetTable.getColumnByIndex(this.mLastHeaderCellMenued));
+        setColumnAsIndexedCol(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
         init();
         return true;
     case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
@@ -363,9 +364,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         init();
         return true;
     case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
-      String elementKey = this.spreadsheetTable
-        .getColumnByIndex(this.mLastHeaderCellMenued)
-        .getElementKey();
+      String elementKey = this.mLastHeaderCellMenued.elementKey;
       ActivityUtil.launchTablePreferenceActivityToEditColumnColorRules(
           this.getActivity(),
           this.getAppName(),
@@ -378,20 +377,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   }
 
   @Override
-  public void regularCellLongClicked(int cellId, int rawX, int rawY) {
-    SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(getActivity(), cellId);
+  public void dataCellLongClicked(CellInfo cellInfo, int rawX, int rawY) {
+    SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(getActivity(), cellInfo);
     this.addOverlay(new CellPopout(cell), 100, 100, rawX, rawY);
   }
 
   @Override
-  public void indexedColCellLongClicked(int cellId, int rawX, int rawY) {
-    SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(getActivity(), cellId);
-    this.addOverlay(new CellPopout(cell), 100, 100, rawX, rawY);
-  }
-
-  @Override
-  public void regularCellDoubleClicked(int cellId, int rawX, int rawY) {
-    SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(getActivity(), cellId);
+  public void dataCellDoubleClicked(CellInfo cellInfo, int rawX, int rawY) {
+    SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(getActivity(), cellInfo);
     this.addOverlay(new CellPopout(cell), 100, 100, rawX, rawY);
   }
 
@@ -406,8 +399,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   }
 
   @Override
-  public void prepRegularCellOccm(ContextMenu menu, int cellId) {
-      this.mLastDataCellMenued = cellId;
+  public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo) {
+    if ( cellInfo.elementKey.equals(this.spreadsheetTable.getIndexedColumnElementKey())) {
+      // should we not enable this for index columns?
+      return;
+    }
+      this.mLastDataCellMenued = cellInfo;
       if (this.hasGroupBys()) {
           menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN,
                   ContextMenu.NONE, "View Collection");
@@ -426,10 +423,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   }
 
   @Override
-  public void prepHeaderCellOccm(ContextMenu menu, int cellId) {
-      this.mLastHeaderCellMenued = cellId;
+  public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo) {
+      this.mLastHeaderCellMenued = cellInfo;
       ColumnProperties cp =
-          spreadsheetTable.getColumnByIndex(this.mLastHeaderCellMenued);
+          spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
       if (this.getTableProperties().isGroupByColumn(cp.getElementKey())) {
           menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY,
                   ContextMenu.NONE, "Unset as Group By");
@@ -444,7 +441,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
           menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_COLUMN_AS_SORT,
                   ContextMenu.NONE, "Set as Sort");
       }
-      if (cellId == spreadsheetTable.retrieveIndexedColumnOffset()) {
+      if (cellInfo.elementKey.equals(spreadsheetTable.getIndexedColumnElementKey())) {
           menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_AS_INDEXED_COL,
                   ContextMenu.NONE, "Unfreeze Column");
       } else {
@@ -458,29 +455,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   }
 
   @Override
- public void regularCellClicked(int cellId) {
+ public void dataCellClicked(CellInfo cellInfo) {
     this.removeOverlay();
  }
 
  @Override
- public void headerCellClicked(int cellId) {
+ public void headerCellClicked(CellInfo cellInfo) {
     this.removeOverlay();
- }
-
- @Override
- public void indexedColCellClicked(int cellId) {
-    this.removeOverlay();
- }
-
- public void indexedColCellDoubleClicked(int cellId, int rawX, int rawY) {
-   SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(getActivity(), cellId);
-   this.addOverlay(new CellPopout(cell), 100, 100, rawX, rawY);
- }
-
- @Override
- public void prepIndexedColCellOccm(ContextMenu menu, int cellId) {
-    // TODO Auto-generated method stub
-
  }
 
   private class CellPopout extends LinearLayout {

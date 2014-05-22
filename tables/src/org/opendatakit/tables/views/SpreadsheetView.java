@@ -29,6 +29,7 @@ import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
 import org.opendatakit.tables.views.components.LockableScrollView;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -54,7 +55,7 @@ public class SpreadsheetView extends LinearLayout
 
   // moved this from the old TableViewSettings
   public static final int DEFAULT_COL_WIDTH = 125;
-  
+
   public static final int MAX_COL_WIDTH = 1000;
 
   /******************************
@@ -77,12 +78,10 @@ public class SpreadsheetView extends LinearLayout
     private final SpreadsheetUserTable table;
     private final int fontSize;
 
-    private final Map<String, ColumnProperties> mElementKeyToProperties;
     private final Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup;
 
     // Keeping this for now in case someone else needs to work with the code
     // and relied on this variable.
-    private LockableScrollView dataScroll;
     private LockableScrollView dataStatusScroll;
     private View wrapper;
     private HorizontalScrollView wrapScroll;
@@ -99,7 +98,7 @@ public class SpreadsheetView extends LinearLayout
     private View.OnTouchListener indexDataCellClickListener;
     private View.OnTouchListener indexHeaderCellClickListener;
 
-    private int lastLongClickedCellId;
+    private CellInfo lastLongClickedCellId;
 
     public SpreadsheetView(Context context, Controller controller,
         SpreadsheetUserTable table) {
@@ -120,11 +119,9 @@ public class SpreadsheetView extends LinearLayout
         // TabularView objects.
         this.mElementKeyToColorRuleGroup =
             new HashMap<String, ColorRuleGroup>();
-        this.mElementKeyToProperties = table.getAllColumns();
-        for (ColumnProperties cp : mElementKeyToProperties.values()) {
+        for (ColumnProperties cp : table.getAllColumns().values()) {
           mElementKeyToColorRuleGroup.put(cp.getElementKey(),
               table.getColumnColorRuleGroup(cp.getElementKey()));
-          mElementKeyToProperties.put(cp.getElementKey(),cp);
         }
 
         // if a custom font size is defined in the KeyValueStore, use that
@@ -151,80 +148,47 @@ public class SpreadsheetView extends LinearLayout
      * Initializes the click listeners.
      */
     private void initListeners() {
+      // The logic here is a bit crazy.
+      // header and data click listeners both receive the full
+      //
         mainDataCellClickListener = new CellTouchListener() {
             @Override
-            protected int figureCellId(int x, int y) {
-                int cellNum = mainData.getCellNumber(x, y);
-//                Log.d(TAG, "mainDataCellClickListener cellId: " + cellNum);
-                if (!table.isIndexed()) {
-                    return cellNum;
-                } else {
-                  return cellNum;
-                }
-            }
-            @Override
-            protected void takeDownAction(int cellId) {
+            protected void takeDownAction(CellInfo cellId) {
               if (table.isIndexed()) {
-                indexData.highlight(-1);
+                indexData.highlight(null);
               }
                 mainData.highlight(cellId);
             }
             @Override
-            protected void takeClickAction(int cellId) {
-                controller.regularCellClicked(cellId);
+            protected void takeClickAction(CellInfo cellId) {
+                controller.dataCellClicked(cellId);
             }
             @Override
-            protected void takeLongClickAction(int cellId, int rawX,
+            protected void takeLongClickAction(CellInfo cellId, int rawX,
                     int rawY) {
-              boolean isIndexed = table.isIndexed();
                 lastLongClickedCellId = cellId;
-                // So we need to check for whether or not the table is indexed again and
-                // alter the cellId appropriately.
-                if (isIndexed) {
-                  int colNum = cellId % (table.getWidth() - 1);
-                  int rowNum = cellId / (table.getWidth() - 1);
-                  cellId = cellId + rowNum + ((colNum < table.retrieveIndexedColumnOffset()) ? 0 : 1);
-                }
-                controller.regularCellLongClicked(cellId, rawX, rawY);
+                controller.dataCellLongClicked(cellId, rawX, rawY);
             }
             @Override
-            protected void takeDoubleClickAction(int cellId, int rawX,
+            protected void takeDoubleClickAction(CellInfo cellId, int rawX,
                 int rawY) {
-              boolean isIndexed = table.isIndexed();
-              // So it seems like the cellId is coming from the mainData table, which
-              // does NOT include the index. So to get the right row here we actually
-              // have to perform a little extra.
-              int trueCellId = cellId;
-              if (isIndexed) {
-                int colNum = cellId % (table.getWidth() - 1);
-                int rowNum = cellId / (table.getWidth() - 1);
-                // trying to hack together correct thing for overlay
-                trueCellId = rowNum * table.getWidth() +
-                    colNum + ((colNum < table.retrieveIndexedColumnOffset()) ? 0 : 1);
-              }
-              controller.regularCellDoubleClicked(trueCellId, rawX, rawY);
+              controller.dataCellDoubleClicked(cellId, rawX, rawY);
             }
         };
         mainHeaderCellClickListener = new CellTouchListener() {
             @Override
-            protected int figureCellId(int x, int y) {
-                int cellNum = mainHeader.getCellNumber(x, y);
-                if (!table.isIndexed()) {
-                    return cellNum;
-                } else {
-                    int colNum = cellNum % (table.getWidth() - 1);
-                    return cellNum + ((colNum < table.retrieveIndexedColumnOffset()) ? 0 : 1);
-                }
+            protected void takeDownAction(CellInfo cellId) {
+              if (table.isIndexed()) {
+                indexData.highlight(null);
+              }
+                mainData.highlight(null);
             }
             @Override
-            protected void takeDownAction(int cellId) {}
-            @Override
-            protected void takeClickAction(int cellId) {
-                mainData.highlight(-1);
+            protected void takeClickAction(CellInfo cellId) {
                 controller.headerCellClicked(cellId);
             }
             @Override
-            protected void takeLongClickAction(int cellId, int rawX,
+            protected void takeLongClickAction(CellInfo cellId, int rawX,
                     int rawY) {
                 lastLongClickedCellId = cellId;
                 controller.openContextMenu(mainHeader);
@@ -233,69 +197,46 @@ public class SpreadsheetView extends LinearLayout
              * Make this do the same thing as a long click.
              */
             @Override
-            protected void takeDoubleClickAction(int cellId, int rawX,
+            protected void takeDoubleClickAction(CellInfo cellId, int rawX,
                 int rawY) {
               takeLongClickAction(cellId, rawX, rawY);
             }
         };
         indexDataCellClickListener = new CellTouchListener() {
             @Override
-            protected int figureCellId(int x, int y) {
-                int cellNum = indexData.getCellNumber(x, y);
-//                Log.d(TAG, "indexDataCellClickListener cellNum: " + cellNum);
-                return cellNum;
-            }
-            @Override
-            protected void takeDownAction(int cellId) {
-              mainData.highlight(-1);
+            protected void takeDownAction(CellInfo cellId) {
+              mainData.highlight(null);
               indexData.highlight(cellId);
             }
             @Override
-            protected void takeClickAction(int cellId) {
-                mainData.highlight(-1);
-                controller.indexedColCellClicked(cellId);
+            protected void takeClickAction(CellInfo cellId) {
+                controller.dataCellClicked(cellId);
             }
             @Override
-            protected void takeLongClickAction(int cellId, int rawX,
+            protected void takeLongClickAction(CellInfo cellId, int rawX,
                     int rawY) {
-                // here it's just the row plus the number of the indexed column.
-                // So the true cell id is the cellId parameter, which is essentially the
-                // row number, * the width of the table, plus the indexed col
-                int trueNum =
-                    cellId *
-                    table.getWidth() +
-                    table.retrieveIndexedColumnOffset();
-                lastLongClickedCellId = trueNum;
-                controller.indexedColCellLongClicked(trueNum, rawX, rawY);
+                lastLongClickedCellId = cellId;
+                controller.dataCellLongClicked(cellId, rawX, rawY);
             }
 
             @Override
-            protected void takeDoubleClickAction(int cellId, int rawX,
+            protected void takeDoubleClickAction(CellInfo cellId, int rawX,
                 int rawY) {
-              // Ok, so here the cellId is also the row number, as we only allow a
-              // single indexed column atm. So if you double click the 5th cell, it will
-              // also have to be the 5th row.
-              int trueNum =
-                  cellId *
-                  table.getWidth() +
-                  table.retrieveIndexedColumnOffset();
-              controller.indexedColCellDoubleClicked(trueNum, rawX, rawY);
+              controller.dataCellDoubleClicked(cellId, rawX, rawY);
             }
         };
         indexHeaderCellClickListener = new CellTouchListener() {
             @Override
-            protected int figureCellId(int x, int y) {
-                return table.retrieveIndexedColumnOffset();
+            protected void takeDownAction(CellInfo cellId) {
+              mainData.highlight(null);
+              indexData.highlight(null);
             }
             @Override
-            protected void takeDownAction(int cellId) {}
-            @Override
-            protected void takeClickAction(int cellId) {
-                mainData.highlight(-1);
+            protected void takeClickAction(CellInfo cellId) {
                 controller.headerCellClicked(cellId);
             }
             @Override
-            protected void takeLongClickAction(int cellId, int rawX,
+            protected void takeLongClickAction(CellInfo cellId, int rawX,
                     int rawY) {
                 lastLongClickedCellId = cellId;
                 controller.openContextMenu(indexHeader);
@@ -304,7 +245,7 @@ public class SpreadsheetView extends LinearLayout
              * Do the same thing as a long click.
              */
             @Override
-            protected void takeDoubleClickAction(int cellId, int rawX,
+            protected void takeDoubleClickAction(CellInfo cellId, int rawX,
                 int rawY) {
               takeLongClickAction(cellId, rawX, rawY);
             }
@@ -312,7 +253,7 @@ public class SpreadsheetView extends LinearLayout
     }
 
     private void buildNonIndexedTable() {
-		wrapper = buildTable(-1, false);
+		wrapper = buildTable(null, false);
 		wrapScroll = new HorizontalScrollView(context);
 		wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
 		    LinearLayout.LayoutParams.MATCH_PARENT);
@@ -346,18 +287,18 @@ public class SpreadsheetView extends LinearLayout
     }
 
     private void buildIndexedTable() {
-        int indexedCol = table.retrieveIndexedColumnOffset();
-        View mainWrapper = buildTable(indexedCol, false);
-        View indexWrapper = buildTable(indexedCol, true);
-        wrapScroll = new LockableHorizontalScrollView(context);
-        wrapScroll.addView(mainWrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        wrapScroll.setHorizontalFadingEdgeEnabled(true);
-        LinearLayout wrapper = new LinearLayout(context);
-        wrapper.addView(indexWrapper);
-        wrapper.addView(wrapScroll);
+      String indexElementKey = table.getIndexedColumnElementKey();
+      View mainWrapper = buildTable(indexElementKey, false);
+      View indexWrapper = buildTable(indexElementKey, true);
+      wrapScroll = new LockableHorizontalScrollView(context);
+      wrapScroll.addView(mainWrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
+              LinearLayout.LayoutParams.MATCH_PARENT);
+      wrapScroll.setHorizontalFadingEdgeEnabled(true);
+      LinearLayout wrapper = new LinearLayout(context);
+      wrapper.addView(indexWrapper);
+      wrapper.addView(wrapScroll);
 
-        LinearLayout completeWrapper = new LinearLayout(context);
+      LinearLayout completeWrapper = new LinearLayout(context);
 		View statusWrapper = buildStatusTable();
 		completeWrapper.addView(statusWrapper);
 		completeWrapper.addView(wrapper);
@@ -415,55 +356,52 @@ public class SpreadsheetView extends LinearLayout
      * Builds a (piece of a) table. The table may either be the indexed column
      * of an indexed table, the non-indexed columns of an indexed table, or the
      * entirety of an unindexed table.
-     * @param indexedCol the column that is indexed (or -1)
+     * @param indexElementKey the column that is indexed (or null)
      * @param isIndexed whether this table is for the indexed column
      * @return a view including the header and body of the table
      */
-    private View buildTable(int indexedCol, boolean isIndexed) {
+    private View buildTable(String indexElementKey, boolean isIndexed) {
 //      Log.i(TAG, "entering buildTable. indexedCol: " + indexedCol +
 //          "isIndexed: " + isIndexed);
-        List<String> elementKeysToDisplay =
-            new ArrayList<String>(table.getNumberOfDisplayColumns());
+        List<String> elementKeysToDisplay = new ArrayList<String>();
         int[] colWidths;
         int[] completeColWidths = getColumnWidths();
         TabularView dataTable;
         TabularView headerTable;
         if (isIndexed) {
-        	ColumnProperties cp = table.getColumnByIndex(indexedCol);
-            elementKeysToDisplay.add(cp.getElementKey());
-            colWidths = new int[1];
-            colWidths[0] = completeColWidths[indexedCol];
-            dataTable = TabularView.getIndexDataTable(context, this,
-                table, elementKeysToDisplay, colWidths, fontSize,
-                this.mElementKeyToProperties,
-                this.mElementKeyToColorRuleGroup);
-            headerTable = TabularView.getIndexHeaderTable(context,
-                this, table, elementKeysToDisplay, colWidths, fontSize,
-                this.mElementKeyToProperties,
-                this.mElementKeyToColorRuleGroup);
+        	ColumnProperties cp = table.getColumnByElementKey(indexElementKey);
+          elementKeysToDisplay.add(cp.getElementKey());
+          colWidths = new int[1];
+          colWidths[0] = completeColWidths[table.getColumnIndexOfElementKey(indexElementKey)];
+          dataTable = TabularView.getIndexDataTable(context, this,
+              table, elementKeysToDisplay, colWidths, fontSize,
+              this.mElementKeyToColorRuleGroup);
+          headerTable = TabularView.getIndexHeaderTable(context,
+              this, table, elementKeysToDisplay, colWidths, fontSize,
+              this.mElementKeyToColorRuleGroup);
         } else {
-            int width = (indexedCol < 0) ? table.getWidth() :
+            int width = (indexElementKey == null) ? table.getWidth() :
                 table.getWidth() - 1;
             colWidths = new int[width];
             int addIndex = 0;
             for (int i = 0; i < table.getWidth(); i++) {
-                if (i == indexedCol) {
-                    continue;
-                }
-                ColumnProperties cp = table.getColumnByIndex(i);
-                elementKeysToDisplay.add(cp.getElementKey());
-                colWidths[addIndex] = completeColWidths[i];
-                addIndex++;
+              ColumnProperties cp = table.getColumnByIndex(i);
+              if (cp.getElementKey().equals(indexElementKey)) {
+                  continue;
+              }
+              elementKeysToDisplay.add(cp.getElementKey());
+              colWidths[addIndex] = completeColWidths[i];
+              addIndex++;
             }
             dataTable = TabularView.getMainDataTable(context, this,
                 table, elementKeysToDisplay, colWidths, fontSize,
-                this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
             headerTable = TabularView.getMainHeaderTable(context,
                 this, table, elementKeysToDisplay, colWidths, fontSize,
-                this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
         }
+
+        LockableScrollView dataScroll;
         dataScroll = new LockableScrollView(context);
         dataScroll.addView(dataTable, new ViewGroup.LayoutParams(
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
@@ -493,17 +431,13 @@ public class SpreadsheetView extends LinearLayout
 
     private View buildStatusTable() {
         int[] colWidths;
-        List<String> dummyHeaderElementKeys = new ArrayList<String>();
-        dummyHeaderElementKeys.add("header");
-        List<String> dummyDataElementKeys = new ArrayList<String>();
-        dummyDataElementKeys.add("data");
         colWidths = new int[1];
         colWidths[0] = TabularView.DEFAULT_STATUS_COLUMN_WIDTH;
 
         dataStatusScroll = new LockableScrollView(context);
         TabularView dataTable = TabularView.getStatusDataTable(context,
             this, table, colWidths, fontSize,
-            this.mElementKeyToProperties, this.mElementKeyToColorRuleGroup);
+            this.mElementKeyToColorRuleGroup);
         dataTable.setVerticalFadingEdgeEnabled(true);
         dataTable.setVerticalScrollBarEnabled(false);
         dataStatusScroll.addView(dataTable, new ViewGroup.LayoutParams(
@@ -512,7 +446,7 @@ public class SpreadsheetView extends LinearLayout
         dataStatusScroll.setHorizontalFadingEdgeEnabled(true);
         TabularView headerTable = TabularView.getStatusHeaderTable(context,
             this, table, colWidths, fontSize,
-            this.mElementKeyToProperties, this.mElementKeyToColorRuleGroup);
+            this.mElementKeyToColorRuleGroup);
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.setOrientation(LinearLayout.VERTICAL);
         wrapper.addView(headerTable, headerTable.getTableWidth(),
@@ -554,12 +488,12 @@ public class SpreadsheetView extends LinearLayout
 
     @Override
     public void onCreateMainDataContextMenu(ContextMenu menu) {
-        controller.prepRegularCellOccm(menu, lastLongClickedCellId);
+        controller.prepDataCellOccm(menu, lastLongClickedCellId);
     }
 
     @Override
     public void onCreateIndexDataContextMenu(ContextMenu menu) {
-        controller.prepIndexedColCellOccm(menu, lastLongClickedCellId);
+        controller.prepDataCellOccm(menu, lastLongClickedCellId);
     }
 
     @Override
@@ -581,7 +515,12 @@ public class SpreadsheetView extends LinearLayout
         public boolean onTouch(View view, MotionEvent event) {
             int x = (Float.valueOf(event.getX())).intValue();
             int y = (Float.valueOf(event.getY())).intValue();
-            int cellId = figureCellId(x, y);
+            CellInfo cellId = null;
+            if ( view instanceof TabularView ) {
+              cellId = ((TabularView) view).getCellInfo(x, y);
+            } else {
+              Log.e(TAG, "Unexpected view type!");
+            }
             long duration = event.getEventTime() - event.getDownTime();
             if (event.getAction() == MotionEvent.ACTION_UP &&
                     duration >= MIN_CLICK_DURATION) {
@@ -607,43 +546,32 @@ public class SpreadsheetView extends LinearLayout
             }
         }
 
-        protected abstract int figureCellId(int x, int y);
+        protected abstract void takeDownAction(CellInfo cellId);
 
-        protected abstract void takeDownAction(int cellId);
+        protected abstract void takeClickAction(CellInfo cellId);
 
-        protected abstract void takeClickAction(int cellId);
-
-        protected abstract void takeLongClickAction(int cellId, int rawX,
+        protected abstract void takeLongClickAction(CellInfo cellId, int rawX,
                 int rawY);
 
-        protected abstract void takeDoubleClickAction(int cellId, int rawX,
+        protected abstract void takeDoubleClickAction(CellInfo cellId, int rawX,
             int rawY);
     }
 
     public interface Controller {
 
-        public void regularCellClicked(int cellId);
+      public void headerCellClicked(CellInfo cellId);
 
-        public void headerCellClicked(int cellId);
+        public void dataCellClicked(CellInfo cellId);
 
-        public void indexedColCellClicked(int cellId);
+        public void dataCellLongClicked(CellInfo cellId, int rawX, int rawY);
 
-        public void regularCellLongClicked(int cellId, int rawX, int rawY);
-
-        public void regularCellDoubleClicked(int cellId, int rawX, int rawY);
-
-        public void indexedColCellDoubleClicked(int cellId, int rawX,
-            int rawY);
-
-        public void indexedColCellLongClicked(int cellId, int rawX, int rawY);
+        public void dataCellDoubleClicked(CellInfo cellId, int rawX, int rawY);
 
         public void openContextMenu(View view);
 
-        public void prepRegularCellOccm(ContextMenu menu, int cellId);
+        public void prepDataCellOccm(ContextMenu menu, CellInfo cellId);
 
-        public void prepHeaderCellOccm(ContextMenu menu, int cellId);
-
-        public void prepIndexedColCellOccm(ContextMenu menu, int cellId);
+        public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId);
 
     }
 
@@ -664,7 +592,7 @@ public class SpreadsheetView extends LinearLayout
       KeyValueStoreHelper columnKVSH =
           table.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
       for (int i = 0; i < numberOfDisplayColumns; i++) {
-    	ColumnProperties cp = table.getColumnByIndex(i);
+        ColumnProperties cp = table.getColumnByIndex(i);
         String elementKey = cp.getElementKey();
         KeyValueHelper aspectHelper = columnKVSH.getAspectHelper(elementKey);
         Integer value =

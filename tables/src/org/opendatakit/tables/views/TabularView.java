@@ -23,6 +23,7 @@ import java.util.Map;
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.UserTable.Row;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -80,7 +81,7 @@ class TabularView extends View {
 
   private int totalHeight;
   private int totalWidth;
-  private int highlightedCellNum;
+  private CellInfo highlightedCellInfo;
 
   private final Paint textPaint;
   private final Paint bgPaint;
@@ -143,13 +144,12 @@ class TabularView extends View {
       Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay,
       int[] columnWidths, int fontSize,
-      Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
     return new TabularView(context, controller, table,
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_DATA_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.MAIN_DATA, fontSize,
-        elementKeyToColumnProperties, elementKeyToColorRuleGroup);
+        elementKeyToColorRuleGroup);
   }
 
   /**
@@ -172,13 +172,12 @@ class TabularView extends View {
       Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay,
       int[] columnWidths, int fontSize,
-      Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
     return new TabularView(context, controller, table,
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_HEADER_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.MAIN_HEADER, fontSize,
-        elementKeyToColumnProperties, elementKeyToColorRuleGroup);
+        elementKeyToColorRuleGroup);
   }
 
   /**
@@ -201,13 +200,12 @@ class TabularView extends View {
       Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay,
       int[] columnWidths, int fontSize,
-      Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
     return new TabularView(context, controller, table,
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_DATA_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.INDEX_DATA, fontSize,
-        elementKeyToColumnProperties, elementKeyToColorRuleGroup);
+        elementKeyToColorRuleGroup);
   }
 
   /**
@@ -230,13 +228,12 @@ class TabularView extends View {
       Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay,
       int[] columnWidths, int fontSize,
-      Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
     return new TabularView(context, controller, table,
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_HEADER_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.INDEX_HEADER, fontSize,
-        elementKeyToColumnProperties, elementKeyToColorRuleGroup);
+        elementKeyToColorRuleGroup);
   }
 
   /**
@@ -258,7 +255,6 @@ class TabularView extends View {
       Context context, Controller controller,
       SpreadsheetUserTable table,
       int[] columnWidths, int fontSize,
-      Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
     List<String> dummyElementKeys = new ArrayList<String>();
     // We need to make this a size one so that the status table knows there's
@@ -268,7 +264,7 @@ class TabularView extends View {
         dummyElementKeys, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_DATA_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.STATUS_DATA, fontSize,
-        elementKeyToColumnProperties, elementKeyToColorRuleGroup);
+        elementKeyToColorRuleGroup);
   }
 
   /**
@@ -290,7 +286,6 @@ class TabularView extends View {
       Context context, Controller controller,
       SpreadsheetUserTable table,
       int[] columnWidths, int fontSize,
-      Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
     List<String> dummyElementKeys = new ArrayList<String>();
     // We need to make this a size one so that the status table knows there's
@@ -300,7 +295,7 @@ class TabularView extends View {
         dummyElementKeys, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_HEADER_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.STATUS_HEADER, fontSize,
-        elementKeyToColumnProperties, elementKeyToColorRuleGroup);
+        elementKeyToColorRuleGroup);
   }
 
   /**
@@ -338,7 +333,6 @@ class TabularView extends View {
       int defaultForegroundColor,
       int defaultBackgroundColor, int borderColor,
       int[] columnWidths, TableType type, int fontSize,
-      Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
     super(context);
     this.controller = controller;
@@ -367,7 +361,7 @@ class TabularView extends View {
       this.mRowColorRuleGroup = mTable.getStatusColumnRuleGroup();
     }
     rowHeight = fontSize + ROW_HEIGHT_PADDING;
-    highlightedCellNum = -1;
+    highlightedCellInfo = null;
     textPaint = new Paint();
     textPaint.setAntiAlias(true);
     textPaint.setTextSize(fontSize);
@@ -418,18 +412,25 @@ class TabularView extends View {
     return totalWidth;
   }
 
-  public int getCellNumber(int x, int y) {
+  public CellInfo getCellInfo(int x, int y) {
     int row = y / (rowHeight + BORDER_WIDTH);
     int col = -1;
     while (x > 0) {
       col++;
       x -= columnWidths[col] + BORDER_WIDTH;
     }
-    return (row * columnWidths.length) + col;
+    if ( col >= columnWidths.length ) {
+      col = columnWidths.length - 1;
+    }
+    if ( row >= mNumberOfRows ) {
+      row = mNumberOfRows - 1;
+    }
+    CellInfo info = new CellInfo( mElementKeys.get(col), col, row);
+    return info;
   }
 
-  public void highlight(int num) {
-    highlightedCellNum = num;
+  public void highlight(CellInfo highlightedCellInfo) {
+    this.highlightedCellInfo = highlightedCellInfo;
     invalidate();
   }
 
@@ -669,17 +670,18 @@ class TabularView extends View {
     // drawing the cells
     int y = topTopmost;
     for (int i = topmost; i < bottommost + 1; i++) {
+      Row theRow = this.mTable.getRowAtIndex(i);
       // we only need to fetch this once for a given row...
       ColorGuide rowGuide = null;
       if ( this.type == TableType.STATUS_DATA ||
            this.type == TableType.INDEX_DATA ||
            this.type == TableType.MAIN_DATA ) {
         // these are the only cases (below) where this value is used...
-        rowGuide = mRowColorRuleGroup.getColorGuide(
-            this.mTable.getRowAtIndex(i));
+        rowGuide = mRowColorRuleGroup.getColorGuide(theRow);
       }
 
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
+
         String datum;
         if (this.type == TableType.STATUS_DATA ||
             this.type == TableType.STATUS_HEADER) {
@@ -690,8 +692,9 @@ class TabularView extends View {
             this.mTable.getHeader(userDataIndex[j]);
         } else if (this.type == TableType.INDEX_DATA ||
                    this.type == TableType.MAIN_DATA) {
-          datum =
-              this.mTable.getDisplayTextOfData(this.getContext(), i, userDataIndex[j], true);
+
+          ColumnProperties cp = this.mTable.getColumnByIndex(userDataIndex[j]);
+          datum = theRow.getDisplayTextOfData(this.getContext(), cp.getElementKey(), true);
         } else {
           Log.e(TAG, "unrecognized table type: " + this.type.name());
           datum = null;
@@ -709,8 +712,7 @@ class TabularView extends View {
             backgroundColor = rowGuide.getBackground();
           }
           ColorGuide columnGuide = mColumnColorRules.get(
-              this.mElementKeys.get(j)).getColorGuide(
-                  this.mTable.getRowAtIndex(i));
+              this.mElementKeys.get(j)).getColorGuide(theRow);
           // Override the role rule if a column rule matched.
           if (columnGuide != null) {
             foregroundColor = columnGuide.getForeground();
@@ -730,11 +732,11 @@ class TabularView extends View {
       /** adding to try and fix draw **/
     }
     // highlighting cell (if necessary)
-    if (highlightedCellNum != -1) {
-      int x = highlightedCellNum % this.mElementKeys.size();
-      int rowNum = highlightedCellNum / this.mElementKeys.size();
-      highlightCell(canvas, xs[x], ((rowNum + 1) * BORDER_WIDTH) +
-          (rowNum * rowHeight), columnWidths[x]);
+    if (highlightedCellInfo != null) {
+      int rowNum = highlightedCellInfo.rowId;
+      int colPos = highlightedCellInfo.colPos;
+      highlightCell(canvas, xs[colPos], ((rowNum + 1) * BORDER_WIDTH) +
+          (rowNum * rowHeight), columnWidths[colPos]);
     }
   }
 

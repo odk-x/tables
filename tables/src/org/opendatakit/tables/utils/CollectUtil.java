@@ -1057,7 +1057,7 @@ public class CollectUtil {
    * when the activity returns.
    * <p>
    * Launches with the return code
-   * {@link Controller#RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE}.
+   * {@link Constants.RequestCodes.ADD_ROW_COLLECT}.
    *
    * @param activityToAwaitReturn
    * @param collectAddIntent

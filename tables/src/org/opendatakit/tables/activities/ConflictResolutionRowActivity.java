@@ -122,8 +122,9 @@ public class ConflictResolutionRowActivity extends ListActivity
     // We'll present them in user-defined order, as they may have set up the
     // useful information together.
     this.mRowNumber = this.mLocal.getRowNumFromId(mRowId);
-    Row row = this.mServer.getRowAtIndex(mRowNumber);
-    this.mServerRowETag = row.getDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG);
+    Row localRow = this.mLocal.getRowAtIndex(mRowNumber);
+    Row serverRow = this.mServer.getRowAtIndex(mRowNumber);
+    this.mServerRowETag = serverRow.getDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG);
     TableProperties tp = mConflictTable.getLocalTable().getTableProperties();
     List<String> columnOrder = tp.getPersistedColumns();
     // This will be the number of rows down we are in the adapter. Each
@@ -141,10 +142,8 @@ public class ConflictResolutionRowActivity extends ListActivity
       Section newSection = new Section(adapterOffset, columnDisplayName);
       ++adapterOffset;
       sections.add(newSection);
-      String localValue = mLocal.getDisplayTextOfData(this, mRowNumber,
-          elementKey, true);
-      String serverValue = mServer.getDisplayTextOfData(this, mRowNumber,
-          elementKey, true);
+      String localValue = localRow.getDisplayTextOfData(this, elementKey, true);
+      String serverValue = serverRow.getDisplayTextOfData(this, elementKey, true);
       if ((localValue == null && serverValue == null) ||
     	  (localValue != null && localValue.equals(serverValue))) {
         // TODO: this doesn't compare actual equality of blobs if their display
