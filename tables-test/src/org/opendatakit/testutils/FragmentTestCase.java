@@ -40,7 +40,7 @@ public class FragmentTestCase<T extends Fragment> {
   public void startFragment(T fragment) {
     this.fragment = fragment;
     controller = Robolectric.buildActivity(Activity.class);
-    activity = controller.create().start().visible().get();
+    activity = (Activity) controller.create().start().visible().get();
     FragmentManager fragmentManager = activity.getFragmentManager();
     fragmentManager.beginTransaction()
         .add(this.fragment, FRAGMENT_TAG).commit();

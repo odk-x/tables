@@ -141,7 +141,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * {@link ContextMenu}, so must be called in or after
    * {@link TablePreferenceFragment#onActivityCreated(Bundle)}.
    */
-  private void initializeAllPreferences() {
+  protected void initializeAllPreferences() {
     this.initializeDisplayNamePreference();
     this.initializeTableIdPreference();
     this.initializeDefaultForm();
