@@ -387,7 +387,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   }
 
   @Override
-  public void openContextMenu(View view) {
+  public void openHeaderContextMenu(View view) {
     this.getActivity().openContextMenu(view);
   }
 

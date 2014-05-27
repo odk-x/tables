@@ -190,7 +190,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       @Override
       protected void takeLongClickAction(CellInfo cellId, int rawX, int rawY) {
         lastLongClickedCellId = cellId;
-        controller.openContextMenu(mainHeader);
+        controller.openHeaderContextMenu(mainHeader);
       }
 
       /**
@@ -239,7 +239,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       @Override
       protected void takeLongClickAction(CellInfo cellId, int rawX, int rawY) {
         lastLongClickedCellId = cellId;
-        controller.openContextMenu(indexHeader);
+        controller.openHeaderContextMenu(indexHeader);
       }
 
       /**
@@ -548,7 +548,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     public void dataCellDoubleClicked(CellInfo cellId, int rawX, int rawY);
 
-    public void openContextMenu(View view);
+    public void openHeaderContextMenu(View view);
 
     public void prepDataCellOccm(ContextMenu menu, CellInfo cellId);
 
