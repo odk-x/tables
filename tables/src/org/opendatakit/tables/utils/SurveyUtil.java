@@ -33,7 +33,7 @@ public class SurveyUtil {
   public static final String KVS_PARTITION = "SurveyUtil";
   public static final String KVS_ASPECT = "default";
   public static final String KEY_FORM_ID = "SurveyUtil.formId";
-  
+
   public static final String URL_ENCODED_SPACE = "%20";
 
   /**
@@ -54,7 +54,7 @@ public class SurveyUtil {
   /** Survey's package name as declared in the manifest. */
   private static final String SURVEY_PACKAGE_NAME = "org.opendatakit.survey.android";
   /** The full path to Survey's main menu activity. */
-  private static final String SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME = "org.opendatakit.survey.android.activities.MainMenuActivity";
+  private static final String SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME = "org.opendatakit.survey.android.activities.SplashScreenActivity";
 
   /**
    * The package name of Survey's FormProvider. Ends with the FormProvider
@@ -316,7 +316,7 @@ public class SurveyUtil {
         surveyAddIntent,
         Constants.RequestCodes.ADD_ROW_SURVEY);
   }
-  
+
   /**
    * Add a row with Survey. Convenience method for calling
    * {@link #getIntentForOdkSurveyAddRow(Context, TableProperties, String,
@@ -343,7 +343,7 @@ public class SurveyUtil {
         prepopulatedValues);
     SurveyUtil.launchSurveyToAddRow(activity, addRowIntent, tableProperties);
   }
-  
+
   /**
    * Launch survey to edit a row. Convenience method for calling
    * {@link #getIntentForOdkSurveyEditRow(Context, TableProperties, String,
