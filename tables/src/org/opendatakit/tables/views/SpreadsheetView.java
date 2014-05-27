@@ -374,7 +374,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       headerTable = TabularView.getIndexHeaderTable(context, this, table, elementKeysToDisplay,
           colWidths, fontSize, this.mElementKeyToColorRuleGroup);
     } else {
-      int width = (indexElementKey == null) ? table.getWidth() : table.getWidth() - 1;
+      int width = (indexElementKey == null || indexElementKey.length() == 0) ? table.getWidth() : table.getWidth() - 1;
       colWidths = new int[width];
       int addIndex = 0;
       for (int i = 0; i < table.getWidth(); i++) {

@@ -91,7 +91,7 @@ public class SpreadsheetUserTable {
   }
 
   boolean isIndexed() {
-    return getIndexedColumnElementKey() != null;
+    return getIndexedColumnElementKey() != null && getIndexedColumnElementKey().length() != 0;
   }
 
   /////////////////////////////////////
