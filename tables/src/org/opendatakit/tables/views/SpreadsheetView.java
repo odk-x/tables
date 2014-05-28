@@ -165,12 +165,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       @Override
       protected void takeLongClickAction(CellInfo cellId, int rawX, int rawY) {
         lastLongClickedCellId = cellId;
-        controller.dataCellLongClicked(cellId, rawX, rawY);
+        controller.openDataContextMenu(mainData);
       }
 
       @Override
       protected void takeDoubleClickAction(CellInfo cellId, int rawX, int rawY) {
-        controller.dataCellDoubleClicked(cellId, rawX, rawY);
+        takeLongClickAction(cellId, rawX, rawY);
       }
     };
     mainHeaderCellClickListener = new CellTouchListener() {
@@ -216,12 +216,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       @Override
       protected void takeLongClickAction(CellInfo cellId, int rawX, int rawY) {
         lastLongClickedCellId = cellId;
-        controller.dataCellLongClicked(cellId, rawX, rawY);
+        controller.openDataContextMenu(indexData);
       }
 
       @Override
       protected void takeDoubleClickAction(CellInfo cellId, int rawX, int rawY) {
-        controller.dataCellDoubleClicked(cellId, rawX, rawY);
+        takeLongClickAction(cellId, rawX, rawY);
       }
     };
     indexHeaderCellClickListener = new CellTouchListener() {
@@ -542,18 +542,15 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     public void headerCellClicked(CellInfo cellId);
 
-    public void dataCellClicked(CellInfo cellId);
-
-    public void dataCellLongClicked(CellInfo cellId, int rawX, int rawY);
-
-    public void dataCellDoubleClicked(CellInfo cellId, int rawX, int rawY);
+    public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId);
 
     public void openHeaderContextMenu(View view);
 
+    public void dataCellClicked(CellInfo cellId);
+
     public void prepDataCellOccm(ContextMenu menu, CellInfo cellId);
 
-    public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId);
-
+    public void openDataContextMenu(View view);
   }
 
   /**
