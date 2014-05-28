@@ -50,7 +50,6 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.common.android.utils.DataUtil;
-import org.opendatakit.tables.views.SpreadsheetView.Controller;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
