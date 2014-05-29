@@ -11,7 +11,6 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 
 import android.content.Context;
-import android.util.Log;
 
 /**
  * Wrapper class for UserTable that presents the table in the way that the
@@ -21,6 +20,7 @@ import android.util.Log;
  *
  */
 public class SpreadsheetUserTable {
+  @SuppressWarnings("unused")
   private static final String TAG = "SpreadsheetUserTable";
 
   private final String[] header;
@@ -83,31 +83,15 @@ public class SpreadsheetUserTable {
   }
 
   /////////////////////////////////////////////////////////////////////////////
-  // Things needing to change....
+  // Whether or not we have a frozen column...
 
-  /**
-   * Get the integer offset of the indexed column.
-   * @return
-   * TODO: remove?
-   */
-  public int retrieveIndexedColumnOffset() {
-    if ( table == null ) {
-      return -1;
-    }
 
-    String key = this.table.getTableProperties().getIndexColumn();
-    if ( key == null ||
-         key.length() == 0 ||
-         table == null) {
-      return -1;
-    }
-    Integer i = elementKeyToSpreadsheetIndex.get(key);
-    if ( i == null ) return -1;
-    return i;
+  public String getIndexedColumnElementKey() {
+    return this.table.getTableProperties().getIndexColumn();
   }
 
   boolean isIndexed() {
-    return retrieveIndexedColumnOffset() != -1;
+    return getIndexedColumnElementKey() != null && getIndexedColumnElementKey().length() != 0;
   }
 
   /////////////////////////////////////
@@ -125,15 +109,13 @@ public class SpreadsheetUserTable {
     public String value;
   };
 
-  public SpreadsheetCell getSpreadsheetCell(Context context, int cellNum) {
-    int rowNum = (cellNum / getWidth());
-    int colNum = (cellNum % getWidth());
+  public SpreadsheetCell getSpreadsheetCell(Context context, CellInfo cellInfo) {
     SpreadsheetCell cell = new SpreadsheetCell();
-    cell.rowNum = rowNum;
-    cell.row = getRowAtIndex(rowNum);
-    cell.elementKey = spreadsheetIndexToElementKey[colNum];
-    cell.displayText = this.getDisplayTextOfData(context, rowNum, colNum, true);
-    cell.value = cell.row.getDataOrMetadataByElementKey(cell.elementKey);
+    cell.rowNum = cellInfo.rowId;
+    cell.row = getRowAtIndex(cellInfo.rowId);
+    cell.elementKey = cellInfo.elementKey;
+    cell.displayText = cell.row.getDisplayTextOfData(context, cellInfo.elementKey, true);
+    cell.value = cell.row.getDataOrMetadataByElementKey(cellInfo.elementKey);
     return cell;
   }
 
@@ -143,10 +125,6 @@ public class SpreadsheetUserTable {
 
   public ColumnProperties getColumnByElementKey(String elementKey) {
     return table.getTableProperties().getColumnByElementKey(elementKey);
-  }
-
-  public int getRowNum(int cellNum) {
-    return (cellNum / getWidth());
   }
 
   public int getWidth() {
@@ -163,27 +141,5 @@ public class SpreadsheetUserTable {
 
   String getHeader(int colNum) {
     return header[colNum];
-  }
-
-  public String getDisplayTextOfData(Context context, int rowNum, int colNum, boolean showErrorText) {
-    String elementKey = spreadsheetIndexToElementKey[colNum];
-    return table.getDisplayTextOfData(context, rowNum, elementKey, showErrorText);
-  }
-
-  public String getDisplayTextOfData(Context context, int cellNum) {
-    int rowNum = cellNum / getWidth();
-    int colNum = cellNum % getWidth();
-    return table.getDisplayTextOfData(context, rowNum, spreadsheetIndexToElementKey[colNum], true);
-  }
-
-  public String getData(int cellNum) {
-    int rowNum = cellNum / getWidth();
-    int colNum = cellNum % getWidth();
-    Row row = table.getRowAtIndex(rowNum);
-    if ( row == null ) {
-      Log.e(TAG, "No row at index " + rowNum);
-      return null;
-    }
-    return row.getDataOrMetadataByElementKey(spreadsheetIndexToElementKey[colNum]);
   }
 }

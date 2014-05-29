@@ -242,9 +242,13 @@ public class TableManagerFragment extends ListFragment {
    */
   void setPropertiesList(List<TableProperties> list) {
     // We can't change the reference, which is held by the adapter.
-    this.getPropertiesList().clear();
+    List<TableProperties> adapterList = this.getPropertiesList();
+    adapterList.clear();
     for (TableProperties tp : list) {
-      this.getPropertiesList().add(tp);
+      adapterList.add(tp);
+    }
+    if ( mTpAdapter != null ) {
+      mTpAdapter.notifyDataSetChanged();
     }
   }
 

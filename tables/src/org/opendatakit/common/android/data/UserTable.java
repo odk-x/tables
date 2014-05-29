@@ -259,62 +259,6 @@ public class UserTable {
     return mSqlOrderByDirection;
   }
 
-  public String getDisplayTextOfData(Context context, int rowNum, String elementKey, boolean showErrorText) {
-    // TODO: share processing with CollectUtil.writeRowDataToBeEdited(...)
-    Row row = getRowAtIndex(rowNum);
-    if ( row == null ) {
-      return null;
-    }
-    String raw = row.getDataOrMetadataByElementKey(elementKey);
-    if ( raw == null ) {
-      return null;
-    }
-    ColumnProperties cp = mTp.getColumnByElementKey(elementKey);
-    ColumnType type = cp.getColumnType();
-    if ( type == ColumnType.AUDIOURI ||
-         type == ColumnType.IMAGEURI ||
-         type == ColumnType.MIMEURI ||
-         type == ColumnType.VIDEOURI ) {
-      try {
-        if (raw.length() == 0 ) {
-          return raw;
-        }
-        @SuppressWarnings("rawtypes")
-        Map m = ODKFileUtils.mapper.readValue(raw, Map.class);
-        String uriFragment = (String) m.get("uriFragment");
-        File f = ODKFileUtils.getAsFile(mTp.getAppName(), uriFragment);
-        return f.getName();
-      } catch (JsonParseException e) {
-        e.printStackTrace();
-      } catch (JsonMappingException e) {
-        e.printStackTrace();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      return raw;
-    } else if ( type == ColumnType.DATE ) {
-      if (raw.length() == 0 ) {
-        return raw;
-      }
-      DateTime d = du.parseDateTimeFromDb(raw);
-      return dateFormatter.print(d);
-    } else if ( type == ColumnType.DATETIME ) {
-      if (raw.length() == 0 ) {
-        return raw;
-      }
-      DateTime d = du.parseDateTimeFromDb(raw);
-      return dateTimeFormatter.print(d);
-    } else if ( type == ColumnType.TIME ) {
-      if (raw.length() == 0 ) {
-        return raw;
-      }
-      DateTime d = du.parseDateTimeFromDb(raw);
-      return timeFormatter.print(d);
-    } else {
-      return raw;
-    }
-  }
-
   public TableProperties getTableProperties() {
     return mTp;
   }
@@ -451,6 +395,61 @@ public class UserTable {
         }
       }
       return result;
+    }
+
+    public String getDisplayTextOfData(Context context, String elementKey, boolean showErrorText) {
+      // TODO: share processing with CollectUtil.writeRowDataToBeEdited(...)
+      String raw = getDataOrMetadataByElementKey(elementKey);
+      if ( raw == null ) {
+        return null;
+      }
+      ColumnProperties cp = mTp.getColumnByElementKey(elementKey);
+      if ( cp == null ) {
+        return raw;
+      }
+      ColumnType type = cp.getColumnType();
+      if ( type == ColumnType.AUDIOURI ||
+           type == ColumnType.IMAGEURI ||
+           type == ColumnType.MIMEURI ||
+           type == ColumnType.VIDEOURI ) {
+        try {
+          if (raw.length() == 0 ) {
+            return raw;
+          }
+          @SuppressWarnings("rawtypes")
+          Map m = ODKFileUtils.mapper.readValue(raw, Map.class);
+          String uriFragment = (String) m.get("uriFragment");
+          File f = ODKFileUtils.getAsFile(mTp.getAppName(), uriFragment);
+          return f.getName();
+        } catch (JsonParseException e) {
+          e.printStackTrace();
+        } catch (JsonMappingException e) {
+          e.printStackTrace();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        return raw;
+      } else if ( type == ColumnType.DATE ) {
+        if (raw.length() == 0 ) {
+          return raw;
+        }
+        DateTime d = du.parseDateTimeFromDb(raw);
+        return dateFormatter.print(d);
+      } else if ( type == ColumnType.DATETIME ) {
+        if (raw.length() == 0 ) {
+          return raw;
+        }
+        DateTime d = du.parseDateTimeFromDb(raw);
+        return dateTimeFormatter.print(d);
+      } else if ( type == ColumnType.TIME ) {
+        if (raw.length() == 0 ) {
+          return raw;
+        }
+        DateTime d = du.parseDateTimeFromDb(raw);
+        return timeFormatter.print(d);
+      } else {
+        return raw;
+      }
     }
 
     @Override

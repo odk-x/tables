@@ -4,7 +4,6 @@ import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.tasks.InitializeTask;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;

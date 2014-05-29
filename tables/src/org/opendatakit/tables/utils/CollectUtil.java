@@ -50,7 +50,6 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.common.android.utils.DataUtil;
-import org.opendatakit.tables.views.SpreadsheetView.Controller;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
@@ -1057,7 +1056,7 @@ public class CollectUtil {
    * when the activity returns.
    * <p>
    * Launches with the return code
-   * {@link Controller#RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE}.
+   * {@link Constants.RequestCodes.ADD_ROW_COLLECT}.
    *
    * @param activityToAwaitReturn
    * @param collectAddIntent
