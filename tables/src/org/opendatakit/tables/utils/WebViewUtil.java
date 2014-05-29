@@ -34,6 +34,7 @@ import org.opendatakit.common.android.utilities.UrlUtils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
@@ -82,10 +83,13 @@ public class WebViewUtil {
    * includes, e.g., having attached a logger and enabling javascript.
    * @return
    */
-  @SuppressLint("SetJavaScriptEnabled")
+  @SuppressLint("NewApi")
   public static WebView getODKCompliantWebView(Context context) {
     WebView result = new WebView(context);
     final String webViewTag = "ODKCompliantWebView";
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      WebView.setWebContentsDebuggingEnabled(true);
+    }
     result.getSettings().setJavaScriptEnabled(true);
     result.setWebViewClient(new WebViewClient() {
 

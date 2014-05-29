@@ -8,6 +8,10 @@
 	<classpathentry kind="lib" path="libs/mockito-all-1.9.5.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ODK Tables"/>
 	<classpathentry kind="lib" path="libs/android.19.jar" sourcepath="/usr/local/var/lib/android-sdk/sources/android-19"/>
-	<classpathentry kind="lib" path="/Users/sudars/.m2/repository/org/robolectric/robolectric/2.4-SNAPSHOT/robolectric-2.4-SNAPSHOT-jar-with-dependencies.jar"/>
+	<classpathentry kind="lib" path="libs/robolectric-2.3-20140430.042024-167-jar-with-dependencies.jar" sourcepath="libs/robolectric-2.3-20140430.042024-167-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/opendatakit.tables-test/libs/robolectric-2.3-20140430.042024-167-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
