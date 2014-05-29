@@ -417,6 +417,9 @@ class TabularView extends View {
     int col = -1;
     while (x > 0) {
       col++;
+      if ( col >= columnWidths.length ) {
+        break;
+      }
       x -= columnWidths[col] + BORDER_WIDTH;
     }
     if ( col >= columnWidths.length ) {

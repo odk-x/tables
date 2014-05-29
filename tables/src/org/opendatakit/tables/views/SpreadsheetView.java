@@ -97,7 +97,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   private View.OnTouchListener indexDataCellClickListener;
   private View.OnTouchListener indexHeaderCellClickListener;
 
-  private CellInfo lastLongClickedCellId;
+  private CellInfo lastHighlightedCellId;
 
   public SpreadsheetView(Context context, Controller controller, SpreadsheetUserTable table) {
     super(context);
@@ -154,23 +154,23 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
         if (table.isIndexed()) {
           indexData.highlight(null);
         }
+        lastHighlightedCellId = cellId;
         mainData.highlight(cellId);
       }
 
       @Override
-      protected void takeClickAction(CellInfo cellId) {
-        controller.dataCellClicked(cellId);
+      protected void takeClickAction() {
+        controller.dataCellClicked(lastHighlightedCellId);
       }
 
       @Override
-      protected void takeLongClickAction(CellInfo cellId, int rawX, int rawY) {
-        lastLongClickedCellId = cellId;
+      protected void takeLongClickAction(int rawX, int rawY) {
         controller.openDataContextMenu(mainData);
       }
 
       @Override
-      protected void takeDoubleClickAction(CellInfo cellId, int rawX, int rawY) {
-        takeLongClickAction(cellId, rawX, rawY);
+      protected void takeDoubleClickAction(int rawX, int rawY) {
+        takeLongClickAction(rawX, rawY);
       }
     };
     mainHeaderCellClickListener = new CellTouchListener() {
@@ -179,17 +179,17 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
         if (table.isIndexed()) {
           indexData.highlight(null);
         }
+        lastHighlightedCellId = cellId;
         mainData.highlight(null);
       }
 
       @Override
-      protected void takeClickAction(CellInfo cellId) {
-        controller.headerCellClicked(cellId);
+      protected void takeClickAction() {
+        controller.headerCellClicked(lastHighlightedCellId);
       }
 
       @Override
-      protected void takeLongClickAction(CellInfo cellId, int rawX, int rawY) {
-        lastLongClickedCellId = cellId;
+      protected void takeLongClickAction(int rawX, int rawY) {
         controller.openHeaderContextMenu(mainHeader);
       }
 
@@ -197,31 +197,31 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
        * Make this do the same thing as a long click.
        */
       @Override
-      protected void takeDoubleClickAction(CellInfo cellId, int rawX, int rawY) {
-        takeLongClickAction(cellId, rawX, rawY);
+      protected void takeDoubleClickAction(int rawX, int rawY) {
+        takeLongClickAction(rawX, rawY);
       }
     };
     indexDataCellClickListener = new CellTouchListener() {
       @Override
       protected void takeDownAction(CellInfo cellId) {
         mainData.highlight(null);
+        lastHighlightedCellId = cellId;
         indexData.highlight(cellId);
       }
 
       @Override
-      protected void takeClickAction(CellInfo cellId) {
-        controller.dataCellClicked(cellId);
+      protected void takeClickAction() {
+        controller.dataCellClicked(lastHighlightedCellId);
       }
 
       @Override
-      protected void takeLongClickAction(CellInfo cellId, int rawX, int rawY) {
-        lastLongClickedCellId = cellId;
+      protected void takeLongClickAction(int rawX, int rawY) {
         controller.openDataContextMenu(indexData);
       }
 
       @Override
-      protected void takeDoubleClickAction(CellInfo cellId, int rawX, int rawY) {
-        takeLongClickAction(cellId, rawX, rawY);
+      protected void takeDoubleClickAction(int rawX, int rawY) {
+        takeLongClickAction(rawX, rawY);
       }
     };
     indexHeaderCellClickListener = new CellTouchListener() {
@@ -229,16 +229,16 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       protected void takeDownAction(CellInfo cellId) {
         mainData.highlight(null);
         indexData.highlight(null);
+        lastHighlightedCellId = cellId;
       }
 
       @Override
-      protected void takeClickAction(CellInfo cellId) {
-        controller.headerCellClicked(cellId);
+      protected void takeClickAction() {
+        controller.headerCellClicked(lastHighlightedCellId);
       }
 
       @Override
-      protected void takeLongClickAction(CellInfo cellId, int rawX, int rawY) {
-        lastLongClickedCellId = cellId;
+      protected void takeLongClickAction(int rawX, int rawY) {
         controller.openHeaderContextMenu(indexHeader);
       }
 
@@ -246,8 +246,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
        * Do the same thing as a long click.
        */
       @Override
-      protected void takeDoubleClickAction(CellInfo cellId, int rawX, int rawY) {
-        takeLongClickAction(cellId, rawX, rawY);
+      protected void takeDoubleClickAction(int rawX, int rawY) {
+        takeLongClickAction(rawX, rawY);
       }
     };
   }
@@ -474,17 +474,17 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
   @Override
   public void onCreateMainDataContextMenu(ContextMenu menu) {
-    controller.prepDataCellOccm(menu, lastLongClickedCellId);
+    controller.prepDataCellOccm(menu, lastHighlightedCellId);
   }
 
   @Override
   public void onCreateIndexDataContextMenu(ContextMenu menu) {
-    controller.prepDataCellOccm(menu, lastLongClickedCellId);
+    controller.prepDataCellOccm(menu, lastHighlightedCellId);
   }
 
   @Override
   public void onCreateHeaderContextMenu(ContextMenu menu) {
-    controller.prepHeaderCellOccm(menu, lastLongClickedCellId);
+    controller.prepHeaderCellOccm(menu, lastHighlightedCellId);
   }
 
   private abstract class CellTouchListener implements View.OnTouchListener {
@@ -510,14 +510,14 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       long duration = event.getEventTime() - event.getDownTime();
       if (event.getAction() == MotionEvent.ACTION_UP && duration >= MIN_CLICK_DURATION) {
         if (event.getEventTime() - lastDownTime < MAX_DOUBLE_CLICK_TIME) {
-          takeDoubleClickAction(cellId, (Float.valueOf(event.getRawX())).intValue(),
+          takeDoubleClickAction((Float.valueOf(event.getRawX())).intValue(),
               (Float.valueOf(event.getRawY())).intValue());
         } else if (duration < MIN_LONG_CLICK_DURATION) {
-          takeClickAction(cellId);
+          takeClickAction();
         } else {
           int rawX = (Float.valueOf(event.getRawX())).intValue();
           int rawY = (Float.valueOf(event.getRawY())).intValue();
-          takeLongClickAction(cellId, rawX, rawY);
+          takeLongClickAction(rawX, rawY);
         }
         lastDownTime = event.getDownTime();
         return true;
@@ -531,11 +531,11 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     protected abstract void takeDownAction(CellInfo cellId);
 
-    protected abstract void takeClickAction(CellInfo cellId);
+    protected abstract void takeClickAction();
 
-    protected abstract void takeLongClickAction(CellInfo cellId, int rawX, int rawY);
+    protected abstract void takeLongClickAction(int rawX, int rawY);
 
-    protected abstract void takeDoubleClickAction(CellInfo cellId, int rawX, int rawY);
+    protected abstract void takeDoubleClickAction(int rawX, int rawY);
   }
 
   public interface Controller {

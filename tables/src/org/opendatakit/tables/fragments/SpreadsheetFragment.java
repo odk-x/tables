@@ -447,10 +447,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   @Override
   public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo) {
     this.mLastDataCellMenued = cellInfo;
-    if (cellInfo.elementKey.equals(this.spreadsheetTable.getIndexedColumnElementKey())) {
-      // should we not enable this for index columns?
-      return;
-    }
     ColumnProperties cp = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
     String columnName = cp.getLocalizedDisplayName();
     menu.setHeaderTitle(columnName);
