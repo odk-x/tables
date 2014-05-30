@@ -518,6 +518,7 @@ public class DbTable {
      * Leave all 'deleting' rows in 'deleting' state.
      * Leave all 'updating' rows in 'updating' state.
      * Reset all 'rest' rows to 'insert' to ensure they are sync'd to the server.
+     * Reset all 'rest_pending_files' rows to 'insert' to ensure they are sync'd to the server.
      */
     public void changeDataRowsToInsertingState() {
 
@@ -565,6 +566,12 @@ public class DbTable {
           SyncState.rest.name()
       };
 
+      String sqlRestPendingFiles = sqlRest;
+      String argsRestPendingFiles[] = {
+          SyncState.inserting.name(),
+          SyncState.rest_pending_files.name()
+      };
+
       SQLiteDatabase db = tp.getWritableDatabase();
       try {
         db.beginTransaction();
@@ -572,6 +579,7 @@ public class DbTable {
         db.execSQL(sqlConflictingLocalDeleting, argsConflictingLocalDeleting);
         db.execSQL(sqlConflictingLocalUpdating, argsConflictingLocalUpdating);
         db.execSQL(sqlRest, argsRest);
+        db.execSQL(sqlRestPendingFiles, argsRestPendingFiles);
         db.setTransactionSuccessful();
       } finally {
         db.endTransaction();
