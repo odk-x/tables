@@ -314,6 +314,45 @@ public class TableDisplayActivityTest {
     this.activity.recreate();
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.MAP);
   }
+  
+  @Test
+  public void checkedMenuItemChangesToListFromSpreadsheet() {
+    this.setupActivityForMenuTest(ViewFragmentType.SPREADSHEET);
+    // make sure it's correct to begin with.
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.SPREADSHEET);
+    this.activity.showListFragment();
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.LIST);
+  }
+  
+  @Test
+  public void checkedMenuItemChangesToMapFromSpreadsheet() {
+    this.setupActivityForMenuTest(ViewFragmentType.SPREADSHEET);
+    // make sure it's correct to begin with.
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.SPREADSHEET);
+    this.activity.showMapFragment();
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.MAP);
+  }
+  
+  @Test
+  public void checkedMenuItemChangesToGraphFromSpreadsheet() {
+    this.setupActivityForMenuTest(ViewFragmentType.SPREADSHEET);
+    // make sure it's correct to begin with.
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.SPREADSHEET);
+    this.activity.showGraphFragment();
+    this.assertOptionsMenuCorrectForTopLevelView(
+        ViewFragmentType.GRAPH_MANAGER);
+  }
+  
+  @Test
+  public void checkedMenuItemChangesToSpreadsheetFromList() {
+    this.setupActivityForMenuTest(ViewFragmentType.LIST);
+    // make sure it's correct to begin with.
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.LIST);
+    this.activity.showSpreadsheetFragment();
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.SPREADSHEET);
+  }
+  
+  
 
   /**
    * Asserts that the options menu is correct for a top level view like list or

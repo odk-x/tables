@@ -401,6 +401,7 @@ public class TableDisplayActivity extends AbsTableActivity
    */
   protected void setCurrentFragmentType(ViewFragmentType currentType) {
     this.mCurrentFragmentType = currentType;
+    this.invalidateOptionsMenu();
   }
 
   /**
