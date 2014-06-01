@@ -11,3 +11,4 @@ gen/
 db\.sql
 perftests/gen/org/opendatakit/tables/test/BuildConfig\.java
 perftests/project\.properties
+local.properties
