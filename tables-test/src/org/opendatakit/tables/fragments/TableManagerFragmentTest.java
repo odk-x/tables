@@ -3,6 +3,8 @@ package org.opendatakit.tables.fragments;
 import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.robolectric.Robolectric.shadowOf;
 
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestContextMenu;
@@ -37,8 +40,10 @@ public class TableManagerFragmentTest {
   String mockTableName2 = "beta";
   String mockTableId1 = "firstTableId";
   String mockTableId2 = "secondTableId";
+  String mockTableName3 = "gamma";
+  String mockTableId3 = "thirdTableId";
 
-  private TableManagerFragment fragment;
+  private TableManagerFragmentStub fragment;
   private Activity parentActivity;
 
   @After
@@ -50,8 +55,8 @@ public class TableManagerFragmentTest {
     this.fragment = getSpy(new ArrayList<TableProperties>());
     doGlobalSetup();
   }
-
-  public void setupFragmentWithTwoItems() {
+  
+  private List<TableProperties> getMockListWithTwoItems() {
     TableProperties tp1 = mock(TableProperties.class);
     TableProperties tp2 = mock(TableProperties.class);
     when(tp1.getLocalizedDisplayName()).thenReturn(mockTableName1);
@@ -61,6 +66,20 @@ public class TableManagerFragmentTest {
     List<TableProperties> listOfMocks = new ArrayList<TableProperties>();
     listOfMocks.add(tp1);
     listOfMocks.add(tp2);
+    return listOfMocks;
+  }
+  
+  private List<TableProperties> getMockListWithThreeItems() {
+    TableProperties tp3 = mock(TableProperties.class);
+    when(tp3.getLocalizedDisplayName()).thenReturn(mockTableName3);
+    when(tp3.getTableId()).thenReturn(mockTableId3);
+    List<TableProperties> listOfMocks = this.getMockListWithTwoItems();
+    listOfMocks.add(tp3);
+    return listOfMocks;
+  }
+
+  public void setupFragmentWithTwoItems() {
+    List<TableProperties> listOfMocks = this.getMockListWithTwoItems();
     this.fragment = getSpy(listOfMocks);
     doGlobalSetup();
   }
@@ -85,8 +104,8 @@ public class TableManagerFragmentTest {
    * @param toDisplay
    * @return
    */
-  private TableManagerFragment getSpy(List<TableProperties> toDisplay) {
-    TableManagerFragment stub = new TableManagerFragmentStub(toDisplay);
+  private TableManagerFragmentStub getSpy(List<TableProperties> toDisplay) {
+    TableManagerFragmentStub stub = new TableManagerFragmentStub(toDisplay);
     return stub;
   }
 
@@ -168,6 +187,41 @@ public class TableManagerFragmentTest {
     org.fest.assertions.api.Assertions.assertThat(intentComponent)
         .isNotNull()
         .isEqualTo(target);
+  }
+  
+  @Test
+  public void listResetsCorrectlyAfterUpdating() {
+    this.setupFragmentWithTwoItems();
+    // make sure it's ready immediately.
+    org.fest.assertions.api.Assertions.assertThat(
+        this.fragment.getListAdapter().getCount())
+        .isEqualTo(2);
+    org.fest.assertions.api.Assertions.assertThat(
+        this.fragment.getListView().getAdapter().getCount())
+        .isEqualTo(2);
+    List<TableProperties> threeItemList = this.getMockListWithThreeItems();
+    this.fragment.setPropertiesList(threeItemList);
+    org.fest.assertions.api.Assertions.assertThat(
+        this.fragment.getListAdapter().getCount())
+        .isEqualTo(3);
+    org.fest.assertions.api.Assertions.assertThat(
+        this.fragment.getListView().getAdapter().getCount())
+        .isEqualTo(3);
+  }
+  
+  @Test
+  public void tableListIsRefreshedOnReturnFromSync() {
+    this.setupFragmentWithTwoItems();
+    org.fest.assertions.api.Assertions.assertThat(
+        this.fragment.getNumberOfCallsToUpdatePropertiesList())
+        .isEqualTo(1);
+    this.fragment.onActivityResult(
+        Constants.RequestCodes.LAUNCH_SYNC, 
+        Activity.RESULT_OK, 
+        null);
+    org.fest.assertions.api.Assertions.assertThat(
+        this.fragment.getNumberOfCallsToUpdatePropertiesList())
+        .isEqualTo(2);
   }
 
   // TODO: Should probably also test that the context menu creates a dialog,

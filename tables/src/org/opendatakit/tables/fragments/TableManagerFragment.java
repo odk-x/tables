@@ -68,7 +68,7 @@ public class TableManagerFragment extends ListFragment {
           baseActivity,
           DisplayPrefsActivity.class);
       preferenceIntent.putExtras(bundle);
-      baseActivity.startActivityForResult(
+      this.startActivityForResult(
           preferenceIntent,
           Constants.RequestCodes.LAUNCH_DISPLAY_PREFS);
       return true;
@@ -78,7 +78,7 @@ public class TableManagerFragment extends ListFragment {
           baseActivity,
           ImportExportActivity.class);
       importExportIntent.putExtras(bundle);
-      baseActivity.startActivityForResult(
+      this.startActivityForResult(
           importExportIntent,
           Constants.RequestCodes.LAUNCH_IMPORT_EXPORT);
       return true;
@@ -91,7 +91,7 @@ public class TableManagerFragment extends ListFragment {
           "org.opendatakit.sync.activities.SyncActivity"));
       syncIntent.setAction(Intent.ACTION_DEFAULT);
       syncIntent.putExtras(bundle);
-      baseActivity.startActivityForResult(
+      this.startActivityForResult(
           syncIntent,
           Constants.RequestCodes.LAUNCH_SYNC);
       return true;
@@ -117,13 +117,21 @@ public class TableManagerFragment extends ListFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     // call this here because we need a context.
+    this.updateTablePropertiesList();
+    this.registerForContextMenu(getListView());
+  }
+  
+  /**
+   * Refresh the list of {@link TableProperties} that is being displayed by
+   * the fragment.
+   */
+  protected void updateTablePropertiesList() {
     List<TableProperties> newProperties = this.retrieveContentsToDisplay();
     Log.e(TAG, "got newProperties list of size: " + newProperties.size());
     this.setPropertiesList(newProperties);
     this.mTpAdapter = new TablePropertiesAdapter(this.getPropertiesList());
     this.setListAdapter(this.mTpAdapter);
     this.mTpAdapter.notifyDataSetChanged();
-    this.registerForContextMenu(getListView());
   }
 
   @Override
@@ -185,7 +193,7 @@ public class TableManagerFragment extends ListFragment {
         public void onClick(DialogInterface dialog, int whichButton) {
           // treat delete as a local removal -- not a server side deletion
           tpOfSelectedItem.deleteTable();
-          // Now dleete the list.
+          // Now update the list.
           TableManagerFragment.this.setPropertiesList(
               retrieveContentsToDisplay());
         }
@@ -213,7 +221,18 @@ public class TableManagerFragment extends ListFragment {
       return true;
     }
     return false;
-  };
+  }
+  
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    switch (requestCode) {
+    case Constants.RequestCodes.LAUNCH_SYNC:
+      this.updateTablePropertiesList();
+      break;
+    default: 
+      super.onActivityResult(requestCode, resultCode, data);
+    }
+  }
 
   /**
    * Retrieve the contents that will be displayed in the list. This should be
