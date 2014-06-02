@@ -83,11 +83,11 @@ public class WebViewUtil {
    * includes, e.g., having attached a logger and enabling javascript.
    * @return
    */
-  @SuppressLint("NewApi")
+  @SuppressLint({ "NewApi", "SetJavaScriptEnabled" })
   public static WebView getODKCompliantWebView(Context context) {
     WebView result = new WebView(context);
     final String webViewTag = "ODKCompliantWebView";
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+    if (Build.VERSION.SDK_INT >= 19) {
       WebView.setWebContentsDebuggingEnabled(true);
     }
     result.getSettings().setJavaScriptEnabled(true);
