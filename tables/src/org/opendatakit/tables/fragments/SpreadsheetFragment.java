@@ -258,6 +258,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   private void init() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     activity.refreshDataTable();
+    activity.refreshDisplayFragment();
   }
 
   void addOverlay(View overlay, int width, int height, int x, int y) {

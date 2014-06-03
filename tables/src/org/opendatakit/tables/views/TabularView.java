@@ -673,19 +673,21 @@ class TabularView extends View {
     // drawing the cells
     int y = topTopmost;
     for (int i = topmost; i < bottommost + 1; i++) {
-      Row theRow = this.mTable.getRowAtIndex(i);
+      Row theRow = null;
+      
       // we only need to fetch this once for a given row...
       ColorGuide rowGuide = null;
       if ( this.type == TableType.STATUS_DATA ||
            this.type == TableType.INDEX_DATA ||
            this.type == TableType.MAIN_DATA ) {
         // these are the only cases (below) where this value is used...
+        theRow = this.mTable.getRowAtIndex(i);
         rowGuide = mRowColorRuleGroup.getColorGuide(theRow);
       }
 
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
 
-        String datum;
+        String datum = null;
         if (this.type == TableType.STATUS_DATA ||
             this.type == TableType.STATUS_HEADER) {
           datum = DEFAULT_STATUS_COLUMN_VALUE;
@@ -697,7 +699,7 @@ class TabularView extends View {
                    this.type == TableType.MAIN_DATA) {
 
           ColumnProperties cp = this.mTable.getColumnByIndex(userDataIndex[j]);
-          datum = theRow.getDisplayTextOfData(this.getContext(), cp.getElementKey(), true);
+          datum = theRow.getDisplayTextOfData(this.getContext(), cp.getElementKey(), true);          
         } else {
           Log.e(TAG, "unrecognized table type: " + this.type.name());
           datum = null;

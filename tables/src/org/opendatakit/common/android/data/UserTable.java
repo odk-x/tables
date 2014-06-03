@@ -215,7 +215,6 @@ public class UserTable {
   }
 
   public Row getRowAtIndex(int index) {
-    Log.e(TAG, "table display name is: " + this.mTp.getTableId());
     return this.mRows.get(index);
   }
 

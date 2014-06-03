@@ -89,7 +89,7 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   }
   
   @Override
-  protected void refreshDisplayFragment() {
+  public void refreshDisplayFragment() {
     if (BUILD_DISPLAY_FRAGMENT) {
       super.refreshDisplayFragment();
     }
