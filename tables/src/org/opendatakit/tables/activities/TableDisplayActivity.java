@@ -22,6 +22,7 @@ import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -86,6 +87,12 @@ public class TableDisplayActivity extends AbsTableActivity
         this.retrieveFragmentTypeToDisplay(savedInstanceState);
     Log.i(TAG, "[onRestoreInstanceState] current fragment type: " +
         this.mCurrentFragmentType);
+  }
+  
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    Log.d(TAG, "[onDestroy]");
   }
 
   @Override
@@ -552,19 +559,76 @@ public class TableDisplayActivity extends AbsTableActivity
     this.setCurrentFragmentType(ViewFragmentType.SPREADSHEET);
     this.updateChildViewVisibility(ViewFragmentType.SPREADSHEET);
     FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    // Hide all the other fragments.
+    this.hideAllOtherViewFragments(
+        ViewFragmentType.SPREADSHEET,
+        fragmentTransaction);
     // Try to retrieve one already there.
     SpreadsheetFragment spreadsheetFragment = (SpreadsheetFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.SPREADSHEET);
+    if (spreadsheetFragment == null) {
+      Log.d(TAG, "[showSpreadsheetFragment] no existing spreadshseet " +
+      		"fragment found");
+    } else {
+      Log.d(TAG, "[showSpreadsheetFragment] existing spreadsheet fragment " +
+      		"found");
+    }
+    Log.d(TAG, "[showSpreadsheetFragment] createNew is: " + createNew);
     if (spreadsheetFragment == null || createNew) {
       spreadsheetFragment = this.createSpreadsheetFragment();
+      fragmentTransaction.add(
+          R.id.activity_table_display_activity_one_pane_content,
+          spreadsheetFragment,
+          Constants.FragmentTags.SPREADSHEET);
+    } else {
+      fragmentTransaction.show(spreadsheetFragment);
     }
-    FragmentTransaction fragmentTransaction =
-        fragmentManager.beginTransaction();
-    fragmentTransaction.replace(
-        R.id.activity_table_display_activity_one_pane_content,
-        spreadsheetFragment,
-        Constants.FragmentTags.SPREADSHEET);
     fragmentTransaction.commit();
+  }
+  
+  /**
+   * Hide every fragment except that specified by fragmentToKeepVisible.
+   * @param fragmentToKeepVisible 
+   * @param fragmentTransaction the transaction on which the calls to hide the
+   * fragments is to be performed
+   */
+  private void hideAllOtherViewFragments(
+      ViewFragmentType fragmentToKeepVisible,
+      FragmentTransaction fragmentTransaction) {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    // First acquire all the possible fragments.
+    Fragment spreadsheet =
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.SPREADSHEET);
+    Fragment list =
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.LIST);
+    Fragment graphManager = fragmentManager.findFragmentByTag(
+        Constants.FragmentTags.GRAPH_MANAGER);
+    Fragment mapList =
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+    Fragment mapInner = fragmentManager.findFragmentByTag(
+        Constants.FragmentTags.MAP_INNER_MAP);
+    if (fragmentToKeepVisible != ViewFragmentType.SPREADSHEET &&
+        spreadsheet != null) {
+      fragmentTransaction.hide(spreadsheet);
+    }
+    if (fragmentToKeepVisible != ViewFragmentType.LIST && 
+        list != null) {
+      fragmentTransaction.hide(list);
+    }
+    if (fragmentToKeepVisible != ViewFragmentType.GRAPH_MANAGER &&
+        graphManager != null) {
+      fragmentTransaction.hide(graphManager);
+    }
+    if (fragmentToKeepVisible != ViewFragmentType.MAP) {
+      if (mapList != null) {
+        fragmentTransaction.hide(mapList);
+      }
+      if (mapInner != null) {
+        fragmentTransaction.hide(mapInner);
+      }
+    }
   }
 
   /**
@@ -591,6 +655,11 @@ public class TableDisplayActivity extends AbsTableActivity
       fileName = this.getTableProperties().getMapListViewFileName();
     }
     FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    this.hideAllOtherViewFragments(
+        ViewFragmentType.MAP,
+        fragmentTransaction);
     MapListViewFragment mapListViewFragment = (MapListViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
     TableMapInnerFragment innerMapFragment = (TableMapInnerFragment)
@@ -599,29 +668,29 @@ public class TableDisplayActivity extends AbsTableActivity
     if (mapListViewFragment == null || createNew) {
       Log.d(TAG, "[showMapFragment] creating new map list fragment");
       mapListViewFragment = this.createMapListViewFragment(fileName);
+      fragmentTransaction.add(
+          R.id.map_view_list,
+          mapListViewFragment,
+          Constants.FragmentTags.MAP_LIST);
     } else {
       Log.d(TAG, "[showMapFragment] existing map list fragment found");
+      fragmentTransaction.show(mapListViewFragment);
     }
     if (innerMapFragment == null || createNew) {
       Log.d(
           TAG,
           "[showMapFragment] creating new inner map fragment");
       innerMapFragment = this.createInnerMapFragment();
+      fragmentTransaction.add(
+          R.id.map_view_inner_map,
+          innerMapFragment,
+          Constants.FragmentTags.MAP_INNER_MAP);
+      innerMapFragment.listener = this;
     } else {
       Log.d(TAG, "[showMapFragment] existing inner map fragment found");
+      innerMapFragment.listener = this;
+      fragmentTransaction.show(innerMapFragment);
     }
-    innerMapFragment.listener = this;
-    FragmentTransaction fragmentTransaction =
-        fragmentManager.beginTransaction();
-    fragmentTransaction
-        .replace(
-            R.id.map_view_list,
-            mapListViewFragment,
-            Constants.FragmentTags.MAP_LIST)
-        .replace(
-            R.id.map_view_inner_map,
-            innerMapFragment,
-            Constants.FragmentTags.MAP_INNER_MAP);
     fragmentTransaction.commit();
   }
 
@@ -665,17 +734,26 @@ public class TableDisplayActivity extends AbsTableActivity
       fileName = getTableProperties().getListViewFileName();
     }
     FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    this.hideAllOtherViewFragments(
+        ViewFragmentType.LIST,
+        fragmentTransaction);
     ListViewFragment listViewFragment = (ListViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.LIST);
     if (listViewFragment == null || createNew) {
+      if (listViewFragment == null) {
+        Log.d(TAG, "[showListFragment] existing list fragment not found");
+      }
       listViewFragment = this.createListViewFragment(fileName);
+      fragmentTransaction.add(
+          R.id.activity_table_display_activity_one_pane_content,
+          listViewFragment,
+          Constants.FragmentTags.LIST);
+    } else {
+      Log.d(TAG, "[showListFragment] existing list fragment found");
+      fragmentTransaction.show(listViewFragment);
     }
-    FragmentTransaction fragmentTransaction =
-        fragmentManager.beginTransaction();
-    fragmentTransaction.replace(
-        R.id.activity_table_display_activity_one_pane_content,
-        listViewFragment,
-        Constants.FragmentTags.LIST);
     fragmentTransaction.commit();
   }
 
@@ -699,18 +777,27 @@ public class TableDisplayActivity extends AbsTableActivity
     this.setCurrentFragmentType(ViewFragmentType.GRAPH_MANAGER);
     this.updateChildViewVisibility(ViewFragmentType.GRAPH_MANAGER);
     FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    this.hideAllOtherViewFragments(
+        ViewFragmentType.GRAPH_MANAGER,
+        fragmentTransaction);
     // Try to retrieve the fragment if it already exists.
     GraphManagerFragment graphManagerFragment = (GraphManagerFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_MANAGER);
     if (graphManagerFragment == null || createNew) {
+      if (graphManagerFragment == null) {
+        Log.d(TAG, "[showGraphFragment] existing graph fragment not found");
+      }
       graphManagerFragment = this.createGraphManagerFragment();
+      fragmentTransaction.add(
+          R.id.activity_table_display_activity_one_pane_content,
+          graphManagerFragment,
+          Constants.FragmentTags.GRAPH_MANAGER);
+    } else {
+      Log.d(TAG, "[showGraphFragment] existing graph fragment found");
+      fragmentTransaction.show(graphManagerFragment);
     }
-    FragmentTransaction fragmentTransaction =
-        fragmentManager.beginTransaction();
-    fragmentTransaction.replace(
-        R.id.activity_table_display_activity_one_pane_content,
-        graphManagerFragment,
-        Constants.FragmentTags.GRAPH_MANAGER);
     fragmentTransaction.commit();
   }
 
@@ -733,6 +820,11 @@ public class TableDisplayActivity extends AbsTableActivity
     this.updateChildViewVisibility(ViewFragmentType.GRAPH_VIEW);
     // Try and use the default.
     FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    this.hideAllOtherViewFragments(
+        ViewFragmentType.GRAPH_VIEW,
+        fragmentTransaction);
     GraphViewFragment graphViewFragment = (GraphViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_VIEW);
     if (graphViewFragment == null || createNew) {
@@ -744,9 +836,7 @@ public class TableDisplayActivity extends AbsTableActivity
       arguments.putString(Constants.IntentKeys.GRAPH_NAME, graphName);
       graphViewFragment.getArguments().putAll(arguments);
     }
-    FragmentTransaction fragmentTransaction =
-        fragmentManager.beginTransaction();
-    fragmentTransaction.replace(
+    fragmentTransaction.add(
         R.id.activity_table_display_activity_one_pane_content,
         graphViewFragment,
         Constants.FragmentTags.GRAPH_VIEW);
