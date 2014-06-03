@@ -22,6 +22,7 @@ import org.opendatakit.tables.activities.TablePropertiesManager;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 
+import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -146,7 +147,37 @@ public class TableMapInnerFragment extends MapFragment {
       getMap().setOnCameraChangeListener(getCameraChangeListener());
     }
   }
-
+  
+  @Override
+  public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    Log.d(TAG, "[onAttach]");
+  }
+  
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    Log.d(TAG, "[onCreate]");
+  }
+  
+  @Override
+  public void onDetach() {
+    super.onDetach();
+    Log.d(TAG, "[onDetach]");
+  }
+  
+  @Override
+  public void onStart() {
+    super.onStart();
+    Log.d(TAG, "[onStart]");
+  }
+  
+  @Override
+  public void onStop() {
+    super.onStop();
+    Log.d(TAG, "[onStop]");
+  }
+  
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -180,10 +211,16 @@ public class TableMapInnerFragment extends MapFragment {
   }
   
   @Override
+  public void onPause() {
+    super.onPause();
+    Log.d(TAG, "[onPause]");
+  }
+  
+  @Override
   public void onResume() {
     super.onResume();
-    this.clearAndInitializeMap();
     Log.d(TAG, "[onResume]");
+    this.clearAndInitializeMap();
   }
   
   @Override
