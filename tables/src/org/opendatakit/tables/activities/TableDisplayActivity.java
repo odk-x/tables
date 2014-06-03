@@ -348,7 +348,7 @@ public class TableDisplayActivity extends AbsTableActivity
      Log.i(TAG, "[onStart]");
   }
 
-  protected void refreshDisplayFragment() {
+  public void refreshDisplayFragment() {
     this.helperInitializeDisplayFragment(true);
   }
 
