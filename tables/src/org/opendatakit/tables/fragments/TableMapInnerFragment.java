@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorRuleGroup;
@@ -19,7 +18,6 @@ import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TablePropertiesManager;
-import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 
 import android.app.Activity;
@@ -32,8 +30,6 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -41,7 +37,6 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -143,9 +138,6 @@ public class TableMapInnerFragment extends MapFragment {
     }
     getMap().setOnMapLongClickListener(getOnMapLongClickListener());
     getMap().setOnMapClickListener(getOnMapClickListener());
-    if (ActivityUtil.isTabletDevice(getActivity())) {
-      getMap().setOnCameraChangeListener(getCameraChangeListener());
-    }
   }
   
   @Override
@@ -592,119 +584,6 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   /**
-   * When the camera is changed, check to see the visible markers on the map,
-   * organize them by distance from the center, and then display them on the
-   * list view.
-   */
-  public OnCameraChangeListener getCameraChangeListener() {
-    return new OnCameraChangeListener() {
-      @Override
-      public void onCameraChange(CameraPosition position) {
-        checkMarkersOnMap();
-        List<Marker> markers = organizeMarkersByDistance(mVisibleMarkers);
-        ArrayList<Integer> indexes = getListOfIndexes(markers);
-        listener.onSetInnerIndexes(indexes);
-      }
-    };
-  }
-
-  /**
-   * Adds or removes markers that are currently visible on the screen.
-   */
-  private void checkMarkersOnMap() {
-    if (getMap() != null) {
-      LatLngBounds bounds =
-          getMap().getProjection().getVisibleRegion().latLngBounds;
-      for (Marker marker : mMarkerIds.keySet()) {
-        if (bounds.contains(marker.getPosition())) {
-          // If the marker is on the screen.
-          if (!mVisibleMarkers.contains(marker)) {
-            mVisibleMarkers.add(marker);
-          }
-        } else {
-          // If the marker is off screen.
-          if (mVisibleMarkers.contains(marker)) {
-            mVisibleMarkers.remove(marker);
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * From the set of markers, return a list organized by distance from the
-   * center of the screen.
-   */
-  private List<Marker> organizeMarkersByDistance(Set<Marker> markers) {
-    List<Marker> orderedMarkers = new ArrayList<Marker>();
-    Map<Double, Marker> distanceToMarker = new TreeMap<Double, Marker>();
-    // Find the distances from the center to each marker.
-    LatLng center = null;
-    try {
-      GoogleMap map = getMap();
-      CameraPosition pos = map.getCameraPosition();
-      center = pos.target;
-    } catch (NullPointerException e) {
-      e.printStackTrace();
-    }
-
-    for (Marker marker : markers) {
-      double distance = distance(center, marker.getPosition());
-      // If there are multiple markers with the same distance,
-      // slightly distance them so there are no overlapping keys.
-      while (distanceToMarker.containsKey(distance)) {
-        distance += 0.00000001;
-      }
-      distanceToMarker.put(distance, marker);
-    }
-
-    // Always put the selected marker first.
-    if (mCurrentMarker != null) {
-      orderedMarkers.add(mCurrentMarker);
-    }
-
-    // After getting all the distances, add them to the orderedMarkers.
-    for (Marker marker : distanceToMarker.values()) {
-      if (marker != mCurrentMarker) {
-        orderedMarkers.add(marker);
-      }
-    }
-    return orderedMarkers;
-  }
-
-  /**
-   * From the list of markers, create a list of indexes of those markers.
-   */
-  private ArrayList<Integer> getListOfIndexes(List<Marker> markers) {
-    ArrayList<Integer> indexes = new ArrayList<Integer>();
-    for (Marker marker : markers) {
-      indexes.add(mMarkerIds.get(marker));
-    }
-    return indexes;
-  }
-
-  /**
-   * Returns the distance between the two LatLng points.
-   */
-  private double distance(LatLng StartP, LatLng EndP) {
-    double lat1 = StartP.latitude;
-    double lat2 = EndP.latitude;
-    double lon1 = StartP.longitude;
-    double lon2 = EndP.longitude;
-    double dLat = Math.toRadians(lat2 - lat1);
-    double dLon = Math.toRadians(lon2 - lon1);
-    double a =
-        Math.sin(dLat / 2) *
-        Math.sin(dLat / 2) +
-        Math.cos(Math.toRadians(lat1)) *
-        Math.cos(Math.toRadians(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    double c = 2 * Math.asin(Math.sqrt(a));
-    return 6366000 * c;
-  }
-
-  /**
    * When a marker is clicked, set the index of the list fragment, and then
    * show it. If that index is already selected, then hide it.
    */
@@ -715,7 +594,6 @@ public class TableMapInnerFragment extends MapFragment {
         int index = (mCurrentMarker != null) ?
             mMarkerIds.get(mCurrentMarker) :
             -1;
-
         // Make the marker visible if it is either invisible or a
         // new marker.
         // Make the marker invisible if clicking on the already
@@ -723,53 +601,14 @@ public class TableMapInnerFragment extends MapFragment {
         if (index != mMarkerIds.get(arg0)) {
           deselectCurrentMarker();
           int newIndex = mMarkerIds.get(arg0);
-          if (ActivityUtil.isTabletDevice(getActivity())) {
-            focusOnMarker(arg0);
-          } else {
-            selectMarker(arg0);
-          }
+          selectMarker(arg0);
           listener.onSetSelectedItemIndex(newIndex);
         } else {
           deselectCurrentMarker();
         }
-
         return true;
       }
     };
-  }
-
-  /**
-   * Focuses the camera on the marker associated with the row id.
-   */
-  public void focusOnMarker(String rowId) {
-    UserTable table = ((TableDisplayActivity) getActivity()).getUserTable();
-    int index = table.getRowNumFromId(rowId);
-    for (final Marker marker : mMarkerIds.keySet()) {
-      if (index == mMarkerIds.get(marker)) {
-        getActivity().runOnUiThread(new Runnable() {
-          @Override
-          public void run() {
-            focusOnMarker(marker);
-          }
-        });
-        break;
-      }
-    }
-  }
-
-  /**
-   * Focuses the map on the specified marker, and selects it.
-   */
-  public void focusOnMarker(Marker marker) {
-    if (mCurrentMarker != marker) {
-      listener.onSetSelectedItemIndex(mMarkerIds.get(marker));
-      deselectCurrentMarker();
-      selectMarker(marker);
-    }
-    getMap().animateCamera(
-        CameraUpdateFactory.newLatLngZoom(
-            mCurrentMarker.getPosition(),
-            getMap().getCameraPosition().zoom));
   }
 
   /**
