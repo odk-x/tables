@@ -15,9 +15,9 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.tables.views.components.ConcordantColumn;
+import org.opendatakit.tables.views.components.ConflictColumn;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter;
-import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.ConcordantColumn;
-import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.ConflictColumn;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.Resolution;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.Section;
 
@@ -142,22 +142,24 @@ public class ConflictResolutionRowActivity extends ListActivity
       Section newSection = new Section(adapterOffset, columnDisplayName);
       ++adapterOffset;
       sections.add(newSection);
-      String localValue = localRow.getDisplayTextOfData(this, elementKey, true);
-      String serverValue = serverRow.getDisplayTextOfData(this, elementKey, true);
-      if ((localValue == null && serverValue == null) ||
-    	  (localValue != null && localValue.equals(serverValue))) {
+      String localRawValue = localRow.getDataOrMetadataByElementKey(elementKey);
+      String localDisplayValue = localRow.getDisplayTextOfData(this, elementKey, true);
+      String serverRawValue = serverRow.getDataOrMetadataByElementKey(elementKey);
+      String serverDisplayValue = serverRow.getDisplayTextOfData(this, elementKey, true);
+      if ((localRawValue == null && serverRawValue == null) ||
+    	  (localRawValue != null && localRawValue.equals(serverRawValue))) {
         // TODO: this doesn't compare actual equality of blobs if their display
         // text is the same.
         // We only want to display a single row, b/c there are no choices to
         // be made by the user.
         ConcordantColumn concordance = new ConcordantColumn(adapterOffset,
-            localValue);
+            localDisplayValue);
         noConflictColumns.add(concordance);
         ++adapterOffset;
       } else {
         // We need to display both the server and local versions.
         ConflictColumn conflictColumn = new ConflictColumn(adapterOffset,
-            elementKey, localValue, serverValue);
+            elementKey, localRawValue, localDisplayValue, serverRawValue, serverDisplayValue);
         ++adapterOffset;
         mConflictColumns.add(conflictColumn);
       }
@@ -453,7 +455,7 @@ public class ConflictResolutionRowActivity extends ListActivity
                   DbTable.getDbTable(mLocal.getTableProperties());
               Map<String, String> valuesToUse = new HashMap<String, String>();
               for (ConflictColumn cc : mConflictColumns) {
-                valuesToUse.put(cc.getElementKey(), cc.getServerValue());
+                valuesToUse.put(cc.getElementKey(), cc.getServerRawValue());
               }
               dbTable.resolveConflict(mRowId, mServerRowETag, valuesToUse);
               dbTable.markDeleted(mRowId);
@@ -502,7 +504,7 @@ public class ConflictResolutionRowActivity extends ListActivity
                   DbTable.getDbTable(mLocal.getTableProperties());
               Map<String, String> valuesToUse = new HashMap<String, String>();
               for (ConflictColumn cc : mConflictColumns) {
-                valuesToUse.put(cc.getElementKey(), cc.getLocalValue());
+                valuesToUse.put(cc.getElementKey(), cc.getLocalRawValue());
               }
               dbTable.resolveConflict(mRowId, mServerRowETag, valuesToUse);
               ConflictResolutionRowActivity.this.finish();
@@ -549,7 +551,7 @@ public class ConflictResolutionRowActivity extends ListActivity
                   DbTable.getDbTable(mLocal.getTableProperties());
               Map<String, String> valuesToUse = new HashMap<String, String>();
               for (ConflictColumn cc : mConflictColumns) {
-                valuesToUse.put(cc.getElementKey(), cc.getServerValue());
+                valuesToUse.put(cc.getElementKey(), cc.getServerRawValue());
               }
               dbTable.resolveConflict(mRowId, mServerRowETag, valuesToUse);
               ConflictResolutionRowActivity.this.finish();

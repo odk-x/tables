@@ -18,14 +18,13 @@ import android.widget.ListView;
 
 /**
  * An activity for presenting a list of all the rows in conflict.
+ *
  * @author sudar.sam@gmail.com
  *
  */
 public class ConflictResolutionListActivity extends ListActivity {
 
-
-  private static final String TAG =
-      ConflictResolutionListActivity.class.getSimpleName();
+  private static final String TAG = ConflictResolutionListActivity.class.getSimpleName();
 
   private static final int RESOLVE_ROW_RESULT = 1;
 
@@ -47,32 +46,32 @@ public class ConflictResolutionListActivity extends ListActivity {
     }
   };
 
-
   @Override
   protected void onResume() {
     super.onResume();
     // Do this in on resume so that if we resolve a row it will be refreshed
     // when we come back.
     mAppName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
-    if ( mAppName == null ) {
+    if (mAppName == null) {
       mAppName = TableFileUtils.getDefaultAppName();
     }
     mTableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
 
-    TableProperties tableProperties =
-        TableProperties.getTablePropertiesForTable(this,mAppName, mTableId);
+    TableProperties tableProperties = TableProperties.getTablePropertiesForTable(this, mAppName,
+        mTableId);
     DbTable dbTable = DbTable.getDbTable(tableProperties);
-    UserTable table = dbTable.rawSqlQuery(DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)",
+    UserTable table = dbTable.rawSqlQuery(
+        DataTableColumns.CONFLICT_TYPE + " IN ( ?, ?)",
         new String[] { Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES),
-                       Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) }, null, null, DataTableColumns.ID, "ASC");
-    if ( table.getNumberOfRows() == 0 ) {
+            Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) }, null, null,
+        DataTableColumns.ID, "ASC");
+    if (table.getNumberOfRows() == 0) {
       this.setResult(RESULT_OK);
       finish();
       return;
     }
 
-    this.mAdapter = new ArrayAdapter<ResolveRowEntry>(
-        getActionBar().getThemedContext(),
+    this.mAdapter = new ArrayAdapter<ResolveRowEntry>(getActionBar().getThemedContext(),
         android.R.layout.simple_list_item_1);
 
     ResolveRowEntry firstE = null;
@@ -81,13 +80,13 @@ public class ConflictResolutionListActivity extends ListActivity {
       String localRowId = localRow.getDataOrMetadataByElementKey(DataTableColumns.ID);
       ResolveRowEntry e = new ResolveRowEntry(localRowId, "Resolve Conflict w.r.t. Server Row " + i);
       this.mAdapter.add(e);
-      if ( firstE == null ) {
+      if (firstE == null) {
         firstE = e;
       }
     }
     this.setListAdapter(mAdapter);
 
-    if ( table.getNumberOfRows() == 1 ) {
+    if (table.getNumberOfRows() == 1) {
       launchRowResolution(firstE);
     }
   }

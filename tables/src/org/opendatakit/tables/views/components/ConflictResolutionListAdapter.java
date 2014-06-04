@@ -22,31 +22,28 @@ import android.widget.TextView;
  * the Google IO 2012 app:
  *
  * https://code.google.com/p/iosched/
+ *
  * @author sudar.sam@gmail.com
  *
  */
 public class ConflictResolutionListAdapter extends BaseAdapter {
 
-  private static final String TAG =
-      ConflictResolutionListAdapter.class.getSimpleName();
+  private static final String TAG = ConflictResolutionListAdapter.class.getSimpleName();
 
   private static final int INVALID_POSITION = -1;
 
   private UICallbacks mCallbacks;
   private LayoutInflater mLayoutInflater;
   private SparseArray<Section> mSections = new SparseArray<Section>();
-  private SparseArray<ConflictColumn> mConflictColumns =
-      new SparseArray<ConflictColumn>();
-  private SparseArray<ConcordantColumn> mConcordantColumns =
-      new SparseArray<ConcordantColumn>();
+  private SparseArray<ConflictColumn> mConflictColumns = new SparseArray<ConflictColumn>();
+  private SparseArray<ConcordantColumn> mConcordantColumns = new SparseArray<ConcordantColumn>();
   /** Whether or not conflictColumns are enabled should be disabled. */
   private boolean mConflictColumnsAreEnabled;
   /**
    * The decisions the user has made on the resolution of the conflict. Maps
    * element key to resolution.
    */
-  private Map<String, Resolution> mResolutions =
-      new HashMap<String, Resolution>();
+  private Map<String, Resolution> mResolutions = new HashMap<String, Resolution>();
   /**
    * A map of element key to the user's chosen value for the column.
    */
@@ -86,61 +83,11 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     }
   }
 
-  /**
-   * Represents a column that is in conflict--i.e. the contents differ between
-   * the server and local versions.
-   * @author sudar.sam@gmail.com
-   *
-   */
-  public static class ConflictColumn {
-    final int position;
-    final String localValue;
-    final String serverValue;
-    final String elementKey;
-
-    public ConflictColumn(int position, String elementKey, String localValue,
-        String serverValue) {
-      this.position = position;
-      this.elementKey = elementKey;
-      this.localValue = localValue;
-      this.serverValue = serverValue;
-    }
-
-    public String getLocalValue() {
-      return this.localValue;
-    }
-
-    public String getServerValue() {
-      return this.serverValue;
-    }
-
-    public String getElementKey() {
-      return this.elementKey;
-    }
-
-  }
-
-  /**
-   * Represents a column that is not in conflict--i.e. one that has the same
-   * value locally and on the server.
-   * @author sudar.sam@gmail.com
-   *
-   */
-  public static class ConcordantColumn {
-    int position;
-    String value;
-
-    public ConcordantColumn(int position, String value) {
-      this.position = position;
-      this.value = value;
-    }
-  }
-
   public ConflictResolutionListAdapter(Context context, UICallbacks callbacks,
       List<Section> sections, List<ConcordantColumn> concordantColumns,
       List<ConflictColumn> conflictColumns) {
-    this.mLayoutInflater = (LayoutInflater) context.getSystemService(
-      Context.LAYOUT_INFLATER_SERVICE);
+    this.mLayoutInflater = (LayoutInflater) context
+        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     this.mResolvedValues = new HashMap<String, String>();
     this.mCallbacks = callbacks;
     // First let's set the columns and sections.
@@ -148,10 +95,10 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       mSections.append(section.firstPosition, section);
     }
     for (ConcordantColumn cc : concordantColumns) {
-      mConcordantColumns.append(cc.position, cc);
+      mConcordantColumns.append(cc.getPosition(), cc);
     }
     for (ConflictColumn cc : conflictColumns) {
-      mConflictColumns.append(cc.position, cc);
+      mConflictColumns.append(cc.getPosition(), cc);
     }
     this.mConflictColumnsAreEnabled = true;
   }
@@ -165,6 +112,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
    * state on things like screen rotation. Cannot rely on the framework to do
    * this for us because are programmatically creating views, and thus reusing
    * ids.
+   *
    * @param chosenValues
    * @param chosenResolutions
    */
@@ -184,8 +132,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
 
   @Override
   public int getCount() {
-    return (mSections.size() + mConflictColumns.size()
-        + mConcordantColumns.size());
+    return (mSections.size() + mConflictColumns.size() + mConcordantColumns.size());
   }
 
   @Override
@@ -199,8 +146,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     } else if (isConcordantColumnPosition(position)) {
       return mConcordantColumns.get(position);
     } else {
-      Log.e(TAG, "[getItem] position " + position + " didn't match any of " +
-      		"the types!");
+      Log.e(TAG, "[getItem] position " + position + " didn't match any of " + "the types!");
       return null;
     }
   }
@@ -219,8 +165,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     } else if (isConcordantColumnPosition(position)) {
       return 2;
     } else {
-      Log.e(TAG, "[getItem] position " + position + " didn't match any of " +
-            "the types!");
+      Log.e(TAG, "[getItem] position " + position + " didn't match any of " + "the types!");
       return -1;
     }
   }
@@ -238,8 +183,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     } else if (isConcordantColumnPosition(position)) {
       return false;
     } else {
-      Log.e(TAG, "[getItem] position " + position + " didn't match any of " +
-            "the types!");
+      Log.e(TAG, "[getItem] position " + position + " didn't match any of " + "the types!");
       return false;
     }
   }
@@ -259,9 +203,10 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
 
   /**
    * Return a map of element key to the values chosen by the user. If a value
-   * isn't present, it hasn't been selected by the user. If it the column
-   * wasn't in conflict, it cannot be selected by the user. When a decision
-   * has been made for every conflict column, the row is resolvable.
+   * isn't present, it hasn't been selected by the user. If it the column wasn't
+   * in conflict, it cannot be selected by the user. When a decision has been
+   * made for every conflict column, the row is resolvable.
+   *
    * @return
    */
   public Map<String, String> getResolvedValues() {
@@ -270,6 +215,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
 
   /**
    * Sets whether or not the views returned by this adapter are clickable.
+   *
    * @param enabled
    */
   public void setConflictColumnsEnabled(boolean enabled) {
@@ -277,8 +223,9 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   }
 
   /**
-   * Return a map of element key to the {@link Resolution} indicating whether
-   * or not a user has made a decision.
+   * Return a map of element key to the {@link Resolution} indicating whether or
+   * not a user has made a decision.
+   *
    * @return
    */
   public Map<String, Resolution> getResolutions() {
@@ -288,24 +235,25 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   /**
    * Update the adapter's internal data structures to reflect the user's
    * choices.
+   *
    * @param position
    * @param decision
    */
-  private void setResolution(ConflictColumn conflictColumn,
-      Resolution decision) {
-    this.mResolutions.put(conflictColumn.elementKey, decision);
+  private void setResolution(ConflictColumn conflictColumn, Resolution decision) {
+    this.mResolutions.put(conflictColumn.getElementKey(), decision);
     String chosenValue;
     // we didn't return, so we know it's safe.
     if (decision == Resolution.LOCAL) {
-      chosenValue = conflictColumn.localValue;
+      chosenValue = conflictColumn.getLocalRawValue();
     } else if (decision == Resolution.SERVER) {
-      chosenValue = conflictColumn.serverValue;
+      chosenValue = conflictColumn.getServerRawValue();
     } else {
-      Log.e(TAG, "[setResolution] decision didn't match a known resolution" +
-      		" type: " + decision.name() + "! not setting anything");
+      Log.e(TAG,
+          "[setResolution] decision didn't match a known resolution" + " type: " + decision.name()
+              + "! not setting anything");
       return;
     }
-    this.mResolvedValues.put(conflictColumn.elementKey, chosenValue);
+    this.mResolvedValues.put(conflictColumn.getElementKey(), chosenValue);
   }
 
   @Override
@@ -313,8 +261,8 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     if (isSectionHeaderPosition(position)) {
       TextView view = (TextView) convertView;
       if (view == null) {
-        view = (TextView) mLayoutInflater.inflate(R.layout.list_item_section_heading, parent,
-          false);
+        view = (TextView) mLayoutInflater
+            .inflate(R.layout.list_item_section_heading, parent, false);
       }
       view.setText(mSections.get(position).title);
       return view;
@@ -327,18 +275,15 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
         view = (LinearLayout) mLayoutInflater.inflate(layoutId, parent, false);
       }
       // the text view displaying the local value
-      TextView localTextView =
-          (TextView) view.findViewById(R.id.list_item_local_text);
-      localTextView.setText(conflictColumn.localValue);
-      TextView serverTextView =
-          (TextView) view.findViewById(R.id.list_item_server_text);
-      serverTextView.setText(conflictColumn.serverValue);
+      TextView localTextView = (TextView) view.findViewById(R.id.list_item_local_text);
+      localTextView.setText(conflictColumn.getLocalDisplayValue());
+      TextView serverTextView = (TextView) view.findViewById(R.id.list_item_server_text);
+      serverTextView.setText(conflictColumn.getServerDisplayValue());
       // The decision the user has made. May be null if it hasn't been set.
-      Resolution userDecision = mResolutions.get(conflictColumn.elementKey);
-      RadioButton localButton =
-          (RadioButton) view.findViewById(R.id.list_item_local_radio_button);
-      RadioButton serverButton =
-          (RadioButton) view.findViewById(R.id.list_item_server_radio_button);
+      Resolution userDecision = mResolutions.get(conflictColumn.getElementKey());
+      RadioButton localButton = (RadioButton) view.findViewById(R.id.list_item_local_radio_button);
+      RadioButton serverButton = (RadioButton) view
+          .findViewById(R.id.list_item_server_radio_button);
       if (userDecision != null) {
         if (userDecision == Resolution.LOCAL) {
           localButton.setChecked(true);
@@ -358,10 +303,10 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       // appropriate. In order to do this, we're going to add the entire view
       // object, including itself, as the view's tag. That way we can get at
       // them to update appropriately.
-      LinearLayout localRow = (LinearLayout)
-          view.findViewById(R.id.list_item_conflict_resolution_local_row);
-      LinearLayout serverRow = (LinearLayout)
-          view.findViewById(R.id.list_item_conflict_resolution_server_row);
+      LinearLayout localRow = (LinearLayout) view
+          .findViewById(R.id.list_item_conflict_resolution_local_row);
+      LinearLayout serverRow = (LinearLayout) view
+          .findViewById(R.id.list_item_conflict_resolution_server_row);
       localRow.setTag(view);
       serverRow.setTag(view);
       // We also need to add the position to each of the views, so that when
@@ -383,14 +328,13 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     } else if (isConcordantColumnPosition(position)) {
       TextView view = (TextView) convertView;
       if (view == null) {
-        view = (TextView) mLayoutInflater.inflate(
-            android.R.layout.simple_list_item_1, parent, false);
+        view = (TextView) mLayoutInflater.inflate(android.R.layout.simple_list_item_1, parent,
+            false);
       }
-      view.setText(mConcordantColumns.get(position).value);
+      view.setText(mConcordantColumns.get(position).getDisplayValue());
       return view;
     } else {
-      Log.e(TAG, "[getView] ran into trouble, position didn't match any of " +
-      		"the types!");
+      Log.e(TAG, "[getView] ran into trouble, position didn't match any of " + "the types!");
       return null;
     }
   }
@@ -399,6 +343,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
    * The class that handles registering a user's choice and updating the view
    * appropriately. The view that adds this as a click listener must have
    * included the whole parent viewgroup as its tag.
+   *
    * @author sudar.sam@gmail.com
    *
    */
@@ -411,10 +356,10 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       View conflictRowView = (View) v.getTag();
       int position = (Integer) v.getTag(R.id.list_view_conflict_row);
       ConflictColumn conflictColumn = mConflictColumns.get(position);
-      RadioButton localButton = (RadioButton) conflictRowView.findViewById(
-          R.id.list_item_local_radio_button);
-      RadioButton serverButton = (RadioButton) conflictRowView.findViewById(
-          R.id.list_item_server_radio_button);
+      RadioButton localButton = (RadioButton) conflictRowView
+          .findViewById(R.id.list_item_local_radio_button);
+      RadioButton serverButton = (RadioButton) conflictRowView
+          .findViewById(R.id.list_item_server_radio_button);
       // Now we need to figure out if this is a server or a local click, which
       // we'll know by which view the click came in on.
       int viewId = v.getId();

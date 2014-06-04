@@ -20,13 +20,13 @@ import android.widget.ListView;
 
 /**
  * An activity for presenting a list of all the rows in conflict.
+ *
  * @author sudar.sam@gmail.com
  *
  */
 public class CheckpointResolutionListActivity extends ListActivity {
 
-  private static final String TAG =
-      CheckpointResolutionListActivity.class.getSimpleName();
+  private static final String TAG = CheckpointResolutionListActivity.class.getSimpleName();
 
   private static final int RESOLVE_ROW = 1;
 
@@ -48,24 +48,24 @@ public class CheckpointResolutionListActivity extends ListActivity {
     }
   };
 
-
   @Override
   protected void onResume() {
     super.onResume();
     // Do this in on resume so that if we resolve a row it will be refreshed
     // when we come back.
     mAppName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
-    if ( mAppName == null ) {
+    if (mAppName == null) {
       mAppName = TableFileUtils.getDefaultAppName();
     }
-    mTableId =
-        getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
-    TableProperties tableProperties =
-        TableProperties.getTablePropertiesForTable(this, mAppName, mTableId);
+    mTableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
+
+    TableProperties tableProperties = TableProperties.getTablePropertiesForTable(this, mAppName,
+        mTableId);
     DbTable dbTable = DbTable.getDbTable(tableProperties);
-    UserTable table = dbTable.rawSqlQuery(DataTableColumns.SAVEPOINT_TYPE + " IS NULL", null, null, null, null, null);
-    this.mAdapter = new ArrayAdapter<ResolveRowEntry>(
-        getActionBar().getThemedContext(),
+    UserTable table = dbTable.rawSqlQuery(
+        DataTableColumns.SAVEPOINT_TYPE + " IS NULL", null, null,
+        null, null, null);
+    this.mAdapter = new ArrayAdapter<ResolveRowEntry>(getActionBar().getThemedContext(),
         android.R.layout.simple_list_item_1);
     Set<String> rowIds = new TreeSet<String>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {
@@ -73,7 +73,7 @@ public class CheckpointResolutionListActivity extends ListActivity {
       String rowId = row.getDataOrMetadataByElementKey(DataTableColumns.ID);
       rowIds.add(rowId);
     }
-    if ( rowIds.isEmpty() ) {
+    if (rowIds.isEmpty()) {
       this.setResult(RESULT_OK);
       finish();
       return;
@@ -81,17 +81,17 @@ public class CheckpointResolutionListActivity extends ListActivity {
 
     ResolveRowEntry firstE = null;
     int i = 0;
-    for ( String rowId : rowIds ) {
+    for (String rowId : rowIds) {
       ++i;
-      ResolveRowEntry e = new ResolveRowEntry( rowId, "Resolve ODK Survey Checkpoint Record " + i);
+      ResolveRowEntry e = new ResolveRowEntry(rowId, "Resolve ODK Survey Checkpoint Record " + i);
       this.mAdapter.add(e);
-      if ( firstE == null ) {
+      if (firstE == null) {
         firstE = e;
       }
     }
     this.setListAdapter(mAdapter);
 
-    if ( rowIds.size() == 1 ) {
+    if (rowIds.size() == 1) {
       launchRowResolution(firstE);
     }
   }
