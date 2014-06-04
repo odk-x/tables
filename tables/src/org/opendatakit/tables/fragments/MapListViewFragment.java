@@ -84,14 +84,14 @@ public class MapListViewFragment extends ListViewFragment implements
     result.addJavascriptInterface(
         tableData.getJavascriptInterfaceWithWeakReference(),
         Constants.JavaScriptHandles.DATA);
+    // Now save the references.
+    this.mControlReference = control;
+    this.mTableDataReference = tableData;
     WebViewUtil.displayFileInWebView(
         this.getActivity(),
         this.getAppName(),
         result,
         this.getFileName());
-    // Now save the references.
-    this.mControlReference = control;
-    this.mTableDataReference = tableData;
     return result;
   }
   
@@ -107,10 +107,10 @@ public class MapListViewFragment extends ListViewFragment implements
     WebView currentView = (WebView) this.getView();
     // Replace the data object.
     TableData tableData = this.createDataObject();
-    this.mTableDataReference = tableData;
     currentView.addJavascriptInterface(
         tableData.getJavascriptInterfaceWithWeakReference(),
         Constants.JavaScriptHandles.DATA);
+    this.mTableDataReference = tableData;
     WebViewUtil.displayFileInWebView(
         this.getActivity(),
         this.getAppName(),

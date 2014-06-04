@@ -47,7 +47,9 @@ public class TableDataIf {
 	 */
 	// @JavascriptInterface
 	public int getCount() {
-		return weakTable.get().getCount();
+		return weakTable
+		    .get()
+		    .getCount();
 	}
 
 	/**
@@ -153,7 +155,9 @@ public class TableDataIf {
 	 */
 	// @JavascriptInterface
 	public String getData(int rowNumber, String elementPath) {
-		return weakTable.get().getData(rowNumber, elementPath);
+		return weakTable
+		    .get()
+		    .getData(rowNumber, elementPath);
 	}
 
 	/**
