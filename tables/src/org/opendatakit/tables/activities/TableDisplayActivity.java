@@ -88,7 +88,7 @@ public class TableDisplayActivity extends AbsTableActivity
     Log.i(TAG, "[onRestoreInstanceState] current fragment type: " +
         this.mCurrentFragmentType);
   }
-  
+
   @Override
   protected void onDestroy() {
     super.onDestroy();
@@ -587,10 +587,10 @@ public class TableDisplayActivity extends AbsTableActivity
     }
     fragmentTransaction.commit();
   }
-  
+
   /**
    * Hide every fragment except that specified by fragmentToKeepVisible.
-   * @param fragmentToKeepVisible 
+   * @param fragmentToKeepVisible
    * @param fragmentTransaction the transaction on which the calls to hide the
    * fragments is to be performed
    */
@@ -613,7 +613,7 @@ public class TableDisplayActivity extends AbsTableActivity
         spreadsheet != null) {
       fragmentTransaction.hide(spreadsheet);
     }
-    if (fragmentToKeepVisible != ViewFragmentType.LIST && 
+    if (fragmentToKeepVisible != ViewFragmentType.LIST &&
         list != null) {
       fragmentTransaction.hide(list);
     }
@@ -665,7 +665,14 @@ public class TableDisplayActivity extends AbsTableActivity
     TableMapInnerFragment innerMapFragment = (TableMapInnerFragment)
         fragmentManager.findFragmentByTag(
             Constants.FragmentTags.MAP_INNER_MAP);
-    if (mapListViewFragment == null || createNew) {
+    if (mapListViewFragment == null ||
+        (fileName != null && !fileName.equals(mapListViewFragment.getFileName())) ||
+        createNew) {
+      if ( mapListViewFragment != null ) {
+        // remove the old fragment
+        Log.d(TAG, "[showMapFragment] removing old map list fragment");
+        fragmentTransaction.remove(mapListViewFragment);
+      }
       Log.d(TAG, "[showMapFragment] creating new map list fragment");
       mapListViewFragment = this.createMapListViewFragment(fileName);
       fragmentTransaction.add(
@@ -677,9 +684,12 @@ public class TableDisplayActivity extends AbsTableActivity
       fragmentTransaction.show(mapListViewFragment);
     }
     if (innerMapFragment == null || createNew) {
-      Log.d(
-          TAG,
-          "[showMapFragment] creating new inner map fragment");
+      if ( innerMapFragment != null ) {
+        // remove the old fragment
+        Log.d(TAG, "[showMapFragment] removing old inner map fragment");
+        fragmentTransaction.remove(innerMapFragment);
+      }
+      Log.d(TAG, "[showMapFragment] creating new inner map fragment");
       innerMapFragment = this.createInnerMapFragment();
       fragmentTransaction.add(
           R.id.map_view_inner_map,
@@ -960,6 +970,9 @@ public class TableDisplayActivity extends AbsTableActivity
     return this.mCurrentFragmentType;
   }
 
+  /**
+   * Invoked by TableMapInnerFragment when an item has been selected
+   */
   @Override
   public void onSetSelectedItemIndex(int i) {
     MapListViewFragment mapListViewFragment = this.findMapListViewFragment();
@@ -970,7 +983,10 @@ public class TableDisplayActivity extends AbsTableActivity
       mapListViewFragment.setIndexOfSelectedItem(i);
     }
   }
-  
+
+  /**
+   * Invoked by TableMapInnerFragment when an item has stopped being selected
+   */
   public void setNoItemSelected() {
     MapListViewFragment mapListViewFragment = this.findMapListViewFragment();
     if (mapListViewFragment == null) {
@@ -981,6 +997,9 @@ public class TableDisplayActivity extends AbsTableActivity
     }
   }
 
+  /**
+   * Invoked by TableMapInnerFragment when the set of visible items has changed.
+   */
   @Override
   public void onSetInnerIndexes(ArrayList<Integer> indexes) {
     MapListViewFragment mapListViewFragment = this.findMapListViewFragment();

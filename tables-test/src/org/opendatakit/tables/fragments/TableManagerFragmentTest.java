@@ -3,8 +3,6 @@ package org.opendatakit.tables.fragments;
 import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
 import static org.robolectric.Robolectric.shadowOf;
 
 import java.util.ArrayList;
@@ -55,7 +53,7 @@ public class TableManagerFragmentTest {
     this.fragment = getSpy(new ArrayList<TableProperties>());
     doGlobalSetup();
   }
-  
+
   private List<TableProperties> getMockListWithTwoItems() {
     TableProperties tp1 = mock(TableProperties.class);
     TableProperties tp2 = mock(TableProperties.class);
@@ -68,7 +66,7 @@ public class TableManagerFragmentTest {
     listOfMocks.add(tp2);
     return listOfMocks;
   }
-  
+
   private List<TableProperties> getMockListWithThreeItems() {
     TableProperties tp3 = mock(TableProperties.class);
     when(tp3.getLocalizedDisplayName()).thenReturn(mockTableName3);
@@ -188,7 +186,7 @@ public class TableManagerFragmentTest {
         .isNotNull()
         .isEqualTo(target);
   }
-  
+
   @Test
   public void listResetsCorrectlyAfterUpdating() {
     this.setupFragmentWithTwoItems();
@@ -208,7 +206,7 @@ public class TableManagerFragmentTest {
         this.fragment.getListView().getAdapter().getCount())
         .isEqualTo(3);
   }
-  
+
   @Test
   public void tableListIsRefreshedOnReturnFromSync() {
     this.setupFragmentWithTwoItems();
@@ -216,8 +214,8 @@ public class TableManagerFragmentTest {
         this.fragment.getNumberOfCallsToUpdatePropertiesList())
         .isEqualTo(1);
     this.fragment.onActivityResult(
-        Constants.RequestCodes.LAUNCH_SYNC, 
-        Activity.RESULT_OK, 
+        Constants.RequestCodes.LAUNCH_SYNC,
+        Activity.RESULT_OK,
         null);
     org.fest.assertions.api.Assertions.assertThat(
         this.fragment.getNumberOfCallsToUpdatePropertiesList())

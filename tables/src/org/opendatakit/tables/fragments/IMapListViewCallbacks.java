@@ -41,5 +41,10 @@ public interface IMapListViewCallbacks {
    */
   public ArrayList<Integer> getMapListIndices();
 
+  /**
+   *
+   * @return true if a subset of the table's data is being returned.
+   */
+  public boolean displayingSubsetOfTable();
 
 }
