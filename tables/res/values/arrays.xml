@@ -4,36 +4,36 @@
     <!-- The various views you can have onto a table. -->
     <string-array
         name="table_view_types">
-        <item>Spreadsheet</item>
+        <item>@string/spreadsheet</item>
         <item>@string/list</item>
         <item>@string/graph</item>
         <item>@string/map</item>
     </string-array>
-    
+
     <!-- The values that are saved for the preference. Must be equivalent
     to TableViewType.name() -->
     <string-array
         name="table_view_types_values" >
-        <item>SPREADSHEET</item>
-        <item>LIST</item>
-        <item>GRAPH</item>
-        <item>MAP</item>
+        <item>@string/table_view_types_values_spreadsheet</item>
+        <item>@string/table_view_types_values_list</item>
+        <item>@string/table_view_types_values_graph</item>
+        <item>@string/table_view_types_values_map</item>
     </string-array>
-    
+
     <string-array
         name="color_rule_types">
-        <item>None</item>
-        <item>Table Color Rules</item>
-        <item>Status Column Color Rules</item>
-        <item>Selectable Column Color Rules</item>
+        <item>@string/none</item>
+        <item>@string/table_color_rules</item>
+        <item>@string/status_column_color_rules</item>
+        <item>@string/selectable_column_color_rules</item>
     </string-array>
-    
+
     <string-array
         name="color_rule_type_values">
-        <item>none</item>
-        <item>table</item>
-        <item>status</item>
-        <item>selectable</item>
+        <item>@string/color_rule_type_values_none</item>
+        <item>@string/color_rule_type_values_table</item>
+        <item>@string/color_rule_type_values_status</item>
+        <item>@string/color_rule_type_values_selectable</item>
     </string-array>
-        
+
 </resources>
