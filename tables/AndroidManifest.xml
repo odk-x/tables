@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.opendatakit.tables"
-    android:versionCode="120"
+    android:versionCode="121"
     android:versionName="2.0" >
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -82,35 +82,21 @@
                 <data android:mimeType="vnd.android.cursor.item/vnd.opendatakit.table" />
             </intent-filter>
             </activity>
-        <activity android:name=".activities.ColumnListActivity" />
         <activity android:name=".activities.MainActivity" />
         <activity android:name=".activities.WebViewActivity" />
         <activity android:name=".activities.TableDisplayActivity" />
         <activity android:name=".activities.TableLevelPreferencesActivity" />
         <activity android:name=".activities.AccountInfoActivity" />
-        <activity android:name=".activities.ColorRuleManagerActivity"/>
-        <activity android:name=".activities.ColumnManager"/>
-        <activity android:name=".activities.CustomHomeScreenActivity"/>
-        <activity android:name=".activities.DetailDisplayActivity"/>
         <activity android:name=".activities.DisplayPrefsActivity"/>
-        <activity android:name=".activities.EditSavedColorRuleActivity"/>
-        <activity android:name=".activities.EditSavedListViewEntryActivity"/>
-        <activity android:name=".activities.ListDisplayActivity"/>
-        <activity android:name=".activities.ListViewManager"/>
         <activity android:name=".activities.PropertyManager"/>
-        <activity android:name=".activities.TableActivity"/>
-        <activity android:name=".activities.TableManager"/>
         <activity android:name=".activities.TablePropertiesManager"/>
 		<activity android:name=".activities.CheckpointResolutionListActivity" />
 		<activity android:name=".activities.CheckpointResolutionRowActivity" />
         <activity android:name=".activities.ConflictResolutionListActivity" />
 		<activity android:name=".activities.ConflictResolutionRowActivity" />
-        <activity android:name=".activities.GraphDisplayActivity" />
-        <activity android:name=".activities.GraphManagerActivity"/>
         <activity android:name=".activities.ImportExportActivity"/>
         <activity android:name=".activities.ImportCSVActivity"/>
         <activity android:name=".activities.ExportCSVActivity"/>
-        <activity android:name=".activities.MainDisplaySettings"/>
         <activity
             android:name=".activities.AndroidShortcuts"
             android:label="@string/shortcut_name"

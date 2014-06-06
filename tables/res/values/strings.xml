@@ -244,8 +244,11 @@
 	<string name="default_survey_form">Default Survey Form</string>
 	<string name="change_detail_view_file">Change Detail View File</string>
 	<string name="edit_table_color_rules">Edit Table Color Rules</string>
+	<string name="table_color_rules">Table Color Rules</string>
 	<string name="edit_status_column_color_rules">Edit Status Column Color Rules</string>
+	<string name="status_column_color_rules">Status Column Color Rules</string>
 	<string name="add_new_color_rule">Add New Color Rule</string>
+	<string name="selectable_column_color_rules">Selectable Column Color Rules</string>
 	<string name="color_rule_preview">Color Rule Preview</string>
 	<string name="status_column">Status Column</string>
 	<string name="color_rule_title_for">Color Rules for %1$s</string>
