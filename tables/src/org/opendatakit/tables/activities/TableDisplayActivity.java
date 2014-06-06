@@ -998,19 +998,6 @@ public class TableDisplayActivity extends AbsTableActivity
   }
 
   /**
-   * Invoked by TableMapInnerFragment when the set of visible items has changed.
-   */
-  @Override
-  public void onSetInnerIndexes(ArrayList<Integer> indexes) {
-    MapListViewFragment mapListViewFragment = this.findMapListViewFragment();
-    if (mapListViewFragment == null) {
-      Log.e(TAG, "[onSetInnerIndexes] fragment is null! Returning");
-    } else {
-      mapListViewFragment.setSubsetOfIndicesToDisplay(indexes);
-    }
-  }
-
-  /**
    * Find a {@link MapListViewFragment} that is associated with this activity.
    * If not present, returns null.
    * @return

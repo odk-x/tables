@@ -94,8 +94,6 @@ public class TableMapInnerFragment extends MapFragment {
      */
     void setNoItemSelected();
 
-    /** Called when we want to set the indexes of the list view. */
-    void onSetInnerIndexes(ArrayList<Integer> indexes);
   }
 
   /** The object that is listening in on events. */
