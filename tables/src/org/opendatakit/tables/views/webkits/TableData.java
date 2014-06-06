@@ -32,6 +32,13 @@ public class TableData {
   }
 
   private final UserTable mTable;
+  
+  /**
+   * The index of the marker that has been selected.
+   */
+  protected int mSelectedMapMarkerIndex;
+  
+  protected static final int INVALID_INDEX = -1;
 
   /**
    * A simple cache of color rules so they're not recreated unnecessarily each
@@ -48,12 +55,14 @@ public class TableData {
     Log.d(TAG, "calling TableData constructor with Table");
     this.mActivity = activity;
     this.mTable = table;
+    this.mSelectedMapMarkerIndex = INVALID_INDEX;
     initMaps();
   }
 
   public TableData(UserTable table) {
     Log.d(TAG, "calling TableData constructor with UserTable");
     this.mTable = table;
+    this.mSelectedMapMarkerIndex = INVALID_INDEX;
     initMaps();
   }
 
@@ -221,7 +230,8 @@ public class TableData {
    * @see {@link TableDataIf#getData(int, String)}.
    */
   public String getData(int rowNum, String elementPath) {
-    Row row = mTable.getRowAtIndex(rowNum);
+    int dataIndex = this.getIndexIntoDataTable(rowNum);
+    Row row = mTable.getRowAtIndex(dataIndex);
     if (row == null) {
       Log.e(TAG, "row " + rowNum + " does not exist! Returning null");
       return null;
@@ -235,6 +245,61 @@ public class TableData {
 
     String result = row.getDataOrMetadataByElementKey(elementKey);
     return result;
+  }
+  
+  /**
+   * Calculate the index into the data table given the display index. The
+   * caller expects to iterate over the data rows in a particular order. This
+   * method maps the display index into a data index. This data index can then
+   * be requested to the backing data table.
+   * @param displayIndex
+   * @return
+   */
+  int getIndexIntoDataTable(int displayIndex) {
+    if (!this.displayIndexMustBeCalculated()) {
+      // Then we can just return it directly.
+      return displayIndex;
+    }
+    // At the moment the only thing we have to account for is that a particular
+    // row has been moved to the top of the list. The math is thus pretty neat.
+    // Say that the selected index at the top is 5. The resultant values to be
+    // returned are thus:
+    // displayIndex: 0  1  2  3  4  5  6  7  8
+    // returnValue : 5  0  1  2  3  4  6  7  8
+    int result;
+    if (displayIndex == 0) {
+      result = this.mSelectedMapMarkerIndex;
+    } else if (displayIndex <= this.mSelectedMapMarkerIndex) {
+      result = displayIndex - 1;
+    } else {
+      // displayindex > selected marker index
+      result = displayIndex;
+    }
+    return result;
+  }
+  
+  /**
+   * Return true if the display index does not map directly to the data index.
+   * For example, this returns true if a map marker has been selected.
+   * @return
+   */
+  boolean displayIndexMustBeCalculated() {
+    return this.mSelectedMapMarkerIndex != INVALID_INDEX;
+  }
+  
+  /**
+   * Set the index of the map marker that has been selected.
+   * @param mapIndex
+   */
+  public void setSelectedMapIndex(int mapIndex) {
+    this.mSelectedMapMarkerIndex = mapIndex;
+  }
+  
+  /**
+   * Remove any map index from being selected.
+   */
+  public void setNoItemSelected() {
+    this.mSelectedMapMarkerIndex = INVALID_INDEX;
   }
 
   public String getTableId() {
