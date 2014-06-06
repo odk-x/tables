@@ -51,6 +51,8 @@ public class TableMapInnerFragment extends MapFragment {
     
   private static final String TAG =
       TableMapInnerFragment.class.getSimpleName();
+  
+  private static final int INVALID_INDEX = -1;
 
   /** The default hue for markers if no color rules are applied. */
   private static final float DEFAULT_MARKER_HUE =
@@ -126,7 +128,8 @@ public class TableMapInnerFragment extends MapFragment {
     Log.d(TAG, "[onActivityCreated]");
     mCurrentIndex = (savedInstanceState != null) ?
         savedInstanceState.getInt(SAVE_KEY_INDEX) :
-        -1;
+        INVALID_INDEX;
+    Log.d(TAG, "[onActivityCreated] retrieved index is: " + mCurrentIndex);
     if (savedInstanceState != null) {
       savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
       getMap().moveCamera(
@@ -169,14 +172,21 @@ public class TableMapInnerFragment extends MapFragment {
     super.onStop();
     Log.d(TAG, "[onStop]");
   }
-  
+    
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     Log.d(TAG, "[onSaveInstanceState]");
+    int markerIndexToSave = INVALID_INDEX;
+    if (mCurrentMarker != null) {
+      markerIndexToSave = mMarkerIds.get(mCurrentMarker);
+    }
+    Log.d(
+        TAG,
+        "[onSaveInstanceState] saving markder index: " + markerIndexToSave);
     outState.putInt(
         SAVE_KEY_INDEX,
-        (mCurrentMarker != null) ? mMarkerIds.get(mCurrentMarker) : -1);
+        markerIndexToSave);
     CameraPosition pos = getMap().getCameraPosition();
     outState.putFloat(SAVE_ZOOM, pos.zoom);
     outState.putDouble(SAVE_TARGET_LAT, pos.target.latitude);
@@ -212,6 +222,12 @@ public class TableMapInnerFragment extends MapFragment {
   public void onResume() {
     super.onResume();
     Log.d(TAG, "[onResume]");
+  }
+  
+  @Override
+  public void onViewStateRestored(Bundle savedInstanceState) {
+    super.onViewStateRestored(savedInstanceState);
+    Log.d(TAG, "[onViewStateRestored]");
     this.clearAndInitializeMap();
   }
   
