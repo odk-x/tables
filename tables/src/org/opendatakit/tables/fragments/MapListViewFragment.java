@@ -56,11 +56,7 @@ public class MapListViewFragment extends ListViewFragment implements
     }
     WebView currentView = (WebView) this.getView();
     // Just reload the page.
-    WebViewUtil.displayFileInWebView(
-        this.getActivity(),
-        this.getAppName(),
-        currentView,
-        this.getFileName());
+    currentView.reload();
   }
 
   /**
