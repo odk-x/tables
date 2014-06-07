@@ -124,10 +124,22 @@ public class TableMapInnerFragment extends MapFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     Log.d(TAG, "[onActivityCreated]");
-    mCurrentIndex = (savedInstanceState != null) ?
-        savedInstanceState.getInt(SAVE_KEY_INDEX) :
-        INVALID_INDEX;
-    Log.d(TAG, "[onActivityCreated] retrieved index is: " + mCurrentIndex);
+  }
+  
+  int retrieveSavedIndexFromBundle(Bundle bundle) {
+    if (bundle != null && bundle.containsKey(SAVE_KEY_INDEX)) {
+      return bundle.getInt(SAVE_KEY_INDEX);
+    } else {
+      return INVALID_INDEX;
+    }
+  }
+  
+  
+  @Override
+  public void onViewCreated(View view, Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
+    Log.d(TAG, "[onViewCreated]");
+    clearAndInitializeMap();
     if (savedInstanceState != null) {
       savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
       getMap().moveCamera(
@@ -151,6 +163,8 @@ public class TableMapInnerFragment extends MapFragment {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.d(TAG, "[onCreate]");
+    this.mCurrentIndex = this.retrieveSavedIndexFromBundle(savedInstanceState);
+    Log.d(TAG, "[onCreate] retrieved index is: " + mCurrentIndex);
   }
   
   @Override
@@ -220,13 +234,6 @@ public class TableMapInnerFragment extends MapFragment {
   public void onResume() {
     super.onResume();
     Log.d(TAG, "[onResume]");
-  }
-  
-  @Override
-  public void onViewStateRestored(Bundle savedInstanceState) {
-    super.onViewStateRestored(savedInstanceState);
-    Log.d(TAG, "[onViewStateRestored]");
-    this.clearAndInitializeMap();
   }
   
   @Override
@@ -373,6 +380,7 @@ public class TableMapInnerFragment extends MapFragment {
               .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
       mMarkerIds.put(marker, i);
       if (mCurrentIndex == i) {
+        Log.d(TAG, "[setMarkers] selecting marker: " + i);
         selectMarker(marker);
       }
     }
@@ -607,7 +615,7 @@ public class TableMapInnerFragment extends MapFragment {
       public boolean onMarkerClick(Marker arg0) {
         int index = (mCurrentMarker != null) ?
             mMarkerIds.get(mCurrentMarker) :
-            -1;
+            INVALID_INDEX;
         // Make the marker visible if it is either invisible or a
         // new marker.
         // Make the marker invisible if clicking on the already

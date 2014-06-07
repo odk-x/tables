@@ -1,9 +1,13 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.tables.utils.WebViewUtil;
+import org.opendatakit.tables.views.webkits.TableData;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 
 /**
@@ -31,11 +35,31 @@ public class MapListViewFragment extends ListViewFragment implements
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    if (savedInstanceState != null) {
-      mSelectedItemIndex =
-          savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX);
+    this.mSelectedItemIndex =
+        this.retrieveSelectedItemIndexFromBundle(savedInstanceState);
+    Log.d(
+        TAG,
+        "[onCreate] retrieved selected index: " + this.mSelectedItemIndex);
+  }
+  
+  @Override
+  protected TableData createDataObject() {
+    // We need to account for the fact that we had previously selected an item.
+    TableData result = super.createDataObject();
+    if (mSelectedItemIndex != INVALID_INDEX) {
+      result.setSelectedMapIndex(this.mSelectedItemIndex);
     } else {
-      this.mSelectedItemIndex = INVALID_INDEX;
+      result.setNoItemSelected();
+    }
+    return result;
+  }
+  
+  int retrieveSelectedItemIndexFromBundle(Bundle bundle) {
+    if (bundle != null &&
+        bundle.containsKey(INTENT_KEY_SELECTED_INDEX)) {
+      return bundle.getInt(INTENT_KEY_SELECTED_INDEX);
+    } else {
+      return INVALID_INDEX;
     }
   }
 
