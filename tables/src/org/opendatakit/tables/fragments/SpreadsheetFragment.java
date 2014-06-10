@@ -87,15 +87,34 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
    */
   private View mOverlay;
   private RelativeLayout.LayoutParams mOverlayLayoutParams;
+  
+  public SpreadsheetFragment() {
+    super();
+    // for fragments
+    Log.d(TAG, "[SpreadsheetFragment] empty no arg constructor called");
+  }
 
   @Override
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.SPREADSHEET;
   }
+  
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    Log.d(TAG, "[onCreate]");
+  }
+  
+  @Override
+  public void onResume() {
+    super.onResume();
+    Log.d(TAG, "[onResume]");
+  }
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
+    Log.d(TAG, "[onActivityCreated]");
 
   }
 
@@ -261,27 +280,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     activity.refreshDisplayFragment();
   }
 
-  void addOverlay(View overlay, int width, int height, int x, int y) {
-    removeOverlay();
-    this.mOverlay = overlay;
-    this.mOverlayLayoutParams = new RelativeLayout.LayoutParams(
-        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-    this.mOverlayLayoutParams.leftMargin = x;
-    this.mOverlayLayoutParams.topMargin = y - getActivity().getActionBar().getHeight();
-    this.mOverlayLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-    ViewGroup container = (ViewGroup) this.getView();
-    container.addView(this.mOverlay, this.mOverlayLayoutParams);
-  }
-
-  void removeOverlay() {
-    if (this.mOverlay != null) {
-      ViewGroup container = (ViewGroup) this.getView();
-      container.removeView(this.mOverlay);
-      this.mOverlay = null;
-      this.mOverlayLayoutParams = null;
-    }
-  }
-
   private void deleteRow(String rowId) {
     DbTable dbTable = DbTable.getDbTable(getTableProperties());
     dbTable.markDeleted(rowId);
@@ -321,7 +319,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           deleteRow(rowId);
-      init();
+          init();
         }
       });
 
@@ -525,12 +523,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
   @Override
   public void dataCellClicked(CellInfo cellInfo) {
-    this.removeOverlay();
+    // noop
   }
 
   @Override
   public void headerCellClicked(CellInfo cellInfo) {
-    this.removeOverlay();
+    // noop
   }
 
   private class CellEditDialog extends AlertDialog {

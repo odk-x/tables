@@ -356,6 +356,7 @@ public class TableDisplayActivity extends AbsTableActivity
   }
 
   public void refreshDisplayFragment() {
+    Log.d(TAG, "[refreshDisplayFragment]");
     this.helperInitializeDisplayFragment(true);
   }
 
@@ -577,6 +578,11 @@ public class TableDisplayActivity extends AbsTableActivity
     }
     Log.d(TAG, "[showSpreadsheetFragment] createNew is: " + createNew);
     if (spreadsheetFragment == null || createNew) {
+      if (spreadsheetFragment != null) {
+        Log.d(TAG, "[showSpreadsheetFragment] removing existing fragment");
+        // Get rid of the existing fragment
+        fragmentTransaction.remove(spreadsheetFragment);
+      }
       spreadsheetFragment = this.createSpreadsheetFragment();
       fragmentTransaction.add(
           R.id.activity_table_display_activity_one_pane_content,
@@ -609,6 +615,10 @@ public class TableDisplayActivity extends AbsTableActivity
         fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
     Fragment mapInner = fragmentManager.findFragmentByTag(
         Constants.FragmentTags.MAP_INNER_MAP);
+    Fragment detailFragment = fragmentManager.findFragmentByTag(
+        Constants.FragmentTags.DETAIL_FRAGMENT);
+    Fragment graphViewFragment = fragmentManager.findFragmentByTag(
+        Constants.FragmentTags.GRAPH_VIEW);
     if (fragmentToKeepVisible != ViewFragmentType.SPREADSHEET &&
         spreadsheet != null) {
       fragmentTransaction.hide(spreadsheet);
@@ -620,6 +630,14 @@ public class TableDisplayActivity extends AbsTableActivity
     if (fragmentToKeepVisible != ViewFragmentType.GRAPH_MANAGER &&
         graphManager != null) {
       fragmentTransaction.hide(graphManager);
+    }
+    if (fragmentToKeepVisible != ViewFragmentType.DETAIL &&
+        detailFragment != null) {
+      fragmentTransaction.hide(detailFragment); 
+    }
+    if (fragmentToKeepVisible != ViewFragmentType.GRAPH_VIEW &&
+        graphViewFragment != null) {
+      fragmentTransaction.hide(graphViewFragment);
     }
     if (fragmentToKeepVisible != ViewFragmentType.MAP) {
       if (mapList != null) {
@@ -754,6 +772,10 @@ public class TableDisplayActivity extends AbsTableActivity
     if (listViewFragment == null || createNew) {
       if (listViewFragment == null) {
         Log.d(TAG, "[showListFragment] existing list fragment not found");
+      } else {
+        // remove the old fragment
+        Log.d(TAG, "[showListFragment] removing old list fragment");
+        fragmentTransaction.remove(listViewFragment);
       }
       listViewFragment = this.createListViewFragment(fileName);
       fragmentTransaction.add(
@@ -798,6 +820,9 @@ public class TableDisplayActivity extends AbsTableActivity
     if (graphManagerFragment == null || createNew) {
       if (graphManagerFragment == null) {
         Log.d(TAG, "[showGraphFragment] existing graph fragment not found");
+      } else {
+        Log.d(TAG, "[showGraphFragment] removing old graph fragment");
+        fragmentTransaction.remove(graphManagerFragment);
       }
       graphManagerFragment = this.createGraphManagerFragment();
       fragmentTransaction.add(
@@ -838,6 +863,12 @@ public class TableDisplayActivity extends AbsTableActivity
     GraphViewFragment graphViewFragment = (GraphViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_VIEW);
     if (graphViewFragment == null || createNew) {
+      if (graphViewFragment != null) {
+        Log.d(TAG, "[showGraphViewFragment] removing old graphview fragment");
+        fragmentTransaction.remove(graphViewFragment);
+      } else {
+        Log.d(TAG, "[showGraphViewFragment] no existing graphview fragment found");
+      }
       graphViewFragment = this.createGraphViewFragment(graphName);
     } else {
       // Add the value to the existing fragment so it displays the correct
@@ -874,6 +905,11 @@ public class TableDisplayActivity extends AbsTableActivity
     this.setCurrentFragmentType(ViewFragmentType.DETAIL);
     this.updateChildViewVisibility(ViewFragmentType.DETAIL);
     FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    this.hideAllOtherViewFragments(
+        ViewFragmentType.DETAIL,
+        fragmentTransaction);
     String fileName = IntentUtil.retrieveFileNameFromBundle(
         this.getIntent().getExtras());
     // Try and use the default.
@@ -888,11 +924,15 @@ public class TableDisplayActivity extends AbsTableActivity
         fragmentManager.findFragmentByTag(
             Constants.FragmentTags.DETAIL_FRAGMENT);
     if (detailViewFragment == null || createNew) {
+      if (detailViewFragment != null) {
+        Log.d(TAG, "[showDetailViewFragment] removing old detail view fragment");
+        fragmentTransaction.remove(detailViewFragment);
+      } else {
+        Log.d(TAG, "[showDetailViewFragment] no existing detail view fragment found");
+      }
       detailViewFragment = this.createDetailViewFragment(fileName, rowId);
     }
-    FragmentTransaction fragmentTransaction =
-        fragmentManager.beginTransaction();
-    fragmentTransaction.replace(
+    fragmentTransaction.add(
         R.id.activity_table_display_activity_one_pane_content,
         detailViewFragment,
         Constants.FragmentTags.DETAIL_FRAGMENT);
