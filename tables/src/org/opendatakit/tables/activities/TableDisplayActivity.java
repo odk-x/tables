@@ -17,6 +17,7 @@ import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
 import org.opendatakit.tables.utils.ActivityUtil;
+import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
@@ -25,6 +26,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -254,10 +256,28 @@ public class TableDisplayActivity extends AbsTableActivity
       break;
     // For now, we will just refresh the table if something could have changed.
     case Constants.RequestCodes.ADD_ROW_COLLECT:
-    case Constants.RequestCodes.EDIT_ROW_COLLECT:
-      // TODO: this is BROKEN! We need to parse Collect results!!!
       if (resultCode == Activity.RESULT_OK) {
         Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
+        TableProperties tableProperties = this.getTableProperties();
+        CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), tableProperties, resultCode, data);
+        
+        this.refreshDataTable();
+        // We also want to cause the fragments to redraw themselves, as their
+        // data may have changed.
+        this.refreshDisplayFragment();
+      } else {
+        Log.d(
+            TAG,
+            "[onActivityResult] result canceled, not refreshing backing " +
+              "table");
+      }
+      break;
+    case Constants.RequestCodes.EDIT_ROW_COLLECT:
+      if (resultCode == Activity.RESULT_OK) {
+        Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
+        TableProperties tableProperties = this.getTableProperties();
+        CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), tableProperties, resultCode, data);
+        
         this.refreshDataTable();
         // We also want to cause the fragments to redraw themselves, as their
         // data may have changed.
