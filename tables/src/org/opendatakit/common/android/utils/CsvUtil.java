@@ -546,11 +546,18 @@ public class CsvUtil {
             throw new IllegalStateException("Unexpected mis-match of isUnitOfRetention for elementKey: " + ci.elementKey);
           }
           List<String> refList = cp.getListChildElementKeys();
-          if ( refList.size() != ci.listOfStringElementKeys.size() ) {
+          if ( refList == null ) {
+            refList = new ArrayList<String>();
+          }
+          List<String> ciList = ci.listOfStringElementKeys;
+          if ( ciList == null ) {
+            ciList = new ArrayList<String>();
+          }
+          if ( refList.size() != ciList.size() ) {
             throw new IllegalStateException("Unexpected mis-match of listOfStringElementKeys for elementKey: " + ci.elementKey);
           }
           for ( int i = 0 ; i < refList.size() ; ++i ) {
-            if ( !refList.get(i).equals(ci.listOfStringElementKeys.get(i)) ) {
+            if ( !refList.get(i).equals(ciList.get(i)) ) {
               throw new IllegalStateException("Unexpected mis-match of listOfStringElementKeys[" + i + "] for elementKey: " + ci.elementKey);
             }
           }
