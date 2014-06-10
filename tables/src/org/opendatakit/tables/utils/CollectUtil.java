@@ -1322,6 +1322,10 @@ public class CollectUtil {
       Log.i(TAG, "return code wasn't OK not inserting " + "edited data.");
       return false;
     }
+    if (data.getData() == null) {
+      Log.i(TAG, "data was null --not editing row");
+      return false;
+    }
     int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
     if (!instanceIsFinalized(context, instanceId)) {
       Log.i(TAG, "instance wasn't marked as finalized--not updating");
@@ -1352,6 +1356,10 @@ public class CollectUtil {
       Intent data) {
     if (returnCode != Activity.RESULT_OK) {
       Log.i(TAG, "return code wasn't OK --not adding row");
+      return false;
+    }
+    if (data.getData() == null) {
+      Log.i(TAG, "data was null --not adding row");
       return false;
     }
     int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
