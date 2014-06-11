@@ -951,13 +951,19 @@ public class TableDisplayActivity extends AbsTableActivity
         Log.d(TAG, "[showDetailViewFragment] no existing detail view fragment found");
       }
       detailViewFragment = this.createDetailViewFragment(fileName, rowId);
+      
+      fragmentTransaction.add(
+          R.id.activity_table_display_activity_one_pane_content,
+          detailViewFragment,
+          Constants.FragmentTags.DETAIL_FRAGMENT);
+    } else {
+      Log.d(TAG, "[showDetailViewFragment] existing detail view fragment found");
+      fragmentTransaction.show(detailViewFragment);
     }
-    fragmentTransaction.add(
-        R.id.activity_table_display_activity_one_pane_content,
-        detailViewFragment,
-        Constants.FragmentTags.DETAIL_FRAGMENT);
+
     fragmentTransaction.commit();
   }
+  
 
   /**
    * Create a {@link DetailViewFragment} to be used with the fragments.
