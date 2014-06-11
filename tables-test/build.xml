@@ -1,66 +1,35 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- WARNING: Eclipse auto-generated file.
-              Any modifications will be overwritten.
-              To include a user specific buildfile here, simply create one in the same
-              directory with the processing instruction <?eclipse.ant.import?>
-              as the first entry and export the buildfile again. --><project basedir="." default="build" name="opendatakit.tables-test">
+
+<project basedir="." default="build" name="opendatakit.tables-test">
     <property environment="env"/>
-    <property name="ECLIPSE_HOME" value="../../../../../../../../Applications/EclipseJuno"/>
     <property name="junit.output.dir" value="junit"/>
-    <property name="ODK Tables.location" value="../tables"/>
+    <property name="tables.location" value="../tables"/>
     <property name="androidcommon.location" value="../../opendatakit.androidcommon/androidcommon" />
+	<property name="playservices.location" value="../../opendatakit.playservices" />
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.7"/>
     <property name="source" value="1.7"/>
-    <path id="JUnit 4.libraryclasspath">
-        <pathelement location="${ECLIPSE_HOME}/plugins/org.junit_4.10.0.v4_10_0_v20120426-0900/junit.jar"/>
-        <pathelement location="${ECLIPSE_HOME}/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+
+    <path id="tables-test.libs.classpath">
+		<pathelement location="${basedir}/libs/hamcrest-core-1.3.jar"/>
+		<pathelement location="${basedir}/libs/junit-4.11.jar"/>
+		<fileset dir="${basedir}/libs" includes="**/*.jar" />
     </path>
-    <path id="Android Private Libraries.libraryclasspath">
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/commons-lang3-3.1.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/simple-xml-2.6.2.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/aggregate-rest-interface-2014-05-28.jar"/>
-        <pathelement location="../tables/libs/commons-math-2.1.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/gson-2.1.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/commons-io-2.4.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/spring-android-auth-1.0.1.RELEASE.jar"/>
-        <pathelement location="../../opendatakit.playservices/libs/google-play-services.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/spring-android-core-1.0.1.RELEASE.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/jackson-mapper-asl-1.9.11.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/spring-android-rest-template-1.0.1.RELEASE.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/joda-time-2.2.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/kxml2-2.3.0.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/jackson-core-asl-1.9.11.jar"/>
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/libs/httpclientandroidlib-4.2.1.jar"/>
+
+	<path id="tables.libs.classpath">
+		<fileset dir="${tables.location}/libs" includes="**/*.jar" />
+		<fileset dir="${playservices.location}/libs" includes="**/*.jar" />
+		<fileset dir="${androidcommon.location}/libs" includes="**/*.jar" />
     </path>
-    <path id="Android Dependencies.libraryclasspath">
-        <pathelement location="../../opendatakit.androidcommon/androidcommon/bin/android common.jar"/>
-        <pathelement location="../../opendatakit.playservices/bin/opendatakit.playservices.jar"/>
-    </path>
-    <path id="Google APIs [Android 4.4.2].libraryclasspath">
-        <pathelement location="../../../../../../../../usr/local/Cellar/android-sdk/22.3/platforms/android-19/android.jar"/>
-        <pathelement location="../../../../../../../../usr/local/Cellar/android-sdk/22.3/add-ons/addon-google_apis-google-19/libs/effects.jar"/>
-        <pathelement location="../../../../../../../../usr/local/Cellar/android-sdk/22.3/add-ons/addon-google_apis-google-19/libs/usb.jar"/>
-        <pathelement location="../../../../../../../../usr/local/Cellar/android-sdk/22.3/add-ons/addon-google_apis-google-19/libs/maps.jar"/>
-    </path>
-    <path id="ODK Tables.classpath">
-        <pathelement location="${ODK Tables.location}/bin/classes"/>
-        <path refid="Android Private Libraries.libraryclasspath"/>
-        <path refid="Android Dependencies.libraryclasspath"/>
-        <path refid="Google APIs [Android 4.4.2].libraryclasspath"/>
-    </path>
+	
     <path id="opendatakit.tables-test.classpath">
+	 <pathelement location="${tables.location}/bin/classes"/>
         <pathelement location="bin"/>
-        <pathelement location="libs/fest-android-1.0.7.jar"/>
-        <pathelement location="libs/fest-assert-core-2.0M10.jar"/>
-        <path refid="JUnit 4.libraryclasspath"/>
-        <pathelement location="libs/mockito-all-1.9.5.jar"/>
-        <path refid="ODK Tables.classpath"/>
-        <pathelement location="libs/android.19.jar"/>
-        <pathelement location="libs/robolectric-2.3-20140430.042024-167-jar-with-dependencies.jar"/>
-        <!-- We need the library projects that ODK Tables references. -->
+        <path refid="tables-test.libs.classpath"/>
+		<path refid="tables.libs.classpath"/> 
         <pathelement location="${androidcommon.location}/bin/classes" />
     </path>
+	
     <target name="init">
         <mkdir dir="bin"/>
         <copy includeemptydirs="false" todir="bin">
@@ -73,12 +42,12 @@
         <delete dir="bin"/>
     </target>
     <target depends="clean" name="cleanall">
-        <ant antfile="build.xml" dir="${ODK Tables.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${tables.location}" inheritAll="false" target="clean"/>
         <ant antfile="build.xml" dir="${androidcommon.location}" inheritAll="false" target="clean" />
     </target>
     <target depends="build-subprojects,build-project" name="build"/>
     <target name="build-subprojects">
-        <ant antfile="build.xml" dir="${ODK Tables.location}" inheritAll="false" target="debug">
+        <ant antfile="build.xml" dir="${tables.location}" inheritAll="false" target="debug">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
@@ -95,20 +64,6 @@
             <src path="src"/>
             <classpath refid="opendatakit.tables-test.classpath"/>
         </javac>
-    </target>
-    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
-    <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
-        <copy todir="${ant.library.dir}">
-            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
-        </copy>
-        <unzip dest="${ant.library.dir}">
-            <patternset includes="jdtCompilerAdapter.jar"/>
-            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
-        </unzip>
-    </target>
-    <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
-        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
-        <antcall target="build"/>
     </target>
     <target name="test">
         <mkdir dir="${junit.output.dir}"/>
