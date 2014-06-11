@@ -147,11 +147,6 @@ public class TableDisplayActivityTest {
         Activity.RESULT_OK,
         true);
   }
-  
-  @Test
-  public void unitTestFail() {
-    Assert.fail();
-  }
 
   @Test
   public void backingTableIsRefreshedOnSuccessfulSurveyEditReturn() {
