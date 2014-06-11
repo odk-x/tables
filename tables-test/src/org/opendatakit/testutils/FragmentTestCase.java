@@ -2,7 +2,10 @@ package org.opendatakit.testutils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 import org.robolectric.util.ActivityController;
 
@@ -20,6 +23,7 @@ import android.app.FragmentManager;
  * @author sudar.sam@gmail.com
  *
  */
+@RunWith(RobolectricTestRunner.class)
 public class FragmentTestCase<T extends Fragment> {
   
   private static final String FRAGMENT_TAG = "fragment";
@@ -52,6 +56,11 @@ public class FragmentTestCase<T extends Fragment> {
    */
   public Activity getParentActivity() {
     return this.activity;
+  }
+  
+  @Test
+  public void meaninglessTest() {
+    assert(true == false);
   }
   
   @After
