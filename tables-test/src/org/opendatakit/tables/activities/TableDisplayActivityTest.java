@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.robolectric.Robolectric.shadowOf;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -145,6 +146,11 @@ public class TableDisplayActivityTest {
         Constants.RequestCodes.EDIT_ROW_COLLECT,
         Activity.RESULT_OK,
         true);
+  }
+  
+  @Test
+  public void unitTestFail() {
+    Assert.fail();
   }
 
   @Test
