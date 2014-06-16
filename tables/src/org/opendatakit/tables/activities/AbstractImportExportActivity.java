@@ -96,7 +96,7 @@ public abstract class AbstractImportExportActivity extends Activity {
         @Override
         public void onClick(View v) {
             Intent intent = new Intent("org.openintents.action.PICK_FILE");
-            intent.setData(Uri.parse("file://" + ODKFileUtils.getAppFolder(appName)));
+            intent.setData(Uri.parse("file://" + ODKFileUtils.getAssetsCsvFolder(appName)));
             intent.putExtra("org.openintents.extra.TITLE", title);
             try {
               startActivityForResult(intent, 1);

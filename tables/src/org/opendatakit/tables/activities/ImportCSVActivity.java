@@ -40,6 +40,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * An activity for importing CSV files to a table.
@@ -161,7 +162,6 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 	 * Attempts to import a CSV file.
 	 */
 	private void importSubmission() {
-     showDialog(IMPORT_IN_PROGRESS_DIALOG);
 
 	  String filenamePath = filenameValField.getText().toString().trim();
 
@@ -175,7 +175,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
          String tableId = terms[0];
          String fileQualifier = null;
          request = new ImportRequest(tableId, fileQualifier);
-       } else if ( terms.length == 3 && terms[1].equals("properties") && terms[2].equals("csv")) {
+       } else if ( terms.length == 3 && (terms[1].equals("properties") || terms[1].equals("definition")) && terms[2].equals("csv")) {
          String tableId = terms[0];
          String fileQualifier = null;
          request = new ImportRequest(tableId, fileQualifier);
@@ -183,7 +183,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
          String tableId = terms[0];
          String fileQualifier = terms[1];
          request = new ImportRequest(tableId, fileQualifier);
-       } else if ( terms.length == 4 && terms[2].equals("properties") && terms[3].equals("csv")) {
+       } else if ( terms.length == 4 && (terms[2].equals("properties") || terms[2].equals("definition")) && terms[3].equals("csv")) {
          String tableId = terms[0];
          String fileQualifier = terms[1];
          request = new ImportRequest(tableId, fileQualifier);
@@ -191,22 +191,11 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
      }
 
      if ( request == null ) {
-	   File file = ODKFileUtils.asAppFile(
-	          appName,
-	          filenameValField.getText().toString().trim()
-	   );
-		String tableName = null;
-		TableProperties tp = null;
-		int pos = tableSpin.getSelectedItemPosition();
-		if(pos == 0) {
-			tableName = ntnValField.getText().toString();
-			request = new ImportRequest(true, null, tableName, file);
-		} else {
-		    tp = tps[pos - 1];
-		    request = new ImportRequest(false, tp.getTableId(), null, file);
-		}
+       Toast.makeText(this, "Invalid csv filename: " + filenameValField.getText(), Toast.LENGTH_LONG).show();
+       return;
      }
 
+     showDialog(IMPORT_IN_PROGRESS_DIALOG);
      ImportTask task = new ImportTask(this, appName);
      task.execute(request);
 		/**
@@ -224,11 +213,33 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 	    if(resultCode == RESULT_CANCELED) {return;}
 	    Uri fileUri = data.getData();
 	    String filepath = fileUri.getPath();
+	    File csvFile = new File(filepath);
 	    // We have to first hand this off to account for the difference in
 	    // external storage directories on different versions of android.
-	    String relativePath = ODKFileUtils.asRelativePath(appName, new File(filepath));
+	    String relativePath = ODKFileUtils.asRelativePath(appName, csvFile);
 	    Log.d(TAG, "relative path of import file: " + relativePath);
-	    filenameValField.setText(relativePath);
+	    File assetCsv = new File(ODKFileUtils.getAssetsCsvFolder(appName));
+	    String assetRelativePath = ODKFileUtils.asRelativePath(appName, assetCsv);
+	    if ( relativePath.startsWith(assetRelativePath) ) {
+	       String name = csvFile.getName();
+	       String[] terms = name.split("\\.");
+          if ( terms.length < 2 || terms.length > 4 ) {
+            Toast.makeText(this, "Import filename must be of the form tableId.csv, tableId.definition.csv, tableId.properties.csv or tableId.qualifier.csv", Toast.LENGTH_LONG).show();
+            return;
+          } else {
+            if ( !terms[terms.length-1].equals("csv") ) {
+              Toast.makeText(this, "Import filename must end in .csv", Toast.LENGTH_LONG).show();
+              return;
+            }
+    	      if ( terms.length == 4 && !(terms[2].equals("properties") || terms[2].equals("definition"))) {
+              Toast.makeText(this, "Import filename must be of the form tableId.qualifier.properties.csv or tableId.qualifier.definition.csv", Toast.LENGTH_LONG).show();
+              return;
+    	      }
+          }
+          filenameValField.setText(relativePath);
+	    } else {
+	      Toast.makeText(this, "Import file must reside in " + assetRelativePath + File.separator, Toast.LENGTH_LONG).show();
+	    }
 	}
 
 	/**
