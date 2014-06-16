@@ -1,7 +1,5 @@
 package org.opendatakit.tables.activities;
 
-import java.util.ArrayList;
-
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
@@ -26,7 +24,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -260,7 +257,7 @@ public class TableDisplayActivity extends AbsTableActivity
         Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
         TableProperties tableProperties = this.getTableProperties();
         CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), tableProperties, resultCode, data);
-        
+
         this.refreshDataTable();
         // We also want to cause the fragments to redraw themselves, as their
         // data may have changed.
@@ -277,7 +274,7 @@ public class TableDisplayActivity extends AbsTableActivity
         Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
         TableProperties tableProperties = this.getTableProperties();
         CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), tableProperties, resultCode, data);
-        
+
         this.refreshDataTable();
         // We also want to cause the fragments to redraw themselves, as their
         // data may have changed.
@@ -653,7 +650,7 @@ public class TableDisplayActivity extends AbsTableActivity
     }
     if (fragmentToKeepVisible != ViewFragmentType.DETAIL &&
         detailFragment != null) {
-      fragmentTransaction.hide(detailFragment); 
+      fragmentTransaction.hide(detailFragment);
     }
     if (fragmentToKeepVisible != ViewFragmentType.GRAPH_VIEW &&
         graphViewFragment != null) {
@@ -951,7 +948,7 @@ public class TableDisplayActivity extends AbsTableActivity
         Log.d(TAG, "[showDetailViewFragment] no existing detail view fragment found");
       }
       detailViewFragment = this.createDetailViewFragment(fileName, rowId);
-      
+
       fragmentTransaction.add(
           R.id.activity_table_display_activity_one_pane_content,
           detailViewFragment,
@@ -963,7 +960,7 @@ public class TableDisplayActivity extends AbsTableActivity
 
     fragmentTransaction.commit();
   }
-  
+
 
   /**
    * Create a {@link DetailViewFragment} to be used with the fragments.

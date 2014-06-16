@@ -1,13 +1,9 @@
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.WebView;
 
 /**
@@ -41,7 +37,7 @@ public class MapListViewFragment extends ListViewFragment implements
         TAG,
         "[onCreate] retrieved selected index: " + this.mSelectedItemIndex);
   }
-  
+
   @Override
   protected TableData createDataObject() {
     // We need to account for the fact that we had previously selected an item.
@@ -53,7 +49,7 @@ public class MapListViewFragment extends ListViewFragment implements
     }
     return result;
   }
-  
+
   int retrieveSelectedItemIndexFromBundle(Bundle bundle) {
     if (bundle != null &&
         bundle.containsKey(INTENT_KEY_SELECTED_INDEX)) {

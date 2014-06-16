@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.robolectric.Robolectric.shadowOf;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -315,7 +314,7 @@ public class TableDisplayActivityTest {
     this.activity.recreate();
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.MAP);
   }
-  
+
   @Test
   public void checkedMenuItemChangesToListFromSpreadsheet() {
     this.setupActivityForMenuTest(ViewFragmentType.SPREADSHEET);
@@ -324,7 +323,7 @@ public class TableDisplayActivityTest {
     this.activity.showListFragment();
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.LIST);
   }
-  
+
   @Test
   public void checkedMenuItemChangesToMapFromSpreadsheet() {
     this.setupActivityForMenuTest(ViewFragmentType.SPREADSHEET);
@@ -333,7 +332,7 @@ public class TableDisplayActivityTest {
     this.activity.showMapFragment();
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.MAP);
   }
-  
+
   @Test
   public void checkedMenuItemChangesToGraphFromSpreadsheet() {
     this.setupActivityForMenuTest(ViewFragmentType.SPREADSHEET);
@@ -343,7 +342,7 @@ public class TableDisplayActivityTest {
     this.assertOptionsMenuCorrectForTopLevelView(
         ViewFragmentType.GRAPH_MANAGER);
   }
-  
+
   @Test
   public void checkedMenuItemChangesToSpreadsheetFromList() {
     this.setupActivityForMenuTest(ViewFragmentType.LIST);
@@ -352,8 +351,8 @@ public class TableDisplayActivityTest {
     this.activity.showSpreadsheetFragment();
     this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.SPREADSHEET);
   }
-  
-  
+
+
 
   /**
    * Asserts that the options menu is correct for a top level view like list or
