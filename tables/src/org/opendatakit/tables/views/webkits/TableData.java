@@ -127,7 +127,8 @@ public class TableData {
     }
     ArrayList<String> rowValues = new ArrayList<String>();
     for (int i = 0; i < requestedRows; i++) {
-      Row row = this.mTable.getRowAtIndex(i);
+      int correctedIndex = getIndexIntoDataTable(i);
+      Row row = this.mTable.getRowAtIndex(correctedIndex);
       rowValues.add(row.getDataOrMetadataByElementKey(elementKey));
     }
     return new JSONArray(rowValues).toString();
@@ -136,7 +137,8 @@ public class TableData {
   public String getColumnDataForElementKey(String elementKey, int requestedRows) {
     ArrayList<String> rowValues = new ArrayList<String>();
     for (int i = 0; i < requestedRows; i++) {
-      Row row = this.mTable.getRowAtIndex(i);
+      int correctedIndex = getIndexIntoDataTable(i);
+      Row row = this.mTable.getRowAtIndex(correctedIndex);
       rowValues.add(row.getDataOrMetadataByElementKey(elementKey));
     }
     return new JSONArray(rowValues).toString();
@@ -169,6 +171,7 @@ public class TableData {
   }
 
   public String getColumnForegroundColor(int rowNumber, String elementPath) {
+    int correctedIndex = getIndexIntoDataTable(rowNumber);
     int foregroundColor = -16777216;
 
     TableProperties tp = mTable.getTableProperties();
@@ -183,7 +186,7 @@ public class TableData {
       this.mElementKeyToColorRuleGroup.put(elementKey, colRul);
     }
 
-    Row row = mTable.getRowAtIndex(rowNumber);
+    Row row = mTable.getRowAtIndex(correctedIndex);
     ColorGuide guide = colRul.getColorGuide(row);
     if (guide != null) {
       foregroundColor = guide.getForeground();
@@ -193,6 +196,7 @@ public class TableData {
   }
 
   public String getStatusForegroundColor(int rowNumber) {
+    int correctedIndex = getIndexIntoDataTable(rowNumber);
     int foregroundColor = -16777216;
 
     if (mStatusColumnColorRuleGroup == null) {
@@ -200,7 +204,7 @@ public class TableData {
       mStatusColumnColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
     }
 
-    Row row = mTable.getRowAtIndex(rowNumber);
+    Row row = mTable.getRowAtIndex(correctedIndex);
     ColorGuide guide = mStatusColumnColorRuleGroup.getColorGuide(row);
     if (guide != null) {
       foregroundColor = guide.getForeground();
@@ -210,6 +214,7 @@ public class TableData {
   }
 
   public String getRowForegroundColor(int rowNumber) {
+    int correctedIndex = getIndexIntoDataTable(rowNumber);
     int foregroundColor = -16777216;
 
     if (mRowColorRuleGroup == null) {
@@ -217,7 +222,7 @@ public class TableData {
       mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
     }
 
-    Row row = mTable.getRowAtIndex(rowNumber);
+    Row row = mTable.getRowAtIndex(correctedIndex);
     ColorGuide guide = mRowColorRuleGroup.getColorGuide(row);
     if (guide != null) {
       foregroundColor = guide.getForeground();
@@ -255,7 +260,7 @@ public class TableData {
    * @param displayIndex
    * @return
    */
-  int getIndexIntoDataTable(int displayIndex) {
+  protected int getIndexIntoDataTable(int displayIndex) {
     if (!this.displayIndexMustBeCalculated()) {
       // Then we can just return it directly.
       return displayIndex;
@@ -307,7 +312,8 @@ public class TableData {
   }
 
   public String getRowId(int index) {
-    return mTable.getRowAtIndex(index).getRowId();
+    int correctedIndex = getIndexIntoDataTable(index);
+    return mTable.getRowAtIndex(correctedIndex).getRowId();
   }
 
 }
