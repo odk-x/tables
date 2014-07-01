@@ -1037,7 +1037,7 @@ public class TableProperties {
     }
     ColumnProperties cp = null;
     cp = ColumnProperties.createNotPersisted(this, jsonStringifyDisplayName, elementKey,
-        elementName, columnType, listChildElementKeys, isUnitOfRetention, true);
+        elementName, columnType, listChildElementKeys, isUnitOfRetention, isUnitOfRetention);
 
     return addColumn(cp);
   }
@@ -1078,24 +1078,26 @@ public class TableProperties {
         db.beginTransaction();
         // ensure that we have persisted this column's values
         cp.persistColumn(db);
-        StringBuilder b = new StringBuilder();
-        b.append("ALTER TABLE \"").append(dbTableName).append("\"")
-         .append(" ADD COLUMN \"").append(cp.getElementKey()).append("\" ");
-        ColumnType type = cp.getColumnType();
-        if ( type == ColumnType.STRING ) {
-          b.append("TEXT");
-        } else if ( type == ColumnType.INTEGER ) {
-          b.append("INTEGER");
-        } else if ( type == ColumnType.NUMBER ) {
-          b.append("REAL");
-        } else if ( type == ColumnType.BOOLEAN ) {
-          b.append("INTEGER"); // 0 and 1
-        } else {
-          b.append("TEXT"); // everything else
+        if ( cp.isUnitOfRetention() ) {
+          StringBuilder b = new StringBuilder();
+          b.append("ALTER TABLE \"").append(dbTableName).append("\"")
+           .append(" ADD COLUMN \"").append(cp.getElementKey()).append("\" ");
+          ColumnType type = cp.getColumnType();
+          if ( type == ColumnType.STRING ) {
+            b.append("TEXT");
+          } else if ( type == ColumnType.INTEGER ) {
+            b.append("INTEGER");
+          } else if ( type == ColumnType.NUMBER ) {
+            b.append("REAL");
+          } else if ( type == ColumnType.BOOLEAN ) {
+            b.append("INTEGER"); // 0 and 1
+          } else {
+            b.append("TEXT"); // everything else
+          }
+          b.append(" NULL");
+          String sql = b.toString();
+          db.execSQL(sql);
         }
-        b.append(" NULL");
-        String sql = b.toString();
-        db.execSQL(sql);
         // use a copy of columnOrder for roll-back purposes
         List<String> newColumnOrder = this.getColumnOrder();
         if (cp.getDisplayVisible()) {
