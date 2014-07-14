@@ -397,6 +397,20 @@ public class UserTable {
       return result;
     }
 
+    public String getRawDataOrMetadataByElementKey(String elementKey) {
+      String result;
+      Integer cell = UserTable.this.mElementKeyToIndex.get(elementKey);
+      if ( cell == null ) {
+        Log.e(TAG, "elementKey [" + elementKey + "] was not found in table");
+        return null;
+      }
+      result = this.mRowData[cell];
+      if (result == null) {
+        return null;
+      }
+      return result;
+    }
+
     public String getDisplayTextOfData(Context context, String elementKey, boolean showErrorText) {
       // TODO: share processing with CollectUtil.writeRowDataToBeEdited(...)
       String raw = getDataOrMetadataByElementKey(elementKey);
