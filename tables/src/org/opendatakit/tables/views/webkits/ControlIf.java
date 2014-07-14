@@ -398,14 +398,23 @@ public class ControlIf {
 	/**
 	 * Add a row to the table. Fails if the table cannot be found, if the column
 	 * cannot be found, or if a value cannot be parsed to the correct value.
+	 * <p>
+	 * Usage is the following:
+	 * <code>
+	 * var valuesMap = {};<br>
+	 * valuesMap['stringElementKey'] = 'howdy ho';<br>
+	 * valuesMap['elementKeyTwo'] = '2.3351';<br>
+	 * var stringifiedObject = JSON.stringify(valuesMap);<br>
+	 * control.addRow('tableId', stringifiedObject);<br>
+	 * </code>
 	 * @param tableId the id of the table you are adding to
 	 * @param valuesMap a stringified JSON object mapping element key to value.
 	 * The values must be able to be parsed to the appropriate types for each
 	 * row. I.e. an integer column cannot have a value "cat".
 	 * @return
 	 */
-	public boolean addRow(String tableId, String valuesMap) {
-	  return weakControl.get().addRow(tableId, valuesMap);
+	public boolean addRow(String tableId, String stringifiedObject) {
+	  return weakControl.get().addRow(tableId, stringifiedObject);
 	}
 	
 	/**
