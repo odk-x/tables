@@ -5,15 +5,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
+import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.common.android.utils.NameUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -25,14 +32,17 @@ import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.ODKDatabaseUtilsWrapper;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.WebViewUtil;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
@@ -474,6 +484,88 @@ public class Control {
         this.mAppName,
         tableId);
     return tp.getLocalizedDisplayName();
+  }
+  
+  public boolean addRow(String tableId, String stringifiedJSON) {
+   TableProperties tableProperties =
+       this.retrieveTablePropertiesForTable(tableId);
+   if (tableProperties == null) {
+     Log.e(TAG, "[addRow] cannot find table for id: " + tableId);
+     return false;
+   }
+    Map<String, String> elementKeyToValue;
+    if (stringifiedJSON == null) {
+      // this case will let us add an empty row if null is passed.
+      elementKeyToValue = new HashMap<String, String>();
+    } else {
+      elementKeyToValue = WebViewUtil.getMapFromJson(stringifiedJSON);
+    }
+    // we now have a map of elementkey -> value. Note that we're not currently
+    // going to handle complex types or those that map to a json value. We 
+    // could, but we'd probably have to have a known entity do the conversions
+    // for us somehow on the js side, rather than expect the caller to craft up
+    // whatever format we've landed on for pictures.
+    // This will contain the values we're going to insert into the database.
+    ContentValues contentValues = new ContentValues();
+    // TODO: respect locale and timezone. Getting this structure from other
+    // places it is used.
+    DataUtil dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
+    for (Map.Entry<String, String> entry : elementKeyToValue.entrySet()) {
+      String elementKey = entry.getKey();
+      String rawValue = entry.getValue();
+      // Get the column so we know what type we need to handle.
+      ColumnProperties columnProperties =
+          tableProperties.getColumnByElementKey(elementKey);
+      if (columnProperties == null) {
+        // uh oh, no column for the given id. problem on the part of the caller
+        Log.e(
+            TAG,
+            "[addRow] could not find column for element key: " + elementKey);
+        return false;
+      }
+      ColumnType columnType = columnProperties.getColumnType();
+      boolean parsedSuccessfully = dataUtil.addValueToContentValues(
+          columnProperties,
+          rawValue,
+          contentValues);
+      if (!parsedSuccessfully) {
+        Log.e(
+            TAG,
+            "[addRow] could not parse value: " +
+              rawValue +
+              " for column type " +
+              columnType);
+        return false;
+      }
+    }
+    // If we've made it here, all appears to be well.
+    SQLiteDatabase writableDatabase = getWritableDatabase();
+    ODKDatabaseUtilsWrapper dbUtils = this.getODKDatabaseUtilsWrapper();
+    dbUtils.writeDataIntoExistingDBTable(
+        writableDatabase,
+        tableId,
+        contentValues);
+    return true;
+  }
+  
+  /**
+   * Very basic method to facilitate testing.
+   * @return
+   */
+  protected SQLiteDatabase getWritableDatabase() {
+    DataModelDatabaseHelper dmDbHelper =
+        DataModelDatabaseHelperFactory.getDbHelper(mActivity, mAppName);
+    SQLiteDatabase result = dmDbHelper.getWritableDatabase();
+    return result;
+  }
+  
+  /**
+   * Very basic method to facilitate stubbing and injection of a mock object.
+   * @return
+   */
+  protected ODKDatabaseUtilsWrapper getODKDatabaseUtilsWrapper() {
+    ODKDatabaseUtilsWrapper result = new ODKDatabaseUtilsWrapper();
+    return result;
   }
 
   /**

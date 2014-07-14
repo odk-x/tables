@@ -3,6 +3,7 @@ package org.opendatakit.testutils;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
@@ -17,6 +18,7 @@ import org.robolectric.shadows.ShadowEnvironment;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.os.Environment;
 

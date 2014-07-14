@@ -3,9 +3,13 @@ package org.opendatakit.testutils;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
@@ -16,6 +20,7 @@ import org.opendatakit.tables.views.webkits.ControlIf;
 import org.opendatakit.tables.views.webkits.TableData;
 import org.opendatakit.tables.views.webkits.TableDataIf;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.webkit.WebView;
 
 /**
@@ -50,6 +55,12 @@ public class TestConstants {
   public static final String DEFAULT_FILE_NAME = "test/File/Name";
 
   public static final String DEFAULT_ROW_ID = "testRowId";
+  
+  public static class ElementKeys {
+    public static final String STRING_COLUMN = "stringColumn";
+    public static final String INT_COLUMN = "intColumn";
+    public static final String NUMBER_COLUMN = "numberColumn";
+  }
 
   /**
    * The default app name for tables. Using this rather than the
@@ -72,6 +83,28 @@ public class TestConstants {
     doReturn(TableViewType.SPREADSHEET)
         .when(tpMock).getDefaultViewType();
     return tpMock;
+  }
+  
+  public static SQLiteDatabase getDatabaseMock() {
+    SQLiteDatabase result = mock(SQLiteDatabase.class);
+    return result;
+  }
+  
+  /**
+   * Get a mock {@link ColumnProperties} object. Returns the element key and
+   * column types given. As more mockable parameters are needed, they should be
+   * added here.
+   * @param elementKey
+   * @param columnType
+   * @return
+   */
+  public static ColumnProperties getColumnPropertiesMock(
+      String elementKey,
+      ColumnType columnType) {
+    ColumnProperties result = mock(ColumnProperties.class);
+    doReturn(elementKey).when(result).getElementKey();
+    doReturn(columnType).when(result).getColumnType();
+    return result;
   }
 
   public static SQLQueryStruct getSQLQueryStructMock() {
@@ -105,6 +138,21 @@ public class TestConstants {
     allViewTypes.add(TableViewType.GRAPH);
     doReturn(allViewTypes).when(allValid).getAllPossibleViewTypes();
     return allValid;
+  }
+  
+  /**
+   * Returns a map with the element keys in {@link ElementKeys}.
+   * @return
+   */
+  public static Map<String, String> getMapOfElementKeyToValue(
+      String rawStringValue,
+      String rawIntValue,
+      String rawNumberValue) {
+    Map<String, String> result = new HashMap<String, String>();
+    result.put(ElementKeys.STRING_COLUMN, rawStringValue);
+    result.put(ElementKeys.INT_COLUMN, rawIntValue);
+    result.put(ElementKeys.NUMBER_COLUMN, rawNumberValue);
+    return result;
   }
 
   public static WebView getWebViewMock() {
