@@ -1,28 +1,48 @@
 package org.opendatakit.tables.views.webkits;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
+import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.robolectric.Robolectric.shadowOf;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.WebViewActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.ODKDatabaseUtilsWrapper;
 import org.opendatakit.tables.utils.SQLQueryStruct;
-import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.tables.utils.WebViewUtil;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowActivity.IntentForResult;
 
+import com.google.android.gms.internal.ee;
+
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 
 /**
  * 
@@ -32,8 +52,14 @@ import android.content.ComponentName;
 @RunWith(RobolectricTestRunner.class)
 public class ControlTest {
   
+  public static final String VALID_STRING_VALUE = "a string value";
+  public static final String VALID_INT_VALUE = "1";
+  public static final String VALID_NUMBER_VALUE = "12.3512";
+  
   Control control;
   Activity activity;
+  /** The wrapper that should be used by the control stub. */
+  ODKDatabaseUtilsWrapper wrapperMock;
   
   @Before
   public void before() {
@@ -44,7 +70,11 @@ public class ControlTest {
           .resume()
           .visible()
           .get();
-    Control control = new Control(
+    // First set up the database utils wrapper mock.
+    this.wrapperMock = mock(ODKDatabaseUtilsWrapper.class);
+    ControlStub.DATABASE = TestConstants.getDatabaseMock();
+    ControlStub.DB_UTILS_WRAPPER = wrapperMock;
+    Control control = new ControlStub(
         activityStub,
         TestConstants.TABLES_DEFAULT_APP_NAME);
     this.activity = activityStub;
@@ -54,9 +84,102 @@ public class ControlTest {
   @After
   public void after() {
     AbsBaseActivityStub.resetState();
+    ControlStub.resetState();
     // null them out just to make sure.
     this.activity = null;
     this.control = null;
+  }
+  
+  protected void setupControlWithTablePropertiesMock() {
+    TableProperties mock = mock(TableProperties.class);
+    ControlStub.TABLE_PROPERTIES_FOR_ID = mock;
+  }
+  
+  @Test
+  public void addRowReturnsFalseIfTableDoesNotExist() {
+    // we don't want the tp to be present
+    ControlStub.TABLE_PROPERTIES_FOR_ID = null;
+    boolean result = this.control.addRow("anyId", "anyString");
+    assertThat(result).isFalse();
+  }
+  
+  @Test
+  public void addRowReturnsFalseIfColumnDoesNotExist() {
+    TableProperties tpMock = TestConstants.getTablePropertiesMock();
+    ControlStub.TABLE_PROPERTIES_FOR_ID = tpMock;
+    String nonExistentColumn = "thisColumnDoesNotExist";
+    doReturn(null).when(tpMock).getColumnByElementKey(nonExistentColumn);
+    ControlStub.TABLE_PROPERTIES_FOR_ID = tpMock;
+    String stringifiedMap = WebViewUtil.stringify(getValidMap());
+    boolean result = this.control.addRow("anyId", stringifiedMap);
+    assertThat(result).isFalse();
+  }
+  
+  @Test
+  public void addRowWithInvalidIntFails() {
+    this.assertInvalidHelper(ColumnType.INTEGER, "invalid");
+  }
+  
+  @Test
+  public void addRowWithInvalidNumberFails() {
+    this.assertInvalidHelper(ColumnType.NUMBER, "invalid");
+  }
+  
+  /**
+   * Perform an assertion for an invalid value for the given column type,
+   * ensuring that the insertion fails.
+   * @param elementKey
+   * @param columnType
+   * @param invalidValue
+   */
+  private void assertInvalidHelper(
+      ColumnType columnType,
+      String invalidValue) {
+    setupControlWithTablePropertiesMock();
+    String elementKey = "anyElementKey";
+    TableProperties tpMock = ControlStub.TABLE_PROPERTIES_FOR_ID;
+    ColumnProperties intColumn = TestConstants.getColumnPropertiesMock(
+        elementKey,
+        columnType);
+    doReturn(intColumn).when(tpMock).getColumnByElementKey(
+        elementKey);
+    Map<String, String> invalidMap = new HashMap<String, String>();
+    invalidMap.put(elementKey, invalidValue);
+    String stringified = WebViewUtil.stringify(invalidMap);
+    boolean result = this.control.addRow("anyId", stringified);
+    assertThat(result).isFalse();
+  }
+  
+  @Test
+  public void addRowWithValidValuesCallsDBUtilsWrapper() {
+    setupControlWithTablePropertiesMock();
+    TableProperties tpMock = ControlStub.TABLE_PROPERTIES_FOR_ID;
+    ColumnProperties stringColumn = TestConstants.getColumnPropertiesMock(
+        TestConstants.ElementKeys.STRING_COLUMN,
+        ColumnType.STRING);
+    ColumnProperties intColumn = TestConstants.getColumnPropertiesMock(
+        TestConstants.ElementKeys.INT_COLUMN,
+        ColumnType.INTEGER);
+    ColumnProperties numberColumn = TestConstants.getColumnPropertiesMock(
+        TestConstants.ElementKeys.NUMBER_COLUMN,
+        ColumnType.NUMBER);
+    doReturn(stringColumn).when(tpMock).getColumnByElementKey(
+        TestConstants.ElementKeys.STRING_COLUMN);
+    doReturn(intColumn).when(tpMock).getColumnByElementKey(
+        TestConstants.ElementKeys.INT_COLUMN);
+    doReturn(numberColumn).when(tpMock).getColumnByElementKey(
+        TestConstants.ElementKeys.NUMBER_COLUMN);
+    // Now we'll do the call and make sure that we called through to the mock
+    // object successfully.
+    String tableId = "anyTableId";
+    Map<String, String> validMap = getValidMap();
+    String validMapString = WebViewUtil.stringify(validMap);
+    ContentValues contentValues = getContentValuesForValidMap();
+    control.addRow(tableId, validMapString);
+    verify(wrapperMock, times(1)).writeDataIntoExistingDBTable(
+        eq(ControlStub.DATABASE),
+        eq(tableId),
+        eq(contentValues));
   }
   
   @Test
@@ -165,6 +288,31 @@ public class ControlTest {
     this.assertDefaultFileNameIsPresent(intent);
     this.assertTableIdIsNotPresent(intent);
     this.assertRowIdIsNotPresent(intent);
+  }
+  
+  /**
+   * Get a map with valid values of the map returned by
+   * {@link TestConstants#getMapOfElementKeyToValue(String, String)}.
+   * @return
+   */
+  protected Map<String, String> getValidMap() {
+    Map<String, String> map = TestConstants.getMapOfElementKeyToValue(
+        VALID_STRING_VALUE,
+        VALID_INT_VALUE,
+        VALID_NUMBER_VALUE);
+    return map;
+  }
+  
+  protected ContentValues getContentValuesForValidMap() {
+    ContentValues result = new ContentValues();
+    result.put(TestConstants.ElementKeys.STRING_COLUMN, VALID_STRING_VALUE);
+    result.put(
+        TestConstants.ElementKeys.INT_COLUMN,
+        Integer.parseInt(VALID_INT_VALUE));
+    result.put(
+        TestConstants.ElementKeys.NUMBER_COLUMN,
+        Double.parseDouble(VALID_NUMBER_VALUE));
+    return result;
   }
   
   private IntentForResult getNextStartedIntent() {

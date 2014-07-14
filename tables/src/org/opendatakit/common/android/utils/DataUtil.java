@@ -40,10 +40,14 @@ import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.util.Log;
 
 
 public class DataUtil {
+  
+  private static final String TAG = DataUtil.class.getSimpleName();
 
     private static final String[] USER_FULL_DATETIME_PATTERNS = {
         "yyyy-MM-dd'T'HH:mm:ss.SSSZ", // ODK Collect format
@@ -225,6 +229,82 @@ public class DataUtil {
           throw new IllegalStateException("Unable to serialize mimeUri", e);
         }
       }
+    }
+    
+    /**
+     * Add a stringified value to the given content values. This respects the
+     * column's type, as defined by {@link ColumnProperties#getColumnType()}.
+     * @param columnProperties
+     * @param rawValue
+     * @param contentValues
+     * @return false if the data was invalid for the given type
+     */
+    public boolean addValueToContentValues(
+        ColumnProperties columnProperties,
+        String rawValue,
+        ContentValues contentValues) {
+      // the value we're going to key things against in the database.
+      String contentValuesKey = columnProperties.getElementKey();
+      if (rawValue == null) {
+        // Then we can trust that it is ok, as we allow nulls.
+        // TODO: verify that nulls are permissible for the column?
+        contentValues.put(contentValuesKey, rawValue);
+        return true;
+      } else {
+        // we have to validate it. this validate function just returns null if
+        // valid, rather than a boolean.
+        String nullMeansInvalid = validifyValue(columnProperties, rawValue);
+        if (nullMeansInvalid == null) {
+          // return false, indicating that the value was not acceptable.
+          Log.e(
+              TAG,
+              "[addRow] could not parse [" +
+                rawValue +
+                "] for column [" +
+                columnProperties.getElementKey() +
+                "] to type: " +
+                columnProperties.getColumnType());
+          return false;
+        }
+      }
+      // This means all is well, and we can parse the value.
+      ColumnType columnType = columnProperties.getColumnType();
+      if (columnType == ColumnType.DATE) {
+        throw new UnsupportedOperationException(
+            "DATE parsing not implemented!");
+      } else if (columnType == ColumnType.DATETIME) {
+        throw new UnsupportedOperationException(
+            "DATETIME parsing not implemented!");
+      } else if (columnType == ColumnType.TIME) {
+        throw new UnsupportedOperationException(
+            "TIME parsing not implemented!");
+      } else if (columnType == ColumnType.DATE_RANGE) {
+        throw new UnsupportedOperationException(
+            "DATE_RANGE parsing not implemented!");
+      } else if (columnType == ColumnType.NUMBER) {
+        double numberValue = Double.parseDouble(rawValue);
+        contentValues.put(contentValuesKey, numberValue);
+      } else if (columnType == ColumnType.INTEGER) {
+        int integerValue = Integer.parseInt(rawValue);
+        contentValues.put(contentValuesKey, integerValue);
+      } else if (columnType == ColumnType.MC_OPTIONS) {
+        throw new UnsupportedOperationException(
+            "MC_OPTIONS parsing not implemented!");
+      } else if (columnType == ColumnType.GEOPOINT) {
+        throw new UnsupportedOperationException(
+            "GEOPOINT parsing not implemented!");
+      } else  if (columnType == ColumnType.STRING) {
+        // take the raw string itself
+        contentValues.put(contentValuesKey, rawValue);
+      } else {
+        // The list of column types I've elected to support above is based
+        // entirely on those in validifyValue(). For not just alert that
+        // something is fishy, as we otherwise need to figure out how to parse
+        // it.
+        throw new IllegalArgumentException(
+            "not currently handling column type: " + columnType);
+      }
+      return true;
     }
 
     public String validifyValue(ColumnProperties cp, String input) {

@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.type.TypeReference;
@@ -76,6 +77,25 @@ public class WebViewUtil {
       e.printStackTrace();
     }
     return map;
+  }
+  
+  /**
+   * Stringify the object. Convenience method, swallows all exceptions.
+   * @param value
+   * @return
+   */
+  public static String stringify(Object value) {
+    String result = null;
+    try {
+      result = ODKFileUtils.mapper.writeValueAsString(value);
+    } catch (JsonGenerationException e) {
+      e.printStackTrace();
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return result;
   }
 
   /**
