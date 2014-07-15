@@ -87,7 +87,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
    */
   private View mOverlay;
   private RelativeLayout.LayoutParams mOverlayLayoutParams;
-  
+
   public SpreadsheetFragment() {
     super();
     // for fragments
@@ -98,13 +98,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.SPREADSHEET;
   }
-  
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.d(TAG, "[onCreate]");
   }
-  
+
   @Override
   public void onResume() {
     super.onResume();
@@ -253,8 +253,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           s.append(", ");
         }
         first = false;
-        s.append(groupByColumn).append("=?");
-        newSelectionArgs.add(cell.row.getDataOrMetadataByElementKey(groupByColumn));
+        String value = cell.row.getRawDataOrMetadataByElementKey(groupByColumn);
+        if ( value == null ) {
+          s.append(groupByColumn).append(" IS NULL");
+        } else {
+          s.append(groupByColumn).append("=?");
+          newSelectionArgs.add(value);
+        }
       }
       sqlWhereClause = s.toString();
       sqlSelectionArgs = newSelectionArgs.toArray(new String[newSelectionArgs.size()]);
@@ -467,7 +472,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     mi.setIcon(R.drawable.ic_action_edit);
     // Now we need to check to see if we are a row in conflict, in which
     // case we want to allow resolution of that row.
-    String syncStateName = row.getDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
+    String syncStateName = row.getRawDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
     if (syncStateName != null && syncStateName.length() != 0
         && SyncState.valueOf(syncStateName) == SyncState.conflicting) {
       // Then add an option to resolve.

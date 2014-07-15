@@ -47,6 +47,7 @@ import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 import android.content.ContentValues;
@@ -167,7 +168,7 @@ public class CsvUtil {
       for (int i = 0; i < table.getNumberOfRows(); i++) {
         Row dataRow = table.getRowAtIndex(i);
         for (int j = 0; j < columns.size(); ++j) {
-          row[j] = dataRow.getDataOrMetadataByElementKey(columns.get(j));;
+          row[j] = dataRow.getRawDataOrMetadataByElementKey(columns.get(j));;
         }
         cw.writeNext(row);
       }
@@ -692,9 +693,9 @@ public class CsvUtil {
         // default values for metadata columns if not provided
         v_id = UUID.randomUUID().toString();
         v_form_id = null;
-        v_locale = null;
+        v_locale = ODKDatabaseUtils.DEFAULT_LOCALE;
         v_savepoint_type = SavepointTypeManipulator.complete();
-        v_savepoint_creator = null;
+        v_savepoint_creator = ODKDatabaseUtils.DEFAULT_CREATOR;
         v_savepoint_timestamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
         v_row_etag = null;
         v_filter_type = null;

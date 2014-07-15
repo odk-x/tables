@@ -18,7 +18,6 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.common.android.utils.NameUtil;
@@ -42,7 +41,6 @@ import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
@@ -485,7 +483,7 @@ public class Control {
         tableId);
     return tp.getLocalizedDisplayName();
   }
-  
+
   public boolean addRow(String tableId, String stringifiedJSON) {
    TableProperties tableProperties =
        this.retrieveTablePropertiesForTable(tableId);
@@ -501,7 +499,7 @@ public class Control {
       elementKeyToValue = WebViewUtil.getMapFromJson(stringifiedJSON);
     }
     // we now have a map of elementkey -> value. Note that we're not currently
-    // going to handle complex types or those that map to a json value. We 
+    // going to handle complex types or those that map to a json value. We
     // could, but we'd probably have to have a known entity do the conversions
     // for us somehow on the js side, rather than expect the caller to craft up
     // whatever format we've landed on for pictures.
@@ -547,7 +545,7 @@ public class Control {
         contentValues);
     return true;
   }
-  
+
   /**
    * Very basic method to facilitate testing.
    * @return
@@ -558,7 +556,7 @@ public class Control {
     SQLiteDatabase result = dmDbHelper.getWritableDatabase();
     return result;
   }
-  
+
   /**
    * Very basic method to facilitate stubbing and injection of a mock object.
    * @return

@@ -124,7 +124,7 @@ public class ConflictResolutionRowActivity extends ListActivity
     this.mRowNumber = this.mLocal.getRowNumFromId(mRowId);
     Row localRow = this.mLocal.getRowAtIndex(mRowNumber);
     Row serverRow = this.mServer.getRowAtIndex(mRowNumber);
-    this.mServerRowETag = serverRow.getDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG);
+    this.mServerRowETag = serverRow.getRawDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG);
     TableProperties tp = mConflictTable.getLocalTable().getTableProperties();
     List<String> columnOrder = tp.getPersistedColumns();
     // This will be the number of rows down we are in the adapter. Each
@@ -142,9 +142,9 @@ public class ConflictResolutionRowActivity extends ListActivity
       Section newSection = new Section(adapterOffset, columnDisplayName);
       ++adapterOffset;
       sections.add(newSection);
-      String localRawValue = localRow.getDataOrMetadataByElementKey(elementKey);
+      String localRawValue = localRow.getRawDataOrMetadataByElementKey(elementKey);
       String localDisplayValue = localRow.getDisplayTextOfData(this, elementKey, true);
-      String serverRawValue = serverRow.getDataOrMetadataByElementKey(elementKey);
+      String serverRawValue = serverRow.getRawDataOrMetadataByElementKey(elementKey);
       String serverDisplayValue = serverRow.getDisplayTextOfData(this, elementKey, true);
       if ((localRawValue == null && serverRawValue == null) ||
     	  (localRawValue != null && localRawValue.equals(serverRawValue))) {
@@ -183,10 +183,10 @@ public class ConflictResolutionRowActivity extends ListActivity
 
 
     int localConflictType = Integer.parseInt(mLocal.getRowAtIndex(mRowNumber)
-        .getDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+        .getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
     int serverConflictType =
         Integer.parseInt(mServer.getRowAtIndex(mRowNumber)
-            .getDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+            .getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
     if (localConflictType ==
           ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
         serverConflictType ==

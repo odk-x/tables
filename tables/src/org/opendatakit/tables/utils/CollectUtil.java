@@ -47,6 +47,7 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.common.android.utils.DataUtil;
@@ -633,7 +634,7 @@ public class CollectUtil {
 	          // Collect's
 	          // database.
 	          collectInstanceKey =
-	              c.getInt(c.getColumnIndexOrThrow(BaseColumns._ID));
+	              ODKDatabaseUtils.getIndexAsType(c, Integer.class, c.getColumnIndexOrThrow(BaseColumns._ID));
 	          uriOfForm =
 	              (Uri.parse(CONTENT_INSTANCE_URI + "/" + collectInstanceKey));
 	          c.close();
@@ -752,7 +753,7 @@ public class CollectUtil {
         int collectFormKey; // this is the primary key of the form in
         // Collect's
         // database.
-        collectFormKey = c.getInt(c.getColumnIndexOrThrow(BaseColumns._ID));
+        collectFormKey = ODKDatabaseUtils.getIndexAsType(c, Integer.class, c.getColumnIndexOrThrow(BaseColumns._ID));
         resultUri =
             (Uri.parse(CollectUtil.CONTENT_FORM_URI + "/" + collectFormKey));
       }
@@ -1162,7 +1163,7 @@ public class CollectUtil {
 	    }
 	    c.moveToFirst();
 	    String status =
-	        c.getString(c.getColumnIndexOrThrow(COLLECT_KEY_STATUS));
+	        ODKDatabaseUtils.getIndexAsString(c, c.getColumnIndexOrThrow(COLLECT_KEY_STATUS));
 	    // potential status values are incomplete, complete, submitted,
 	    // submission_failed
 	    // all but the incomplete status indicate a marked-as-complete record.
@@ -1218,9 +1219,9 @@ public class CollectUtil {
 	    }
 	    c.moveToFirst();
 	    FormValues fv = new FormValues();
-	    fv.timestamp = c.getLong(
+	    fv.timestamp = ODKDatabaseUtils.getIndexAsType(c, Long.class,
 	        c.getColumnIndexOrThrow(COLLECT_KEY_LAST_STATUS_CHANGE_DATE));
-	    String instancepath = c.getString(
+	    String instancepath = ODKDatabaseUtils.getIndexAsString(c,
 	        c.getColumnIndexOrThrow("instanceFilePath"));
 	    File instanceFile = new File(instancepath);
 	    parseXML(fv, instanceFile);

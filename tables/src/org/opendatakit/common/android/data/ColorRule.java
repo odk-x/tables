@@ -222,7 +222,7 @@ public class ColorRule {
         columnType = cp.getColumnType();
       }
       // Get the value we're testing against.
-      String testValue = row.getDataOrMetadataByElementKey(mElementKey);
+      String testValue = row.getRawDataOrMetadataByElementKey(mElementKey);
       if (testValue == null) {
         testValue = "";
       }

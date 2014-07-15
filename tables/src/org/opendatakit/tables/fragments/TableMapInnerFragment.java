@@ -48,10 +48,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
  * @author sudar.sam@gmail.com
  */
 public class TableMapInnerFragment extends MapFragment {
-    
+
   private static final String TAG =
       TableMapInnerFragment.class.getSimpleName();
-  
+
   private static final int INVALID_INDEX = -1;
 
   /** The default hue for markers if no color rules are applied. */
@@ -88,7 +88,7 @@ public class TableMapInnerFragment extends MapFragment {
      * Set the index of the marker that has been selected.
      */
     void onSetSelectedItemIndex(int i);
-    
+
     /**
      * Sets that no item is selected.
      */
@@ -125,7 +125,7 @@ public class TableMapInnerFragment extends MapFragment {
     super.onActivityCreated(savedInstanceState);
     Log.d(TAG, "[onActivityCreated]");
   }
-  
+
   int retrieveSavedIndexFromBundle(Bundle bundle) {
     if (bundle != null && bundle.containsKey(SAVE_KEY_INDEX)) {
       return bundle.getInt(SAVE_KEY_INDEX);
@@ -133,8 +133,8 @@ public class TableMapInnerFragment extends MapFragment {
       return INVALID_INDEX;
     }
   }
-  
-  
+
+
   @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
@@ -152,13 +152,13 @@ public class TableMapInnerFragment extends MapFragment {
     getMap().setOnMapLongClickListener(getOnMapLongClickListener());
     getMap().setOnMapClickListener(getOnMapClickListener());
   }
-  
+
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
     Log.d(TAG, "[onAttach]");
   }
-  
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -166,25 +166,25 @@ public class TableMapInnerFragment extends MapFragment {
     this.mCurrentIndex = this.retrieveSavedIndexFromBundle(savedInstanceState);
     Log.d(TAG, "[onCreate] retrieved index is: " + mCurrentIndex);
   }
-  
+
   @Override
   public void onDetach() {
     super.onDetach();
     Log.d(TAG, "[onDetach]");
   }
-  
+
   @Override
   public void onStart() {
     super.onStart();
     Log.d(TAG, "[onStart]");
   }
-  
+
   @Override
   public void onStop() {
     super.onStop();
     Log.d(TAG, "[onStop]");
   }
-    
+
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -223,19 +223,19 @@ public class TableMapInnerFragment extends MapFragment {
     mVisibleMarkers.clear();
     mCurrentMarker = null;
   }
-  
+
   @Override
   public void onPause() {
     super.onPause();
     Log.d(TAG, "[onPause]");
   }
-  
+
   @Override
   public void onResume() {
     super.onResume();
     Log.d(TAG, "[onResume]");
   }
-  
+
   @Override
   public View onCreateView(
       LayoutInflater inflater,
@@ -289,7 +289,7 @@ public class TableMapInnerFragment extends MapFragment {
       }
     }
   }
-  
+
   /**
    * Get the {@link TableProperties} that is associated with the table this
    * view is displaying.
@@ -300,7 +300,7 @@ public class TableMapInnerFragment extends MapFragment {
     TableProperties result = activity.getTableProperties();
     return result;
   }
-  
+
   /**
    * Get the {@link UserTable} that this view is displaying.
    * @return
@@ -351,9 +351,9 @@ public class TableMapInnerFragment extends MapFragment {
     // Go through each row and create a marker at the specified location.
     for (int i = 0; i < table.getNumberOfRows(); i++) {
       Row row = table.getRowAtIndex(i);
-      String latitudeString = row.getDataOrMetadataByElementKey(
+      String latitudeString = row.getRawDataOrMetadataByElementKey(
           latitudeColumn.getElementKey());
-      String longitudeString = row.getDataOrMetadataByElementKey(
+      String longitudeString = row.getRawDataOrMetadataByElementKey(
           longitudeColumn.getElementKey());
       if (latitudeString == null ||
           longitudeString == null ||
@@ -561,7 +561,7 @@ public class TableMapInnerFragment extends MapFragment {
           if (latitudeColumn.getColumnType() == ColumnType.GEOPOINT) {
             elementNameToValue.put(
                 latitudeElementKey,
-                Double.toString(location.latitude) + 
+                Double.toString(location.latitude) +
                   "," +
                   Double.toString(location.longitude));
           } else {

@@ -32,12 +32,12 @@ public class TableData {
   }
 
   private final UserTable mTable;
-  
+
   /**
    * The index of the marker that has been selected.
    */
   protected int mSelectedMapMarkerIndex;
-  
+
   protected static final int INVALID_INDEX = -1;
 
   /**
@@ -129,7 +129,7 @@ public class TableData {
     for (int i = 0; i < requestedRows; i++) {
       int correctedIndex = getIndexIntoDataTable(i);
       Row row = this.mTable.getRowAtIndex(correctedIndex);
-      rowValues.add(row.getDataOrMetadataByElementKey(elementKey));
+      rowValues.add(row.getRawDataOrMetadataByElementKey(elementKey));
     }
     return new JSONArray(rowValues).toString();
   }
@@ -139,7 +139,7 @@ public class TableData {
     for (int i = 0; i < requestedRows; i++) {
       int correctedIndex = getIndexIntoDataTable(i);
       Row row = this.mTable.getRowAtIndex(correctedIndex);
-      rowValues.add(row.getDataOrMetadataByElementKey(elementKey));
+      rowValues.add(row.getRawDataOrMetadataByElementKey(elementKey));
     }
     return new JSONArray(rowValues).toString();
   }
@@ -248,10 +248,10 @@ public class TableData {
       return null;
     }
 
-    String result = row.getDataOrMetadataByElementKey(elementKey);
+    String result = row.getRawDataOrMetadataByElementKey(elementKey);
     return result;
   }
-  
+
   /**
    * Calculate the index into the data table given the display index. The
    * caller expects to iterate over the data rows in a particular order. This
@@ -282,7 +282,7 @@ public class TableData {
     }
     return result;
   }
-  
+
   /**
    * Return true if the display index does not map directly to the data index.
    * For example, this returns true if a map marker has been selected.
@@ -291,7 +291,7 @@ public class TableData {
   boolean displayIndexMustBeCalculated() {
     return this.mSelectedMapMarkerIndex != INVALID_INDEX;
   }
-  
+
   /**
    * Set the index of the map marker that has been selected.
    * @param mapIndex
@@ -299,7 +299,7 @@ public class TableData {
   public void setSelectedMapIndex(int mapIndex) {
     this.mSelectedMapMarkerIndex = mapIndex;
   }
-  
+
   /**
    * Remove any map index from being selected.
    */

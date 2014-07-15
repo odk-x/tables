@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -219,7 +220,7 @@ class KeyValueStoreManager {
     int i = 0;
     c.moveToFirst();
     while (i < c.getCount()) {
-      ids.add(c.getString(tableIdIndex));
+      ids.add(ODKDatabaseUtils.getIndexAsString(c, tableIdIndex));
       i++;
       c.moveToNext();
     }

@@ -31,10 +31,10 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.DataUtil;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
@@ -152,10 +152,13 @@ public class UserTable {
     String[] rowData = new String[userColumnOrder.size()+ adminColumnOrder.size()];
     if (c.moveToFirst()) {
       do {
-        String rowId = c.getString(rowIdIndex);
+        if ( c.isNull(rowIdIndex)) {
+          throw new IllegalStateException("Unexpected null value for rowId");
+        }
+        String rowId = ODKDatabaseUtils.getIndexAsString(c, rowIdIndex);
         // First get the user-defined data for this row.
         for (i = 0; i < cursorIndex.length; i++) {
-          String value = getIndexAsString(c, cursorIndex[i]);
+          String value = ODKDatabaseUtils.getIndexAsString(c, cursorIndex[i]);
           rowData[i] = value;
         }
         Row nextRow = new Row(rowId, rowData.clone());
@@ -163,55 +166,6 @@ public class UserTable {
       } while (c.moveToNext());
     }
     c.close();
-  }
-
-  /**
-   * Return the data stored in the cursor at the given index and given position
-   * (ie the given row which the cursor is currently on) as a String.
-   * <p>
-   * NB: Currently only checks for Strings, long, int, and double.
-   *
-   * @param c
-   * @param i
-   * @return
-   */
-  @SuppressLint("NewApi")
-  private static final String getIndexAsString(Cursor c, int i) {
-    // If you add additional return types here be sure to modify the javadoc.
-    if ( i == -1 ) return null;
-    int version = android.os.Build.VERSION.SDK_INT;
-    if (version < 11) {
-      // getType() is not yet supported.
-      String str = null;
-      try {
-        str = c.getString(i);
-      } catch (Exception e1) {
-        try {
-          str = Long.toString(c.getLong(i));
-        } catch (Exception e2) {
-          try {
-            str = Double.toString(c.getDouble(i));
-          } catch (Exception e3) {
-            throw new IllegalStateException("Unexpected data type in SQLite table");
-          }
-        }
-      }
-      return str;
-    } else {
-      switch (c.getType(i)) {
-      case Cursor.FIELD_TYPE_STRING:
-        return c.getString(i);
-      case Cursor.FIELD_TYPE_FLOAT:
-        return Double.toString(c.getDouble(i));
-      case Cursor.FIELD_TYPE_INTEGER:
-        return Long.toString(c.getLong(i));
-      case Cursor.FIELD_TYPE_NULL:
-        return c.getString(i);
-      default:
-      case Cursor.FIELD_TYPE_BLOB:
-        throw new IllegalStateException("Unexpected data type in SQLite table");
-      }
-    }
   }
 
   public Row getRowAtIndex(int index) {
@@ -273,7 +227,7 @@ public class UserTable {
 
   public boolean hasCheckpointRows() {
     for ( Row row : mRows ) {
-      String type = row.getDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE);
+      String type = row.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE);
       if ( type == null || type.length() == 0 ) {
         return true;
       }
@@ -283,7 +237,7 @@ public class UserTable {
 
   public boolean hasConflictRows() {
     for ( Row row : mRows ) {
-      String conflictType = row.getDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE);
+      String conflictType = row.getRawDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE);
       if ( conflictType != null && conflictType.length() != 0 ) {
         return true;
       }
@@ -357,46 +311,13 @@ public class UserTable {
      * the passed in elementKey. This can be either the element key of a
      * user-defined column or a ODKTabes-specified metadata column.
      * <p>
-     * Null values are returned as an empty string. Null is returned if the
-     * elementKey is not found in the table.
+     * Null values are returned as nulls.
      *
      * @param elementKey
      *          elementKey of data or metadata column
      * @return String representation of contents of column. Null values are
-     *         converted to an empty string. If the elementKey is not contained
-     *         in the table, returns null.
+     *         returned as null.
      */
-    public String getDataOrMetadataByElementKey(String elementKey) {
-      String result;
-      Integer cell = UserTable.this.mElementKeyToIndex.get(elementKey);
-      if ( cell == null ) {
-        Log.e(TAG, "elementKey [" + elementKey + "] was not found in table");
-        return "";
-      }
-      result = this.mRowData[cell];
-      if (result == null) {
-        result = "";
-      }
-      ColumnProperties cp = UserTable.this.mTp.getColumnByElementKey(elementKey);
-      if ( cp != null &&
-           cp.getColumnType() == ColumnType.NUMBER &&
-           result.indexOf('.') != -1 ) {
-        // trim trailing zeros on numbers (leaving the last one)
-        int lnz = result.length()-1;
-        while ( lnz > 0 && result.charAt(lnz) == '0' ) {
-          lnz--;
-        }
-        if ( lnz >= result.length()-2 ) {
-          // ended in non-zero or x0
-          return result;
-        } else {
-          // ended in 0...0
-          return result.substring(0, lnz+2);
-        }
-      }
-      return result;
-    }
-
     public String getRawDataOrMetadataByElementKey(String elementKey) {
       String result;
       Integer cell = UserTable.this.mElementKeyToIndex.get(elementKey);
@@ -413,7 +334,7 @@ public class UserTable {
 
     public String getDisplayTextOfData(Context context, String elementKey, boolean showErrorText) {
       // TODO: share processing with CollectUtil.writeRowDataToBeEdited(...)
-      String raw = getDataOrMetadataByElementKey(elementKey);
+      String raw = getRawDataOrMetadataByElementKey(elementKey);
       if ( raw == null ) {
         return null;
       }
@@ -461,6 +382,20 @@ public class UserTable {
         }
         DateTime d = du.parseDateTimeFromDb(raw);
         return timeFormatter.print(d);
+      } else if ( type == ColumnType.NUMBER &&
+                  raw.indexOf('.') != -1 ) {
+        // trim trailing zeros on numbers (leaving the last one)
+        int lnz = raw.length()-1;
+        while ( lnz > 0 && raw.charAt(lnz) == '0' ) {
+          lnz--;
+        }
+        if ( lnz >= raw.length()-2 ) {
+          // ended in non-zero or x0
+          return raw;
+        } else {
+          // ended in 0...0
+          return raw.substring(0, lnz+2);
+        }
       } else {
         return raw;
       }

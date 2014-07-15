@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -103,7 +104,7 @@ public class ColumnDefinitions {
       c.moveToFirst();
       int j = 0;
       while (j < c.getCount()) {
-        elementKeys.add(c.getString(dbElementKeyIndex));
+        elementKeys.add(ODKDatabaseUtils.getIndexAsString(c, dbElementKeyIndex));
         c.moveToNext();
         j++;
       }
@@ -161,14 +162,14 @@ public class ColumnDefinitions {
       c.moveToFirst();
       int j = 0;
       while (j < c.getCount()) {
-        columnDefMap.put(ColumnDefinitionsColumns.TABLE_ID, c.getString(dbTableIdIndex));
-        columnDefMap.put(ColumnDefinitionsColumns.ELEMENT_KEY, c.getString(dbElementKeyIndex));
-        columnDefMap.put(ColumnDefinitionsColumns.ELEMENT_NAME, c.getString(dbElementNameIndex));
-        columnDefMap.put(ColumnDefinitionsColumns.ELEMENT_TYPE, c.getString(dbElementTypeIndex));
+        columnDefMap.put(ColumnDefinitionsColumns.TABLE_ID, ODKDatabaseUtils.getIndexAsString(c, dbTableIdIndex));
+        columnDefMap.put(ColumnDefinitionsColumns.ELEMENT_KEY, ODKDatabaseUtils.getIndexAsString(c, dbElementKeyIndex));
+        columnDefMap.put(ColumnDefinitionsColumns.ELEMENT_NAME, ODKDatabaseUtils.getIndexAsString(c, dbElementNameIndex));
+        columnDefMap.put(ColumnDefinitionsColumns.ELEMENT_TYPE, ODKDatabaseUtils.getIndexAsString(c, dbElementTypeIndex));
         columnDefMap.put(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS,
-            c.getString(dbListChildElementKeysIndex));
-        columnDefMap.put(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, Boolean.toString(
-            c.getInt(dbUnitOfRetentionIndex) == 1));
+            ODKDatabaseUtils.getIndexAsString(c, dbListChildElementKeysIndex));
+        Boolean value = ODKDatabaseUtils.getIndexAsType(c, Boolean.class, dbUnitOfRetentionIndex);
+        columnDefMap.put(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, value == null ? null : value.toString());
         c.moveToNext();
         j++;
       }

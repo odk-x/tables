@@ -115,7 +115,7 @@ public class SpreadsheetUserTable {
     cell.row = getRowAtIndex(cellInfo.rowId);
     cell.elementKey = cellInfo.elementKey;
     cell.displayText = cell.row.getDisplayTextOfData(context, cellInfo.elementKey, true);
-    cell.value = cell.row.getDataOrMetadataByElementKey(cellInfo.elementKey);
+    cell.value = cell.row.getRawDataOrMetadataByElementKey(cellInfo.elementKey);
     return cell;
   }
 
