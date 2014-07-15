@@ -397,7 +397,7 @@ public class ControlIf {
 	
 	/**
 	 * Add a row to the table. Fails if the table cannot be found, if the column
-	 * cannot be found, or if a value cannot be parsed to the correct value.
+	 * cannot be found, or if a value cannot be parsed to the correct type.
 	 * <p>
 	 * Usage is the following:
 	 * <code>
