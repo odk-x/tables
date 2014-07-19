@@ -19,12 +19,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.type.TypeReference;
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
@@ -32,8 +36,10 @@ import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
+import org.opendatakit.common.android.utils.DataUtil;
 
 import android.annotation.SuppressLint;
+import android.content.ContentValues;
 import android.content.Context;
 import android.os.Build;
 import android.util.Log;
@@ -94,6 +100,58 @@ public class WebViewUtil {
       e.printStackTrace();
     } catch (IOException e) {
       e.printStackTrace();
+    }
+    return result;
+  }
+  
+  /**
+   * Turn the map into a {@link ContentValues} object. Returns null if any of
+   * the element keys do not exist in the table, or if the value cannot be 
+   * parsed to the type of the column.
+   * @param tableProperties
+   * @param elementKeyToValue
+   * @return
+   */
+  public static ContentValues getContentValuesFromMap(
+      TableProperties tableProperties,
+      Map<String, String> elementKeyToValue) {
+    // Note that we're not currently
+    // going to handle complex types or those that map to a json value. We 
+    // could, but we'd probably have to have a known entity do the conversions
+    // for us somehow on the js side, rather than expect the caller to craft up
+    // whatever format we've landed on for pictures.
+    // This will contain the values we're going to insert into the database.
+    ContentValues result = new ContentValues();
+    // TODO: respect locale and timezone. Getting this structure from other
+    // places it is used.
+    DataUtil dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
+    for (Map.Entry<String, String> entry : elementKeyToValue.entrySet()) {
+      String elementKey = entry.getKey();
+      String rawValue = entry.getValue();
+      // Get the column so we know what type we need to handle.
+      ColumnProperties columnProperties =
+          tableProperties.getColumnByElementKey(elementKey);
+      if (columnProperties == null) {
+        // uh oh, no column for the given id. problem on the part of the caller
+        Log.e(
+            TAG,
+            "[addRow] could not find column for element key: " + elementKey);
+        return null;
+      }
+      ColumnType columnType = columnProperties.getColumnType();
+      boolean parsedSuccessfully = dataUtil.addValueToContentValues(
+          columnProperties,
+          rawValue,
+          result);
+      if (!parsedSuccessfully) {
+        Log.e(
+            TAG,
+            "[addRow] could not parse value: " +
+              rawValue +
+              " for column type " +
+              columnType);
+        return null;
+      }
     }
     return result;
   }
