@@ -26,6 +26,7 @@ import java.util.Set;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -123,7 +124,7 @@ public class TableDefinitions {
       c.moveToFirst();
       for ( int j = 0 ; j < c.getColumnCount() ; ++j ) {
     	String columnName = c.getColumnName(j);
-    	String value = c.getString(j);
+    	String value = ODKDatabaseUtils.getIndexAsString(c, j);
     	if ( columnNames.contains(columnName) ) {
     		tableDefMap.put(columnName, value);
     	}
@@ -206,7 +207,7 @@ public class TableDefinitions {
 	    if ( c.getCount() > 0 ) {
 	      c.moveToFirst();
 	      do {
-	        String tableId = c.getString(dbTableIdIndex);
+	        String tableId = ODKDatabaseUtils.getIndexAsString(c, dbTableIdIndex);
 	        tableIds.add(tableId);
 	      } while ( c.moveToNext() );
 	    }
@@ -228,7 +229,7 @@ public class TableDefinitions {
        if ( c.getCount() > 0 ) {
          c.moveToFirst();
          do {
-           String tableName = c.getString(dbTableNameIndex);
+           String tableName = ODKDatabaseUtils.getIndexAsString(c, dbTableNameIndex);
            tableNames.add(tableName);
          } while ( c.moveToNext() );
        }

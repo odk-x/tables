@@ -70,7 +70,7 @@ public class CheckpointResolutionListActivity extends ListActivity {
     Set<String> rowIds = new TreeSet<String>();
     for (int i = 0; i < table.getNumberOfRows(); i++) {
       Row row = table.getRowAtIndex(i);
-      String rowId = row.getDataOrMetadataByElementKey(DataTableColumns.ID);
+      String rowId = row.getRawDataOrMetadataByElementKey(DataTableColumns.ID);
       rowIds.add(rowId);
     }
     if (rowIds.isEmpty()) {

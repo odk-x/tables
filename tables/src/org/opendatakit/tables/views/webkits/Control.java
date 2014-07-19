@@ -18,7 +18,6 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.common.android.utils.NameUtil;
@@ -42,7 +41,6 @@ import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
@@ -554,7 +552,7 @@ public class Control {
      }
      return true;
   }
-  
+
   /**
    * Very basic method to facilitate testing.
    * @return
@@ -565,7 +563,7 @@ public class Control {
     SQLiteDatabase result = dmDbHelper.getWritableDatabase();
     return result;
   }
-  
+
   /**
    * Very basic method to facilitate stubbing and injection of a mock object.
    * @return

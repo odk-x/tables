@@ -112,7 +112,7 @@ public class CheckpointResolutionRowActivity extends ListActivity
     // save as incomplete. Otherwise, it is to roll back or update to incomplete.
 
     Row rowStarting = conflictTable.getRowAtIndex(0);
-    String type = rowStarting.getDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE);
+    String type = rowStarting.getRawDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TYPE);
     boolean deleteEntirely = ( type == null || type.length() == 0 );
 
     if ( !deleteEntirely ) {
@@ -150,9 +150,9 @@ public class CheckpointResolutionRowActivity extends ListActivity
       Section newSection = new Section(adapterOffset, columnDisplayName);
       ++adapterOffset;
       sections.add(newSection);
-      String localRawValue = rowEnding.getDataOrMetadataByElementKey(elementKey);
+      String localRawValue = rowEnding.getRawDataOrMetadataByElementKey(elementKey);
       String localDisplayValue = rowEnding.getDisplayTextOfData(this, elementKey, true);
-      String serverRawValue = rowStarting.getDataOrMetadataByElementKey(elementKey);
+      String serverRawValue = rowStarting.getRawDataOrMetadataByElementKey(elementKey);
       String serverDisplayValue = rowStarting.getDisplayTextOfData(this, elementKey, true);
       if (deleteEntirely || (localRawValue == null && serverRawValue == null) ||
     	  (localRawValue != null && localRawValue.equals(serverRawValue))) {

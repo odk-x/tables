@@ -18,6 +18,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.provider.TablesProviderAPI;
@@ -122,10 +123,10 @@ public class AndroidShortcuts extends Activity {
           c.moveToPosition(-1);
           while (c.moveToNext()) {
             String tableName = app.getName() + " > "
-                + c.getString(c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
+                + ODKDatabaseUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
             uri = Uri.withAppendedPath(
                 Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
-                c.getString(c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
+                ODKDatabaseUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
             choices.add(new Choice(R.drawable.tables_table, tableIcon, uri, tableName, appName));
           }
         }

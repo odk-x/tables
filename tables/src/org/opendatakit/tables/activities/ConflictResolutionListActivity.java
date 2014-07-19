@@ -77,7 +77,7 @@ public class ConflictResolutionListActivity extends ListActivity {
     ResolveRowEntry firstE = null;
     for (int i = 0; i < table.getNumberOfRows(); i++) {
       Row localRow = table.getRowAtIndex(i);
-      String localRowId = localRow.getDataOrMetadataByElementKey(DataTableColumns.ID);
+      String localRowId = localRow.getRawDataOrMetadataByElementKey(DataTableColumns.ID);
       ResolveRowEntry e = new ResolveRowEntry(localRowId, "Resolve Conflict w.r.t. Server Row " + i);
       this.mAdapter.add(e);
       if (firstE == null) {

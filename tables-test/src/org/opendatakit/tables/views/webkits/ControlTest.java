@@ -2,8 +2,6 @@ package org.opendatakit.tables.views.webkits;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -30,37 +28,33 @@ import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.ODKDatabaseUtilsWrapper;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.utils.WebViewUtil;
-import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowActivity.IntentForResult;
 
-import com.google.android.gms.internal.ee;
-
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentValues;
-import android.database.sqlite.SQLiteDatabase;
 
 /**
- * 
+ *
  * @author sudar.sam@gmail.com
  *
  */
 @RunWith(RobolectricTestRunner.class)
 public class ControlTest {
-  
+
   public static final String VALID_STRING_VALUE = "a string value";
   public static final String VALID_INT_VALUE = "1";
   public static final String VALID_NUMBER_VALUE = "12.3512";
-  
+
   Control control;
   Activity activity;
   /** The wrapper that should be used by the control stub. */
   ODKDatabaseUtilsWrapper wrapperMock;
-  
+
   @Before
   public void before() {
     AbsBaseActivityStub activityStub = Robolectric.buildActivity(
@@ -80,7 +74,7 @@ public class ControlTest {
     this.activity = activityStub;
     this.control = control;
   }
-  
+
   @After
   public void after() {
     AbsBaseActivityStub.resetState();
@@ -89,12 +83,12 @@ public class ControlTest {
     this.activity = null;
     this.control = null;
   }
-  
+
   protected void setupControlWithTablePropertiesMock() {
     TableProperties mock = mock(TableProperties.class);
     ControlStub.TABLE_PROPERTIES_FOR_ID = mock;
   }
-  
+
   @Test
   public void addRowReturnsFalseIfTableDoesNotExist() {
     this.helperAddOrUpdateFailsIfTableDoesNotExist(false);
@@ -148,12 +142,12 @@ public class ControlTest {
     }
     assertThat(result).isFalse();
   }
-  
+
   @Test
   public void addRowWithNullContentValuesFails() {
     this.helperAddOrUpdateWithNullContentValuesFails(false);
   }
-  
+
   @Test
   public void updateRowWithNullContentValuesFails() {
     this.helperAddOrUpdateWithNullContentValuesFails(true);
@@ -173,7 +167,7 @@ public class ControlTest {
     }
     assertThat(result).isFalse();
   }
-  
+
   @Test
   public void addRowWithValidValuesCallsDBUtilsWrapper() {
     this.helperAddOrUpdateRowWithValuesCallsDBUtilsWrapper(false);
@@ -226,7 +220,7 @@ public class ControlTest {
           eq(contentValues));
     }
   }
-  
+
   @Test
   public void helperLaunchDefaultViewLaunchesCorrectIntent() {
     this.control.helperLaunchDefaultView(
@@ -246,7 +240,7 @@ public class ControlTest {
     this.assertDefaultSQLArgsArePresent(intent);
     this.assertRowIdIsNotPresent(intent);
   }
-  
+
   @Test
   public void helperOpenTableToSpreadsheetViewLaunchesCorrectIntent() {
     this.control.helperOpenTableToSpreadsheetView(
@@ -266,7 +260,7 @@ public class ControlTest {
     this.assertFileNameIsNotPresent(intent);
     this.assertDefaultSQLArgsArePresent(intent);
   }
-  
+
   @Test
   public void helperOpenTableToMapViewLaunchesCorrectIntent() {
     this.control.helperOpenTableToMapView(
@@ -287,7 +281,7 @@ public class ControlTest {
     this.assertDefaultFileNameIsPresent(intent);
     this.assertDefaultSQLArgsArePresent(intent);
   }
-  
+
   @Test
   public void helperOpenTableWithFileLaunchesCorrectIntent() {
     this.control.helperOpenTableWithFile(
@@ -308,7 +302,7 @@ public class ControlTest {
     this.assertViewFragmentTypeIsPresent(intent, ViewFragmentType.LIST);
     this.assertDefaultSQLArgsArePresent(intent);
   }
-  
+
   @Test
   public void openDetailViewWithFileLaunchesCorrectIntent() {
     this.control.openDetailViewWithFile(
@@ -323,7 +317,7 @@ public class ControlTest {
     this.assertDefaultRowIdIsPresent(intent);
     this.assertDefaultFileNameIsPresent(intent);
   }
-  
+
   @Test
   public void launchHTMLLaunchesCorrectIntent() {
     this.control.launchHTML(TestConstants.DEFAULT_FILE_NAME);
@@ -334,7 +328,7 @@ public class ControlTest {
     this.assertTableIdIsNotPresent(intent);
     this.assertRowIdIsNotPresent(intent);
   }
-  
+
   /**
    * Get a map with valid values of the map returned by
    * {@link TestConstants#getMapOfElementKeyToValue(String, String)}.
@@ -347,7 +341,7 @@ public class ControlTest {
         VALID_NUMBER_VALUE);
     return map;
   }
-  
+
   protected ContentValues getContentValuesForValidMap() {
     ContentValues result = new ContentValues();
     result.put(TestConstants.ElementKeys.STRING_COLUMN, VALID_STRING_VALUE);
@@ -359,12 +353,12 @@ public class ControlTest {
         Double.parseDouble(VALID_NUMBER_VALUE));
     return result;
   }
-  
+
   private IntentForResult getNextStartedIntent() {
     ShadowActivity shadowActivity = shadowOf(this.activity);
     return shadowActivity.peekNextStartedActivityForResult();
   }
-    
+
   private void assertComponentIsForTableDisplayActivity(
       ComponentName component) {
     ComponentName target = new ComponentName(
@@ -372,14 +366,14 @@ public class ControlTest {
         TableDisplayActivity.class);
     org.fest.assertions.api.Assertions.assertThat(component).isEqualTo(target);
   }
-  
+
   private void assertComponentIsForWebViewActivity(ComponentName component) {
     ComponentName target = new ComponentName(
         this.activity,
         WebViewActivity.class);
     org.fest.assertions.api.Assertions.assertThat(component).isEqualTo(target);
   }
-  
+
   private void assertDefaultTableIdIsPresent(IntentForResult intent) {
     String tableId = IntentUtil.retrieveTableIdFromBundle(
         intent.intent.getExtras());
@@ -387,7 +381,7 @@ public class ControlTest {
         .isNotNull()
         .isEqualTo(TestConstants.DEFAULT_TABLE_ID);
   }
-  
+
   private void assertDefaultRowIdIsPresent(IntentForResult intent) {
     String rowId = IntentUtil.retrieveRowIdFromBundle(
         intent.intent.getExtras());
@@ -395,13 +389,13 @@ public class ControlTest {
         .isNotNull()
         .isEqualTo(TestConstants.DEFAULT_ROW_ID);
   }
-  
+
   private void assertRowIdIsNotPresent(IntentForResult intent) {
     String rowId = IntentUtil.retrieveRowIdFromBundle(
         intent.intent.getExtras());
     org.fest.assertions.api.Assertions.assertThat(rowId).isNull();
   }
-  
+
   private void assertDefaultFileNameIsPresent(IntentForResult intent) {
     String fileName = IntentUtil.retrieveFileNameFromBundle(
         intent.intent.getExtras());
@@ -409,19 +403,19 @@ public class ControlTest {
         .isNotNull()
         .isEqualTo(TestConstants.DEFAULT_FILE_NAME);
   }
-  
+
   private void assertFileNameIsNotPresent(IntentForResult intent) {
     String fileName = IntentUtil.retrieveFileNameFromBundle(
         intent.intent.getExtras());
     org.fest.assertions.api.Assertions.assertThat(fileName).isNull();
   }
-  
+
   private void assertTableIdIsNotPresent(IntentForResult intent){
     String tableId = IntentUtil.retrieveTableIdFromBundle(
         intent.intent.getExtras());
     org.fest.assertions.api.Assertions.assertThat(tableId).isNull();
   }
-  
+
   private void assertViewFragmentTypeIsPresent(
       IntentForResult intent,
       ViewFragmentType viewFragmentType) {
@@ -435,7 +429,7 @@ public class ControlTest {
         .isEqualTo(viewFragmentType.name());
     }
   }
-  
+
   private void assertDefaultSQLArgsArePresent(IntentForResult intent) {
     SQLQueryStruct queryStruct = IntentUtil.getSQLQueryStructFromBundle(
         intent.intent.getExtras());

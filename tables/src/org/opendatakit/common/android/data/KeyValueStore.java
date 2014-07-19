@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -241,11 +242,11 @@ public class KeyValueStore {
     int i = 0;
     c.moveToFirst();
     while (i < c.getCount()) {
-      String value = c.getString(valueIndex);
+      String value = ODKDatabaseUtils.getIndexAsString(c, valueIndex);
       if (value == null || value.equals("")) {
         value = null;
       }
-      keyValues.put(c.getString(keyIndex), value);
+      keyValues.put(ODKDatabaseUtils.getIndexAsString(c, keyIndex), value);
       i++;
       c.moveToNext();
     }
@@ -271,12 +272,12 @@ public class KeyValueStore {
     c.moveToFirst();
     while (i < c.getCount()) {
       OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
-      entry.tableId = c.getString(idIndex);
-      entry.partition = c.getString(partitionIndex);
-      entry.aspect = c.getString(aspectIndex);
-      entry.key = c.getString(keyIndex);
-      entry.type = c.getString(typeIndex);
-      entry.value = c.getString(valueIndex);
+      entry.tableId = ODKDatabaseUtils.getIndexAsString(c, idIndex);
+      entry.partition = ODKDatabaseUtils.getIndexAsString(c, partitionIndex);
+      entry.aspect = ODKDatabaseUtils.getIndexAsString(c, aspectIndex);
+      entry.key = ODKDatabaseUtils.getIndexAsString(c, keyIndex);
+      entry.type = ODKDatabaseUtils.getIndexAsString(c, typeIndex);
+      entry.value = ODKDatabaseUtils.getIndexAsString(c, valueIndex);
       entries.add(entry);
       i++;
       c.moveToNext();
@@ -355,7 +356,7 @@ public class KeyValueStore {
 	    int i = 0;
 	    c.moveToFirst();
 	    while (i < c.getCount()) {
-	      partitions.add(c.getString(partitionIndex));
+	      partitions.add(ODKDatabaseUtils.getIndexAsString(c, partitionIndex));
 	      i++;
 	      c.moveToNext();
 	    }
@@ -396,7 +397,7 @@ public class KeyValueStore {
 	    int i = 0;
 	    c.moveToFirst();
 	    while (i < c.getCount()) {
-	      aspects.add(c.getString(aspectIndex));
+	      aspects.add(ODKDatabaseUtils.getIndexAsString(c, aspectIndex));
 	      c.moveToNext();
 	      i++;
 	    }

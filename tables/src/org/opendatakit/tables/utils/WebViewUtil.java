@@ -84,7 +84,7 @@ public class WebViewUtil {
     }
     return map;
   }
-  
+
   /**
    * Stringify the object. Convenience method, swallows all exceptions.
    * @param value
@@ -274,7 +274,7 @@ public class WebViewUtil {
     for (String elementKey : allElementKeys) {
       elementKeyToValue.put(
           elementKey,
-          requestedRow.getDataOrMetadataByElementKey(elementKey));
+          requestedRow.getRawDataOrMetadataByElementKey(elementKey));
     }
     return elementKeyToValue;
   }

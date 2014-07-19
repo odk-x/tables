@@ -38,6 +38,7 @@ import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.sync.aggregate.SyncTag;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.ColorRuleUtil;
 import org.opendatakit.common.android.utils.DataUtil;
@@ -1271,13 +1272,14 @@ public class TableProperties {
         DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
         while (c.moveToNext()) {
           if (!c.isNull(idxKey)) {
-            String value = c.getString(idxKey);
+            String value = ODKDatabaseUtils.getIndexAsString(c, idxKey);
             String update = du.validifyValue(cpKey, value);
             if (update == null) {
               throw new IllegalArgumentException("Unable to convert " + value + " to "
                   + elementType.name());
             }
-            updates.add(new RowUpdate(c.getString(idxId), c.getString(idxTimestamp), update));
+            updates.add(new RowUpdate(ODKDatabaseUtils.getIndexAsString(c, idxId),
+                ODKDatabaseUtils.getIndexAsString(c, idxTimestamp), update));
           }
         }
       } finally {

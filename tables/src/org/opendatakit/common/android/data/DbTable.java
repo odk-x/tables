@@ -30,6 +30,7 @@ import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 import android.content.ContentValues;
@@ -351,7 +352,7 @@ public class DbTable {
         }
         c.moveToFirst();
         int idxSyncState = c.getColumnIndexOrThrow(DataTableColumns.SYNC_STATE);
-        String value = c.getString(idxSyncState);
+        String value = ODKDatabaseUtils.getIndexAsString(c, idxSyncState);
         if ( value == null ) {
           Log.e(TAG, "Unexpected null value for sync state");
           return null;
@@ -763,7 +764,7 @@ public class DbTable {
 	      if (c.moveToFirst()) {
 	        int syncStateIndex = c.getColumnIndex(DataTableColumns.SYNC_STATE);
 	        if ( !c.isNull(syncStateIndex) ) {
-	          String val = c.getString(syncStateIndex);
+	          String val = ODKDatabaseUtils.getIndexAsString(c, syncStateIndex);
 	          return SyncState.valueOf(val);
 	        }
 	      }

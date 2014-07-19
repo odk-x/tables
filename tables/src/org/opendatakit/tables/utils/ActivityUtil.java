@@ -36,7 +36,7 @@ public class ActivityUtil {
     if ( formType.isCollectForm() ) {
       Map<String, String> elementKeyToValue = new HashMap<String, String>();
       for (String elementKey : tp.getPersistedColumns()) {
-        String value = row.getDataOrMetadataByElementKey(elementKey);
+        String value = row.getRawDataOrMetadataByElementKey(elementKey);
         elementKeyToValue.put(elementKey, value);
       }
 
@@ -70,7 +70,7 @@ public class ActivityUtil {
       }
     }
   }
-  
+
   /**
    * Edit a row using the form specified by tableProperties.
    * @param activity the activity that should await the return
@@ -182,7 +182,7 @@ public class ActivityUtil {
         intent,
         Constants.RequestCodes.LAUNCH_TABLE_PREFS);
   }
-  
+
   /**
    * Launch {@link TableLevelPreferencesActivity} to edit a column's list of
    * color rules. Launches with request code

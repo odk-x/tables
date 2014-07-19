@@ -73,12 +73,23 @@ public class RFC4180CsvReader {
 
   /**
    * Reads the next line from the buffer and converts to a string array.
+   * Lines are expected to end with either CR-LF or just LF (newline).
+   * Throws an IllegalStateException if this is not the case.
    *
-   * @return a string array with each comma-separated element as a separate
-   *         entry.
+   * @return <p>a String array with each comma-separated element as a separate
+   *         entry in that array.</p>
+   *         <p>Zero-length elements are returned as null values in the
+   *         String[] array.</p>
+   *         <p>Double-quotes should wrap elements containing new lines
+   *         and commas. Embedded double-quotes are represented as two
+   *         consecutive double-quote characters.</p>
+   *         <p>Whether quoted or not, spaces are significant.</p>
+   *         <p>Returns null instead of a String[] array if the stream is at EOF.</p>
    *
+   * @throws IllegalStateException
+   *              if the file is badly formed.
    * @throws IOException
-   *             if bad things happen during the read
+   *              if bad things happen during the read.
    */
   public String[] readNext() throws IOException {
 
@@ -186,7 +197,12 @@ public class RFC4180CsvReader {
           return results.toArray(new String[results.size()]);
         } else if ( ch == separator ) {
           // marks the end of this naked field
-          results.add(b.toString());
+          String field = b.toString();
+          if ( field.length() == 0 ) {
+            // empty strings are nulls
+            field = null;
+          }
+          results.add(field);
           b.setLength(0);
           // look for the start of the next field
           state = ParseState.atStartOfField;
@@ -203,7 +219,12 @@ public class RFC4180CsvReader {
           if ( ch != quotechar ) {
             // nope -- we are done with this quoted field
             // and expect a comma (or CR LF).
-            results.add(b.toString());
+            String field = b.toString();
+            if ( field.length() == 0 ) {
+              // empty strings are nulls
+              field = null;
+            }
+            results.add(field);
             b.setLength(0);
             state = ParseState.expectingComma;
             // process the ch we read in but didn't use
