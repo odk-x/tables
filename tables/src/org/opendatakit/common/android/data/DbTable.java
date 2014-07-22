@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
@@ -496,6 +498,9 @@ public class DbTable {
           values.put(DataTableColumns.ROW_ETAG,
               DataTableColumns.DEFAULT_ROW_ETAG);
         }
+
+        cleanUpValuesMap(values);
+
         SQLiteDatabase db = tp.getWritableDatabase();
         try {
           db.beginTransaction();
@@ -639,11 +644,116 @@ public class DbTable {
         actualUpdateRow(values, DataTableColumns.ID + " = ?", whereArgs);
     }
 
+    private void cleanUpValuesMap(ContentValues values) {
+
+      Map<String, String> toBeResolved = new HashMap<String,String>();
+
+      for ( String key : values.keySet() ) {
+        if ( DataTableColumns.CONFLICT_TYPE.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.FILTER_TYPE.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.FILTER_TYPE.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.FILTER_VALUE.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.FORM_ID.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.ID.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.LOCALE.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.ROW_ETAG.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.SAVEPOINT_CREATOR.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.SAVEPOINT_TIMESTAMP.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.SAVEPOINT_TYPE.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns.SYNC_STATE.equals(key) ) {
+          continue;
+        } else if ( DataTableColumns._ID.equals(key) ) {
+          continue;
+        }
+        // OK it is one of the data columns
+        ColumnProperties cp = tp.getColumnByElementKey(key);
+        boolean retainInDb = false;
+        if (cp.getColumnType().name().equals("array") || cp.getListChildElementKeys() == null || cp.getListChildElementKeys().isEmpty()) {
+          retainInDb = true;
+        }
+        if ( !retainInDb ) {
+          toBeResolved.put(key, values.getAsString(key));
+        }
+      }
+
+      // remove these non-retained values from the values set...
+      for ( String key : toBeResolved.keySet() ) {
+        values.remove(key);
+      }
+
+      for ( ; !toBeResolved.isEmpty(); ) {
+
+        Map<String, String> moreToResolve = new HashMap<String, String>();
+
+        for ( Map.Entry<String,String> entry : toBeResolved.entrySet() ) {
+          String key = entry.getKey();
+          String json = entry.getValue();
+          if ( json == null ) {
+            // don't need to do anything
+            // since the value is null
+            continue;
+          }
+          ColumnProperties cp = tp.getColumnByElementKey(key);
+          try {
+            Map<String,Object> struct = ODKFileUtils.mapper.readValue(json, Map.class);
+            for ( String subkey : cp.getListChildElementKeys() ) {
+              ColumnProperties subcp = tp.getColumnByElementKey(subkey);
+              boolean retainInDb = false;
+              if (subcp.getColumnType().name().equals("array") ||
+                  subcp.getListChildElementKeys() == null ||
+                  subcp.getListChildElementKeys().isEmpty()) {
+                retainInDb = true;
+              }
+              if ( retainInDb ) {
+                if ( subcp.getColumnType().name().equals("integer") ) {
+                  values.put(subkey, (Integer) struct.get(subcp.getElementName()));
+                } else if ( subcp.getColumnType().name().equals("number") ) {
+                  values.put(subkey, (Double) struct.get(subcp.getElementName()));
+                } else if ( subcp.getColumnType().name().equals("boolean") ) {
+                  values.put(subkey, ((Boolean) struct.get(subcp.getElementName())) ? 1 : 0);
+                } else {
+                  values.put(subkey, (String) struct.get(subcp.getElementName()));
+                }
+              } else {
+                // this must be a javascript structure... re-JSON it and save (for next round).
+                moreToResolve.put(subkey, ODKFileUtils.mapper.writeValueAsString(struct.get(subcp.getElementName())));
+              }
+            }
+          } catch (JsonParseException e) {
+            e.printStackTrace();
+            throw new IllegalStateException("should not be happening");
+          } catch (JsonMappingException e) {
+            e.printStackTrace();
+            throw new IllegalStateException("should not be happening");
+          } catch (IOException e) {
+            e.printStackTrace();
+            throw new IllegalStateException("should not be happening");
+          }
+        }
+
+        toBeResolved = moreToResolve;
+      }
+    }
+
     private void actualUpdateRow(ContentValues values, String where,
             String[] whereArgs) {
         if ( !values.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP) ) {
 	        values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
         }
+
+        cleanUpValuesMap(values);
+
         SQLiteDatabase db = tp.getWritableDatabase();
         try {
           db.beginTransaction();

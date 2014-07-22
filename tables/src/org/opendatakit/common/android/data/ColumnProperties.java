@@ -80,18 +80,6 @@ public class ColumnProperties {
   // private static final String DB_LIST_CHILD_ELEMENT_KEYS =
   // "list_child_element_keys";
   /*
-   * if this is a composite type (geopoint), this is a JSON list of the element
-   * keys of the direct descendants of this field name.
-   */
-  // private static final String DB_IS_UNIT_OF_RETENTION =
-  // "is_unit_of_retention";
-  /*
-   * default: 1 (true) -- whether or not this is a column in the underlying
-   * database table. If true, elementKey is the dbColumnName in which this
-   * value is written. The value will be written as JSON if it is a composite
-   * type. see larger comment below for example.
-   */
-  /*
    * These two columns have been replaced by the single column DB_JOINS
    */
   // private static final String DB_JOINS = "joins";
@@ -263,11 +251,6 @@ public class ColumnProperties {
    * with final element ', and ')
    */
 
-  // /***********************************
-  // * Default values for those columns that have defaults.
-  // ***********************************/
-  // public static final int DEFAULT_DB_IS_UNIT_OF_RETENTION = 1;
-
   /***********************************
    * The partition name of the column keys in the key value store.
    ***********************************/
@@ -312,7 +295,6 @@ public class ColumnProperties {
   private String elementName;
   private ColumnType elementType;
   private List<String> listChildElementKeys;
-  private boolean isUnitOfRetention;
   /*
    * The fields that reside in the key value store.
    */
@@ -339,7 +321,7 @@ public class ColumnProperties {
    */
   private ColumnProperties(TableProperties tp, String elementKey, String elementName,
       ColumnType elementType, List<String> listChildElementKeys,
-      boolean isUnitOfRetention, boolean displayVisible, String jsonStringifyDisplayName,
+      boolean displayVisible, String jsonStringifyDisplayName,
       ArrayList<String> displayChoicesList, String displayFormat,
       ArrayList<JoinColumn> joins) {
     this.tp = tp;
@@ -349,7 +331,6 @@ public class ColumnProperties {
     this.elementType = elementType;
     this.listChildElementKeys = listChildElementKeys;
     this.joins = (joins == null) ? new ArrayList<JoinColumn>() : joins;
-    this.isUnitOfRetention = isUnitOfRetention;
     this.displayVisible = displayVisible;
     this.jsonStringifyDisplayName = jsonStringifyDisplayName;
     updateDisplayNameFromJsonStringifyDisplayName();
@@ -440,9 +421,6 @@ public class ColumnProperties {
     boolean displayVisible = DataHelper.stringToBool(displayVisibleStr);
     // KEY_JOINS
 
-    // DB_IS_UNIT_OF_RETENTION
-    String isUnitOfRetentionStr = columnDefinitions.get(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION);
-    boolean isUnitOfRetention = DataHelper.stringToBool(isUnitOfRetentionStr);
     // DB_COLUMN_TYPE
     String columnTypeStr = columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_TYPE);
     ColumnType columnType = ColumnType.valueOf(columnTypeStr);
@@ -483,7 +461,7 @@ public class ColumnProperties {
     }
     return new ColumnProperties(tp, elementKey,
         columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
-        listChildElementKeys, isUnitOfRetention, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
+        listChildElementKeys, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
         displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), joins);
   }
 
@@ -518,7 +496,7 @@ public class ColumnProperties {
     kvs.addEntriesToStore(db, values);
 
     ColumnDefinitions.assertColumnDefinition(db, tableId, elementKey, elementName, elementType,
-        ODKFileUtils.mapper.writeValueAsString(listChildElementKeys), isUnitOfRetention);
+        ODKFileUtils.mapper.writeValueAsString(listChildElementKeys));
   }
 
   public enum ColumnDefinitionChange {
@@ -542,9 +520,6 @@ public class ColumnProperties {
       return ColumnDefinitionChange.INCOMPATIBLE;
     }
     if (!this.getListChildElementKeys().equals(cp.getListChildElementKeys())) {
-      return ColumnDefinitionChange.INCOMPATIBLE;
-    }
-    if (this.isUnitOfRetention() != cp.isUnitOfRetention()) {
       return ColumnDefinitionChange.INCOMPATIBLE;
     }
     if (this.getColumnType() != cp.getColumnType()) {
@@ -577,11 +552,10 @@ public class ColumnProperties {
    */
   static ColumnProperties createNotPersisted(TableProperties tp,
       String jsonStringifyDisplayName, String elementKey, String elementName, ColumnType columnType,
-      List<String> listChildElementKeys, boolean isUnitOfRetention,
-      boolean displayVisible) {
+      List<String> listChildElementKeys, boolean displayVisible) {
 
     ColumnProperties cp = new ColumnProperties(tp, elementKey, elementName, columnType,
-        listChildElementKeys, isUnitOfRetention, displayVisible, jsonStringifyDisplayName,
+        listChildElementKeys, displayVisible, jsonStringifyDisplayName,
         null, null, null);
 
     return cp;
@@ -659,6 +633,30 @@ public class ColumnProperties {
     return elementType;
   }
 
+  public Class<?> getDataType() {
+    if ( getColumnType().name().equals("array") ) {
+      return ArrayList.class;
+    }
+    List<String> listChildren = getListChildElementKeys();
+    if ( listChildren != null && !listChildren.isEmpty() ) {
+      return HashMap.class;
+    }
+
+    if ( getColumnType().name().equals("integer") ) {
+      return Integer.class;
+    }
+
+    if ( getColumnType().name().equals("number") ) {
+      return Double.class;
+    }
+
+    if ( getColumnType().name().equals("boolean") ) {
+      return Boolean.class;
+    }
+
+    return String.class;
+  }
+
   /**
    * Sets the column's type.
    *
@@ -708,15 +706,6 @@ public class ColumnProperties {
       throw new IllegalArgumentException("setListChildElementKeys failed: "
           + listChildElementKeys.toString(), e);
     }
-  }
-
-  public boolean isUnitOfRetention() {
-    return isUnitOfRetention;
-  }
-
-  public void setIsUnitOfRetention(SQLiteDatabase db, boolean setting) {
-    setBooleanProperty(db, ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, setting);
-    this.isUnitOfRetention = setting;
   }
 
   /**

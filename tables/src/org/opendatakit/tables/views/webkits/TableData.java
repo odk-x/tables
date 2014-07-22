@@ -1,9 +1,13 @@
 package org.opendatakit.tables.views.webkits;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.common.android.data.ColorGuide;
@@ -13,6 +17,8 @@ import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 import android.app.Activity;
 import android.util.Log;
@@ -247,9 +253,61 @@ public class TableData {
       Log.e(TAG, "column with elementPath: " + elementPath + " does not" + " exist.");
       return null;
     }
+    ColumnProperties cp = mTable.getTableProperties().getColumnByElementKey(elementKey);
+    if ( cp.getColumnType().name().equals("array") ) {
+      String result = row.getRawDataOrMetadataByElementKey(elementKey);
+      return result;
+    }
 
-    String result = row.getRawDataOrMetadataByElementKey(elementKey);
-    return result;
+    List<String> listChildElementKeys = cp.getListChildElementKeys();
+    if ( listChildElementKeys == null || listChildElementKeys.isEmpty() ) {
+      String result = row.getRawDataOrMetadataByElementKey(elementKey);
+      return result;
+    }
+
+    try {
+      Map<String,Object> resultSet = new HashMap<String,Object>();
+      assembleNonNullParts(row, resultSet, listChildElementKeys);
+      if ( resultSet.isEmpty() ) {
+        return null;
+      }
+      String result = ODKFileUtils.mapper.writeValueAsString(resultSet);
+      return result;
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("unable to parse JSON expression");
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("unable to parse JSON expression");
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("unable to parse JSON expression");
+    }
+  }
+
+  private void assembleNonNullParts( Row row, Map<String, Object> resultSet, List<String> elementKeys ) throws JsonParseException, JsonMappingException, IOException {
+    for ( String elementKey : elementKeys ) {
+      ColumnProperties cp = mTable.getTableProperties().getColumnByElementKey(elementKey);
+      if ( cp.getColumnType().name().equals("array") ) {
+        String result = row.getRawDataOrMetadataByElementKey(elementKey);
+        resultSet.put(cp.getElementName(), ODKFileUtils.mapper.readValue(result, ArrayList.class));
+      } else {
+        List<String> subKeys = cp.getListChildElementKeys();
+        if ( subKeys == null || subKeys.isEmpty() ) {
+          Class<?> clazz = cp.getDataType();
+          Object value = row.getRawDataType(elementKey, clazz);
+          if ( value != null ) {
+            resultSet.put(cp.getElementName(), value);
+          }
+        } else {
+          Map<String, Object> subValues = new HashMap<String,Object>();
+          assembleNonNullParts(row, subValues, subKeys);
+          if ( !subValues.isEmpty() ) {
+            resultSet.put(cp.getElementName(), subValues);
+          }
+        }
+      }
+    }
   }
 
   /**

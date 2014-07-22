@@ -55,7 +55,6 @@ public class ColumnDefinitions {
     columnNames.add(ColumnDefinitionsColumns.ELEMENT_NAME);
     columnNames.add(ColumnDefinitionsColumns.ELEMENT_TYPE);
     columnNames.add(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
-    columnNames.add(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION);
   }
 
   /*
@@ -146,7 +145,6 @@ public class ColumnDefinitions {
       int dbElementTypeIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_TYPE);
       int dbListChildElementKeysIndex =
           c.getColumnIndexOrThrow(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
-      int dbUnitOfRetentionIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION);
 
       if (c.getCount() > 1) {
         Log.e(TAG, "query for tableId: " + tableId + "and elementKey: " +
@@ -168,8 +166,6 @@ public class ColumnDefinitions {
         columnDefMap.put(ColumnDefinitionsColumns.ELEMENT_TYPE, ODKDatabaseUtils.getIndexAsString(c, dbElementTypeIndex));
         columnDefMap.put(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS,
             ODKDatabaseUtils.getIndexAsString(c, dbListChildElementKeysIndex));
-        Boolean value = ODKDatabaseUtils.getIndexAsType(c, Boolean.class, dbUnitOfRetentionIndex);
-        columnDefMap.put(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, value == null ? null : value.toString());
         c.moveToNext();
         j++;
       }
@@ -271,12 +267,11 @@ public class ColumnDefinitions {
    */
   public static void assertColumnDefinition(SQLiteDatabase db,
       String tableId, String elementKey, String elementName,
-      ColumnType elementType, String listChild, boolean isUnitOfRetention) {
+      ColumnType elementType, String listChild) {
     ContentValues values = new ContentValues();
     values.put(ColumnDefinitionsColumns.ELEMENT_NAME, elementName);
     values.put(ColumnDefinitionsColumns.ELEMENT_TYPE, elementType.name());
     values.put(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, listChild);
-    values.put(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, isUnitOfRetention ? 1 : 0);
 
     Cursor c = null;
     try {

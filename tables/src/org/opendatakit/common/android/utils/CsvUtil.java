@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -238,7 +237,6 @@ public class CsvUtil {
       colDefHeaders.add(ColumnDefinitionsColumns.ELEMENT_KEY);
       colDefHeaders.add(ColumnDefinitionsColumns.ELEMENT_NAME);
       colDefHeaders.add(ColumnDefinitionsColumns.ELEMENT_TYPE);
-      colDefHeaders.add(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION);
       colDefHeaders.add(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
 
       cw.writeNext(colDefHeaders.toArray(new String[colDefHeaders.size()]));
@@ -260,9 +258,7 @@ public class CsvUtil {
         colDefRow[0] = cp.getElementKey();
         colDefRow[1] = cp.getElementName();
         colDefRow[2] = cp.getColumnType().toString();
-        // Excel does upper case...
-        colDefRow[3] = Boolean.toString(cp.isUnitOfRetention()).toUpperCase(Locale.ENGLISH);
-        colDefRow[4] = ODKFileUtils.mapper.writeValueAsString(cp.getListChildElementKeys());
+        colDefRow[3] = ODKFileUtils.mapper.writeValueAsString(cp.getListChildElementKeys());
         cw.writeNext(colDefRow);
       }
 
@@ -355,7 +351,6 @@ public class CsvUtil {
     String displayName;
     String elementName;
     ColumnType elementType;
-    Boolean isUnitOfRetention;
     List<String> listOfStringElementKeys = new ArrayList<String>();
     List<OdkTablesKeyValueStoreEntry> kvsEntries = new ArrayList<OdkTablesKeyValueStoreEntry>();
   };
@@ -426,9 +421,6 @@ public class CsvUtil {
           }
           if ( ColumnDefinitionsColumns.ELEMENT_TYPE.equals(colHeaders[i]) ) {
             ci.elementType = ColumnType.valueOf(row[i]);
-          }
-          if ( ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION.equals(colHeaders[i]) ) {
-            ci.isUnitOfRetention = Boolean.valueOf(row[i]);
           }
           if ( ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS.equals(colHeaders[i]) ) {
             ci.listOfStringElementKeys = ODKFileUtils.mapper.readValue(row[i], ArrayList.class );
@@ -543,9 +535,6 @@ public class CsvUtil {
           if ( !cp.getElementName().equals(ci.elementName) ) {
             throw new IllegalStateException("Unexpected mis-match of elementName for elementKey: " + ci.elementKey);
           }
-          if ( cp.isUnitOfRetention() != ci.isUnitOfRetention ) {
-            throw new IllegalStateException("Unexpected mis-match of isUnitOfRetention for elementKey: " + ci.elementKey);
-          }
           List<String> refList = cp.getListChildElementKeys();
           if ( refList == null ) {
             refList = new ArrayList<String>();
@@ -588,7 +577,7 @@ public class CsvUtil {
 
         for ( ColumnInfo ci : columns.values() ) {
           ColumnProperties cp = tp.addColumn(ci.displayName, ci.elementKey, ci.elementName,
-              ci.elementType, ci.listOfStringElementKeys, ci.isUnitOfRetention);
+              ci.elementType, ci.listOfStringElementKeys);
           cp.addMetaDataEntries(ci.kvsEntries);
         }
         tp.addMetaDataEntries(kvsEntries, false);

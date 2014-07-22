@@ -993,7 +993,7 @@ public class TableProperties {
    * @return ColumnProperties for the new table
    */
   public ColumnProperties addColumn(String displayName, String elementKey, String elementName,
-      ColumnType columnType, List<String> listChildElementKeys, boolean isUnitOfRetention) {
+      ColumnType columnType, List<String> listChildElementKeys) {
     if (elementKey == null) {
       elementKey = NameUtil.createUniqueElementKey(displayName, this);
     } else if (!NameUtil.isValidUserDefinedDatabaseName(elementKey)) {
@@ -1003,7 +1003,9 @@ public class TableProperties {
     // e.g., Array types and custom data types can have child elements
     // with a null element name. The child element defines the underlying
     // storage type of the value.
-    if (isUnitOfRetention) {
+    boolean retainInDb = false;
+    if (columnType.name().equals("array") || listChildElementKeys == null || listChildElementKeys.isEmpty()) {
+      retainInDb = true;
       if (elementName == null) {
         throw new IllegalArgumentException("[addColumn] null element name for elementKey: "
             + elementKey);
@@ -1037,8 +1039,9 @@ public class TableProperties {
           + " for: " + elementName);
     }
     ColumnProperties cp = null;
+    // make it visible if it is retained in the db.
     cp = ColumnProperties.createNotPersisted(this, jsonStringifyDisplayName, elementKey,
-        elementName, columnType, listChildElementKeys, isUnitOfRetention, isUnitOfRetention);
+        elementName, columnType, listChildElementKeys, retainInDb);
 
     return addColumn(cp);
   }
@@ -1079,7 +1082,13 @@ public class TableProperties {
         db.beginTransaction();
         // ensure that we have persisted this column's values
         cp.persistColumn(db);
-        if ( cp.isUnitOfRetention() ) {
+        boolean retainInDb = false;
+        if (cp.getColumnType().name().equals("array") ||
+            cp.getListChildElementKeys() == null || cp.getListChildElementKeys().isEmpty()) {
+          retainInDb = true;
+        }
+
+        if ( retainInDb ) {
           StringBuilder b = new StringBuilder();
           b.append("ALTER TABLE \"").append(dbTableName).append("\"")
            .append(" ADD COLUMN \"").append(cp.getElementKey()).append("\" ");
@@ -1246,7 +1255,13 @@ public class TableProperties {
     boolean needsConversion = false;
     for (String col : getPersistedColumns()) {
       ColumnProperties cp = getColumnByElementKey(elementKey);
-      if (cp.isUnitOfRetention()) {
+      boolean retainInDb = false;
+      if (cp.getColumnType().name().equals("array") ||
+          cp.getListChildElementKeys() == null || cp.getListChildElementKeys().isEmpty()) {
+        retainInDb = true;
+      }
+
+      if (retainInDb) {
         csvBuilder.append(", " + col);
         if (cp.getElementKey().equals(elementKey)) {
           cpKey = cp;
@@ -1325,7 +1340,13 @@ public class TableProperties {
     }
     for (String elementKey : mElementKeyToColumnProperties.keySet()) {
       ColumnProperties cp = mElementKeyToColumnProperties.get(elementKey);
-      if (cp.isUnitOfRetention()) {
+      boolean retainInDb = false;
+      if (cp.getColumnType().name().equals("array") ||
+          cp.getListChildElementKeys() == null || cp.getListChildElementKeys().isEmpty()) {
+        retainInDb = true;
+      }
+
+      if (retainInDb) {
         persistedColumns.add(elementKey);
       }
     }

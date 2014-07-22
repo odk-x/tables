@@ -35,6 +35,7 @@ import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.DataUtil;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
@@ -330,6 +331,64 @@ public class UserTable {
         return null;
       }
       return result;
+    }
+
+    /**
+     * Return the data stored in the cursor at the given index and given position
+     * (ie the given row which the cursor is currently on) as null OR whatever
+     * data type it is.
+     * <p>This does not actually convert data types from one type
+     * to the other. Instead, it safely preserves null values and returns boxed
+     * data values. If you specify ArrayList or HashMap, it JSON deserializes
+     * the value into one of those.
+     *
+     * @param c
+     * @param clazz
+     * @param i
+     * @return
+     */
+    public final <T> T getRawDataType(String elementKey, Class<T> clazz) {
+      // If you add additional return types here be sure to modify the javadoc.
+      try {
+        String value = getRawDataOrMetadataByElementKey(elementKey);
+        if (value == null) {
+          return null;
+        }
+        if ( clazz == Long.class ) {
+          Long l = Long.parseLong(value);
+          return (T) l;
+        } else if ( clazz == Integer.class ) {
+          Integer l = Integer.parseInt(value);
+          return (T) l;
+        } else if ( clazz == Double.class ) {
+          Double d = Double.parseDouble(value);
+          return (T) d;
+        } else if ( clazz == String.class ) {
+          return (T) value;
+        } else if ( clazz == Boolean.class ) {
+          return (T) Boolean.valueOf(value);
+        } else if ( clazz == ArrayList.class ) {
+          // json deserialization of an array
+          return (T) ODKFileUtils.mapper.readValue(value, ArrayList.class);
+        } else if ( clazz == HashMap.class ) {
+          // json deserialization of an object
+          return (T) ODKFileUtils.mapper.readValue(value, HashMap.class);
+        } else {
+          throw new IllegalStateException("Unexpected data type in SQLite table");
+        }
+      } catch (ClassCastException e) {
+        e.printStackTrace();
+        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString() + " in SQLite table ");
+      } catch (JsonParseException e) {
+        e.printStackTrace();
+        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString() + " on SQLite table");
+      } catch (JsonMappingException e) {
+        e.printStackTrace();
+        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString() + " on SQLite table");
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new IllegalStateException("Unexpected data type conversion failure " + e.toString() + " on SQLite table");
+      }
     }
 
     public String getDisplayTextOfData(Context context, String elementKey, boolean showErrorText) {
