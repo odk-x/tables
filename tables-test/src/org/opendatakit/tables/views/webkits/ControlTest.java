@@ -91,61 +91,95 @@ public class ControlTest {
 
   @Test
   public void addRowReturnsFalseIfTableDoesNotExist() {
-    // we don't want the tp to be present
-    ControlStub.TABLE_PROPERTIES_FOR_ID = null;
-    boolean result = this.control.addRow("anyId", "anyString");
-    assertThat(result).isFalse();
+    this.helperAddOrUpdateFailsIfTableDoesNotExist(false);
   }
-
+  
   @Test
   public void addRowReturnsFalseIfColumnDoesNotExist() {
+    this.helperAddOrUpdateFailsIfColumnDoesNotExist(false);
+  }
+  
+  @Test
+  public void updateRowReturnsFalseIfTableDoesNotExist() {
+    this.helperAddOrUpdateFailsIfTableDoesNotExist(true);
+  }
+  
+  @Test
+  public void updateRowReturnsFalseIfColumnDoesNotExist() {
+    this.helperAddOrUpdateFailsIfColumnDoesNotExist(true);
+  }
+  
+  protected void helperAddOrUpdateFailsIfTableDoesNotExist(boolean isUpdate) {
+    // we don't want the tp to be present
+    ControlStub.TABLE_PROPERTIES_FOR_ID = null;
+    boolean result;
+    if (isUpdate) {
+      result = this.control.updateRow("anyId", "anyString", "anyRowId");
+    } else {
+      result = this.control.addRow("anyId", "anyString");
+    }
+    assertThat(result).isFalse();
+  }
+  
+  /**
+   * Asserts that the add/update row fails if the column does not exist.
+   * @param isUpdate false if you are testing
+   * {@link Control#addRow(String, String)}. If true, calls
+   * {@link Control#updateRow(String, String, String)}.
+   */
+  protected void helperAddOrUpdateFailsIfColumnDoesNotExist(boolean isUpdate) {
     TableProperties tpMock = TestConstants.getTablePropertiesMock();
     ControlStub.TABLE_PROPERTIES_FOR_ID = tpMock;
     String nonExistentColumn = "thisColumnDoesNotExist";
     doReturn(null).when(tpMock).getColumnByElementKey(nonExistentColumn);
     ControlStub.TABLE_PROPERTIES_FOR_ID = tpMock;
     String stringifiedMap = WebViewUtil.stringify(getValidMap());
-    boolean result = this.control.addRow("anyId", stringifiedMap);
+    boolean result;
+    if (isUpdate) {
+      result = this.control.updateRow("anyId", stringifiedMap, "anyRowId");
+    } else {
+      result = this.control.addRow("anyId", stringifiedMap);
+    }
     assertThat(result).isFalse();
   }
 
   @Test
-  public void addRowWithInvalidIntFails() {
-    this.assertInvalidHelper(ColumnType.INTEGER, "invalid");
+  public void addRowWithNullContentValuesFails() {
+    this.helperAddOrUpdateWithNullContentValuesFails(false);
   }
 
   @Test
-  public void addRowWithInvalidNumberFails() {
-    this.assertInvalidHelper(ColumnType.NUMBER, "invalid");
+  public void updateRowWithNullContentValuesFails() {
+    this.helperAddOrUpdateWithNullContentValuesFails(true);
   }
-
-  /**
-   * Perform an assertion for an invalid value for the given column type,
-   * ensuring that the insertion fails.
-   * @param elementKey
-   * @param columnType
-   * @param invalidValue
-   */
-  private void assertInvalidHelper(
-      ColumnType columnType,
-      String invalidValue) {
+  
+  protected void helperAddOrUpdateWithNullContentValuesFails(
+      boolean isUpdate) {
     setupControlWithTablePropertiesMock();
-    String elementKey = "anyElementKey";
-    TableProperties tpMock = ControlStub.TABLE_PROPERTIES_FOR_ID;
-    ColumnProperties intColumn = TestConstants.getColumnPropertiesMock(
-        elementKey,
-        columnType);
-    doReturn(intColumn).when(tpMock).getColumnByElementKey(
-        elementKey);
-    Map<String, String> invalidMap = new HashMap<String, String>();
-    invalidMap.put(elementKey, invalidValue);
-    String stringified = WebViewUtil.stringify(invalidMap);
-    boolean result = this.control.addRow("anyId", stringified);
+    // we need to return a null ContentValues when we ask for it.
+    ControlStub.CONTENT_VALUES = null;
+    String stringifiedJSON = WebViewUtil.stringify(getValidMap());
+    boolean result;
+    if (isUpdate) {
+      result = this.control.updateRow("anyTableId", stringifiedJSON, "anyRowId");
+    } else {
+      result = this.control.addRow("anyTableId", stringifiedJSON);
+    }
     assertThat(result).isFalse();
   }
 
   @Test
   public void addRowWithValidValuesCallsDBUtilsWrapper() {
+    this.helperAddOrUpdateRowWithValuesCallsDBUtilsWrapper(false);
+  }
+  
+  @Test
+  public void updateRowWithValidValuesCallsDBUtilsWrapper() {
+    this.helperAddOrUpdateRowWithValuesCallsDBUtilsWrapper(true);
+  }
+  
+  protected void helperAddOrUpdateRowWithValuesCallsDBUtilsWrapper(
+      boolean isUpdate) {
     setupControlWithTablePropertiesMock();
     TableProperties tpMock = ControlStub.TABLE_PROPERTIES_FOR_ID;
     ColumnProperties stringColumn = TestConstants.getColumnPropertiesMock(
@@ -169,11 +203,22 @@ public class ControlTest {
     Map<String, String> validMap = getValidMap();
     String validMapString = WebViewUtil.stringify(validMap);
     ContentValues contentValues = getContentValuesForValidMap();
-    control.addRow(tableId, validMapString);
-    verify(wrapperMock, times(1)).writeDataIntoExistingDBTable(
-        eq(ControlStub.DATABASE),
-        eq(tableId),
-        eq(contentValues));
+    ControlStub.CONTENT_VALUES = contentValues;
+    if (isUpdate) {
+      String uuid = "aRowId";
+      this.control.updateRow(tableId, validMapString, uuid);
+      verify(wrapperMock, times(1)).writeDataIntoExistingDBTableWithId(
+          eq(ControlStub.DATABASE),
+          eq(tableId),
+          eq(contentValues),
+          eq(uuid));
+    } else {
+      control.addRow(tableId, validMapString);
+      verify(wrapperMock, times(1)).writeDataIntoExistingDBTable(
+          eq(ControlStub.DATABASE),
+          eq(tableId),
+          eq(contentValues));
+    }
   }
 
   @Test

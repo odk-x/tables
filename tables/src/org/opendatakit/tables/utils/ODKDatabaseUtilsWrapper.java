@@ -18,10 +18,6 @@ import android.database.sqlite.SQLiteDatabase;
  */
 public class ODKDatabaseUtilsWrapper {
   
-  public ODKDatabaseUtilsWrapper() {
-    // no-op.
-  }
-  
   /**
    * Wraps {@link ODKDatabaseUtils#writeDataIntoExistingDBTable(
    * SQLiteDatabase, String, ContentValues)}.
@@ -37,6 +33,18 @@ public class ODKDatabaseUtilsWrapper {
         database,
         tableName,
         contentValues);
+  }
+  
+  public void writeDataIntoExistingDBTableWithId(
+      SQLiteDatabase database,
+      String tableName,
+      ContentValues contentValues,
+      String uuid) {
+    ODKDatabaseUtils.writeDataIntoExistingDBTableWithId(
+        database,
+        tableName,
+        contentValues,
+        uuid);
   }
 
 }

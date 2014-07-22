@@ -483,67 +483,74 @@ public class Control {
         tableId);
     return tp.getLocalizedDisplayName();
   }
-
+  
+  public boolean updateRow(
+      String tableId,
+      String stringifiedJSON,
+      String rowId) {
+    return helperAddOrUpdateRow(tableId, stringifiedJSON, rowId);
+  }
+  
+  protected ContentValues getContentValuesFromMap(
+      TableProperties tableProperties,
+      Map<String, String> elementKeyToValue) {
+    return WebViewUtil.getContentValuesFromMap(
+        tableProperties,
+        elementKeyToValue);
+  }
+  
   public boolean addRow(String tableId, String stringifiedJSON) {
-   TableProperties tableProperties =
-       this.retrieveTablePropertiesForTable(tableId);
-   if (tableProperties == null) {
-     Log.e(TAG, "[addRow] cannot find table for id: " + tableId);
-     return false;
-   }
-    Map<String, String> elementKeyToValue;
-    if (stringifiedJSON == null) {
-      // this case will let us add an empty row if null is passed.
-      elementKeyToValue = new HashMap<String, String>();
-    } else {
-      elementKeyToValue = WebViewUtil.getMapFromJson(stringifiedJSON);
+    return helperAddOrUpdateRow(tableId, stringifiedJSON, null); 
+  }
+  
+  /**
+   * Add or update a row. If rowId is null, add is called. If it is not, update
+   * is called.
+   * @param tableId
+   * @param stringifiedJSON
+   * @param rowId
+   * @return
+   */
+  protected boolean helperAddOrUpdateRow(
+      String tableId,
+      String stringifiedJSON,
+      String rowId) {
+    TableProperties tableProperties =
+        this.retrieveTablePropertiesForTable(tableId);
+    if (tableProperties == null) {
+      Log.e(TAG, "[addRow] cannot find table for id: " + tableId);
+      return false;
     }
-    // we now have a map of elementkey -> value. Note that we're not currently
-    // going to handle complex types or those that map to a json value. We
-    // could, but we'd probably have to have a known entity do the conversions
-    // for us somehow on the js side, rather than expect the caller to craft up
-    // whatever format we've landed on for pictures.
-    // This will contain the values we're going to insert into the database.
-    ContentValues contentValues = new ContentValues();
-    // TODO: respect locale and timezone. Getting this structure from other
-    // places it is used.
-    DataUtil dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
-    for (Map.Entry<String, String> entry : elementKeyToValue.entrySet()) {
-      String elementKey = entry.getKey();
-      String rawValue = entry.getValue();
-      // Get the column so we know what type we need to handle.
-      ColumnProperties columnProperties =
-          tableProperties.getColumnByElementKey(elementKey);
-      if (columnProperties == null) {
-        // uh oh, no column for the given id. problem on the part of the caller
-        Log.e(
-            TAG,
-            "[addRow] could not find column for element key: " + elementKey);
-        return false;
-      }
-      ColumnType columnType = columnProperties.getColumnType();
-      boolean parsedSuccessfully = dataUtil.addValueToContentValues(
-          columnProperties,
-          rawValue,
-          contentValues);
-      if (!parsedSuccessfully) {
-        Log.e(
-            TAG,
-            "[addRow] could not parse value: " +
-              rawValue +
-              " for column type " +
-              columnType);
-        return false;
-      }
-    }
-    // If we've made it here, all appears to be well.
-    SQLiteDatabase writableDatabase = getWritableDatabase();
-    ODKDatabaseUtilsWrapper dbUtils = this.getODKDatabaseUtilsWrapper();
-    dbUtils.writeDataIntoExistingDBTable(
-        writableDatabase,
-        tableId,
-        contentValues);
-    return true;
+     Map<String, String> elementKeyToValue;
+     if (stringifiedJSON == null) {
+       // this case will let us add an empty row if null is passed.
+       elementKeyToValue = new HashMap<String, String>();
+     } else {
+       elementKeyToValue = WebViewUtil.getMapFromJson(stringifiedJSON);
+     }
+     ContentValues contentValues = getContentValuesFromMap(
+         tableProperties,
+         elementKeyToValue);
+     if (contentValues == null) {
+       // something went wrong parsing.
+       return false;
+     }
+     // If we've made it here, all appears to be well.
+     SQLiteDatabase writableDatabase = getWritableDatabase();
+     ODKDatabaseUtilsWrapper dbUtils = this.getODKDatabaseUtilsWrapper();
+     if (rowId == null) {
+       dbUtils.writeDataIntoExistingDBTable(
+           writableDatabase,
+           tableId,
+           contentValues);
+     } else {
+       dbUtils.writeDataIntoExistingDBTableWithId(
+           writableDatabase,
+           tableId,
+           contentValues,
+           rowId);
+     }
+     return true;
   }
 
   /**
