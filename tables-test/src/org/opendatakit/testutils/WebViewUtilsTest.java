@@ -14,29 +14,28 @@ import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.ControlStub;
 import org.robolectric.RobolectricTestRunner;
 
 import android.content.ContentValues;
 
 /**
- * 
+ *
  * @author sudar.sam@gmail.com
  *
  */
 @RunWith(RobolectricTestRunner.class)
 public class WebViewUtilsTest {
-  
+
   @Test
   public void getContentValuesInvalidIntFails() {
     this.assertInvalidHelper(ColumnType.INTEGER, "invalid");
   }
-  
+
   @Test
   public void getContentValuesInvalidNumberFails() {
     this.assertInvalidHelper(ColumnType.NUMBER, "invalid");
   }
-  
+
   /**
    * Perform an assertion for an invalid value for the given column type,
    * ensuring that the insertion fails.

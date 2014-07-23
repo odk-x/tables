@@ -5,21 +5,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.common.android.utils.NameUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -483,14 +479,14 @@ public class Control {
         tableId);
     return tp.getLocalizedDisplayName();
   }
-  
+
   public boolean updateRow(
       String tableId,
       String stringifiedJSON,
       String rowId) {
     return helperAddOrUpdateRow(tableId, stringifiedJSON, rowId);
   }
-  
+
   protected ContentValues getContentValuesFromMap(
       TableProperties tableProperties,
       Map<String, String> elementKeyToValue) {
@@ -498,11 +494,11 @@ public class Control {
         tableProperties,
         elementKeyToValue);
   }
-  
+
   public boolean addRow(String tableId, String stringifiedJSON) {
-    return helperAddOrUpdateRow(tableId, stringifiedJSON, null); 
+    return helperAddOrUpdateRow(tableId, stringifiedJSON, null);
   }
-  
+
   /**
    * Add or update a row. If rowId is null, add is called. If it is not, update
    * is called.

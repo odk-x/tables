@@ -9,7 +9,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.robolectric.Robolectric.shadowOf;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.After;
@@ -93,22 +92,22 @@ public class ControlTest {
   public void addRowReturnsFalseIfTableDoesNotExist() {
     this.helperAddOrUpdateFailsIfTableDoesNotExist(false);
   }
-  
+
   @Test
   public void addRowReturnsFalseIfColumnDoesNotExist() {
     this.helperAddOrUpdateFailsIfColumnDoesNotExist(false);
   }
-  
+
   @Test
   public void updateRowReturnsFalseIfTableDoesNotExist() {
     this.helperAddOrUpdateFailsIfTableDoesNotExist(true);
   }
-  
+
   @Test
   public void updateRowReturnsFalseIfColumnDoesNotExist() {
     this.helperAddOrUpdateFailsIfColumnDoesNotExist(true);
   }
-  
+
   protected void helperAddOrUpdateFailsIfTableDoesNotExist(boolean isUpdate) {
     // we don't want the tp to be present
     ControlStub.TABLE_PROPERTIES_FOR_ID = null;
@@ -120,7 +119,7 @@ public class ControlTest {
     }
     assertThat(result).isFalse();
   }
-  
+
   /**
    * Asserts that the add/update row fails if the column does not exist.
    * @param isUpdate false if you are testing
@@ -152,7 +151,7 @@ public class ControlTest {
   public void updateRowWithNullContentValuesFails() {
     this.helperAddOrUpdateWithNullContentValuesFails(true);
   }
-  
+
   protected void helperAddOrUpdateWithNullContentValuesFails(
       boolean isUpdate) {
     setupControlWithTablePropertiesMock();
@@ -172,12 +171,12 @@ public class ControlTest {
   public void addRowWithValidValuesCallsDBUtilsWrapper() {
     this.helperAddOrUpdateRowWithValuesCallsDBUtilsWrapper(false);
   }
-  
+
   @Test
   public void updateRowWithValidValuesCallsDBUtilsWrapper() {
     this.helperAddOrUpdateRowWithValuesCallsDBUtilsWrapper(true);
   }
-  
+
   protected void helperAddOrUpdateRowWithValuesCallsDBUtilsWrapper(
       boolean isUpdate) {
     setupControlWithTablePropertiesMock();
