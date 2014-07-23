@@ -2,6 +2,7 @@ package org.opendatakit.tables.views.webkits;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -9,7 +10,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.robolectric.Robolectric.shadowOf;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.After;
@@ -112,13 +112,19 @@ public class ControlTest {
   protected void helperAddOrUpdateFailsIfTableDoesNotExist(boolean isUpdate) {
     // we don't want the tp to be present
     ControlStub.TABLE_PROPERTIES_FOR_ID = null;
-    boolean result;
     if (isUpdate) {
-      result = this.control.updateRow("anyId", "anyString", "anyRowId");
+      boolean result =
+          this.control.updateRow("anyId", "anyString", "anyRowId");
+      assertThat(result).isFalse();
     } else {
-      result = this.control.addRow("anyId", "anyString");
+      this.setupControlStubToReturnGeneratedRowId("some id");
+      String rowId = this.control.addRow("anyId", "anyString");
+      assertThat(rowId).isNull();
     }
-    assertThat(result).isFalse();
+  }
+  
+  protected void setupControlStubToReturnGeneratedRowId(String rowId) {
+    ControlStub.GENERATED_ROW_ID = rowId;
   }
   
   /**
@@ -134,13 +140,15 @@ public class ControlTest {
     doReturn(null).when(tpMock).getColumnByElementKey(nonExistentColumn);
     ControlStub.TABLE_PROPERTIES_FOR_ID = tpMock;
     String stringifiedMap = WebViewUtil.stringify(getValidMap());
-    boolean result;
     if (isUpdate) {
-      result = this.control.updateRow("anyId", stringifiedMap, "anyRowId");
+      boolean result =
+          this.control.updateRow("anyId", stringifiedMap, "anyRowId");
+      assertThat(result).isFalse();
     } else {
-      result = this.control.addRow("anyId", stringifiedMap);
+      this.setupControlStubToReturnGeneratedRowId("some id");
+      String rowId = this.control.addRow("anyId", stringifiedMap);
+      assertThat(rowId).isNull();
     }
-    assertThat(result).isFalse();
   }
 
   @Test
@@ -159,13 +167,15 @@ public class ControlTest {
     // we need to return a null ContentValues when we ask for it.
     ControlStub.CONTENT_VALUES = null;
     String stringifiedJSON = WebViewUtil.stringify(getValidMap());
-    boolean result;
     if (isUpdate) {
-      result = this.control.updateRow("anyTableId", stringifiedJSON, "anyRowId");
+      boolean result =
+          this.control.updateRow("anyTableId", stringifiedJSON, "anyRowId");
+      assertThat(result).isFalse();
     } else {
-      result = this.control.addRow("anyTableId", stringifiedJSON);
+      this.setupControlStubToReturnGeneratedRowId("some row id");
+      String rowId = this.control.addRow("anyTableId", stringifiedJSON);
+      assertThat(rowId).isNull();
     }
-    assertThat(result).isFalse();
   }
 
   @Test
@@ -204,20 +214,23 @@ public class ControlTest {
     String validMapString = WebViewUtil.stringify(validMap);
     ContentValues contentValues = getContentValuesForValidMap();
     ControlStub.CONTENT_VALUES = contentValues;
+    String rowId = "aRowId";
     if (isUpdate) {
-      String uuid = "aRowId";
-      this.control.updateRow(tableId, validMapString, uuid);
+      this.control.updateRow(tableId, validMapString, rowId);
       verify(wrapperMock, times(1)).writeDataIntoExistingDBTableWithId(
           eq(ControlStub.DATABASE),
           eq(tableId),
           eq(contentValues),
-          eq(uuid));
+          eq(rowId));
     } else {
-      control.addRow(tableId, validMapString);
-      verify(wrapperMock, times(1)).writeDataIntoExistingDBTable(
+      ControlStub.GENERATED_ROW_ID = rowId;
+      String returnedRowId = control.addRow(tableId, validMapString);
+      verify(wrapperMock, times(1)).writeDataIntoExistingDBTableWithId(
           eq(ControlStub.DATABASE),
           eq(tableId),
-          eq(contentValues));
+          eq(contentValues),
+          eq(rowId));
+      assertThat(returnedRowId).isEqualTo(rowId);
     }
   }
 
