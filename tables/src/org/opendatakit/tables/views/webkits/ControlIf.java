@@ -412,9 +412,10 @@ public class ControlIf {
 	 * @param valuesMap a stringified JSON object mapping element key to value.
 	 * The values must be able to be parsed to the appropriate types for each
 	 * row. E.g. an integer column cannot have a value "cat".
-	 * @return
+	 * @return If the add was successful, return the id of the added row. Null
+	 * if the add failed.
 	 */
-	public boolean addRow(String tableId, String stringifiedObject) {
+	public String addRow(String tableId, String stringifiedObject) {
 	  return weakControl.get().addRow(tableId, stringifiedObject);
 	}
 	

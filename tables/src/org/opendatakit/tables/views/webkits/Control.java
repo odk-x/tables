@@ -5,17 +5,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
+import java.util.UUID;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
+import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.common.android.utils.NameUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -479,14 +485,14 @@ public class Control {
         tableId);
     return tp.getLocalizedDisplayName();
   }
-
+  
   public boolean updateRow(
       String tableId,
       String stringifiedJSON,
       String rowId) {
     return helperAddOrUpdateRow(tableId, stringifiedJSON, rowId);
   }
-
+  
   protected ContentValues getContentValuesFromMap(
       TableProperties tableProperties,
       Map<String, String> elementKeyToValue) {
@@ -494,23 +500,52 @@ public class Control {
         tableProperties,
         elementKeyToValue);
   }
-
-  public boolean addRow(String tableId, String stringifiedJSON) {
-    return helperAddOrUpdateRow(tableId, stringifiedJSON, null);
-  }
-
+  
   /**
-   * Add or update a row. If rowId is null, add is called. If it is not, update
+   * Add a row. Returns the id of the added row is successful or null if the
+   * add failed.
+   * @param tableId
+   * @param stringifiedJSON
+   * @return
+   */
+  public String addRow(String tableId, String stringifiedJSON) {
+    String rowId = this.generateRowId();
+    boolean addSuccessful =
+        helperAddOrUpdateRow(tableId, stringifiedJSON, rowId);
+    if (addSuccessful) {
+      return rowId;
+    } else {
+      return null;
+    }
+  }
+  
+  /**
+   * Generate a row id. Eventually this should be moved to a common function
+   * provided by {@link ODKDatabaseUtils} or something similar so that we can
+   * more easily remain consistent.
+   * @return
+   */
+  protected String generateRowId() {
+    String result = "uuid:" + UUID.randomUUID().toString();
+    return result;
+  }
+  
+  /**
+   * Add or update a row. If isUpdate is false, add is called.
    * is called.
    * @param tableId
    * @param stringifiedJSON
-   * @param rowId
+   * @param rowId cannot be null.
    * @return
+   * @throws IllegalArgumentException if rowId is null.
    */
   protected boolean helperAddOrUpdateRow(
       String tableId,
       String stringifiedJSON,
       String rowId) {
+    if (rowId == null) {
+      throw new IllegalArgumentException("row id cannot be null");
+    }
     TableProperties tableProperties =
         this.retrieveTablePropertiesForTable(tableId);
     if (tableProperties == null) {
@@ -534,18 +569,11 @@ public class Control {
      // If we've made it here, all appears to be well.
      SQLiteDatabase writableDatabase = getWritableDatabase();
      ODKDatabaseUtilsWrapper dbUtils = this.getODKDatabaseUtilsWrapper();
-     if (rowId == null) {
-       dbUtils.writeDataIntoExistingDBTable(
-           writableDatabase,
-           tableId,
-           contentValues);
-     } else {
-       dbUtils.writeDataIntoExistingDBTableWithId(
-           writableDatabase,
-           tableId,
-           contentValues,
-           rowId);
-     }
+     dbUtils.writeDataIntoExistingDBTableWithId(
+         writableDatabase,
+         tableId,
+         contentValues,
+         rowId);
      return true;
   }
 

@@ -15,6 +15,7 @@ public class ControlStub extends Control {
   public static TableProperties TABLE_PROPERTIES_FOR_ID = null;
   public static SQLiteDatabase DATABASE = null;
   public static ContentValues CONTENT_VALUES = null;
+  public static String GENERATED_ROW_ID = null;
 
   public ControlStub(Activity activity, String appName) {
     super(activity, appName);
@@ -25,6 +26,7 @@ public class ControlStub extends Control {
     TABLE_PROPERTIES_FOR_ID = null;
     DATABASE = null;
     CONTENT_VALUES = null;
+    GENERATED_ROW_ID = null;
   }
   
   @Override
@@ -47,6 +49,11 @@ public class ControlStub extends Control {
       TableProperties tableProperties,
       Map<String, String> elementKeyToValue) {
     return CONTENT_VALUES;
+  }
+  
+  @Override
+  protected String generateRowId() {
+    return GENERATED_ROW_ID;
   }
   
 
