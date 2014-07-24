@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.KeyValueHelper;
@@ -269,7 +270,7 @@ public class TablePropertiesManager extends PreferenceActivity {
 
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper = tp
-        .getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
+        .getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_TABLE);
 
     // Color Options Preference!
     String colorType = kvsHelper.getString(KEY_COLOR_RULE_TYPE);

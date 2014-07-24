@@ -7,7 +7,7 @@ package org.opendatakit.common.android.data;
  */
 public class LocalKeyValueStoreConstants {
 
-  
+
   /**
    * Constants needed to use the key value store with list views.
    * @author sudar.sam@gmail.com
@@ -26,11 +26,6 @@ public class LocalKeyValueStoreConstants {
      * within this partition and a particular aspect. (Perhaps the name "Doctor"?)
      */
     public static final String PARTITION_VIEWS = PARTITION + ".views";
-    /**
-     * This is the default aspect for the list view. This should be all that is
-     * used until we allow multiple list views for a single file.
-     */
-    public static final String ASPECT_DEFAULT = "default";
     /**
      * This key holds the filename associated with the view.
      */

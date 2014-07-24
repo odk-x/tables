@@ -24,6 +24,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -45,7 +46,6 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * it cannot share the same name as this field),
    * {@link AspectKeyValueStoreHelper} must be used.
    */
-  public static final String DEFAULT_ASPECT = "default";
 
   private static final ObjectMapper mapper;
   static {
@@ -106,7 +106,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public Integer getInteger(String key) {
-    return getInteger(DEFAULT_ASPECT, key);
+    return getInteger(KeyValueStoreConstants.ASPECT_DEFAULT, key);
   }
 
   private Integer getInteger(String aspect, String key) {
@@ -124,7 +124,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public ArrayList<Object> getArray(String key) {
-    return getArray(DEFAULT_ASPECT, key);
+    return getArray(KeyValueStoreConstants.ASPECT_DEFAULT, key);
   }
 
   private ArrayList<Object> getArray(String aspect, String key) {
@@ -155,7 +155,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public String getString(String key) {
-    return getString(DEFAULT_ASPECT, key);
+    return getString(KeyValueStoreConstants.ASPECT_DEFAULT, key);
   }
 
   private String getString(String aspect, String key) {
@@ -173,7 +173,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public String getObject(String key) {
-    return getObject(DEFAULT_ASPECT, key);
+    return getObject(KeyValueStoreConstants.ASPECT_DEFAULT, key);
   }
 
   private String getObject(String aspect, String key) {
@@ -191,7 +191,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public Boolean getBoolean(String key) {
-    return getBoolean(DEFAULT_ASPECT, key);
+    return getBoolean(KeyValueStoreConstants.ASPECT_DEFAULT, key);
   }
 
   private Boolean getBoolean(String aspect, String key) {
@@ -209,7 +209,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public Double getNumber(String key) {
-    return getNumber(DEFAULT_ASPECT, key);
+    return getNumber(KeyValueStoreConstants.ASPECT_DEFAULT, key);
   }
 
   private Double getNumber(String aspect, String key) {
@@ -227,7 +227,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public void setInteger(String key, Integer value) {
-    setIntegerEntry(DEFAULT_ASPECT, key, value);
+    setIntegerEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key, value);
   }
 
   private void setIntegerEntry(String aspect, String key, Integer value) {
@@ -245,7 +245,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public void setNumber(String key, Double value) {
-    setNumberEntry(DEFAULT_ASPECT, key, value);
+    setNumberEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key, value);
   }
 
   private void setNumberEntry(String aspect, String key, Double value) {
@@ -263,7 +263,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public void setObject(String key, String jsonOfObject) {
-    setObjectEntry(DEFAULT_ASPECT, key, jsonOfObject);
+    setObjectEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key, jsonOfObject);
   }
 
   private void setObjectEntry(String aspect, String key, String jsonOfObject) {
@@ -281,7 +281,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public void setBoolean(String key, Boolean value) {
-    setBooleanEntry(DEFAULT_ASPECT, key, value);
+    setBooleanEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key, value);
   }
 
   /**
@@ -306,7 +306,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public void setString(String key, String value) {
-    setStringEntry(DEFAULT_ASPECT, key, value);
+    setStringEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key, value);
   }
 
   /**
@@ -336,7 +336,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param value
    */
   public void setString(SQLiteDatabase db, String key, String value) {
-	  setStringEntry(db, DEFAULT_ASPECT, key, value);
+	  setStringEntry(db, KeyValueStoreConstants.ASPECT_DEFAULT, key, value);
   }
 
   /**
@@ -354,7 +354,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public void setArray(String key, ArrayList<Object> value) {
-    setArrayEntry(DEFAULT_ASPECT, key, value);
+    setArrayEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key, value);
   }
 
   /**
@@ -397,7 +397,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public int removeKey(String key) {
-    return removeEntry(DEFAULT_ASPECT, key);
+    return removeEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key);
   }
 
   /**
@@ -421,7 +421,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   @Override
   public OdkTablesKeyValueStoreEntry getEntry(String key) {
-    return getEntry(DEFAULT_ASPECT, key);
+    return getEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key);
   }
 
   /**

@@ -2,6 +2,7 @@ package org.opendatakit.tables.fragments;
 
 import java.io.File;
 
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
@@ -112,7 +113,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    */
   void setListViewFileName(String relativePath) {
     KeyValueStoreHelper kvsh = getTableProperties().getKeyValueStoreHelper(
-        TableProperties.KVS_PARTITION);
+        KeyValueStoreConstants.PARTITION_TABLE);
     kvsh.setString(TableProperties.KEY_LIST_VIEW_FILE_NAME, relativePath);
   }
 
@@ -122,17 +123,17 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    */
   void setDetailViewFileName(String relativePath) {
     KeyValueStoreHelper kvsh = getTableProperties().getKeyValueStoreHelper(
-        TableProperties.KVS_PARTITION);
+        KeyValueStoreConstants.PARTITION_TABLE);
     kvsh.setString(TableProperties.KEY_DETAIL_VIEW_FILE_NAME, relativePath);
   }
-  
+
   /**
    * Sets the file name for the list view to be displayed in the map.
    * @param relativePath
    */
   void setMapListViewFileName(String relativePath) {
     KeyValueStoreHelper kvsh = getTableProperties().getKeyValueStoreHelper(
-        TableProperties.KVS_PARTITION);
+        KeyValueStoreConstants.PARTITION_TABLE);
     kvsh.setString(TableProperties.KEY_MAP_LIST_VIEW_FILE_NAME, relativePath);
   }
 
@@ -201,7 +202,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         Constants.PreferenceKeys.Table.TABLE_COLOR_RULES);
     tableColorPref.setOnPreferenceClickListener(
         new OnPreferenceClickListener() {
-      
+
       @Override
       public boolean onPreferenceClick(Preference preference) {
         // pop in the list of columns.
@@ -225,8 +226,8 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     TableProperties tableProperties = getTableProperties();
     listPref.setSummary(tableProperties.getListViewFileName());
   }
-  
-  
+
+
   private void initializeMapListFile() {
     FileSelectorPreference mapListPref = (FileSelectorPreference)
         this.findPreference(Constants.PreferenceKeys.Table.MAP_LIST_FILE);
@@ -258,7 +259,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         Constants.PreferenceKeys.Table.STATUS_COLOR_RULES);
     statusColorPref.setOnPreferenceClickListener(
         new OnPreferenceClickListener() {
-      
+
       @Override
       public boolean onPreferenceClick(Preference preference) {
         // pop in the list of columns.
@@ -304,12 +305,12 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
 
     });
   }
-  
+
   private void initializeColumns() {
     Preference columnPref = this.findPreference(
         Constants.PreferenceKeys.Table.COLUMNS);
     columnPref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-      
+
       @Override
       public boolean onPreferenceClick(Preference preference) {
         // pop in the list of columns.

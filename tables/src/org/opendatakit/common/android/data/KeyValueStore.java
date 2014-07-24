@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 
@@ -210,8 +211,8 @@ public class KeyValueStore {
     // we want the first to be the tableId, b/c that is the table id we are
     // querying over in the database.
     desiredKeys[0] = tableId;
-    desiredKeys[1] = TableProperties.KVS_PARTITION;
-    desiredKeys[2] = KeyValueStoreHelper.DEFAULT_ASPECT;
+    desiredKeys[1] = KeyValueStoreConstants.PARTITION_TABLE;
+    desiredKeys[2] = KeyValueStoreConstants.ASPECT_DEFAULT;
     for (int i = 0; i < basicProps.length; i++) {
       desiredKeys[i+3] = basicProps[i];
     }

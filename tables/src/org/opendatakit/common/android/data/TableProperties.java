@@ -38,6 +38,7 @@ import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.sync.aggregate.SyncTag;
+import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.ColorRuleUtil;
@@ -75,22 +76,21 @@ public class TableProperties {
 
   /***********************************
    * The partition and aspect of table properties in the key value store.
+   * KeyValueStoreConstants.PARTITION_TABLE
    ***********************************/
-  public static final String KVS_PARTITION = KeyValueStoreConstants.PARTITION_TABLE;
 
   /***********************************
    * The names of keys that are defaulted to exist in the key value store.
+   *
+   * KeyValueStoreConstants.TABLE_DISPLAY_NAME
+   * KeyValueStoreConstants.TABLE_COL_ORDER
+   * KeyValueStoreConstants.TABLE_GROUP_BY_COLS
+   * KeyValueStoreConstants.TABLE_SORT_COL
+   * KeyValueStoreConstants.TABLE_SORT_ORDER
+   * KeyValueStoreConstants.TABLE_INDEX_COL
    ***********************************/
-  public static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
-  private static final String KEY_COLUMN_ORDER = KeyValueStoreConstants.TABLE_COL_ORDER;
-
-  private static final String KEY_GROUP_BY_COLUMNS = KeyValueStoreConstants.TABLE_GROUP_BY_COLS;
-
-  private static final String KEY_SORT_COLUMN = KeyValueStoreConstants.TABLE_SORT_COL;
-  private static final String KEY_SORT_ORDER = KeyValueStoreConstants.TABLE_SORT_ORDER;
 
   // INDEX_COL is held fixed during left/right pan
-  private static final String KEY_INDEX_COLUMN = KeyValueStoreConstants.TABLE_INDEX_COL;
 
   // this is not known by the server...
   private static final String KEY_DEFAULT_VIEW_TYPE = "defaultViewType";
@@ -121,9 +121,11 @@ public class TableProperties {
    * These are the keys that exist in the key value store after the creation of
    * a table. In other words they should always exist in the key value store.
    */
-  private static final String[] INIT_KEYS = { KEY_DISPLAY_NAME, KEY_COLUMN_ORDER,
-      KEY_GROUP_BY_COLUMNS, KEY_SORT_COLUMN, KEY_SORT_ORDER,
-      KEY_DEFAULT_VIEW_TYPE, KEY_INDEX_COLUMN };
+  private static final String[] INIT_KEYS = {
+    KeyValueStoreConstants.TABLE_DISPLAY_NAME, KeyValueStoreConstants.TABLE_COL_ORDER,
+    KeyValueStoreConstants.TABLE_GROUP_BY_COLS, KeyValueStoreConstants.TABLE_SORT_COL,
+    KeyValueStoreConstants.TABLE_SORT_ORDER,
+      KEY_DEFAULT_VIEW_TYPE, KeyValueStoreConstants.TABLE_INDEX_COL };
 
   // these are now safe for multi-appName hosting...
   // we probably want to maintain only 'N' table properties in memory (in a fixed-length array).
@@ -347,7 +349,7 @@ public class TableProperties {
     this.lastSyncTime = lastSyncTime;
     this.defaultViewType = defaultViewType;
     this.transactioning = transactioning;
-    this.tableKVSH = this.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
+    this.tableKVSH = this.getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_TABLE);
 
     // This should be OK even when we are creating a new database
     // because there should be no column entries defined yet.
@@ -508,23 +510,23 @@ public class TableProperties {
       if (mapProps.get(TableDefinitionsColumns.TABLE_ID) == null) {
         mapProps.put(TableDefinitionsColumns.TABLE_ID, tableId);
       }
-      if (mapProps.get(KEY_DISPLAY_NAME) == null) {
-        mapProps.put(KEY_DISPLAY_NAME, tableId);
+      if (mapProps.get(KeyValueStoreConstants.TABLE_DISPLAY_NAME) == null) {
+        mapProps.put(KeyValueStoreConstants.TABLE_DISPLAY_NAME, tableId);
       }
-      if (mapProps.get(KEY_COLUMN_ORDER) == null) {
-        mapProps.put(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
+      if (mapProps.get(KeyValueStoreConstants.TABLE_COL_ORDER) == null) {
+        mapProps.put(KeyValueStoreConstants.TABLE_COL_ORDER, DEFAULT_KEY_COLUMN_ORDER);
       }
-      if (mapProps.get(KEY_GROUP_BY_COLUMNS) == null) {
-        mapProps.put(KEY_GROUP_BY_COLUMNS, DEFAULT_KEY_GROUP_BY_COLUMNS);
+      if (mapProps.get(KeyValueStoreConstants.TABLE_GROUP_BY_COLS) == null) {
+        mapProps.put(KeyValueStoreConstants.TABLE_GROUP_BY_COLS, DEFAULT_KEY_GROUP_BY_COLUMNS);
       }
-      if (mapProps.get(KEY_SORT_COLUMN) == null) {
-        mapProps.put(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
+      if (mapProps.get(KeyValueStoreConstants.TABLE_SORT_COL) == null) {
+        mapProps.put(KeyValueStoreConstants.TABLE_SORT_COL, DEFAULT_KEY_SORT_COLUMN);
       }
-      if (mapProps.get(KEY_SORT_ORDER) == null) {
-        mapProps.put(KEY_SORT_ORDER, DEFAULT_KEY_SORT_ORDER);
+      if (mapProps.get(KeyValueStoreConstants.TABLE_SORT_ORDER) == null) {
+        mapProps.put(KeyValueStoreConstants.TABLE_SORT_ORDER, DEFAULT_KEY_SORT_ORDER);
       }
-      if (mapProps.get(KEY_INDEX_COLUMN) == null) {
-        mapProps.put(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
+      if (mapProps.get(KeyValueStoreConstants.TABLE_INDEX_COL) == null) {
+        mapProps.put(KeyValueStoreConstants.TABLE_INDEX_COL, DEFAULT_KEY_INDEX_COLUMN);
       }
       if (mapProps.get(KEY_DEFAULT_VIEW_TYPE) == null) {
         mapProps.put(KEY_DEFAULT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
@@ -550,7 +552,7 @@ public class TableProperties {
       int transactioningInt = Integer.parseInt(transactioningStr);
       transactioning = DataHelper.intToBool(transactioningInt);
     }
-    String columnOrderValue = props.get(KEY_COLUMN_ORDER);
+    String columnOrderValue = props.get(KeyValueStoreConstants.TABLE_COL_ORDER);
     String defaultViewTypeStr = props.get(KEY_DEFAULT_VIEW_TYPE);
     TableViewType defaultViewType;
     if (defaultViewTypeStr == null) {
@@ -587,7 +589,7 @@ public class TableProperties {
       }
     }
 
-    String groupByColumnsJsonString = props.get(KEY_GROUP_BY_COLUMNS);
+    String groupByColumnsJsonString = props.get(KeyValueStoreConstants.TABLE_GROUP_BY_COLS);
     ArrayList<String> groupByCols = new ArrayList<String>();
     if (groupByColumnsJsonString != null && groupByColumnsJsonString.length() != 0) {
       try {
@@ -605,9 +607,12 @@ public class TableProperties {
     }
 
     return new TableProperties(context, appName, db, props.get(TableDefinitionsColumns.TABLE_ID),
-        props.get(TableDefinitionsColumns.DB_TABLE_NAME), props.get(KEY_DISPLAY_NAME), columnOrder,
-        groupByCols, props.get(KEY_SORT_COLUMN), props.get(KEY_SORT_ORDER),
-        props.get(KEY_INDEX_COLUMN), SyncTag.valueOf(props.get(TableDefinitionsColumns.SYNC_TAG)),
+        props.get(TableDefinitionsColumns.DB_TABLE_NAME),
+        props.get(KeyValueStoreConstants.TABLE_DISPLAY_NAME), columnOrder,
+        groupByCols, props.get(KeyValueStoreConstants.TABLE_SORT_COL),
+        props.get(KeyValueStoreConstants.TABLE_SORT_ORDER),
+        props.get(KeyValueStoreConstants.TABLE_INDEX_COL),
+        SyncTag.valueOf(props.get(TableDefinitionsColumns.SYNC_TAG)),
         props.get(TableDefinitionsColumns.LAST_SYNC_TIME), defaultViewType,
         transactioning);
   }
@@ -648,7 +653,7 @@ public class TableProperties {
           // wrap it so that it is a JSON string
           displayName = ODKFileUtils.mapper.writeValueAsString(displayName);
         }
-        propPairs.put(KEY_DISPLAY_NAME, displayName);
+        propPairs.put(KeyValueStoreConstants.TABLE_DISPLAY_NAME, displayName);
         tp = constructPropertiesFromMap(context, appName, db, propPairs);
         if (tp == null) {
           throw new IllegalStateException("Unexpectedly missing " + tableId);
@@ -794,41 +799,11 @@ public class TableProperties {
   }
 
   public String getLocalizedDisplayName() {
-    Locale locale = Locale.getDefault();
-    String full_locale = locale.toString();
-    int underscore = full_locale.indexOf('_');
-    String lang_only_locale = (underscore == -1) ? full_locale : full_locale.substring(0,
-        underscore);
-
-    if (displayName.startsWith("\"") && displayName.endsWith("\"")) {
-      return displayName.substring(1, displayName.length() - 1);
-    } else if (displayName.startsWith("{") && displayName.endsWith("}")) {
-      try {
-        Map<String, Object> localeMap = ODKFileUtils.mapper.readValue(displayName, Map.class);
-        String candidate = (String) localeMap.get(full_locale);
-        if (candidate != null)
-          return candidate;
-        candidate = (String) localeMap.get(lang_only_locale);
-        if (candidate != null)
-          return candidate;
-        candidate = (String) localeMap.get("default");
-        if (candidate != null)
-          return candidate;
-        return getTableId();
-      } catch (JsonParseException e) {
-        e.printStackTrace();
-        throw new IllegalStateException("bad displayName for tableId: " + getTableId());
-      } catch (JsonMappingException e) {
-        e.printStackTrace();
-        throw new IllegalStateException("bad displayName for tableId: " + getTableId());
-      } catch (IOException e) {
-        e.printStackTrace();
-        throw new IllegalStateException("bad displayName for tableId: " + getTableId());
-      }
+    String localized = ODKDataUtils.getLocalizedDisplayName(getDisplayName());
+    if ( localized == null ) {
+      return getTableId();
     }
-    return displayName;
-    // throw new IllegalStateException("bad displayName for tableId: " +
-    // getTableId());
+    return localized;
   }
 
   /**
@@ -838,7 +813,7 @@ public class TableProperties {
    *          the new display name
    */
   public void setDisplayName(SQLiteDatabase db, String displayName) {
-    tableKVSH.setString(db, KEY_DISPLAY_NAME, displayName);
+    tableKVSH.setString(db, KeyValueStoreConstants.TABLE_DISPLAY_NAME, displayName);
     this.displayName = displayName;
   }
 
@@ -1358,7 +1333,7 @@ public class TableProperties {
       throws JsonGenerationException, JsonMappingException, IOException {
     String colOrderList = null;
     colOrderList = ODKFileUtils.mapper.writeValueAsString(columnOrder);
-    tableKVSH.setString(db, KEY_COLUMN_ORDER, colOrderList);
+    tableKVSH.setString(db, KeyValueStoreConstants.TABLE_COL_ORDER, colOrderList);
     this.columnOrder = columnOrder;
   }
 
@@ -1397,7 +1372,7 @@ public class TableProperties {
       groupByCols = new ArrayList<String>();
     }
     groupByJsonStr = ODKFileUtils.mapper.writeValueAsString(groupByCols);
-    tableKVSH.setString(db, KEY_GROUP_BY_COLUMNS, groupByJsonStr);
+    tableKVSH.setString(db, KeyValueStoreConstants.TABLE_GROUP_BY_COLS, groupByJsonStr);
     this.groupByColumns = groupByCols;
   }
 
@@ -1419,7 +1394,7 @@ public class TableProperties {
     if ((sortColumn != null) && (sortColumn.length() == 0)) {
       sortColumn = null;
     }
-    tableKVSH.setString(db, KEY_SORT_COLUMN, sortColumn);
+    tableKVSH.setString(db, KeyValueStoreConstants.TABLE_SORT_COL, sortColumn);
     this.sortColumn = sortColumn;
   }
 
@@ -1432,7 +1407,7 @@ public class TableProperties {
       sortOrder = null;
     }
 
-    tableKVSH.setString(db, KEY_SORT_ORDER, sortOrder);
+    tableKVSH.setString(db, KeyValueStoreConstants.TABLE_SORT_ORDER, sortOrder);
     this.sortOrder = sortOrder;
   }
 
@@ -1467,7 +1442,7 @@ public class TableProperties {
     if ((indexColumnElementKey == null)) {
       indexColumnElementKey = DEFAULT_KEY_INDEX_COLUMN;
     }
-    tableKVSH.setString(db, KEY_INDEX_COLUMN, indexColumnElementKey);
+    tableKVSH.setString(db, KeyValueStoreConstants.TABLE_INDEX_COL, indexColumnElementKey);
     this.indexColumn = indexColumnElementKey;
   }
 
@@ -1610,7 +1585,7 @@ public class TableProperties {
    */
   public String getListViewFileName() {
     KeyValueStoreHelper kvsh =
-        this.getKeyValueStoreHelper(KVS_PARTITION);
+        this.getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_TABLE);
     String listFileName = kvsh.getString(KEY_LIST_VIEW_FILE_NAME);
     return listFileName;
   }
@@ -1622,7 +1597,7 @@ public class TableProperties {
    */
   public String getMapListViewFileName() {
     KeyValueStoreHelper kvsh =
-        this.getKeyValueStoreHelper(KVS_PARTITION);
+        this.getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_TABLE);
     String fileName = kvsh.getString(KEY_MAP_LIST_VIEW_FILE_NAME);
     return fileName;
   }
@@ -1633,7 +1608,7 @@ public class TableProperties {
   */
   public String getDetailViewFileName() {
     KeyValueStoreHelper kvsh =
-        this.getKeyValueStoreHelper(KVS_PARTITION);
+        this.getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_TABLE);
    String detailFileName = kvsh.getString(KEY_DETAIL_VIEW_FILE_NAME);
     return detailFileName;
    }

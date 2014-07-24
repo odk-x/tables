@@ -31,6 +31,7 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
@@ -38,7 +39,6 @@ import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.KeyValueStoreEntryType;
-import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
@@ -496,9 +496,9 @@ public class CsvUtil {
         } else {
           // not column-specific
           // see if we can find the displayName
-          if ( TableProperties.KVS_PARTITION.equals(kvsEntry.partition) &&
-               KeyValueStoreHelper.DEFAULT_ASPECT.equals(kvsEntry.aspect) &&
-               TableProperties.KEY_DISPLAY_NAME.equals(kvsEntry.key) ) {
+          if ( KeyValueStoreConstants.PARTITION_TABLE.equals(kvsEntry.partition) &&
+               KeyValueStoreConstants.ASPECT_DEFAULT.equals(kvsEntry.aspect) &&
+               KeyValueStoreConstants.TABLE_DISPLAY_NAME.equals(kvsEntry.key) ) {
             displayName = kvsEntry.value;
           }
           // still put it in the kvsEntries -- displayName is not stored???
