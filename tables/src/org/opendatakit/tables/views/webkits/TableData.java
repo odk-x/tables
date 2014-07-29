@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.common.android.data.ColorGuide;
@@ -21,6 +19,9 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 import android.app.Activity;
 import android.util.Log;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 /**
  * The model for the object that is handed to the javascript.

@@ -262,7 +262,6 @@ public class ColumnDefinitions {
    * @param elementType type of the column. null values will be converted to
    * DEFAULT_DB_ELEMENT_TYPE
    * @param listChild
-   * @param isUnitOfRetention
    * @return a map of column names to fields for the new table
    */
   public static void assertColumnDefinition(SQLiteDatabase db,

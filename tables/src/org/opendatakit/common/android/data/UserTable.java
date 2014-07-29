@@ -24,8 +24,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -38,6 +36,9 @@ import org.opendatakit.common.android.utils.DataUtil;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 /**
  * This class represents a table. This can be conceptualized as a list of rows.

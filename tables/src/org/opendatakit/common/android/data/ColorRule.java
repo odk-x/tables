@@ -17,10 +17,11 @@ package org.opendatakit.common.android.data;
 
 import java.util.UUID;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.opendatakit.common.android.data.UserTable.Row;
 
 import android.util.Log;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * This is a single rule specifying a color for a given datum.
