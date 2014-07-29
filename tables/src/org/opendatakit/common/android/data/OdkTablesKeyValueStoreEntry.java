@@ -16,9 +16,6 @@
 
 package org.opendatakit.common.android.data;
 
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.Root;
-
 /**
  * This is a simple struct-like object that will hold the rows from the key
  * value store. It is meant to be parsed into JSON objects to passed to the
@@ -31,13 +28,11 @@ import org.simpleframework.xml.Root;
  * @author sudar.sam@gmail.com
  *
  */
-@Root(strict = false)
 public class OdkTablesKeyValueStoreEntry {
 
   /**
    * The table id of the table to which this entry belongs.
    */
-  @Element(required = true)
   public String tableId;
 
   /**
@@ -48,7 +43,6 @@ public class OdkTablesKeyValueStoreEntry {
    * convention) a partition name ListView. TableProperties and ColumnProperties
    * are the exception, belonging simply to the partitions "Table" and "Column".
    */
-  @Element(required = false)
   public String partition;
 
   /**
@@ -58,7 +52,6 @@ public class OdkTablesKeyValueStoreEntry {
    * its unique column identifier for the table). A particular saved graph view
    * might have the display name of that graph.
    */
-  @Element(required = false)
   public String aspect;
 
   /**
@@ -66,7 +59,6 @@ public class OdkTablesKeyValueStoreEntry {
    * with this entry. Eg a key of "list" might mean that this entry is important
    * to the list view of the table.
    */
-  @Element(required = false)
   public String key;
 
   /**
@@ -76,14 +68,12 @@ public class OdkTablesKeyValueStoreEntry {
    * FileManifestEntry object with information relating to the version of the
    * file and how to get it.
    */
-  @Element(required = false)
   public String type;
 
   /**
    * The actual value of this entry. If the type is String, this is a string. If
    * it is a File, it is a FileManifestEntry JSON object.
    */
-  @Element(required = false)
   public String value;
 
   @Override
