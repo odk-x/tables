@@ -436,11 +436,14 @@ public class UserTable {
         DateTime d = du.parseDateTimeFromDb(raw);
         return dateTimeFormatter.print(d);
       } else if ( type == ColumnType.TIME ) {
-        if (raw.length() == 0 ) {
+        // Survey time cannot be parsed to dateTime
+        // just return raw for now
+        /*if (raw.length() == 0 ) {
           return raw;
         }
         DateTime d = du.parseDateTimeFromDb(raw);
-        return timeFormatter.print(d);
+        return timeFormatter.print(d);*/
+        return raw;
       } else if ( type == ColumnType.NUMBER &&
                   raw.indexOf('.') != -1 ) {
         // trim trailing zeros on numbers (leaving the last one)
