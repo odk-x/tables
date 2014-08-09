@@ -29,5 +29,17 @@ public class ODKDatabaseUtilsWrapper {
         contentValues,
         uuid);
   }
+  
+  public void updateDataInExistingDBTableWithId(
+      SQLiteDatabase database,
+      String tableName,
+      ContentValues contentValues,
+      String uuid) {
+    ODKDatabaseUtils.updateDataInExistingDBTableWithId(
+        database, 
+        tableName, 
+        contentValues, 
+        uuid);
+  }
 
 }
