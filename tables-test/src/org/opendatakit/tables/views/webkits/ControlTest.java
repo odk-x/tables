@@ -216,7 +216,7 @@ public class ControlTest {
     String rowId = "aRowId";
     if (isUpdate) {
       this.control.updateRow(tableId, validMapString, rowId);
-      verify(wrapperMock, times(1)).writeDataIntoExistingDBTableWithId(
+      verify(wrapperMock, times(1)).updateDataInExistingDBTableWithId(
           eq(ControlStub.DATABASE),
           eq(tableId),
           eq(contentValues),
