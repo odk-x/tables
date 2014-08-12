@@ -93,7 +93,7 @@ public class Tables extends Application {
       pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
       int versionNumber = pinfo.versionCode;
       String versionName = pinfo.versionName;
-      versionDetail = " " + versionName + "(" + versionNumber + ")";
+      versionDetail = " " + versionName + " (rev " + versionNumber + ")";
     } catch (NameNotFoundException e) {
       e.printStackTrace();
     }

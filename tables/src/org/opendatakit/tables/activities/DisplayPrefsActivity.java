@@ -7,11 +7,16 @@ import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.fragments.AboutMenuFragment;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.OutputUtil;
 
 import android.app.AlertDialog;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
@@ -21,7 +26,10 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 
 public class DisplayPrefsActivity extends PreferenceActivity {
+
   public static final String INTENT_KEY_TABLE_ID = "tableId";
+  private static final int ABOUT_ACTIVITY_CODE = 1;
+  
   private String appName;
   private Preferences prefs;
   private TableProperties tp;
@@ -51,6 +59,13 @@ public class DisplayPrefsActivity extends PreferenceActivity {
       kvsh = tp.getKeyValueStoreHelper("SpreadsheetView");
       customPreferences();
     }
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    // don't care about outcome:
+    // ABOUT_ACTIVITY_CODE
   }
 
   // set default font size for all tables
@@ -136,6 +151,25 @@ public class DisplayPrefsActivity extends PreferenceActivity {
     });
     developerCategory.addPreference(writeDebugObjectsPref);
 
+    // And the about screen
+    PreferenceCategory aboutCategory = new PreferenceCategory(this);
+    root.addPreference(aboutCategory);
+    aboutCategory.setTitle(R.string.about);
+    
+    Preference aboutPref = new Preference(this);
+    aboutPref.setTitle(R.string.about);
+    aboutPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+      
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        Intent i = new Intent(DisplayPrefsActivity.this, AboutWrapperActivity.class);
+        i.putExtra(Constants.IntentKeys.APP_NAME, appName);
+        startActivityForResult(i, ABOUT_ACTIVITY_CODE);
+        return true;
+      }
+    });
+    aboutCategory.addPreference(aboutPref);
+    
     setPreferenceScreen(root);
   }
 

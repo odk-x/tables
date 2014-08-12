@@ -97,6 +97,7 @@
         <activity android:name=".activities.ImportExportActivity"/>
         <activity android:name=".activities.ImportCSVActivity"/>
         <activity android:name=".activities.ExportCSVActivity"/>
+        <activity android:name=".activities.AboutWrapperActivity"/>
         <activity
             android:name=".activities.AndroidShortcuts"
             android:label="@string/shortcut_name"
