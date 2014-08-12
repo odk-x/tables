@@ -486,7 +486,7 @@ public class Control {
       String tableId,
       String stringifiedJSON,
       String rowId) {
-    return helperAddOrUpdateRow(tableId, stringifiedJSON, rowId);
+    return helperAddOrUpdateRow(tableId, stringifiedJSON, rowId, true);
   }
   
   protected ContentValues getContentValuesFromMap(
@@ -507,7 +507,7 @@ public class Control {
   public String addRow(String tableId, String stringifiedJSON) {
     String rowId = this.generateRowId();
     boolean addSuccessful =
-        helperAddOrUpdateRow(tableId, stringifiedJSON, rowId);
+        helperAddOrUpdateRow(tableId, stringifiedJSON, rowId, false);
     if (addSuccessful) {
       return rowId;
     } else {
@@ -538,7 +538,8 @@ public class Control {
   protected boolean helperAddOrUpdateRow(
       String tableId,
       String stringifiedJSON,
-      String rowId) {
+      String rowId,
+      boolean isUpdate) {
     if (rowId == null) {
       throw new IllegalArgumentException("row id cannot be null");
     }
@@ -565,11 +566,20 @@ public class Control {
      // If we've made it here, all appears to be well.
      SQLiteDatabase writableDatabase = getWritableDatabase();
      ODKDatabaseUtilsWrapper dbUtils = this.getODKDatabaseUtilsWrapper();
-     dbUtils.writeDataIntoExistingDBTableWithId(
-         writableDatabase,
-         tableId,
-         contentValues,
-         rowId);
+     if (isUpdate) {
+       dbUtils.updateDataInExistingDBTableWithId(
+           writableDatabase,
+           tableId,
+           contentValues,
+           rowId);
+       
+     } else {
+       dbUtils.writeDataIntoExistingDBTableWithId(
+           writableDatabase,
+           tableId,
+           contentValues,
+           rowId);
+     }
      return true;
   }
 
