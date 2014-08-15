@@ -1,10 +1,7 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.fragments.AboutMenuFragment;
 
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.os.Bundle;
 
 public class AboutWrapperActivity extends AbsBaseActivity {
