@@ -8,15 +8,19 @@ import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * The base Activity for all ODK Tables activities. Performs basic
@@ -168,28 +172,44 @@ public abstract class AbsBaseActivity extends Activity {
       String tableId = iterator.next();
       mCheckpointTables.remove(tableId);
 
-      Intent i = new Intent(this,
-          CheckpointResolutionListActivity.class);
+      Intent i;
+      i = new Intent();
+      i.setComponent(new ComponentName(Constants.ExternalIntentStrings.SYNC_PACKAGE_NAME,
+              Constants.ExternalIntentStrings.SYNC_CHECKPOINT_ACTIVITY_COMPONENT_NAME));
+      i.setAction(Intent.ACTION_EDIT);
       i.putExtra(Constants.IntentKeys.APP_NAME,
           getAppName());
       i.putExtra(
           Constants.IntentKeys.TABLE_ID,
           tableId);
-      this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
+      try {
+        this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
+      } catch ( ActivityNotFoundException e ) {
+        Toast.makeText(this, getString(R.string.activity_not_found, 
+            Constants.ExternalIntentStrings.SYNC_CHECKPOINT_ACTIVITY_COMPONENT_NAME), Toast.LENGTH_LONG).show();
+      }
     }
     if ( (mConflictTables != null) && !mConflictTables.isEmpty() ) {
       Iterator<String> iterator = mConflictTables.keySet().iterator();
       String tableId = iterator.next();
       mConflictTables.remove(tableId);
 
-      Intent i = new Intent(this,
-          CheckpointResolutionListActivity.class);
+      Intent i;
+      i = new Intent();
+      i.setComponent(new ComponentName(Constants.ExternalIntentStrings.SYNC_PACKAGE_NAME,
+          Constants.ExternalIntentStrings.SYNC_CONFLICT_ACTIVITY_COMPONENT_NAME));
+      i.setAction(Intent.ACTION_EDIT);
       i.putExtra(Constants.IntentKeys.APP_NAME,
           getAppName());
       i.putExtra(
           Constants.IntentKeys.TABLE_ID,
           tableId);
-      this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
+      try {
+        this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
+      } catch ( ActivityNotFoundException e ) {
+        Toast.makeText(this, getString(R.string.activity_not_found, 
+            Constants.ExternalIntentStrings.SYNC_CONFLICT_ACTIVITY_COMPONENT_NAME), Toast.LENGTH_LONG).show();
+      }
     }
 
   }

@@ -90,10 +90,6 @@
         <activity android:name=".activities.DisplayPrefsActivity"/>
         <activity android:name=".activities.PropertyManager"/>
         <activity android:name=".activities.TablePropertiesManager"/>
-		<activity android:name=".activities.CheckpointResolutionListActivity" />
-		<activity android:name=".activities.CheckpointResolutionRowActivity" />
-        <activity android:name=".activities.ConflictResolutionListActivity" />
-		<activity android:name=".activities.ConflictResolutionRowActivity" />
         <activity android:name=".activities.ImportExportActivity"/>
         <activity android:name=".activities.ImportCSVActivity"/>
         <activity android:name=".activities.ExportCSVActivity"/>

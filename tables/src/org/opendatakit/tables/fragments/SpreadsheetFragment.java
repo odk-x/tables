@@ -8,17 +8,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.ConflictResolutionRowActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.ActivityUtil;
@@ -76,7 +73,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   // This should allow for the opening of a joined table.
   private static final int MENU_ITEM_ID_OPEN_JOIN_TABLE = 10;
   private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES = 11;
-  private static final int MENU_ITEM_ID_RESOLVE_ROW_CONFLICT = 12;
 
   private SpreadsheetUserTable spreadsheetTable;
 
@@ -302,16 +298,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       cell = spreadsheetTable.getSpreadsheetCell(this.getActivity(), this.mLastDataCellMenued);
       openCellEditDialog(cell);
       return true;
-    case MENU_ITEM_ID_RESOLVE_ROW_CONFLICT:
-      cell = spreadsheetTable.getSpreadsheetCell(this.getActivity(), this.mLastDataCellMenued);
-      // We'll just launch the resolve activity.
-      Intent i = new Intent(this.getActivity(), ConflictResolutionRowActivity.class);
-      i.putExtra(Constants.IntentKeys.APP_NAME, spreadsheetTable.getAppName());
-      i.putExtra(Constants.IntentKeys.TABLE_ID, spreadsheetTable.getTableId());
-      String conflictRowId = cell.row.getRowId();
-      i.putExtra(ConflictResolutionRowActivity.INTENT_KEY_ROW_ID, conflictRowId);
-      this.getActivity().startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
-      return true;
     case MENU_ITEM_ID_DELETE_ROW:
       cell = spreadsheetTable.getSpreadsheetCell(this.getActivity(), this.mLastDataCellMenued);
       AlertDialog confirmDeleteAlert;
@@ -470,15 +456,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     mi.setIcon(R.drawable.ic_action_discard);
     mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE, getString(R.string.edit_row));
     mi.setIcon(R.drawable.ic_action_edit);
-    // Now we need to check to see if we are a row in conflict, in which
-    // case we want to allow resolution of that row.
-    String syncStateName = row.getRawDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
-    if (syncStateName != null && syncStateName.length() != 0
-        && SyncState.valueOf(syncStateName) == SyncState.conflicting) {
-      // Then add an option to resolve.
-      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_RESOLVE_ROW_CONFLICT, ContextMenu.NONE, getString(R.string.resolve_conflict));
-      mi.setIcon(R.drawable.sync_icon);
-    }
 
     // check a join association with this column; add a join... option if
     // it is applicable.

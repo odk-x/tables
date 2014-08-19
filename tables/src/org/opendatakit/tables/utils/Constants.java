@@ -44,7 +44,14 @@ public class Constants {
     public static final String TEXT_HTML = "text/html";
   }
 
-
+  public static class ExternalIntentStrings {
+    /** Survey's package name as declared in the manifest. */
+    public static final String SYNC_PACKAGE_NAME = "org.opendatakit.sync";
+    /** The full path to Sync's checkpoint list activity. */
+    public static final String SYNC_CHECKPOINT_ACTIVITY_COMPONENT_NAME = "org.opendatakit.conflict.activities.CheckpointResolutionListActivity";
+    /** The full path to Sync's conflict list activity. */
+    public static final String SYNC_CONFLICT_ACTIVITY_COMPONENT_NAME = "org.opendatakit.conflict.activities.ConflictResolutionListActivity";
+  }
 
   /**
    * Intent keys to be used to communicate between activities.
@@ -59,7 +66,9 @@ public class Constants {
     /** tables that have checkpoint rows */
     public static final String CHECKPOINT_TABLES = "checkpointTables";
     
+    /** for conflict resolution screens */
     public static final String TABLE_ID = "tableId";
+    /** common for all activities */
     public static final String APP_NAME = "appName";
     /**
      * Tells {@link TableDisplayActivity} what time of view it should be
