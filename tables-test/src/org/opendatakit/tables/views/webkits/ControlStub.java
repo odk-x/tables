@@ -3,9 +3,9 @@ package org.opendatakit.tables.views.webkits;
 import java.util.Map;
 
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.ODKDatabaseUtilsWrapper;
 
-import android.app.Activity;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -17,7 +17,7 @@ public class ControlStub extends Control {
   public static ContentValues CONTENT_VALUES = null;
   public static String GENERATED_ROW_ID = null;
 
-  public ControlStub(Activity activity, String appName) {
+  public ControlStub(AbsBaseActivity activity, String appName) {
     super(activity, appName);
   }
   

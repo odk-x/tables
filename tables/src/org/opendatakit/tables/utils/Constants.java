@@ -52,6 +52,7 @@ public class Constants {
    *
    */
   public static class IntentKeys {
+    public static final String ACTION_TABLE_ID = "actionTableId";
     public static final String TABLE_ID = "tableId";
     public static final String APP_NAME = "appName";
     /**

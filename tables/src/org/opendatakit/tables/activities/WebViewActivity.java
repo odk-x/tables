@@ -1,10 +1,13 @@
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.WebFragment;
+import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -78,6 +81,71 @@ public class WebViewActivity extends AbsBaseActivity {
       return true;
     default:
       return super.onOptionsItemSelected(item);
+    }
+  }
+
+  @Override
+  protected void onActivityResult(
+      int requestCode,
+      int resultCode,
+      Intent data) {
+    String tableId = this.getActionTableId();
+    if ( tableId != null ) {
+      
+      TableProperties restoreTableProperties = 
+          TableProperties.getTablePropertiesForTable(
+              this,
+              this.getAppName(),
+              tableId);
+
+      switch (requestCode) {
+      case Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
+      case Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER:
+        // don't let the user cancel out of these...
+        break;
+      // For now, we will just refresh the table if something could have changed.
+      case Constants.RequestCodes.ADD_ROW_COLLECT:
+        if (resultCode == Activity.RESULT_OK) {
+          Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
+          CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), restoreTableProperties, resultCode, data);
+        } else {
+          Log.d(
+              TAG,
+              "[onActivityResult] result canceled, not refreshing backing " +
+                "table");
+        }
+        break;
+      case Constants.RequestCodes.EDIT_ROW_COLLECT:
+        if (resultCode == Activity.RESULT_OK) {
+          Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
+          CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), restoreTableProperties, resultCode, data);
+        } else {
+          Log.d(
+              TAG,
+              "[onActivityResult] result canceled, not refreshing backing " +
+                "table");
+        }
+        break;
+      case Constants.RequestCodes.ADD_ROW_SURVEY:
+      case Constants.RequestCodes.EDIT_ROW_SURVEY:
+        if (resultCode == Activity.RESULT_OK) {
+          Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
+        } else {
+          Log.d(
+              TAG,
+              "[onActivityResult] result canceled, refreshing backing table");
+        }
+        break;
+      }
+      // NOTE: if there is a conflict when returning from ODK Collect, 
+      // we may get into a bad state if the conflict or checkpoint
+      // coincides with the row that ODK Collect is modifying.  This is 
+      // potentially unrecoverable!
+      if ( maybeLaunchCheckpointResolver(restoreTableProperties) ||
+          maybeLaunchConflictResolver(restoreTableProperties) ) {
+       return;
+      }
+      super.onActivityResult(requestCode, resultCode, data);
     }
   }
 

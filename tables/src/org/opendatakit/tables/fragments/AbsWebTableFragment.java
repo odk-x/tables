@@ -2,6 +2,7 @@ package org.opendatakit.tables.fragments;
 
 import java.lang.ref.WeakReference;
 
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
@@ -85,7 +86,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    */
   @Override
   public Control createControlObject() {
-    Control result = new Control(getActivity(), getAppName());
+    Control result = new Control((AbsBaseActivity) getActivity(), getAppName());
     return result;
   }
 

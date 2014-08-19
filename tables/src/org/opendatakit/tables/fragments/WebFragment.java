@@ -101,7 +101,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
    */
   @Override
   public Control createControlObject() {
-    Control result = new Control(this.getActivity(), this.getAppName());
+    Control result = new Control((AbsBaseActivity) this.getActivity(), this.getAppName());
     return result;
   }
   

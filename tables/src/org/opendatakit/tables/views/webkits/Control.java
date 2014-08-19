@@ -34,7 +34,6 @@ import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.WebViewUtil;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
@@ -52,7 +51,7 @@ public class Control {
 
   private static final String TAG = Control.class.getSimpleName();
 
-  protected Activity mActivity;
+  protected AbsBaseActivity mActivity;
   protected String mAppName;
 
   public Object getJavascriptInterfaceWithWeakReference() {
@@ -70,7 +69,7 @@ public class Control {
    * @param activity
    *          the activity that will be holding the view
    */
-  public Control(Activity activity, String appName) {
+  public Control(AbsBaseActivity activity, String appName) {
     this.mActivity = activity;
     this.mAppName = appName;
   }

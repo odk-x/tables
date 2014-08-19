@@ -113,27 +113,8 @@ public class TableDisplayActivity extends AbsTableActivity
     super.onResume();
     Log.i(TAG, "[onResume]");
     TableProperties tableProperties = this.getTableProperties();
-    if ( tableProperties.hasCheckpoints() ) {
-      Intent i = new Intent(this,
-          CheckpointResolutionListActivity.class);
-      i.putExtra(Constants.IntentKeys.APP_NAME,
-          getAppName());
-      i.putExtra(
-          Constants.IntentKeys.TABLE_ID,
-          tableProperties.getTableId());
-      this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
-
-    } else if ( tableProperties.hasConflicts() ) {
-      Intent i = new Intent(this,
-          ConflictResolutionListActivity.class);
-      i.putExtra(Constants.IntentKeys.APP_NAME,
-          getAppName());
-      i.putExtra(
-          Constants.IntentKeys.TABLE_ID,
-          tableProperties.getTableId());
-      this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
-
-    } else {
+    if ( !maybeLaunchCheckpointResolver(tableProperties) && 
+         !maybeLaunchConflictResolver(tableProperties) ) {
       this.initializeDisplayFragment();
     }
   }
@@ -295,9 +276,16 @@ public class TableDisplayActivity extends AbsTableActivity
             TAG,
             "[onActivityResult] result canceled, refreshing backing table");
       }
-      // always refresh, as survey may have done something
-      this.refreshDataTable();
-      this.refreshDisplayFragment();
+      String tableId = this.getActionTableId();
+      TableProperties surveyTableProperties = retrieveTablePropertiesForId(tableId);
+      if ( maybeLaunchCheckpointResolver(surveyTableProperties) ) {
+        return; 
+      } else {
+        // verify that the data table doesn't contain checkpoints...
+        // always refresh, as survey may have done something
+        this.refreshDataTable();
+        this.refreshDisplayFragment();
+      }
       break;
     }
     super.onActivityResult(requestCode, resultCode, data);

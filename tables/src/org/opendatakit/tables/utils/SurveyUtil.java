@@ -10,6 +10,7 @@ import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -310,8 +311,13 @@ public class SurveyUtil {
    * @param surveyAddIntent
    * @param tp
    */
-  public static void launchSurveyToAddRow(Activity activityToAwaitReturn, Intent surveyAddIntent,
+  public static void launchSurveyToAddRow(AbsBaseActivity activityToAwaitReturn, Intent surveyAddIntent,
                                           TableProperties tp) {
+    activityToAwaitReturn.setActionTableId(tp.getTableId());
+    if ( activityToAwaitReturn.maybeLaunchConflictResolver(tp) ) {
+      // this is ugly and un-graceful -- do not launch Survey, but resolve conflict first...
+     return;
+    }
     activityToAwaitReturn.startActivityForResult(
         surveyAddIntent,
         Constants.RequestCodes.ADD_ROW_SURVEY);
@@ -330,7 +336,7 @@ public class SurveyUtil {
    * Should be element key to value.
    */
   public static void addRowWithSurvey(
-      Activity activity,
+      AbsBaseActivity activity,
       String appName,
       TableProperties tableProperties,
       SurveyFormParameters surveyFormParameters,
@@ -356,7 +362,7 @@ public class SurveyUtil {
    * @param surveyFormParameters
    */
   public static void editRowWithSurvey(
-      Activity activity,
+      AbsBaseActivity activity,
       String appName,
       String instanceId,
       TableProperties tableProperties,
@@ -382,8 +388,13 @@ public class SurveyUtil {
    * @param surveyEditIntent
    * @param tp
    */
-  public static void launchSurveyToEditRow(Activity activityToAwaitReturn, Intent surveyEditIntent,
+  public static void launchSurveyToEditRow(AbsBaseActivity activityToAwaitReturn, Intent surveyEditIntent,
                                            TableProperties tp, String rowId) {
+    activityToAwaitReturn.setActionTableId(tp.getTableId());
+    if ( activityToAwaitReturn.maybeLaunchConflictResolver(tp) ) {
+      // this is ugly and un-graceful -- do not launch Survey, but resolve conflict first...
+     return;
+    }
     activityToAwaitReturn.startActivityForResult(
         surveyEditIntent,
         Constants.RequestCodes.EDIT_ROW_SURVEY);
