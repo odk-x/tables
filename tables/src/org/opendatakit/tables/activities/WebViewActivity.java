@@ -137,14 +137,6 @@ public class WebViewActivity extends AbsBaseActivity {
         }
         break;
       }
-      // NOTE: if there is a conflict when returning from ODK Collect, 
-      // we may get into a bad state if the conflict or checkpoint
-      // coincides with the row that ODK Collect is modifying.  This is 
-      // potentially unrecoverable!
-      if ( maybeLaunchCheckpointResolver(restoreTableProperties) ||
-          maybeLaunchConflictResolver(restoreTableProperties) ) {
-       return;
-      }
       super.onActivityResult(requestCode, resultCode, data);
     }
   }

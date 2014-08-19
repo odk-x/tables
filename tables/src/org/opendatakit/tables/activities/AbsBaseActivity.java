@@ -1,12 +1,22 @@
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.TableProperties;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.provider.TableDefinitionsColumns;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 
 /**
  * The base Activity for all ODK Tables activities. Performs basic
@@ -16,18 +26,31 @@ import android.os.Bundle;
  *
  */
 public abstract class AbsBaseActivity extends Activity {
-  
+
   protected String mAppName;
   protected String mActionTableId = null;
   
+  Bundle mCheckpointTables = new Bundle();
+  Bundle mConflictTables = new Bundle();
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.mAppName = retrieveAppNameFromIntent();
-    if ( savedInstanceState != null && savedInstanceState.containsKey(Constants.IntentKeys.ACTION_TABLE_ID) ) {
-      mActionTableId = savedInstanceState.getString(Constants.IntentKeys.ACTION_TABLE_ID);
-      if ( mActionTableId != null && mActionTableId.length() == 0 ) {
-        mActionTableId = null;
+    if ( savedInstanceState != null ) {
+      if ( savedInstanceState.containsKey(Constants.IntentKeys.ACTION_TABLE_ID) ) {
+        mActionTableId = savedInstanceState.getString(Constants.IntentKeys.ACTION_TABLE_ID);
+        if ( mActionTableId != null && mActionTableId.length() == 0 ) {
+          mActionTableId = null;
+        }
+      }
+      
+      if ( savedInstanceState.containsKey(Constants.IntentKeys.CHECKPOINT_TABLES) ) {
+        mCheckpointTables = savedInstanceState.getBundle(Constants.IntentKeys.CHECKPOINT_TABLES);
+      }
+
+      if ( savedInstanceState.containsKey(Constants.IntentKeys.CONFLICT_TABLES) ) {
+        mConflictTables = savedInstanceState.getBundle(Constants.IntentKeys.CONFLICT_TABLES);
       }
     }
   }
@@ -40,6 +63,12 @@ public abstract class AbsBaseActivity extends Activity {
     if ( mActionTableId != null && mActionTableId.length() != 0 ) {
       outState.putString(Constants.IntentKeys.ACTION_TABLE_ID, mActionTableId);
     }
+    if ( mCheckpointTables != null && !mCheckpointTables.isEmpty() ) {
+      outState.putBundle(Constants.IntentKeys.CHECKPOINT_TABLES, mCheckpointTables);
+    }
+    if ( mConflictTables != null && !mConflictTables.isEmpty() ) {
+      outState.putBundle(Constants.IntentKeys.CONFLICT_TABLES, mConflictTables);
+    }
   }
 
   public String getActionTableId() {
@@ -50,34 +79,119 @@ public abstract class AbsBaseActivity extends Activity {
     mActionTableId = tableId;
   }
   
-  public boolean maybeLaunchConflictResolver(TableProperties restoreTableProperties) {
-    if ( restoreTableProperties.hasConflicts() ) {
-      Intent i = new Intent(this,
-          ConflictResolutionListActivity.class);
-      i.putExtra(Constants.IntentKeys.APP_NAME,
-          getAppName());
-      i.putExtra(
-          Constants.IntentKeys.TABLE_ID,
-          restoreTableProperties.getTableId());
-      this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
-      return true;
+  public void scanAllTables() {
+    long now = System.currentTimeMillis();
+    Log.i(this.getClass().getSimpleName(), "scanAllTables -- searching for conflicts and checkpoints ");
+    
+    DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(this, getAppName());
+    
+    SQLiteDatabase db = dbh.getReadableDatabase();
+    Cursor c = null;
+
+    StringBuilder b = new StringBuilder();
+    b.append("SELECT ").append(TableDefinitionsColumns.DB_TABLE_NAME).append(", ")
+     .append(TableDefinitionsColumns.TABLE_ID).append(" FROM \"")
+     .append(DataModelDatabaseHelper.TABLE_DEFS_TABLE_NAME).append("\"");
+
+    Map<String,String> tableMap = new TreeMap<String,String>();
+    try {
+      c = db.rawQuery(b.toString(), null);
+      int idxId = c.getColumnIndex(TableDefinitionsColumns.TABLE_ID);
+      int idxName = c.getColumnIndex(TableDefinitionsColumns.DB_TABLE_NAME);
+      if ( c.moveToFirst() ) {
+        do {
+          tableMap.put(ODKDatabaseUtils.getIndexAsString(c, idxId), 
+              ODKDatabaseUtils.getIndexAsString(c, idxName));
+        } while ( c.moveToNext() );
+      }
+      c.close();
+    } finally {
+      if ( c != null && !c.isClosed() ) {
+        c.close();
+      }
     }
-    return false;
+    
+    Bundle checkpointTables = new Bundle();
+    Bundle conflictTables = new Bundle();
+    
+    for ( Map.Entry<String,String> table : tableMap.entrySet() ) {
+      String tableId = table.getKey();
+      String dbTableName = table.getValue();
+      b.setLength(0);
+      b.append("SELECT SUM(case when _savepoint_type is null then 1 else 0 end) as checkpoints,")
+       .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts from \"")
+       .append(dbTableName).append("\"");
+      
+      try {
+        c = db.rawQuery(b.toString(), null);
+        int idxCheckpoints = c.getColumnIndex("checkpoints");
+        int idxConflicts = c.getColumnIndex("conflicts");
+        c.moveToFirst();
+        int checkpoints = ODKDatabaseUtils.getIndexAsType(c, Integer.class, idxCheckpoints);
+        int conflicts = ODKDatabaseUtils.getIndexAsType(c, Integer.class, idxConflicts);
+        c.close();
+        
+        if ( checkpoints != 0 ) {
+          checkpointTables.putString(tableId, dbTableName);
+        }
+        if ( conflicts != 0 ) {
+          conflictTables.putString(tableId, dbTableName);
+        }
+      } finally {
+        if ( c != null && !c.isClosed() ) {
+          c.close();
+        }
+      }
+    }
+    mCheckpointTables = checkpointTables;
+    mConflictTables = conflictTables;
+    
+    
+    long elapsed = System.currentTimeMillis() - now;
+    Log.i(this.getClass().getSimpleName(), "scanAllTables -- full table scan completed: " + Long.toString(elapsed) + " ms");
   }
   
-  public boolean maybeLaunchCheckpointResolver(TableProperties restoreTableProperties) {
-    if ( restoreTableProperties.hasCheckpoints() ) {
+  @Override
+  protected void onPostResume() {
+    super.onPostResume();
+    // Hijack the app here, after all screens have been resumed,
+    // to ensure that all checkpoints and conflicts have been
+    // resolved. If they haven't, we branch to the resolution
+    // activity.
+    
+    if ( ( mCheckpointTables == null || mCheckpointTables.isEmpty() ) &&
+         ( mConflictTables == null || mConflictTables.isEmpty() ) ) {
+      scanAllTables();
+    }
+    if ( (mCheckpointTables != null) && !mCheckpointTables.isEmpty() ) {
+      Iterator<String> iterator = mCheckpointTables.keySet().iterator();
+      String tableId = iterator.next();
+      mCheckpointTables.remove(tableId);
+
       Intent i = new Intent(this,
           CheckpointResolutionListActivity.class);
       i.putExtra(Constants.IntentKeys.APP_NAME,
           getAppName());
       i.putExtra(
           Constants.IntentKeys.TABLE_ID,
-          restoreTableProperties.getTableId());
+          tableId);
       this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
-      return true;
     }
-    return false;
+    if ( (mConflictTables != null) && !mConflictTables.isEmpty() ) {
+      Iterator<String> iterator = mConflictTables.keySet().iterator();
+      String tableId = iterator.next();
+      mConflictTables.remove(tableId);
+
+      Intent i = new Intent(this,
+          CheckpointResolutionListActivity.class);
+      i.putExtra(Constants.IntentKeys.APP_NAME,
+          getAppName());
+      i.putExtra(
+          Constants.IntentKeys.TABLE_ID,
+          tableId);
+      this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
+    }
+
   }
   
   /**

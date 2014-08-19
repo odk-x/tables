@@ -112,11 +112,7 @@ public class TableDisplayActivity extends AbsTableActivity
   protected void onResume() {
     super.onResume();
     Log.i(TAG, "[onResume]");
-    TableProperties tableProperties = this.getTableProperties();
-    if ( !maybeLaunchCheckpointResolver(tableProperties) && 
-         !maybeLaunchConflictResolver(tableProperties) ) {
-      this.initializeDisplayFragment();
-    }
+    this.initializeDisplayFragment();
   }
 
   @Override
@@ -276,16 +272,10 @@ public class TableDisplayActivity extends AbsTableActivity
             TAG,
             "[onActivityResult] result canceled, refreshing backing table");
       }
-      String tableId = this.getActionTableId();
-      TableProperties surveyTableProperties = retrieveTablePropertiesForId(tableId);
-      if ( maybeLaunchCheckpointResolver(surveyTableProperties) ) {
-        return; 
-      } else {
-        // verify that the data table doesn't contain checkpoints...
-        // always refresh, as survey may have done something
-        this.refreshDataTable();
-        this.refreshDisplayFragment();
-      }
+      // verify that the data table doesn't contain checkpoints...
+      // always refresh, as survey may have done something
+      this.refreshDataTable();
+      this.refreshDisplayFragment();
       break;
     }
     super.onActivityResult(requestCode, resultCode, data);
