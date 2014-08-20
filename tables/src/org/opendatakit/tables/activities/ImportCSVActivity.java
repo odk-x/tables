@@ -17,7 +17,6 @@ package org.opendatakit.tables.activities;
 
 import java.io.File;
 
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.tasks.ImportRequest;
@@ -32,13 +31,10 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,23 +46,11 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
   private static final String TAG = ImportCSVActivity.class.getSimpleName();
 
 	/** view IDs (for use in testing) */
-	public static final int NTNVAL_ID = 1;
-	public static final int TABLESPIN_ID = 2;
 	public static final int FILENAMEVAL_ID = 3;
 	public static final int IMPORTBUTTON_ID = 4;
 
 	/* the appName context within which we are running */
 	private String appName;
-	/* the list of table properties */
-	private TableProperties[] tps;
-	/* the list of table names */
-	private String[] tableNames;
-	/* the view for inputting the new table name (label and text field) */
-	private View newTableViews;
-	/* the text field for getting the new table name */
-	private EditText ntnValField;
-	/* the table name spinner */
-	private Spinner tableSpin;
 	/* the text field for getting the filename */
 	private EditText filenameValField;
 	/* the button for selecting a file */
@@ -107,49 +91,10 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		// Horizontal divider
 		View ruler1 = new View(this); ruler1.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler1,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
-		// adding the table spinner
-		TextView etn = new TextView(this);
-		etn.setText(getString(R.string.import_disposition_label));
-		etn.setTextColor(getResources().getColor(R.color.black));
-		tableSpin = new Spinner(this);
-		tableSpin.setId(TABLESPIN_ID);
-		tps = TableProperties.getTablePropertiesForAll(this, appName);
-		tableNames = new String[tps.length + 1];
-		tableNames[0] = getString(R.string.import_new_table);
-		int counter = 1;
-		for (TableProperties tp : tps) {
-		    tableNames[counter] = tp.getLocalizedDisplayName();
-		    counter++;
-		}
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_spinner_item, tableNames);
-		adapter.setDropDownViewResource(
-				android.R.layout.simple_spinner_dropdown_item);
-		tableSpin.setAdapter(adapter);
-		tableSpin.setSelection(0);
-		tableSpin.setOnItemSelectedListener(new tableSpinListener());
-		v.addView(etn);
-		v.addView(tableSpin);
-		// adding the new table name field
-		LinearLayout ntn = new LinearLayout(this);
-		ntn.setOrientation(LinearLayout.VERTICAL);
-		TextView ntnLabel = new TextView(this);
-		ntnLabel.setText(getString(R.string.enter_new_table_name));
-		ntnLabel.setTextColor(getResources().getColor(R.color.black));
-		ntn.addView(ntnLabel);
-		ntnValField = new EditText(this);
-		ntnValField.setId(NTNVAL_ID);
-		ntnValField.setText(getString(R.string.import_new_table));
-		ntn.addView(ntnValField);
-		newTableViews = ntn;
-		v.addView(newTableViews);
-		// Horizontal divider
-		View ruler2 = new View(this); ruler2.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler2,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// adding the import button
 		this.mImportButton = new Button(this);
 		this.mImportButton.setId(IMPORTBUTTON_ID);
-		this.mImportButton.setText(getString(R.string.import_import_new_table));
+		this.mImportButton.setText(getString(R.string.import_append_table));
 		this.mImportButton.setOnClickListener(new ImportButtonListener());
 		v.addView(this.mImportButton);
 		// wrapping in a scroll view
@@ -198,13 +143,6 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
      showDialog(IMPORT_IN_PROGRESS_DIALOG);
      ImportTask task = new ImportTask(this, appName);
      task.execute(request);
-		/**
-		Handler iHandler = new ImporterHandler();
-		ImporterThread iThread = new ImporterThread(iHandler, tableName, tp,
-		        file, (pos == 0));
-		showDialog(IMPORT_IN_PROGRESS_DIALOG);
-		iThread.start();
-		**/
 	}
 
 	@Override
@@ -240,28 +178,6 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 	    } else {
 	      Toast.makeText(this, "Import file must reside in " + assetRelativePath + File.separator, Toast.LENGTH_LONG).show();
 	    }
-	}
-
-	/**
-	 * A listener for the table name spinner. Adds or removes the "New Table"
-	 * name field as necessary.
-	 */
-	private class tableSpinListener
-			implements AdapterView.OnItemSelectedListener {
-		@Override
-		public void onItemSelected(AdapterView<?> parent, View view,
-				int position, long id) {
-			if(position == 0) {
-				newTableViews.setVisibility(View.VISIBLE);
-				mImportButton.setText(getString(R.string.import_import_new_table));
-			} else {
-				newTableViews.setVisibility(View.GONE);
-				mImportButton.setText(getString(R.string.import_append_table));
-			}
-		}
-		@Override
-		public void onNothingSelected(AdapterView<?> parent) {
-		}
 	}
 
 	/**

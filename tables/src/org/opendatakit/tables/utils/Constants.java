@@ -197,7 +197,7 @@ public class Constants {
     /** A generic code for now. Can refactor to make more specific if needed.*/
     public static final int LAUNCH_VIEW = 5;
     public static final int LAUNCH_DISPLAY_PREFS = 6;
-    public static final int LAUNCH_IMPORT_EXPORT = 7;
+    public static final int LAUNCH_IMPORT = 7;
     public static final int LAUNCH_SYNC = 8;
     public static final int LAUNCH_TABLE_MANAGER = 9;
     /** For launching an HTML file not associated with a table. */
@@ -213,6 +213,7 @@ public class Constants {
     public static final int EDIT_ROW_SURVEY = 18;
     public static final int LAUNCH_CHECKPOINT_RESOLVER = 19;
     public static final int LAUNCH_CONFLICT_RESOLVER = 20;
+    public static final int LAUNCH_EXPORT = 21;
   }
 
   /**

@@ -8,7 +8,8 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.DisplayPrefsActivity;
-import org.opendatakit.tables.activities.ImportExportActivity;
+import org.opendatakit.tables.activities.ExportCSVActivity;
+import org.opendatakit.tables.activities.ImportCSVActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
@@ -72,15 +73,23 @@ public class TableManagerFragment extends ListFragment {
           preferenceIntent,
           Constants.RequestCodes.LAUNCH_DISPLAY_PREFS);
       return true;
-    case R.id.menu_table_manager_export:
     case R.id.menu_table_manager_import:
-      Intent importExportIntent = new Intent(
+      Intent importIntent = new Intent(
           baseActivity,
-          ImportExportActivity.class);
-      importExportIntent.putExtras(bundle);
+          ImportCSVActivity.class);
+      importIntent.putExtras(bundle);
       this.startActivityForResult(
-          importExportIntent,
-          Constants.RequestCodes.LAUNCH_IMPORT_EXPORT);
+          importIntent,
+          Constants.RequestCodes.LAUNCH_IMPORT);
+      return true;
+    case R.id.menu_table_manager_export:
+      Intent exportIntent = new Intent(
+          baseActivity,
+          ExportCSVActivity.class);
+      exportIntent.putExtras(bundle);
+      this.startActivityForResult(
+          exportIntent,
+          Constants.RequestCodes.LAUNCH_EXPORT);
       return true;
     case R.id.menu_table_manager_sync:
 //      OdkSyncServiceProxy proxy = new OdkSyncServiceProxy(this.getActivity());
