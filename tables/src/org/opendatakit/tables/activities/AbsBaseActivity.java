@@ -131,14 +131,14 @@ public abstract class AbsBaseActivity extends Activity {
         int idxCheckpoints = c.getColumnIndex("checkpoints");
         int idxConflicts = c.getColumnIndex("conflicts");
         c.moveToFirst();
-        int checkpoints = ODKDatabaseUtils.getIndexAsType(c, Integer.class, idxCheckpoints);
-        int conflicts = ODKDatabaseUtils.getIndexAsType(c, Integer.class, idxConflicts);
+        Integer checkpoints = ODKDatabaseUtils.getIndexAsType(c, Integer.class, idxCheckpoints);
+        Integer conflicts = ODKDatabaseUtils.getIndexAsType(c, Integer.class, idxConflicts);
         c.close();
         
-        if ( checkpoints != 0 ) {
+        if ( checkpoints != null && checkpoints != 0 ) {
           checkpointTables.putString(tableId, dbTableName);
         }
-        if ( conflicts != 0 ) {
+        if ( conflicts != null && conflicts != 0 ) {
           conflictTables.putString(tableId, dbTableName);
         }
       } finally {
