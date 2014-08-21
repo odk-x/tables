@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
@@ -25,12 +26,14 @@ public class WebFragmentTest {
   Activity activity;
   
   @Before
-  public void setup() {
+  public void before() {
+    TestCaseUtils.setExternalStorageMounted();
     ShadowLog.stream = System.out;
   }
   
   @After
   public void after() {
+    TestCaseUtils.resetExternalStorageState();
     WebFragmentStub.resetState();
   }
   

@@ -14,6 +14,7 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 
@@ -28,13 +29,13 @@ public class SpreadsheetFragmentTest {
   Activity activity;
 
   @Before
-  public void setup() {
+  public void before() {
     ShadowLog.stream = System.out;
+    TestCaseUtils.setExternalStorageMounted();
     // We don't want to build the menu here, as it doesn't
     // give us any information in this test class.
     TableDisplayActivityStub.BUILD_MENU_FRAGMENT = false;
   }
-
   private void doGlobalSetup() {
     this.fragment = new SpreadsheetFragmentStub();
     ODKFragmentTestUtil.startFragmentForActivity(
@@ -66,6 +67,7 @@ public class SpreadsheetFragmentTest {
 
   @After
   public void after() {
+    TestCaseUtils.resetExternalStorageState();
     TableDisplayActivityStub.resetState();
   }
 

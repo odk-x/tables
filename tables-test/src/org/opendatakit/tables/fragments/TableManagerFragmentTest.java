@@ -47,6 +47,7 @@ public class TableManagerFragmentTest {
   @After
   public void after() {
     AbsBaseActivityStub.resetState();
+    TestCaseUtils.resetExternalStorageState();
   }
 
   public void setupFragmentWithNoItems() {
