@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
 import org.opendatakit.tables.views.webkits.TableData;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 
@@ -23,12 +24,14 @@ public class MapListViewFragmentTest {
 
   @After
   public void after() {
+    TestCaseUtils.resetExternalStorageState();
     MapListViewFragmentStub.resetState();
   }
 
   @Before
   public void setupWithDefaults() {
     ShadowLog.stream = System.out;
+    TestCaseUtils.setExternalStorageMounted();
     TableDisplayActivityStub.BUILD_MENU_FRAGMENT = false;
     MapListViewFragmentStub stub = new MapListViewFragmentStub();
     ODKFragmentTestUtil.startFragmentForActivity(

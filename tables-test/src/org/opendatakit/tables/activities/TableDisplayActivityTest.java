@@ -20,6 +20,7 @@ import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
@@ -47,6 +48,7 @@ public class TableDisplayActivityTest {
   @Before
   public void before() {
     ShadowLog.stream = System.out;
+    TestCaseUtils.setExternalStorageMounted();
     this.activity = Robolectric.buildActivity(TableDisplayActivityStub.class)
         .create()
         .start()
@@ -59,6 +61,7 @@ public class TableDisplayActivityTest {
 
   @After
   public void after() {
+    TestCaseUtils.resetExternalStorageState();
     TableDisplayActivityStub.resetState();
   }
 

@@ -11,6 +11,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.WebFragment;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
@@ -35,6 +36,7 @@ public class WebViewActivityTest {
   
   @Before
   public void before() {
+    TestCaseUtils.setExternalStorageMounted();
     ShadowLog.stream = System.out;
     this.activity = Robolectric.buildActivity(WebViewActivityStub.class)
         .create()
@@ -46,6 +48,7 @@ public class WebViewActivityTest {
   
   @After
   public void after() {
+    TestCaseUtils.resetExternalStorageState();
     WebViewActivityStub.resetState();
   }
   
