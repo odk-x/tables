@@ -3,9 +3,11 @@ package org.opendatakit.tables.activities;
 import static org.mockito.Mockito.mock;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
@@ -18,8 +20,14 @@ import org.robolectric.RobolectricTestRunner;
 @RunWith(RobolectricTestRunner.class)
 public class AbsTableActivityTest {
   
+  @Before
+  public void before() {
+    TestCaseUtils.setExternalStorageMounted();
+  }
+  
   @After
   public void after() {
+    TestCaseUtils.resetExternalStorageState();
     // Reset all these values in case they were changed.
     AbsTableActivityStub.APP_NAME = AbsTableActivityStub.DEFAULT_APP_NAME;
     AbsTableActivityStub.TABLE_PROPERTIES =

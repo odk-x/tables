@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 import org.robolectric.shadows.ShadowWebView;
@@ -29,11 +30,13 @@ public class ListViewFragmentTest {
   
   @After
   public void after() {
+    TestCaseUtils.resetExternalStorageState();
     ListViewFragmentStub.resetState();
   }
   
   @Before
-  public void setup() {
+  public void before() {
+    TestCaseUtils.setExternalStorageMounted();
     ShadowLog.stream = System.out;
     TableDisplayActivityStub.BUILD_MENU_FRAGMENT = false;
     ListViewFragmentStub stub = new ListViewFragmentStub();

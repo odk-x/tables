@@ -6,6 +6,7 @@ public class WebViewActivityStub extends WebViewActivity {
   
   public static final String DEFAULT_APP_NAME =
       TestConstants.TABLES_DEFAULT_APP_NAME;
+  public static final boolean DO_SCAN_ALL_TABLES = false;
   
   public static String APP_NAME = DEFAULT_APP_NAME;
   

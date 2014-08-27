@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.robolectric.RobolectricTestRunner;
 
 import android.app.Activity;
@@ -25,6 +26,7 @@ public class AbsBaseFragmentTest {
   
   @Before
   public void setup() {
+    TestCaseUtils.setExternalStorageMounted();
     AbsBaseFragmentStub stub = new AbsBaseFragmentStub();
     ODKFragmentTestUtil.startFragmentForActivity(
         AbsBaseActivityStub.class,
@@ -36,6 +38,7 @@ public class AbsBaseFragmentTest {
   
   @After
   public void after() {
+    TestCaseUtils.resetExternalStorageState();
     AbsBaseActivityStub.resetState();
   }
   

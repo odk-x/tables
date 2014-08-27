@@ -27,6 +27,7 @@ import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.ODKDatabaseUtilsWrapper;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.utils.WebViewUtil;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
@@ -56,6 +57,7 @@ public class ControlTest {
 
   @Before
   public void before() {
+    TestCaseUtils.setExternalStorageMounted();
     AbsBaseActivityStub activityStub = Robolectric.buildActivity(
         AbsBaseActivityStub.class)
           .create()
@@ -78,6 +80,7 @@ public class ControlTest {
   public void after() {
     AbsBaseActivityStub.resetState();
     ControlStub.resetState();
+    TestCaseUtils.resetExternalStorageState();
     // null them out just to make sure.
     this.activity = null;
     this.control = null;

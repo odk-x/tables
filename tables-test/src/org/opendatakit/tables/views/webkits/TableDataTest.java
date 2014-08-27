@@ -7,11 +7,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
+import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
 import android.app.Activity;
+import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
 
 @RunWith(RobolectricTestRunner.class)
 public class TableDataTest {
@@ -21,6 +23,7 @@ public class TableDataTest {
   
   @Before
   public void before() {
+    TestCaseUtils.setExternalStorageMounted();
     AbsBaseActivityStub activity = Robolectric.buildActivity(
         AbsBaseActivityStub.class)
           .create()
@@ -37,6 +40,7 @@ public class TableDataTest {
   
   @After
   public void after() {
+    TestCaseUtils.resetExternalStorageState();
     AbsBaseActivityStub.resetState();
     this.activity = null;
     this.tableData = null;

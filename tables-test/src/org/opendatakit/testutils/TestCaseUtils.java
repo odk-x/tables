@@ -46,6 +46,14 @@ public class TestCaseUtils {
   public static void setExternalStorageMounted() {
     ShadowEnvironment.setExternalStorageState(Environment.MEDIA_MOUNTED);
   }
+  
+  /**
+   * Restore the external storage to the original state. Pairs with
+   * {@link #setExternalStorageMounted()} to undo the call.
+   */
+  public static void resetExternalStorageState() {
+    ShadowEnvironment.setExternalStorageState(Environment.MEDIA_REMOVED);
+  }
 
   public static void startFragmentForMainActivity(Fragment fragment) {
     MainActivity mainActivity = Robolectric.buildActivity(MainActivity.class)
