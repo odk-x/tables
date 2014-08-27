@@ -90,35 +90,35 @@ public class ColorRuleUtil {
 
   public static ColorRule getColorRuleForSyncStateRest() {
     return new ColorRule(ID_REST_RULE, DataTableColumns.SYNC_STATE,
-        ColorRule.RuleType.EQUAL, SyncState.rest.name(),
+        ColorRule.RuleType.EQUAL, SyncState.synced.name(),
         DEFAULT_SYNC_STATE_REST_FOREGROUND,
         DEFAULT_SYNC_STATE_REST_BACKGROUND);
   }
 
   public static ColorRule getColorRuleForSyncStateInserting() {
     return new ColorRule(ID_INSERTING_RULE, DataTableColumns.SYNC_STATE,
-        ColorRule.RuleType.EQUAL, SyncState.inserting.name(),
+        ColorRule.RuleType.EQUAL, SyncState.new_row.name(),
         DEFAULT_SYNC_STATE_INSERTING_FOREGROUND,
         DEFAULT_SYNC_STATE_INSERTING_BACKGROUND);
   }
 
   public static ColorRule getColorRuleForSyncStateUpdating() {
     return new ColorRule(ID_UPDATING_RULE, DataTableColumns.SYNC_STATE,
-        ColorRule.RuleType.EQUAL, SyncState.updating.name(),
+        ColorRule.RuleType.EQUAL, SyncState.changed.name(),
         DEFAULT_SYNC_STATE_UPDATING_FOREGROUND,
         DEFAULT_SYNC_STATE_UPDATING_BACKGROUND);
   }
 
   public static ColorRule getColorRuleForSyncStateDeleting() {
     return new ColorRule(ID_DELETING_RULE, DataTableColumns.SYNC_STATE,
-        ColorRule.RuleType.EQUAL, SyncState.deleting.name(),
+        ColorRule.RuleType.EQUAL, SyncState.deleted.name(),
         DEFAULT_SYNC_STATE_DELETING_FOREGROUND,
         DEFAULT_SYNC_STATE_DELETING_BACKGROUND);
   }
 
   public static ColorRule getColorRuleForSyncStateConflict() {
     return new ColorRule(ID_CONFLICTING_RULE, DataTableColumns.SYNC_STATE,
-        ColorRule.RuleType.EQUAL, SyncState.conflicting.name(),
+        ColorRule.RuleType.EQUAL, SyncState.in_conflict.name(),
         DEFAULT_SYNC_STATE_CONFLICT_FOREGROUND,
         DEFAULT_SYNC_STATE_CONFLICT_BACKGROUND);
   }

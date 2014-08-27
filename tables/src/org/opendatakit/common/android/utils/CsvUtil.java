@@ -778,9 +778,9 @@ public class CsvUtil {
           cv.put(DataTableColumns.FILTER_VALUE, v_filter_value);
 
 
-          cv.put(DataTableColumns.SYNC_STATE, SyncState.inserting.name());
+          cv.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
 
-          if ( syncState == SyncState.inserting ) {
+          if ( syncState == SyncState.new_row ) {
             // we do the actual update here
             dbTable.actualUpdateRowByRowId(v_id, cv);
           }

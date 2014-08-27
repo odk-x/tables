@@ -73,24 +73,24 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
         // We know it must be a String rep of an int.
         SyncState targetState = SyncState.valueOf(colorRule.getVal());
         // For now we need to handle the special cases of the sync state.
-        if (targetState == SyncState.inserting) {
+        if (targetState == SyncState.new_row) {
           description = this.mContext.getString(
-              R.string.sync_state_equals_inserting_message);
-        } else if (targetState == SyncState.updating) {
+              R.string.sync_state_equals_new_row_message);
+        } else if (targetState == SyncState.changed) {
           description = this.mContext.getString(
-              R.string.sync_state_equals_updating_message);
-        } else if (targetState == SyncState.rest) {
+              R.string.sync_state_equals_changed_message);
+        } else if (targetState == SyncState.synced) {
           description = this.mContext.getString(
-              R.string.sync_state_equals_rest_message);
-        } else if (targetState == SyncState.rest_pending_files) {
+              R.string.sync_state_equals_synced_message);
+        } else if (targetState == SyncState.synced_pending_files) {
           description = this.mContext.getString(
-              R.string.sync_state_equals_rest_pending_files_message);
-        } else if (targetState == SyncState.deleting) {
+              R.string.sync_state_equals_synced_pending_files_message);
+        } else if (targetState == SyncState.deleted) {
           description = this.mContext.getString(
-              R.string.sync_state_equals_deleting_message);
-        } else if (targetState == SyncState.conflicting) {
+              R.string.sync_state_equals_deleted_message);
+        } else if (targetState == SyncState.in_conflict) {
           description = this.mContext.getString(
-              R.string.sync_state_equals_conflicting_message);
+              R.string.sync_state_equals_in_conflict_message);
         } else {
           Log.e(TAG, "unrecognized sync state: " + targetState);
           description = "unknown";

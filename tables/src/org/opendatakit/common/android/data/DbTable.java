@@ -384,7 +384,7 @@ public class DbTable {
       String[] selectionKeys = new String[2];
       selectionKeys[0] = DataTableColumns.SYNC_STATE;
       selectionKeys[1] = DataTableColumns.CONFLICT_TYPE;
-      String syncStateConflictStr = SyncState.conflicting.name();
+      String syncStateConflictStr = SyncState.in_conflict.name();
       String conflictTypeLocalDeletedStr =
           Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES);
       String conflictTypeLocalUpdatedStr =
@@ -446,7 +446,7 @@ public class DbTable {
         }
 
         // The admin columns get added here and also in actualAddRow
-        cv.put(DataTableColumns.SYNC_STATE, SyncState.inserting.name());
+        cv.put(DataTableColumns.SYNC_STATE, SyncState.new_row.name());
         cv.put(DataTableColumns.FORM_ID, formId);
         cv.put(DataTableColumns.LOCALE, locale);
         cv.put(DataTableColumns.SAVEPOINT_TYPE, savepointType);
@@ -538,7 +538,7 @@ public class DbTable {
 
       String sqlConflictingServer = b.toString();
       String argsConflictingServer[] = {
-          SyncState.conflicting.name(),
+          SyncState.in_conflict.name(),
           Integer.toString(ConflictType.SERVER_DELETED_OLD_VALUES),
           Integer.toString(ConflictType.SERVER_UPDATED_UPDATED_VALUES)
       };
@@ -551,14 +551,14 @@ public class DbTable {
 
       String sqlConflictingLocalDeleting = b.toString();
       String argsConflictingLocalDeleting[] = {
-          SyncState.deleting.name(),
+          SyncState.deleted.name(),
           Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES)
       };
 
       // update local update conflicts to updates
       String sqlConflictingLocalUpdating = sqlConflictingLocalDeleting;
       String argsConflictingLocalUpdating[] = {
-          SyncState.updating.name(),
+          SyncState.changed.name(),
           Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES)
       };
 
@@ -569,14 +569,14 @@ public class DbTable {
 
       String sqlRest = b.toString();
       String argsRest[] = {
-          SyncState.inserting.name(),
-          SyncState.rest.name()
+          SyncState.new_row.name(),
+          SyncState.synced.name()
       };
 
       String sqlRestPendingFiles = sqlRest;
       String argsRestPendingFiles[] = {
-          SyncState.inserting.name(),
-          SyncState.rest_pending_files.name()
+          SyncState.new_row.name(),
+          SyncState.synced_pending_files.name()
       };
 
       SQLiteDatabase db = tp.getWritableDatabase();
@@ -614,8 +614,8 @@ public class DbTable {
         // UPDATE: I have used the KeyValueStoreSync to return the same value
         // as hilary was originally using. However, this might have to be
         // updated.
-        if (getSyncState(rowId) == SyncState.rest) {
-          cv.put(DataTableColumns.SYNC_STATE, SyncState.updating.name());
+        if (getSyncState(rowId) == SyncState.synced) {
+          cv.put(DataTableColumns.SYNC_STATE, SyncState.changed.name());
         }
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
@@ -767,7 +767,7 @@ public class DbTable {
             ConflictType.SERVER_DELETED_OLD_VALUES + ", " +
             ConflictType.SERVER_UPDATED_UPDATED_VALUES + ")";
         ContentValues updateValues = new ContentValues();
-        updateValues.put(DataTableColumns.SYNC_STATE, SyncState.updating.name());
+        updateValues.put(DataTableColumns.SYNC_STATE, SyncState.changed.name());
         updateValues.put(DataTableColumns.ROW_ETAG, serverRowETag);
         updateValues.putNull(DataTableColumns.CONFLICT_TYPE);
         for (String key : values.keySet()) {
@@ -796,12 +796,12 @@ public class DbTable {
      */
     public void markDeleted(String rowId) {
       SyncState syncState = getSyncState(rowId);
-      if (syncState == SyncState.inserting) {
+      if (syncState == SyncState.new_row) {
         deleteRowActual(rowId);
-      } else if (syncState == SyncState.rest || syncState == SyncState.updating) {
+      } else if (syncState == SyncState.synced || syncState == SyncState.changed) {
         String[] whereArgs = { rowId };
         ContentValues values = new ContentValues();
-        values.put(DataTableColumns.SYNC_STATE, SyncState.deleting.name());
+        values.put(DataTableColumns.SYNC_STATE, SyncState.deleted.name());
         SQLiteDatabase db = tp.getWritableDatabase();
         try {
           db.beginTransaction();

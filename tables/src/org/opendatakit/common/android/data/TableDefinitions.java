@@ -59,7 +59,7 @@ public class TableDefinitions {
    ***********************************/
   public static final int DEFAULT_DB_LAST_SYNC_TIME = -1;
   public static final String DEFAULT_DB_SYNC_TAG = "";
-  public static final SyncState DEFAULT_DB_SYNC_STATE = SyncState.inserting;
+  public static final SyncState DEFAULT_DB_SYNC_STATE = SyncState.new_row;
   public static final int DEFAULT_DB_TRANSACTIONING = 0;
   public static final String DEFAULT_DB_TABLE_ID_ACCESS_CONTROLS = "";
 
