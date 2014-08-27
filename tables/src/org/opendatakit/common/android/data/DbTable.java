@@ -679,11 +679,7 @@ public class DbTable {
         }
         // OK it is one of the data columns
         ColumnProperties cp = tp.getColumnByElementKey(key);
-        boolean retainInDb = false;
-        if (cp.getColumnType().name().equals("array") || cp.getListChildElementKeys() == null || cp.getListChildElementKeys().isEmpty()) {
-          retainInDb = true;
-        }
-        if ( !retainInDb ) {
+        if ( !cp.isUnitOfRetention() ) {
           toBeResolved.put(key, values.getAsString(key));
         }
       }
@@ -710,13 +706,7 @@ public class DbTable {
             Map<String,Object> struct = ODKFileUtils.mapper.readValue(json, Map.class);
             for ( String subkey : cp.getListChildElementKeys() ) {
               ColumnProperties subcp = tp.getColumnByElementKey(subkey);
-              boolean retainInDb = false;
-              if (subcp.getColumnType().name().equals("array") ||
-                  subcp.getListChildElementKeys() == null ||
-                  subcp.getListChildElementKeys().isEmpty()) {
-                retainInDb = true;
-              }
-              if ( retainInDb ) {
+              if ( subcp.isUnitOfRetention() ) {
                 if ( subcp.getColumnType().name().equals("integer") ) {
                   values.put(subkey, (Integer) struct.get(subcp.getElementName()));
                 } else if ( subcp.getColumnType().name().equals("number") ) {

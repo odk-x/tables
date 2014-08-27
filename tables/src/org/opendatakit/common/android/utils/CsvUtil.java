@@ -575,9 +575,16 @@ public class CsvUtil {
         tp = TableProperties.addTable(context, appName,
             tableId, (displayName == null ? tableId : displayName), tableId);
 
+        Map<String, ColumnProperties> defns = new HashMap<String, ColumnProperties>();
         for ( ColumnInfo ci : columns.values() ) {
-          ColumnProperties cp = tp.addColumn(ci.displayName, ci.elementKey, ci.elementName,
+          ColumnProperties cp = tp.createNoPersistColumn(ci.displayName, ci.elementKey, ci.elementName,
               ci.elementType, ci.listOfStringElementKeys);
+          defns.put(cp.getElementKey(), cp);
+        }
+        tp.createColumnsForTable(defns);
+        // we have created the table...
+        for ( ColumnInfo ci : columns.values() ) {
+          ColumnProperties cp = tp.getColumnByElementKey(ci.elementKey);
           cp.addMetaDataEntries(ci.kvsEntries);
         }
         tp.addMetaDataEntries(kvsEntries, false);

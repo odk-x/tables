@@ -288,6 +288,8 @@ public class ColumnProperties {
    * actual column itself.
    */
   private final TableProperties tp;
+  /** computed flag indicating whether this column is a database column */
+  private boolean isUnitOfRetention = true;
   /*
    * The fields that reside in ColumnDefinitions
    */
@@ -627,6 +629,16 @@ public class ColumnProperties {
     return elementName;
   }
 
+  public boolean isUnitOfRetention() {
+    return isUnitOfRetention;
+  }
+  
+  public void setNotUnitOfRetention() {
+    isUnitOfRetention = false;
+    // display is not visible also
+    displayVisible = false;
+  }
+  
   /**
    * @return the column's type
    */
