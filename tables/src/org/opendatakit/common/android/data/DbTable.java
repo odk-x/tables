@@ -423,7 +423,7 @@ public class DbTable {
     }
 
     /**
-     * Adds a row to the table with an inserting synchronization state.
+     * Adds a row to the table with a new_row synchronization state.
      * <p>
      * If the rowId is null it is not added.
      * <p>
@@ -521,13 +521,13 @@ public class DbTable {
      * the device. In this case, we do not know whether the rows on the device
      * match those on the server.
      *
-     * Reset all 'conflicting' rows to their original local state (updating or deleting).
-     * Leave all 'deleting' rows in 'deleting' state.
-     * Leave all 'updating' rows in 'updating' state.
-     * Reset all 'rest' rows to 'insert' to ensure they are sync'd to the server.
-     * Reset all 'rest_pending_files' rows to 'insert' to ensure they are sync'd to the server.
+     * Reset all 'in_conflict' rows to their original local state (changed or deleted).
+     * Leave all 'deleted' rows in 'deleted' state.
+     * Leave all 'changed' rows in 'changed' state.
+     * Reset all 'synced' rows to 'new_row' to ensure they are sync'd to the server.
+     * Reset all 'synced_pending_files' rows to 'new_row' to ensure they are sync'd to the server.
      */
-    public void changeDataRowsToInsertingState() {
+    public void changeDataRowsToNewRowState() {
 
       StringBuilder b = new StringBuilder();
 
@@ -791,7 +791,7 @@ public class DbTable {
     }
 
     /**
-     * If table is synchronized and not in an INSERTING state, marks row as
+     * If row is not in an new_row state, marks row as
      * deleted. Otherwise, actually deletes the row.
      */
     public void markDeleted(String rowId) {

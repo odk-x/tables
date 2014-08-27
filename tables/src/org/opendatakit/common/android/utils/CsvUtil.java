@@ -745,14 +745,14 @@ public class CsvUtil {
           syncState = dbTable.getRowSyncState(v_id);
         }
         /**
-         * Insertion will set the SYNC_STATE to inserting.
+         * Insertion will set the SYNC_STATE to new_row.
          *
          * If the table is sync'd to the server, this will cause one
          * sync interaction with the server to confirm that the server
          * also has this record.
          *
          * If a record with this same rowId already exists, if it is
-         * in an inserting sync state, we update it here. Otherwise,
+         * in an new_row sync state, we update it here. Otherwise,
          * if there were any local changes, we leave the row unchanged.
          */
         if ( syncState != null ) {
