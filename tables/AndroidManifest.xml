@@ -90,7 +90,14 @@
         </activity>
         <activity android:name=".activities.MainActivity" />
         <activity android:name=".activities.WebViewActivity" />
-        <activity android:name=".activities.TableDisplayActivity" />
+        <activity android:name=".activities.TableDisplayActivity">
+        
+            <intent-filter>
+                <action android:name="org.opendatakit.tables.activities.TableDisplayActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            
+        </activity>
         <activity android:name=".activities.TableLevelPreferencesActivity" />
         <activity android:name=".activities.AccountInfoActivity" />
         <activity android:name=".activities.DisplayPrefsActivity"/>
