@@ -81,7 +81,13 @@
                 <data android:mimeType="vnd.android.cursor.dir/vnd.opendatakit.table" />
                 <data android:mimeType="vnd.android.cursor.item/vnd.opendatakit.table" />
             </intent-filter>
-            </activity>
+            
+            <intent-filter>
+                <action android:name="org.opendatakit.tables.activities.Launcher"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            
+        </activity>
         <activity android:name=".activities.MainActivity" />
         <activity android:name=".activities.WebViewActivity" />
         <activity android:name=".activities.TableDisplayActivity" />
