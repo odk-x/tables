@@ -22,6 +22,7 @@ import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.provider.TablesProviderAPI;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
@@ -29,96 +30,133 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-
+import android.widget.Toast;
 
 public class Launcher extends Activity {
 
   private static final String TAG = Launcher.class.getName();
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+  private String mAppName;
+  private String mFileName;
 
-        // android.os.Debug.waitForDebugger();
-
-        String appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
-        if ( appName == null ) {
-          appName = TableFileUtils.getDefaultAppName();
-        }
-
-        String tableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
-
-        Uri uri = getIntent().getData();
-        if ( uri != null ) {
-          final Uri uriTablesProvider = TablesProviderAPI.CONTENT_URI;
-          if (uri.getScheme().equalsIgnoreCase(uriTablesProvider.getScheme()) &&
-              uri.getAuthority().equalsIgnoreCase(uriTablesProvider.getAuthority())) {
-            List<String> segments = uri.getPathSegments();
-            if (segments != null && segments.size() >= 1) {
-              appName = segments.get(0);
-              if ( segments.size() == 2 ) {
-                tableId = segments.get(1);
-              }
-            }
-          }
-        }
-
-        // ensuring directories exist
-        ODKFileUtils.verifyExternalStorageAvailability();
-        ODKFileUtils.assertDirectoryStructure(appName);
-
-        String dir = ODKFileUtils.getAppFolder(appName);
-        // First determine if we're supposed to use a custom home screen.
-        // Do a check also to make sure the file actually exists.
-        Preferences preferences = new Preferences(this, appName);
-        File homeScreen = new File(ODKFileUtils.getTablesHomeScreenFile(appName));
-        if (tableId == null && preferences.getUseHomeScreen() && homeScreen.exists()) {
-          // launch it.
-          String homescreenRelativePath = ODKFileUtils.asRelativePath(
-              appName,
-              homeScreen);
-          Log.d(TAG, "homescreen file exists and is set to be used.");
-
-          Uri data = getIntent().getData();
-          Bundle extras = getIntent().getExtras();
-
-          Intent i = new Intent(this, WebViewActivity.class);
-          if ( data != null ) {
-            i.setData(data);
-          }
-          if ( extras != null ) {
-            i.putExtras(extras);
-          }
-          i.putExtra(Constants.IntentKeys.APP_NAME, appName);
-          i.putExtra(Constants.IntentKeys.FILE_NAME, homescreenRelativePath);
-          startActivity(i);
-        } else {
-          Log.d(TAG, "no homescreen file found, launching TableManager");
-          // First set the prefs to false. This is useful in the case where
-          // someone has configured an app to use a home screen and then
-          // deleted that file out from under it.
-          preferences.setUseHomeScreen(false);
-          // Launch the TableManager.
-          if ( tableId == null ) {
-            tableId = (new Preferences(this, appName)).getDefaultTableId();
-          }
-
-          Uri data = getIntent().getData();
-          Bundle extras = getIntent().getExtras();
-
-          Intent i = new Intent(this, MainActivity.class);
-          if ( data != null ) {
-            i.setData(data);
-          }
-          if ( extras != null ) {
-            i.putExtras(extras);
-          }
-          i.putExtra(Constants.IntentKeys.APP_NAME, appName);
-          if ( tableId != null ) {
-            i.putExtra(Constants.IntentKeys.TABLE_ID, tableId);
-          }
-          startActivity(i);
-        }
-        finish();
+  protected void retrieveValuesFromIntent() {
+    Intent intent = this.getIntent();
+    Bundle extras = intent.getExtras();
+    this.mAppName = IntentUtil.retrieveAppNameFromBundle(extras);
+    if (this.mAppName == null) {
+      this.mAppName = TableFileUtils.getDefaultAppName();
     }
+    this.mFileName = IntentUtil.retrieveFileNameFromBundle(extras);
+  }
+  
+  protected Preferences createPreferences() {
+    Preferences preferences = new Preferences(this, this.mAppName);
+    return preferences;
+  }
+
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    
+    this.retrieveValuesFromIntent();
+
+    Uri uri = getIntent().getData();
+    if (uri != null) {
+      final Uri uriTablesProvider = TablesProviderAPI.CONTENT_URI;
+      if (uri.getScheme().equalsIgnoreCase(uriTablesProvider.getScheme())
+          && uri.getAuthority().equalsIgnoreCase(uriTablesProvider.getAuthority())) {
+        List<String> segments = uri.getPathSegments();
+        if (segments != null && segments.size() >= 1) {
+          this.mAppName = segments.get(0);
+        }
+      }
+    }
+
+    // ensuring directories exist
+    ODKFileUtils.verifyExternalStorageAvailability();
+    ODKFileUtils.assertDirectoryStructure(this.mAppName);
+
+    Preferences preferences = this.createPreferences();
+    
+    // First determine if we're supposed to use a custom home screen.
+    // Do a check also to make sure the file actually exists.
+    if (useDefaultHomeScreen() || this.customFileSpecified()) {
+      
+      String relativePathToFile = null;
+      if (this.customFileSpecified()) {
+        File customFile = ODKFileUtils.asAppFile(mAppName, mFileName);
+        if (!customFile.exists()) {
+          Toast.makeText(
+              this,
+              "File does not exist: " + customFile.getAbsolutePath(),
+              Toast.LENGTH_SHORT)
+            .show();
+          this.finish();
+          return;
+        }
+        relativePathToFile = ODKFileUtils.asRelativePath(
+            mAppName,
+            customFile);
+      } else {
+        File defaultHomeScreen =
+            new File(ODKFileUtils.getTablesHomeScreenFile(this.mAppName));
+        relativePathToFile = ODKFileUtils.asRelativePath(
+            mAppName,
+            defaultHomeScreen);
+        Log.d(TAG, "homescreen file exists and is set to be used.");
+      }
+
+      Uri data = getIntent().getData();
+      Bundle extras = getIntent().getExtras();
+
+      Intent i = new Intent(this, WebViewActivity.class);
+      if (data != null) {
+        i.setData(data);
+      }
+      if (extras != null) {
+        i.putExtras(extras);
+      }
+      i.putExtra(Constants.IntentKeys.APP_NAME, this.mAppName);
+      i.putExtra(Constants.IntentKeys.FILE_NAME, relativePathToFile);
+      startActivity(i);
+    } else {
+      Log.d(TAG, "no homescreen file found, launching TableManager");
+      // First set the prefs to false. This is useful in the case where
+      // someone has configured an app to use a home screen and then
+      // deleted that file out from under it.
+      preferences.setUseHomeScreen(false);
+      // Launch the TableManager.
+      
+      Uri data = getIntent().getData();
+      Bundle extras = getIntent().getExtras();
+
+      Intent i = new Intent(this, MainActivity.class);
+      if (data != null) {
+        i.setData(data);
+      }
+      if (extras != null) {
+        i.putExtras(extras);
+      }
+      i.putExtra(Constants.IntentKeys.APP_NAME, this.mAppName);
+      startActivity(i);
+    }
+    finish();
+  }
+  
+  protected boolean customFileSpecified() {
+    return this.mFileName != null;
+  }
+  
+  /**
+   * Sets if the default home screen should be launched.
+   * @return
+   */
+  protected boolean useDefaultHomeScreen() {
+    Preferences preferences = this.createPreferences();
+    File userHomeScreen =
+        new File(ODKFileUtils.getTablesHomeScreenFile(this.mAppName));
+    return preferences.getUseHomeScreen() && userHomeScreen.exists();
+  }
+
+  
 }
