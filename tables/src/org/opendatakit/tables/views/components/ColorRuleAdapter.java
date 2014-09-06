@@ -5,8 +5,8 @@ import java.util.List;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 
 import android.content.Context;
@@ -68,7 +68,7 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
         mType == ColorRuleGroup.Type.TABLE) {
       ColorRule colorRule = mColorRules.get(currentPosition);
       String elementKey = colorRule.getColumnElementKey();
-      if (DbTable.getAdminColumns().contains(elementKey)) {
+      if (ODKDatabaseUtils.getAdminColumns().contains(elementKey)) {
         isMetadataRule = true;
         // We know it must be a String rep of an int.
         SyncState targetState = SyncState.valueOf(colorRule.getVal());

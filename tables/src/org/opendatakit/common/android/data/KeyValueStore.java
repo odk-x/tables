@@ -163,12 +163,12 @@ public class KeyValueStore {
   }
 
   /**
-   * Return a list of all the OdkTablesKeyValueStoreEntry objects that exist
+   * Return a list of all the KeyValueStoreEntry objects that exist
    * in the key value store for this table.
    * @param db
    * @return
    */
-  public ArrayList<OdkTablesKeyValueStoreEntry> getEntries(SQLiteDatabase db) {
+  public ArrayList<KeyValueStoreEntry> getEntries(SQLiteDatabase db) {
     Cursor c = db.query(this.dbBackingName,
         new String[] {KeyValueStoreColumns.TABLE_ID,
                       KeyValueStoreColumns.PARTITION,
@@ -193,7 +193,7 @@ public class KeyValueStore {
    * @return
    */
   public boolean entriesExist(SQLiteDatabase db) {
-    List<OdkTablesKeyValueStoreEntry> allEntries = getEntries(db);
+    List<KeyValueStoreEntry> allEntries = getEntries(db);
     return allEntries.size() > 0;
   }
 
@@ -259,9 +259,9 @@ public class KeyValueStore {
    * Get the full entries from the table. These are the full entries, with
    * tableId and type information.
    */
-  protected ArrayList<OdkTablesKeyValueStoreEntry> getEntriesFromCursor(Cursor c) {
-    ArrayList<OdkTablesKeyValueStoreEntry> entries =
-        new ArrayList<OdkTablesKeyValueStoreEntry>();
+  protected ArrayList<KeyValueStoreEntry> getEntriesFromCursor(Cursor c) {
+    ArrayList<KeyValueStoreEntry> entries =
+        new ArrayList<KeyValueStoreEntry>();
     int idIndex = c.getColumnIndexOrThrow(KeyValueStoreColumns.TABLE_ID);
     int partitionIndex =
         c.getColumnIndexOrThrow(KeyValueStoreColumns.PARTITION);
@@ -272,7 +272,7 @@ public class KeyValueStore {
     int i = 0;
     c.moveToFirst();
     while (i < c.getCount()) {
-      OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
+      KeyValueStoreEntry entry = new KeyValueStoreEntry();
       entry.tableId = ODKDatabaseUtils.getIndexAsString(c, idIndex);
       entry.partition = ODKDatabaseUtils.getIndexAsString(c, partitionIndex);
       entry.aspect = ODKDatabaseUtils.getIndexAsString(c, aspectIndex);
@@ -307,7 +307,7 @@ public class KeyValueStore {
    * @param keys
    * @return
    */
-  public List<OdkTablesKeyValueStoreEntry> getEntriesForKeys(SQLiteDatabase db,
+  public List<KeyValueStoreEntry> getEntriesForKeys(SQLiteDatabase db,
       String partition, String aspect, List<String> keys) {
     String[] desiredKeys = new String[keys.size() + 3];
     // we want the first to be the tableId, b/c that is the table id we are
@@ -420,7 +420,7 @@ public class KeyValueStore {
    * file manifest entry, is not done.
    * @return
    */
-  public List<OdkTablesKeyValueStoreEntry> getEntriesForPartitions(
+  public List<KeyValueStoreEntry> getEntriesForPartitions(
       SQLiteDatabase db, List<String> partitions) {
     // The number of fixed items regardless of how many partitions. In this
     // case that's just the tableId.
@@ -460,7 +460,7 @@ public class KeyValueStore {
    * @param partition
    * @return
    */
-  public List<OdkTablesKeyValueStoreEntry> getEntriesForPartition(
+  public List<KeyValueStoreEntry> getEntriesForPartition(
       SQLiteDatabase db, String partition) {
     List<String> desiredPartitions = new ArrayList<String>();
     desiredPartitions.add(partition);
@@ -476,9 +476,9 @@ public class KeyValueStore {
    * @param entries List of the entries to be added.
    */
   public void addEntriesToStore(SQLiteDatabase db,
-      List<OdkTablesKeyValueStoreEntry> entries) {
+      List<KeyValueStoreEntry> entries) {
     int numInserted = 0;
-    for (OdkTablesKeyValueStoreEntry entry : entries) {
+    for (KeyValueStoreEntry entry : entries) {
       if (entry.value == null)
         entry.value = "";
       // We're going to go through insertOrUpdate key to ensure that the set
@@ -532,7 +532,7 @@ public class KeyValueStore {
     this.deleteKey(db, partition, aspect, key);
     if (value == null)
       value = "";
-    OdkTablesKeyValueStoreEntry newEntry = new OdkTablesKeyValueStoreEntry();
+    KeyValueStoreEntry newEntry = new KeyValueStoreEntry();
     newEntry.tableId = this.tableId;
     newEntry.partition = partition;
     newEntry.aspect = aspect;
@@ -553,7 +553,7 @@ public class KeyValueStore {
    * table remain a set.
    */
   private void addEntryToStore(SQLiteDatabase db,
-      OdkTablesKeyValueStoreEntry entry) {
+      KeyValueStoreEntry entry) {
     ContentValues values = new ContentValues();
     values.put(KeyValueStoreColumns.TABLE_ID, neverNull(entry.tableId));
     values.put(KeyValueStoreColumns.PARTITION, neverNull(entry.partition));

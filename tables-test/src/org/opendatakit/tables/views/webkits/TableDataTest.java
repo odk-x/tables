@@ -13,7 +13,6 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
 import android.app.Activity;
-import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
 
 @RunWith(RobolectricTestRunner.class)
 public class TableDataTest {
@@ -32,7 +31,6 @@ public class TableDataTest {
           .visible()
           .get();
     TableData tableData = new TableData(
-        activity,
         TestConstants.getUserTableMock());
     this.activity = activity;
     this.tableData = tableData;

@@ -518,7 +518,7 @@ public class TableDisplayActivity extends AbsTableActivity
     TableProperties tableProperties = this.getTableProperties();
     SQLQueryStruct sqlQueryStruct =
         this.retrieveSQLQueryStatStructFromIntent();
-    DbTable dbTable = DbTable.getDbTable(tableProperties);
+    DbTable dbTable = new DbTable(tableProperties);
     UserTable result = dbTable.rawSqlQuery(
         sqlQueryStruct.whereClause,
         sqlQueryStruct.selectionArgs,

@@ -10,7 +10,6 @@ import java.util.Set;
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
@@ -496,14 +495,6 @@ public class TableMapInnerFragment extends MapFragment {
       ColumnProperties longitudeColumn,
       String longitude) {
     try {
-      if (latitudeColumn.getColumnType() == ColumnType.GEOPOINT) {
-        String[] parts = latitude.split(",");
-        latitude = parts[0].trim();
-      }
-      if ( longitudeColumn.getColumnType() == ColumnType.GEOPOINT ) {
-        String[] parts = longitude.split(",");
-        longitude = parts[1].trim();
-      }
       return new LatLng(
           Double.parseDouble(latitude),
           Double.parseDouble(longitude));
@@ -558,33 +549,17 @@ public class TableMapInnerFragment extends MapFragment {
         {
           ColumnProperties latitudeColumn =
               tp.getColumnByElementKey(latitudeElementKey);
-          if (latitudeColumn.getColumnType() == ColumnType.GEOPOINT) {
-            elementNameToValue.put(
-                latitudeElementKey,
-                Double.toString(location.latitude) +
-                  "," +
-                  Double.toString(location.longitude));
-          } else {
-            elementNameToValue.put(
+          elementNameToValue.put(
                 latitudeElementKey,
                 Double.toString(location.latitude));
-          }
         }
 
         {
           ColumnProperties longitudeColumn =
               tp.getColumnByElementKey(longitudeElementKey);
-          if (longitudeColumn.getColumnType() == ColumnType.GEOPOINT) {
-            elementNameToValue.put(
-                longitudeElementKey,
-                Double.toString(location.latitude) +
-                  "," +
-                  Double.toString(location.longitude));
-          } else {
-            elementNameToValue.put(
+          elementNameToValue.put(
                 longitudeElementKey,
                 Double.toString(location.longitude));
-          }
         }
         // To store the mapping in a bundle, we need to put it in string list.
         ArrayList<String> bundleStrings = new ArrayList<String>();

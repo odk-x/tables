@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
@@ -100,7 +100,7 @@ public class TestConstants {
    */
   public static ColumnProperties getColumnPropertiesMock(
       String elementKey,
-      ColumnType columnType) {
+      ElementType columnType) {
     ColumnProperties result = mock(ColumnProperties.class);
     doReturn(elementKey).when(result).getElementKey();
     doReturn(columnType).when(result).getColumnType();

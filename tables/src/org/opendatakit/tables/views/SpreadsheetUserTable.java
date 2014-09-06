@@ -7,8 +7,10 @@ import java.util.Map;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.tables.application.Tables;
 
 import android.content.Context;
 
@@ -31,7 +33,9 @@ public class SpreadsheetUserTable {
 
   public SpreadsheetUserTable(UserTable table) {
     this.table = table;
-    List<String> colOrder = this.table.getTableProperties().getColumnOrder();
+    TableProperties tp = getTableProperties();
+
+    List<String> colOrder = tp.getColumnOrder();
     header = new String[colOrder.size()];
     spreadsheetIndexToUserTableIndexRemap = new int[colOrder.size()];
     spreadsheetIndexToElementKey = new String[colOrder.size()];
@@ -39,39 +43,46 @@ public class SpreadsheetUserTable {
     for ( int i = 0 ; i < colOrder.size(); ++i ) {
       String elementKey = colOrder.get(i);
       spreadsheetIndexToUserTableIndexRemap[i] = this.table.getColumnIndexOfElementKey(elementKey);
-      ColumnProperties cp = this.table.getTableProperties().getColumnByElementKey(elementKey);
+      ColumnProperties cp = tp.getColumnByElementKey(elementKey);
       header[i] = cp.getLocalizedDisplayName();
       spreadsheetIndexToElementKey[i] = elementKey;
       elementKeyToSpreadsheetIndex.put(elementKey, i);
     }
   }
 
+  private TableProperties getTableProperties() {
+    TableProperties tp = 
+        TableProperties.getTablePropertiesForTable(
+            Tables.getInstance().getApplicationContext(), table.getAppName(), table.getTableId());
+    return tp;
+  }
+  
   public KeyValueStoreHelper getKeyValueStoreHelper(String partition) {
-    return table.getTableProperties().getKeyValueStoreHelper(partition);
+    return getTableProperties().getKeyValueStoreHelper(partition);
   }
 
   public String getTableId() {
-    return table.getTableProperties().getTableId();
+    return table.getTableId();
   }
 
   public String getAppName() {
-    return table.getTableProperties().getAppName();
+    return table.getAppName();
   }
 
   public Map<String, ColumnProperties> getAllColumns() {
-    return table.getTableProperties().getAllColumns();
+    return getTableProperties().getAllColumns();
   }
 
   public ColorRuleGroup getColumnColorRuleGroup(String elementKey) {
-    return ColorRuleGroup.getColumnColorRuleGroup(table.getTableProperties(), elementKey);
+    return ColorRuleGroup.getColumnColorRuleGroup(getTableProperties(), elementKey);
   }
 
   public ColorRuleGroup getStatusColumnRuleGroup() {
-    return ColorRuleGroup.getStatusColumnRuleGroup(table.getTableProperties());
+    return ColorRuleGroup.getStatusColumnRuleGroup(getTableProperties());
   }
 
   public ColorRuleGroup getTableColorRuleGroup() {
-    return ColorRuleGroup.getTableColorRuleGroup(table.getTableProperties());
+    return ColorRuleGroup.getTableColorRuleGroup(getTableProperties());
   }
 
   int getNumberOfRows() {
@@ -87,7 +98,7 @@ public class SpreadsheetUserTable {
 
 
   public String getIndexedColumnElementKey() {
-    return this.table.getTableProperties().getIndexColumn();
+    return this.getTableProperties().getIndexColumn();
   }
 
   boolean isIndexed() {
@@ -114,17 +125,18 @@ public class SpreadsheetUserTable {
     cell.rowNum = cellInfo.rowId;
     cell.row = getRowAtIndex(cellInfo.rowId);
     cell.elementKey = cellInfo.elementKey;
-    cell.displayText = cell.row.getDisplayTextOfData(context, cellInfo.elementKey, true);
+    ColumnProperties cp = getTableProperties().getColumnByElementKey(cellInfo.elementKey);
+    cell.displayText = cell.row.getDisplayTextOfData(context, cp.getColumnType(), cellInfo.elementKey, true);
     cell.value = cell.row.getRawDataOrMetadataByElementKey(cellInfo.elementKey);
     return cell;
   }
 
   public ColumnProperties getColumnByIndex(int headerCellNum) {
-    return table.getTableProperties().getColumnByElementKey(spreadsheetIndexToElementKey[headerCellNum]);
+    return getTableProperties().getColumnByElementKey(spreadsheetIndexToElementKey[headerCellNum]);
   }
 
   public ColumnProperties getColumnByElementKey(String elementKey) {
-    return table.getTableProperties().getColumnByElementKey(elementKey);
+    return getTableProperties().getColumnByElementKey(elementKey);
   }
 
   public int getWidth() {

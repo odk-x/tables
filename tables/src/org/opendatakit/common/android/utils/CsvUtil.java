@@ -27,19 +27,24 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.aggregate.odktables.rest.RFC4180CsvReader;
+import org.opendatakit.aggregate.odktables.rest.RFC4180CsvWriter;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
-import org.opendatakit.common.android.data.KeyValueStoreEntryType;
-import org.opendatakit.common.android.data.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.common.android.data.ElementDataType;
+import org.opendatakit.common.android.data.ElementType;
+import org.opendatakit.common.android.data.KeyValueStoreEntry;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
@@ -126,7 +131,7 @@ public class CsvUtil {
     columns.addAll(tp.getPersistedColumns());
 
     // And now add all remaining export columns
-    for (String colName : DbTable.getExportColumns()) {
+    for (String colName : ODKDatabaseUtils.getExportColumns()) {
       if (columns.contains(colName)) {
         continue;
       }
@@ -148,7 +153,7 @@ public class CsvUtil {
       }
 
       // getting data
-      DbTable dbt = DbTable.getDbTable(tp);
+      DbTable dbt = new DbTable(tp);
       String whereString = DataTableColumns.SAVEPOINT_TYPE + " IS NOT NULL AND (" +
             DataTableColumns.CONFLICT_TYPE + " IS NULL OR " +
             DataTableColumns.CONFLICT_TYPE + " = " +
@@ -218,7 +223,7 @@ public class CsvUtil {
    * @param propertiesCsv
    * @return
    */
-  public boolean writePropertiesCsv(TableProperties tp, File definitionCsv, File propertiesCsv) {
+  private boolean writePropertiesCsv(TableProperties tp, File definitionCsv, File propertiesCsv) {
     Log.i(TAG, "writePropertiesCsv: tableId: " + tp.getTableId());
 
     // writing metadata
@@ -283,11 +288,11 @@ public class CsvUtil {
        * Since the md5Hash of the file identifies identical properties,
        * ensure that the list of KVS entries is in alphabetical order.
        */
-      List<OdkTablesKeyValueStoreEntry> kvsEntries = tp.getMetaDataEntries();
-      Collections.sort(kvsEntries, new Comparator<OdkTablesKeyValueStoreEntry>(){
+      List<KeyValueStoreEntry> kvsEntries = tp.getMetaDataEntries();
+      Collections.sort(kvsEntries, new Comparator<KeyValueStoreEntry>(){
 
         @Override
-        public int compare(OdkTablesKeyValueStoreEntry lhs, OdkTablesKeyValueStoreEntry rhs) {
+        public int compare(KeyValueStoreEntry lhs, KeyValueStoreEntry rhs) {
           int outcome;
           if ( lhs.partition == null && rhs.partition == null ) {
             outcome = 0;
@@ -324,7 +329,7 @@ public class CsvUtil {
       cw.writeNext(kvsHeaders.toArray(new String[kvsHeaders.size()]));
       String[] kvsRow = new String[kvsHeaders.size()];
       for (int i = 0; i < kvsEntries.size(); i++) {
-        OdkTablesKeyValueStoreEntry entry = kvsEntries.get(i);
+        KeyValueStoreEntry entry = kvsEntries.get(i);
         kvsRow[0] = entry.partition;
         kvsRow[1] = entry.aspect;
         kvsRow[2] = entry.key;
@@ -346,16 +351,7 @@ public class CsvUtil {
     }
   }
 
-  private static class ColumnInfo {
-    String elementKey;
-    String displayName;
-    String elementName;
-    ColumnType elementType;
-    List<String> listOfStringElementKeys = new ArrayList<String>();
-    List<OdkTablesKeyValueStoreEntry> kvsEntries = new ArrayList<OdkTablesKeyValueStoreEntry>();
-  };
-
-  public int countUpToLastNonNullElement(String[] row) {
+  private int countUpToLastNonNullElement(String[] row) {
     for ( int i = row.length-1 ; i >= 0 ; --i ) {
       if ( row[i] != null ) {
         return (i+1);
@@ -384,7 +380,7 @@ public class CsvUtil {
     Log.i(TAG, "updateTablePropertiesFromCsv: tableId: " + tableId );
 
 
-    Map<String, ColumnInfo> columns = new HashMap<String, ColumnInfo>();
+    List<Column> columns = new ArrayList<Column>();
 
     // reading data
     File file = null;
@@ -406,32 +402,35 @@ public class CsvUtil {
       // get the first row
       row = cr.readNext();
       while ( row != null && countUpToLastNonNullElement(row) != 0 ) {
-        ColumnInfo ci = new ColumnInfo();
 
+        String elementKeyStr = null;
+        String elementNameStr = null;
+        String elementTypeStr = null;
+        String listChildElementKeysStr = null;
         int rowLength = countUpToLastNonNullElement(row);
         for ( int i = 0 ; i < rowLength ; ++i ) {
           if ( i >= colHeadersLength ) {
             throw new IllegalStateException("data beyond header row of ColumnDefinitions table");
           }
           if ( ColumnDefinitionsColumns.ELEMENT_KEY.equals(colHeaders[i]) ) {
-            ci.elementKey = row[i];
+            elementKeyStr = row[i];
           }
           if ( ColumnDefinitionsColumns.ELEMENT_NAME.equals(colHeaders[i]) ) {
-            ci.elementName = row[i];
+            elementNameStr = row[i];
           }
           if ( ColumnDefinitionsColumns.ELEMENT_TYPE.equals(colHeaders[i]) ) {
-            ci.elementType = ColumnType.valueOf(row[i]);
+            elementTypeStr = row[i];
           }
           if ( ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS.equals(colHeaders[i]) ) {
-            ci.listOfStringElementKeys = ODKFileUtils.mapper.readValue(row[i], ArrayList.class );
+            listChildElementKeysStr = row[i];
           }
         }
 
-        if ( ci.elementKey == null || ci.elementType == null ) {
+        if ( elementKeyStr == null || elementTypeStr == null ) {
           throw new IllegalStateException("ElementKey and ElementType must be specified");
         }
 
-        columns.put(ci.elementKey, ci);
+        columns.add(new Column( elementKeyStr, elementNameStr, elementTypeStr, listChildElementKeysStr));
 
         // get next row or blank to end...
         row = cr.readNext();
@@ -447,6 +446,10 @@ public class CsvUtil {
       } catch (IOException e) {
       }
 
+      List<ColumnDefinition> colDefns = ColumnDefinition.buildColumnDefinitions(columns);
+      Map<String, List<KeyValueStoreEntry>> colEntries = 
+          new TreeMap<String, List<KeyValueStoreEntry>>();
+
       file = new File(ODKFileUtils.getTablePropertiesCsvFile(appName, tableId));
       in = new FileInputStream(file);
       input = new InputStreamReader(in, CharEncoding.UTF_8);
@@ -456,11 +459,11 @@ public class CsvUtil {
       String[] kvsHeaders = cr.readNext();
       int kvsHeadersLength = countUpToLastNonNullElement(kvsHeaders);
       String displayName = null;
-      List<OdkTablesKeyValueStoreEntry> kvsEntries = new ArrayList<OdkTablesKeyValueStoreEntry>();
+      List<KeyValueStoreEntry> kvsEntries = new ArrayList<KeyValueStoreEntry>();
       // read the first row
       row = cr.readNext();
       while ( row != null && countUpToLastNonNullElement(row)  != 0 ) {
-        OdkTablesKeyValueStoreEntry kvsEntry = new OdkTablesKeyValueStoreEntry();
+        KeyValueStoreEntry kvsEntry = new KeyValueStoreEntry();
         kvsEntry.tableId = tableId;
         int rowLength = countUpToLastNonNullElement(row);
         for ( int i = 0 ; i < rowLength ; ++i ) {
@@ -483,16 +486,16 @@ public class CsvUtil {
         if ( ColumnProperties.KVS_PARTITION.equals(kvsEntry.partition) ) {
           // column-specific
           String column = kvsEntry.aspect;
-          ColumnInfo ci = columns.get(column);
+          List<KeyValueStoreEntry> kvList = colEntries.get(column);
+          if ( kvList == null ) {
+            kvList = new ArrayList<KeyValueStoreEntry>();
+            colEntries.put(column,  kvList);
+          }
+          ColumnDefinition ci = ColumnDefinition.find(colDefns, column);
           if ( ci == null ) {
             throw new IllegalStateException("Reference to non-existent column: " + column + " of tableId: " + tableId);
           }
-          // look for the displayName
-          if ( ColumnProperties.KEY_DISPLAY_NAME.equals(kvsEntry.key) ) {
-            ci.displayName = kvsEntry.value;
-          } else {
-            ci.kvsEntries.add(kvsEntry);
-          }
+          kvList.add(kvsEntry);
         } else {
           // not column-specific
           // see if we can find the displayName
@@ -518,81 +521,117 @@ public class CsvUtil {
       }
 
       TableProperties tp = TableProperties.refreshTablePropertiesForTable(context, appName, tableId);
-      if ( tp.getDbTableName() == null ) {
-        tp = null;
-      }
 
       if ( tp != null ) {
         // confirm that the column definitions are unchanged...
         if ( tp.getAllColumns().size() != columns.size() ) {
           throw new IllegalStateException("Unexpectedly found tableId with different column definitions that already exists!");
         }
-        for ( ColumnInfo ci : columns.values() ) {
-          ColumnProperties cp = tp.getColumnByElementKey(ci.elementKey);
+        for ( ColumnDefinition ci : colDefns ) {
+          ColumnProperties cp = tp.getColumnByElementKey(ci.getElementKey());
           if ( cp == null ) {
-            throw new IllegalStateException("Unexpectedly failed to match elementKey: " + ci.elementKey);
+            throw new IllegalStateException("Unexpectedly failed to match elementKey: " + ci.getElementKey());
           }
-          if ( !cp.getElementName().equals(ci.elementName) ) {
-            throw new IllegalStateException("Unexpected mis-match of elementName for elementKey: " + ci.elementKey);
+          if ( !cp.getElementName().equals(ci.getElementName()) ) {
+            throw new IllegalStateException("Unexpected mis-match of elementName for elementKey: " + ci.getElementKey());
           }
-          List<String> refList = cp.getListChildElementKeys();
+          List<ColumnDefinition> refList = cp.getChildren();
           if ( refList == null ) {
-            refList = new ArrayList<String>();
+            refList = new ArrayList<ColumnDefinition>();
           }
-          List<String> ciList = ci.listOfStringElementKeys;
-          if ( ciList == null ) {
-            ciList = new ArrayList<String>();
-          }
+          List<ColumnDefinition> ciList = ci.getChildren();
           if ( refList.size() != ciList.size() ) {
-            throw new IllegalStateException("Unexpected mis-match of listOfStringElementKeys for elementKey: " + ci.elementKey);
+            throw new IllegalStateException("Unexpected mis-match of listOfStringElementKeys for elementKey: " + ci.getElementKey());
           }
-          for ( int i = 0 ; i < refList.size() ; ++i ) {
-            if ( !refList.get(i).equals(ciList.get(i)) ) {
-              throw new IllegalStateException("Unexpected mis-match of listOfStringElementKeys[" + i + "] for elementKey: " + ci.elementKey);
+          for ( int i = 0 ; i < ciList.size() ; ++i ) {
+            if ( !refList.contains(ciList.get(i)) ) {
+              throw new IllegalStateException("Unexpected mis-match of listOfStringElementKeys[" + i + "] for elementKey: " + ci.getElementKey());
             }
           }
-          if ( cp.getColumnType() != ci.elementType ) {
-            throw new IllegalStateException("Unexpected mis-match of elementType for elementKey: " + ci.elementKey);
+          ElementType type = ElementType.parseElementType(ci.getElementType(), !ci.getChildren().isEmpty());
+          if ( !cp.getColumnType().equals(type) ) {
+            throw new IllegalStateException("Unexpected mis-match of elementType for elementKey: " + ci.getElementKey());
           }
         }
         // OK -- we have matching table definition
         // now just clear and update the properties...
         tp.addMetaDataEntries(kvsEntries, true);
-        for ( ColumnInfo ci : columns.values() ) {
-          ColumnProperties cp = tp.getColumnByElementKey(ci.elementKey);
+        for ( ColumnDefinition ci : colDefns) {
+          ColumnProperties cp = tp.getColumnByElementKey(ci.getElementKey());
           // put the displayName into the KVS
-          OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
-          entry.tableId = tableId;
-          entry.partition = ColumnProperties.KVS_PARTITION;
-          entry.aspect = ci.elementKey;
-          entry.key = ColumnProperties.KEY_DISPLAY_NAME;
-          entry.type = KeyValueStoreEntryType.OBJECT.name();
-          entry.value = ci.displayName;
-          ci.kvsEntries.add(entry);
-          cp.addMetaDataEntries(ci.kvsEntries);
+          List<KeyValueStoreEntry> kvsList = colEntries.get(ci.getElementKey());
+          if ( kvsList == null ) {
+            kvsList = new ArrayList<KeyValueStoreEntry>();
+            colEntries.put(ci.getElementKey(), kvsList);
+          }
+          KeyValueStoreEntry entry = null;
+          for ( KeyValueStoreEntry e : kvsList ) {
+            if ( e.partition.equals(ColumnProperties.KVS_PARTITION) &&
+                 e.aspect.equals(ci.getElementKey()) &&
+                 e.key.equals(ColumnProperties.KEY_DISPLAY_NAME) ) {
+              entry = e;
+              break;
+            }
+          }
+          if ( entry == null) {
+            entry = new KeyValueStoreEntry();
+            entry.tableId = tableId;
+            entry.partition = ColumnProperties.KVS_PARTITION;
+            entry.aspect = ci.getElementKey();
+            entry.key = ColumnProperties.KEY_DISPLAY_NAME;
+            entry.type = ElementDataType.object.name();
+            entry.value = ODKFileUtils.mapper.writeValueAsString(ci.getElementKey());
+            kvsList.add(entry);
+          }
+          cp.addMetaDataEntries(kvsList);
         }
       } else {
         tp = TableProperties.addTable(context, appName,
             tableId, (displayName == null ? tableId : displayName), tableId);
 
+        for ( ColumnDefinition ci : colDefns ) {
+          // put the displayName into the KVS if not supplied
+          List<KeyValueStoreEntry> kvsList = colEntries.get(ci.getElementKey());
+          if ( kvsList == null ) {
+            kvsList = new ArrayList<KeyValueStoreEntry>();
+            colEntries.put(ci.getElementKey(), kvsList);
+          }
+          KeyValueStoreEntry entry = null;
+          for ( KeyValueStoreEntry e : kvsList ) {
+            if ( e.partition.equals(ColumnProperties.KVS_PARTITION) &&
+                 e.aspect.equals(ci.getElementKey()) &&
+                 e.key.equals(ColumnProperties.KEY_DISPLAY_NAME) ) {
+              entry = e;
+              break;
+            }
+          }
+          if ( entry == null) {
+            entry = new KeyValueStoreEntry();
+            entry.tableId = tableId;
+            entry.partition = ColumnProperties.KVS_PARTITION;
+            entry.aspect = ci.getElementKey();
+            entry.key = ColumnProperties.KEY_DISPLAY_NAME;
+            entry.type = ElementDataType.object.name();
+            entry.value = ODKFileUtils.mapper.writeValueAsString(ci.getElementKey());
+            kvsList.add(entry);
+          }
+        }
+
         Map<String, ColumnProperties> defns = new HashMap<String, ColumnProperties>();
-        for ( ColumnInfo ci : columns.values() ) {
-          ColumnProperties cp = tp.createNoPersistColumn(ci.displayName, ci.elementKey, ci.elementName,
-              ci.elementType, ci.listOfStringElementKeys);
+        for ( ColumnDefinition ci : colDefns ) {
+          ColumnProperties cp = tp.createNoPersistColumn(ci);
           defns.put(cp.getElementKey(), cp);
         }
         tp.createColumnsForTable(defns);
         // we have created the table...
-        for ( ColumnInfo ci : columns.values() ) {
-          ColumnProperties cp = tp.getColumnByElementKey(ci.elementKey);
-          cp.addMetaDataEntries(ci.kvsEntries);
+        for ( ColumnDefinition ci : colDefns ) {
+          List<KeyValueStoreEntry> kvsList = colEntries.get(ci.getElementKey());
+          ColumnProperties cp = tp.getColumnByElementKey(ci.getElementKey());
+          cp.addMetaDataEntries(kvsList);
         }
         tp.addMetaDataEntries(kvsEntries, false);
       }
       tp = TableProperties.refreshTablePropertiesForTable(context, appName, tableId);
-      if ( tp.getDbTableName() == null ) {
-        tp = null;
-      }
       return tp;
     } catch (IOException e) {
       return null;
@@ -627,9 +666,6 @@ public class CsvUtil {
   public boolean importSeparable(ImportListener importListener, String tableId, String fileQualifier, boolean createIfNotPresent) {
 
     TableProperties tp = TableProperties.refreshTablePropertiesForTable(context, appName, tableId);
-    if ( tp.getDbTableName() == null ) {
-      tp = null;
-    }
 
     if ( tp == null ) {
       if ( createIfNotPresent ) {
@@ -659,7 +695,7 @@ public class CsvUtil {
       // don't have to worry about quotes in elementKeys...
       String[] columnsInFile = cr.readNext();
       int columnsInFileLength = countUpToLastNonNullElement(columnsInFile);
-      DbTable dbTable = DbTable.getDbTable(tp);
+      DbTable dbTable = new DbTable(tp);
 
       String v_id;
       String v_form_id;

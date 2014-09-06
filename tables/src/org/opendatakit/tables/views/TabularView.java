@@ -699,7 +699,7 @@ class TabularView extends View {
                    this.type == TableType.MAIN_DATA) {
 
           ColumnProperties cp = this.mTable.getColumnByIndex(userDataIndex[j]);
-          datum = theRow.getDisplayTextOfData(this.getContext(), cp.getElementKey(), true);          
+          datum = theRow.getDisplayTextOfData(this.getContext(), cp.getColumnType(), cp.getElementKey(), true);          
         } else {
           Log.e(TAG, "unrecognized table type: " + this.type.name());
           datum = null;

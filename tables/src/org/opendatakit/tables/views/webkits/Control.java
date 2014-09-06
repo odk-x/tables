@@ -18,8 +18,6 @@ import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utils.NameUtil;
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
@@ -34,18 +32,13 @@ import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.WebViewUtil;
 
-import android.app.AlertDialog;
 import android.content.ContentValues;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.WindowManager;
-import android.widget.EditText;
-import android.widget.Toast;
 
 public class Control {
 
@@ -927,111 +920,6 @@ public class Control {
     return true;
   }
 
-  /**
-   * Create an alert that will allow for a new table name. This might be to
-   * rename an existing table, if isNewTable false, or it could be a new
-   * table, if isNewTable is true.
-   * <p>
-   * This method is based on {@link TableManager.alertForNewTableName}. The
-   * parameters are the same for the sake of consistency.
-   * <p>
-   * As this method does not access the javascript, the caller is responsible
-   * for refreshing the displayed information.
-   *
-   * @param isNewTable
-   * @param tp
-   * @param givenTableName
-   */
-  public void alertForNewTableName(
-      final boolean isNewTable,
-      final TableProperties tp,
-      String givenTableName) {
-    Log.d(TAG, "alertForNewTableName called");
-    Log.d(TAG, "isNewTable: " + Boolean.toString(isNewTable));
-    Log.d(TAG, "tp: " + tp);
-    Log.d(TAG, "givenTableName: " + givenTableName);
-    AlertDialog newTableAlert;
-    AlertDialog.Builder alert = new AlertDialog.Builder(mActivity);
-    alert.setTitle(mActivity.getString(R.string.name_of_new_table));
-    // An edit text for getting user input.
-    final EditText input = new EditText(mActivity);
-    alert.setView(input);
-    if (givenTableName != null) {
-      input.setText(givenTableName);
-    }
-    // OK Action: create a new table.
-    alert.setPositiveButton(mActivity.getString(R.string.ok),
-        new DialogInterface.OnClickListener() {
-
-          @Override
-          public void onClick(DialogInterface dialog, int which) {
-            String newTableName = input.getText().toString().trim();
-            if (newTableName == null || newTableName.equals("")) {
-              Toast.makeText(
-                  mActivity,
-                  mActivity.getString(R.string.error_table_name_empty),
-                  Toast.LENGTH_LONG).show();
-            } else {
-              if (isNewTable) {
-                // TODO: prompt for this!
-                String tableId = NameUtil.createUniqueTableId(
-                    Control.this.mActivity,
-                    Control.this.mAppName,
-                    newTableName);
-                addTable(newTableName, tableId);
-              } else {
-                SQLiteDatabase db = tp.getWritableDatabase();
-                try {
-                  db.beginTransaction();
-                  tp.setDisplayName(db, newTableName);
-                  db.setTransactionSuccessful();
-                } catch ( Exception e ) {
-                  e.printStackTrace();
-                  Log.e(TAG, "Unable to change display name: " + e.toString());
-                  Toast.makeText(
-                      Control.this.mActivity,
-                      "Unable to change display name",
-                      Toast.LENGTH_LONG).show();
-                } finally {
-                  db.endTransaction();
-                  db.close();
-                }
-              }
-            }
-          }
-        });
-
-    alert.setNegativeButton(
-        R.string.cancel,
-        new DialogInterface.OnClickListener() {
-
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        // Cancel it, do nothing.
-      }
-    });
-    newTableAlert = alert.create();
-    newTableAlert.getWindow().setSoftInputMode(
-        WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-    newTableAlert.show();
-  }
-
-  private void addTable(String tableName, String tableId) {
-    // TODO: if this avenue to create a table remains, we need to also
-    // prompt them for a tableId name.
-    String dbTableName = NameUtil.createUniqueDbTableName(
-        this.mActivity,
-        this.mAppName,
-        tableName);
-    @SuppressWarnings("unused")
-    TableProperties tp = TableProperties.addTable(
-        this.mActivity,
-        this.mAppName,
-        dbTableName,
-        tableName,
-        tableId);
-  }
-
   private TableData queryForTableData(
       String tableId,
       String sqlWhereClause,
@@ -1047,7 +935,7 @@ public class Control {
           "request for table with tableId [" + tableId + "] cannot be found.");
       return null;
     }
-    DbTable dbTable = DbTable.getDbTable(tp);
+    DbTable dbTable = new DbTable(tp);
     UserTable userTable = dbTable.rawSqlQuery(
         sqlWhereClause,
         sqlSelectionArgs,
@@ -1055,7 +943,7 @@ public class Control {
         sqlHaving,
         sqlOrderByElementKey,
         sqlOrderByDirection);
-    TableData tableData = new TableData(this.mActivity, userTable);
+    TableData tableData = new TableData(userTable);
     return tableData;
   }
 

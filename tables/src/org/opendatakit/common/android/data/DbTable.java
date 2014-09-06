@@ -17,10 +17,7 @@ package org.opendatakit.common.android.data;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -72,80 +69,6 @@ public class DbTable {
        DataTableColumns.ID + " = ?";
 
 
-    /*
-     * These are the columns that are present in any row in the database.
-     * Each row should have these in addition to the user-defined columns.
-     * If you add a column here you have to be sure to also add it in the
-     * create table statement, which can't be programmatically created easily.
-     */
-    private static final List<String> ADMIN_COLUMNS;
-
-    /**
-     * These are the columns that should be exported
-     */
-    private static final List<String> EXPORT_COLUMNS;
-
-    /*
-     * These are the columns that we want to include in sync rows to sync up
-     * to the server. This is a work in progress that is being added later, so
-     * I can't promise that there isn't some magic happening elsewhere that I
-     * am missing. Hopefully this will be exhaustive, however. It is a map of
-     * column name to column type that we will be putting into a row for
-     * SyncProcessor. (At least that is the obvious place I'm making this for).
-     */
-    private static final Map<String, ColumnType> COLUMNS_TO_SYNC;
-
-    static {
-      ArrayList<String> adminColumns = new ArrayList<String>();
-      adminColumns.add(DataTableColumns.ID);
-      adminColumns.add(DataTableColumns.ROW_ETAG);
-      adminColumns.add(DataTableColumns.SYNC_STATE); // not exportable
-      adminColumns.add(DataTableColumns.CONFLICT_TYPE); // not exportable
-      adminColumns.add(DataTableColumns.FILTER_TYPE);
-      adminColumns.add(DataTableColumns.FILTER_VALUE);
-      adminColumns.add(DataTableColumns.FORM_ID);
-      adminColumns.add(DataTableColumns.LOCALE);
-      adminColumns.add(DataTableColumns.SAVEPOINT_TYPE);
-      adminColumns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-      adminColumns.add(DataTableColumns.SAVEPOINT_CREATOR);
-      ADMIN_COLUMNS = Collections.unmodifiableList(adminColumns);
-
-      ArrayList<String> exportColumns = new ArrayList<String>();
-      exportColumns.add(DataTableColumns.ID);
-      exportColumns.add(DataTableColumns.ROW_ETAG);
-      exportColumns.add(DataTableColumns.FILTER_TYPE);
-      exportColumns.add(DataTableColumns.FILTER_VALUE);
-      exportColumns.add(DataTableColumns.FORM_ID);
-      exportColumns.add(DataTableColumns.LOCALE);
-      exportColumns.add(DataTableColumns.SAVEPOINT_TYPE);
-      exportColumns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-      exportColumns.add(DataTableColumns.SAVEPOINT_CREATOR);
-      EXPORT_COLUMNS = Collections.unmodifiableList(exportColumns);
-
-      // put the columns in to the to-sync map.
-      COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
-      COLUMNS_TO_SYNC.put(DataTableColumns.FILTER_TYPE, ColumnType.STRING);
-      COLUMNS_TO_SYNC.put(DataTableColumns.FILTER_VALUE, ColumnType.STRING);
-      COLUMNS_TO_SYNC.put(DataTableColumns.FORM_ID, ColumnType.STRING);
-      COLUMNS_TO_SYNC.put(DataTableColumns.LOCALE, ColumnType.STRING);
-      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_TYPE, ColumnType.STRING);
-      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_TIMESTAMP, ColumnType.STRING);
-      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_CREATOR, ColumnType.STRING);
-    }
-
-    /**
-     * Return an unmodifiable list of the admin columns that must be present
-     * in every database table.
-     * @return
-     */
-    public static List<String> getAdminColumns() {
-      return ADMIN_COLUMNS;
-    }
-
-    public static List<String> getExportColumns() {
-      return EXPORT_COLUMNS;
-    }
-
     public static final String DB_CSV_COLUMN_LIST =
         DataTableColumns.ID
         + ", " + DataTableColumns.ROW_ETAG
@@ -162,11 +85,7 @@ public class DbTable {
 
     private final TableProperties tp;
 
-    public static DbTable getDbTable(TableProperties tp) {
-        return new DbTable(tp);
-    }
-
-    private DbTable(TableProperties tp) {
+    public DbTable(TableProperties tp) {
         this.tp = tp;
     }
 
@@ -183,15 +102,16 @@ public class DbTable {
         for (String elementKey : tp.getPersistedColumns()) {
             ColumnProperties cp = tp.getColumnByElementKey(elementKey);
             colListBuilder.append(", " + elementKey);
-            if (cp.getColumnType() == ColumnType.NUMBER) {
+            ElementDataType type = cp.getColumnType().getDataType();
+            if (type == ElementDataType.number) {
                 colListBuilder.append(" REAL");
-            } else if (cp.getColumnType() == ColumnType.INTEGER) {
+            } else if (type == ElementDataType.integer) {
                 colListBuilder.append(" INTEGER");
             } else {
                 colListBuilder.append(" TEXT");
             }
         }
-        String toExecute = "CREATE TABLE " + tp.getDbTableName() + "("
+        String toExecute = "CREATE TABLE " + tp.getTableId() + "("
             + DataTableColumns.ID + " TEXT NOT NULL, "
             + DataTableColumns.ROW_ETAG + " TEXT NULL, "
             + DataTableColumns.SYNC_STATE + " TEXT NOT NULL, "
@@ -249,7 +169,7 @@ public class DbTable {
         Cursor c = null;
         try {
            db = tp.getReadableDatabase();
-           c = db.query(tp.getDbTableName(), null,
+           c = db.query(tp.getTableId(), null,
                    sqlQuery,
                    selectionArgs, groupByClause, havingClause, orderByClause);
            UserTable table = buildTable(c, tp, sqlQuery, selectionArgs,
@@ -281,7 +201,7 @@ public class DbTable {
       Cursor c = null;
       try {
         StringBuilder s = new StringBuilder();
-        s.append("SELECT * FROM ").append(this.tp.getDbTableName());
+        s.append("SELECT * FROM ").append(this.tp.getTableId());
         if ( whereClause != null && whereClause.length() != 0 ) {
           s.append(" WHERE ").append(whereClause);
         }
@@ -340,7 +260,7 @@ public class DbTable {
       try {
         StringBuilder s = new StringBuilder();
         s.append("SELECT ").append(DataTableColumns.SYNC_STATE)
-         .append(" FROM ").append(this.tp.getDbTableName())
+         .append(" FROM ").append(this.tp.getTableId())
          .append(" WHERE ").append(SQL_WHERE_FOR_SINGLE_ROW);
         String sqlQuery = s.toString();
         db = tp.getReadableDatabase();
@@ -418,7 +338,8 @@ public class DbTable {
     private UserTable buildTable(Cursor c, TableProperties tp,
         String whereClause, String[] selectionArgs, String[] groupByArgs, String havingClause,
         String orderByElementKey, String orderByDirection) {
-      return new UserTable(c, tp, whereClause, selectionArgs,
+      return new UserTable(c, tp.getAppName(), tp.getTableId(), 
+          tp.getPersistedColumns(), whereClause, selectionArgs,
           groupByArgs, havingClause, orderByElementKey, orderByDirection);
     }
 
@@ -506,7 +427,7 @@ public class DbTable {
         try {
           db.beginTransaction();
 	       values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
-	       long result = db.insertOrThrow(tp.getDbTableName(), null, values);
+	       long result = db.insertOrThrow(tp.getTableId(), null, values);
 	       if ( result != -1 ) {
 	         db.setTransactionSuccessful();
 	       }
@@ -533,7 +454,7 @@ public class DbTable {
 
       // remove server conflicting rows
       b.setLength(0);
-      b.append("DELETE FROM ").append(tp.getDbTableName()).append(" WHERE ").append(DataTableColumns.SYNC_STATE)
+      b.append("DELETE FROM ").append(tp.getTableId()).append(" WHERE ").append(DataTableColumns.SYNC_STATE)
       .append(" =? AND ").append(DataTableColumns.CONFLICT_TYPE).append(" IN (?, ?)");
 
       String sqlConflictingServer = b.toString();
@@ -545,7 +466,7 @@ public class DbTable {
 
       // update local delete conflicts to deletes
       b.setLength(0);
-      b.append("UPDATE ").append(tp.getDbTableName()).append(" SET ").append(DataTableColumns.SYNC_STATE)
+      b.append("UPDATE ").append(tp.getTableId()).append(" SET ").append(DataTableColumns.SYNC_STATE)
       .append(" =?, ").append(DataTableColumns.CONFLICT_TYPE).append(" = null WHERE ")
       .append(DataTableColumns.CONFLICT_TYPE).append(" = ?");
 
@@ -564,7 +485,7 @@ public class DbTable {
 
       // reset all 'rest' rows to 'insert'
       b.setLength(0);
-      b.append("UPDATE ").append(tp.getDbTableName()).append(" SET ").append(DataTableColumns.SYNC_STATE)
+      b.append("UPDATE ").append(tp.getTableId()).append(" SET ").append(DataTableColumns.SYNC_STATE)
       .append(" =? WHERE ").append(DataTableColumns.SYNC_STATE).append(" =?");
 
       String sqlRest = b.toString();
@@ -704,14 +625,16 @@ public class DbTable {
           ColumnProperties cp = tp.getColumnByElementKey(key);
           try {
             Map<String,Object> struct = ODKFileUtils.mapper.readValue(json, Map.class);
-            for ( String subkey : cp.getListChildElementKeys() ) {
+            for ( ColumnDefinition child : cp.getChildren() ) {
+              String subkey = child.getElementKey();
               ColumnProperties subcp = tp.getColumnByElementKey(subkey);
               if ( subcp.isUnitOfRetention() ) {
-                if ( subcp.getColumnType().name().equals("integer") ) {
+                ElementDataType type = subcp.getColumnType().getDataType();
+                if ( type == ElementDataType.integer ) {
                   values.put(subkey, (Integer) struct.get(subcp.getElementName()));
-                } else if ( subcp.getColumnType().name().equals("number") ) {
+                } else if ( type == ElementDataType.number ) {
                   values.put(subkey, (Double) struct.get(subcp.getElementName()));
-                } else if ( subcp.getColumnType().name().equals("boolean") ) {
+                } else if ( type == ElementDataType.bool ) {
                   values.put(subkey, ((Boolean) struct.get(subcp.getElementName())) ? 1 : 0);
                 } else {
                   values.put(subkey, (String) struct.get(subcp.getElementName()));
@@ -749,7 +672,7 @@ public class DbTable {
         try {
           db.beginTransaction();
 	       values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
-	       db.update(tp.getDbTableName(), values, where, whereArgs);
+	       db.update(tp.getTableId(), values, where, whereArgs);
 	       db.setTransactionSuccessful();
         } finally {
           db.endTransaction();
@@ -778,10 +701,10 @@ public class DbTable {
         SQLiteDatabase db = tp.getWritableDatabase();
         try {
           db.beginTransaction();
-	        db.delete(tp.getDbTableName(), deleteSql, deleteWhereArgs);
+	        db.delete(tp.getTableId(), deleteSql, deleteWhereArgs);
 	        updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
 	        updateValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
-	        db.update(tp.getDbTableName(), updateValues, updateWhereSql,
+	        db.update(tp.getTableId(), updateValues, updateWhereSql,
 	                updateWhereArgs);
 	        db.setTransactionSuccessful();
         } finally {
@@ -807,7 +730,7 @@ public class DbTable {
           db.beginTransaction();
           values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
           values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
-	       db.update(tp.getDbTableName(), values, DataTableColumns.ID + " = ?", whereArgs);
+	       db.update(tp.getTableId(), values, DataTableColumns.ID + " = ?", whereArgs);
 	       db.setTransactionSuccessful();
         } finally {
           db.endTransaction();
@@ -842,7 +765,7 @@ public class DbTable {
       SQLiteDatabase db = tp.getWritableDatabase();
       try {
          db.beginTransaction();
-      	db.delete(tp.getDbTableName(), whereClause, whereArgs);
+      	db.delete(tp.getTableId(), whereClause, whereArgs);
       	db.setTransactionSuccessful();
       } finally {
         db.endTransaction();
@@ -860,7 +783,7 @@ public class DbTable {
 		Cursor c = null;
 		try {
 	      db = tp.getReadableDatabase();
-	      c = db.query(tp.getDbTableName(), new String[] { DataTableColumns.SYNC_STATE }, DataTableColumns.ID + " = ?",
+	      c = db.query(tp.getTableId(), new String[] { DataTableColumns.SYNC_STATE }, DataTableColumns.ID + " = ?",
 	          new String[] { rowId }, null, null, null);
 	      if (c.moveToFirst()) {
 	        int syncStateIndex = c.getColumnIndex(DataTableColumns.SYNC_STATE);

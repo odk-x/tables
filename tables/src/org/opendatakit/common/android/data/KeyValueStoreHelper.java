@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.common.android.utilities.DataHelper;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -111,14 +112,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private Integer getInteger(String aspect, String key) {
-    OdkTablesKeyValueStoreEntry entry = getEntry(aspect, key);
+    KeyValueStoreEntry entry = getEntry(aspect, key);
     if (entry == null) {
       return null;
     }
-    if (!entry.type.equals(KeyValueStoreEntryType.INTEGER.getLabel())) {
+    if (!entry.type.equals(ElementDataType.integer.name())) {
       throw new IllegalArgumentException("requested int entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
-          "not of type: " + KeyValueStoreEntryType.INTEGER.getLabel());
+          "not of type: " + ElementDataType.integer.name());
     }
     return Integer.parseInt(entry.value);
   }
@@ -129,14 +130,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private ArrayList<Object> getArray(String aspect, String key) {
-    OdkTablesKeyValueStoreEntry entry = getEntry(aspect, key);
+    KeyValueStoreEntry entry = getEntry(aspect, key);
     if (entry == null) {
       return null;
     }
-    if (!entry.type.equals(KeyValueStoreEntryType.ARRAY.getLabel())) {
+    if (!entry.type.equals(ElementDataType.array.name())) {
       throw new IllegalArgumentException("requested list entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
-          "not of type: " + KeyValueStoreEntryType.ARRAY.getLabel());
+          "not of type: " + ElementDataType.array.name());
     }
     ArrayList<Object> result = null;
     try {
@@ -160,14 +161,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private String getString(String aspect, String key) {
-    OdkTablesKeyValueStoreEntry entry = getEntry(aspect, key);
+    KeyValueStoreEntry entry = getEntry(aspect, key);
     if (entry == null) {
       return null;
     }
-    if (!entry.type.equals(KeyValueStoreEntryType.STRING.getLabel())) {
+    if (!entry.type.equals(ElementDataType.string.name())) {
       throw new IllegalArgumentException("requested string entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
-          "not of type: " + KeyValueStoreEntryType.STRING.getLabel());
+          "not of type: " + ElementDataType.string.name());
     }
     return entry.value;
   }
@@ -178,14 +179,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private String getObject(String aspect, String key) {
-    OdkTablesKeyValueStoreEntry entry = getEntry(aspect, key);
+    KeyValueStoreEntry entry = getEntry(aspect, key);
     if (entry == null) {
       return null;
     }
-    if (!entry.type.equals(KeyValueStoreEntryType.OBJECT.getLabel())) {
+    if (!entry.type.equals(ElementDataType.object.name())) {
       throw new IllegalArgumentException("requested object entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
-          "not of type: " + KeyValueStoreEntryType.OBJECT.getLabel());
+          "not of type: " + ElementDataType.object.name());
     }
     return entry.value;
   }
@@ -196,14 +197,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private Boolean getBoolean(String aspect, String key) {
-    OdkTablesKeyValueStoreEntry entry = getEntry(aspect, key);
+    KeyValueStoreEntry entry = getEntry(aspect, key);
     if (entry == null) {
       return null;
     }
-    if (!entry.type.equals(KeyValueStoreEntryType.BOOLEAN.getLabel())) {
+    if (!entry.type.equals(ElementDataType.bool.name())) {
       throw new IllegalArgumentException("requested boolean entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
-          "not of type: " + KeyValueStoreEntryType.BOOLEAN.getLabel());
+          "not of type: " + ElementDataType.bool.name());
     }
     return DataHelper.intToBool(Integer.parseInt(entry.value));
   }
@@ -214,14 +215,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private Double getNumber(String aspect, String key) {
-    OdkTablesKeyValueStoreEntry entry = getEntry(aspect, key);
+    KeyValueStoreEntry entry = getEntry(aspect, key);
     if (entry == null) {
       return null;
     }
-    if (!entry.type.equals(KeyValueStoreEntryType.NUMBER.getLabel())) {
+    if (!entry.type.equals(ElementDataType.number.name())) {
       throw new IllegalArgumentException("requested number entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
-          "not of type: " + KeyValueStoreEntryType.NUMBER.getLabel());
+          "not of type: " + ElementDataType.number.name());
     }
     return Double.parseDouble(entry.value);
   }
@@ -236,7 +237,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     try {
       db.beginTransaction();
       kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          KeyValueStoreEntryType.INTEGER.getLabel(), Integer.toString(value));
+          ElementDataType.integer.name(), Integer.toString(value));
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -254,7 +255,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     try {
       db.beginTransaction();
       kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          KeyValueStoreEntryType.NUMBER.getLabel(), Double.toString(value));
+          ElementDataType.number.name(), Double.toString(value));
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -272,7 +273,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     try {
       db.beginTransaction();
       kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          KeyValueStoreEntryType.OBJECT.getLabel(), jsonOfObject);
+          ElementDataType.object.name(), jsonOfObject);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -296,7 +297,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     try {
       db.beginTransaction();
       kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-        KeyValueStoreEntryType.BOOLEAN.getLabel(),
+          ElementDataType.bool.name(),
         Integer.toString(DataHelper.boolToInt(value)));
       db.setTransactionSuccessful();
     } finally {
@@ -321,7 +322,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     try {
       db.beginTransaction();
       kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          KeyValueStoreEntryType.STRING.getLabel(), value);
+          ElementDataType.string.name(), value);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -350,7 +351,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    */
   public void setStringEntry(SQLiteDatabase db, String aspect, String key, String value) {
 	    kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-	            KeyValueStoreEntryType.STRING.getLabel(), value);
+	            ElementDataType.string.name(), value);
   }
 
   @Override
@@ -388,7 +389,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     try {
       db.beginTransaction();
       kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          KeyValueStoreEntryType.ARRAY.getLabel(), entryValue);
+          ElementDataType.array.name(), entryValue);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -421,7 +422,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public OdkTablesKeyValueStoreEntry getEntry(String key) {
+  public KeyValueStoreEntry getEntry(String key) {
     return getEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key);
   }
 
@@ -435,13 +436,13 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param key
    * @return
    */
-  private OdkTablesKeyValueStoreEntry getEntry(String aspect, String key) {
+  private KeyValueStoreEntry getEntry(String aspect, String key) {
     List<String> keyList = new ArrayList<String>();
     keyList.add(key);
     SQLiteDatabase db = null;
     try {
       db = tp.getReadableDatabase();
-      List<OdkTablesKeyValueStoreEntry> entries =
+      List<KeyValueStoreEntry> entries =
           kvs.getEntriesForKeys(db, this.partition, aspect, keyList);
       // Do some sanity checking. There should only ever be one entry per key.
       if (entries.size() > 1) {
@@ -545,7 +546,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     }
 
     @Override
-    public OdkTablesKeyValueStoreEntry getEntry(String key) {
+    public KeyValueStoreEntry getEntry(String key) {
       return KeyValueStoreHelper.this.getEntry(aspect, key);
     }
 

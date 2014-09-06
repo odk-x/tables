@@ -18,7 +18,6 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.ColumnType;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;
@@ -26,74 +25,69 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 
-
 public class CellValueView {
-    
-    public static CellEditView getCellEditView(Context context,
-            ColumnProperties cp, String value) {
-    	
-        if ( cp.getColumnType() == ColumnType.MC_OPTIONS ) {
-            return new MultipleChoiceEditView(context, cp, value);
-        } else {
-            return new DefaultEditView(context, value);
-        }
+
+  public static CellEditView getCellEditView(Context context, ColumnProperties cp, String value) {
+
+    if (cp.getDisplayChoicesList() != null) {
+      return new MultipleChoiceEditView(context, cp, value);
+    } else {
+      return new DefaultEditView(context, value);
     }
-    
-    public static abstract class CellEditView extends LinearLayout {
-        
-        private CellEditView(Context context) {
-            super(context);
-        }
-        
-        public abstract String getValue();
+  }
+
+  public static abstract class CellEditView extends LinearLayout {
+
+    private CellEditView(Context context) {
+      super(context);
     }
-    
-    private static class MultipleChoiceEditView extends CellEditView {
-        
-        private final Spinner spinner;
-        
-        public MultipleChoiceEditView(Context context, ColumnProperties cp,
-                String value) {
-            super(context);
-            ArrayList<String> opts = cp.getDisplayChoicesList();
-            int selection = -1;
-            for (int i = 0; i < opts.size(); i++) {
-                if (opts.get(i).equals(value)) {
-                    selection = i;
-                    break;
-                }
-            }
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
-                    android.R.layout.simple_spinner_item,
-                    cp.getDisplayChoicesList());
-            adapter.setDropDownViewResource(
-                    android.R.layout.simple_spinner_dropdown_item);
-            spinner = new Spinner(context);
-            spinner.setAdapter(adapter);
-            if (selection != -1) {
-                spinner.setSelection(selection);
-            }
-            addView(spinner);
+
+    public abstract String getValue();
+  }
+
+  private static class MultipleChoiceEditView extends CellEditView {
+
+    private final Spinner spinner;
+
+    public MultipleChoiceEditView(Context context, ColumnProperties cp, String value) {
+      super(context);
+      ArrayList<String> opts = cp.getDisplayChoicesList();
+      int selection = -1;
+      for (int i = 0; i < opts.size(); i++) {
+        if (opts.get(i).equals(value)) {
+          selection = i;
+          break;
         }
-        
-        public String getValue() {
-            return (String) spinner.getSelectedItem();
-        }
+      }
+      ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
+          android.R.layout.simple_spinner_item, cp.getDisplayChoicesList());
+      adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+      spinner = new Spinner(context);
+      spinner.setAdapter(adapter);
+      if (selection != -1) {
+        spinner.setSelection(selection);
+      }
+      addView(spinner);
     }
-    
-    private static class DefaultEditView extends CellEditView {
-        
-        private final EditText editText;
-        
-        public DefaultEditView(Context context, String value) {
-            super(context);
-            editText = new EditText(context);
-            editText.setText(value);
-            addView(editText);
-        }
-        
-        public String getValue() {
-            return editText.getText().toString();
-        }
+
+    public String getValue() {
+      return (String) spinner.getSelectedItem();
     }
+  }
+
+  private static class DefaultEditView extends CellEditView {
+
+    private final EditText editText;
+
+    public DefaultEditView(Context context, String value) {
+      super(context);
+      editText = new EditText(context);
+      editText.setText(value);
+      addView(editText);
+    }
+
+    public String getValue() {
+      return editText.getText().toString();
+    }
+  }
 }

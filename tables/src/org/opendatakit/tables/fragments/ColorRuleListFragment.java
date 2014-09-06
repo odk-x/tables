@@ -6,7 +6,7 @@ import java.util.List;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.common.android.utils.ColorRuleUtil;
+import org.opendatakit.common.android.utilities.ColorRuleUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.IntentUtil;

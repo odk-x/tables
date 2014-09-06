@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 
 import android.util.Log;
 
@@ -297,7 +298,27 @@ public class ColorRuleGroup {
     public ColorGuide getColorGuide(Row row) {
       for (int i = 0; i < ruleList.size(); i++) {
         ColorRule cr = ruleList.get(i);
-        if (cr.checkMatch(tp, row)) {
+        // First get the data about the column. It is possible that we are trying
+        // to match a metadata column, in which case there will be no
+        // ColumnProperties object. At this point all such metadata elementKeys
+        // must not begin with an underscore, whereas all user defined columns
+        // will, so we'll also try to do a helpful check in case this invariant
+        // changes in the future.
+        String elementKey = cr.getColumnElementKey();
+        ColumnProperties cp = tp.getColumnByElementKey(cr.getColumnElementKey());
+        ElementDataType type;
+        if (cp == null) {
+          // Was likely a metadata column.
+          if (!ODKDatabaseUtils.getAdminColumns().contains(elementKey)) {
+            throw new IllegalArgumentException("element key passed to "
+                + "ColorRule#checkMatch didn't have a mapping and was "
+                + "not a metadata elementKey: " + elementKey);
+          }
+          type = ElementDataType.string;
+        } else {
+          type = cp.getColumnType().getDataType();
+        }
+        if (cr.checkMatch(type, row)) {
           return new ColorGuide(cr.getForeground(), cr.getBackground());
         }
       }

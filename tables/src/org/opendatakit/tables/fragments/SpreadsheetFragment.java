@@ -13,7 +13,7 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.utils.DataUtil;
+import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -22,6 +22,7 @@ import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.ParseUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.views.CellInfo;
 import org.opendatakit.tables.views.CellValueView;
@@ -282,7 +283,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   }
 
   private void deleteRow(String rowId) {
-    DbTable dbTable = DbTable.getDbTable(getTableProperties());
+    DbTable dbTable = new DbTable(getTableProperties());
     dbTable.markDeleted(rowId);
   }
 
@@ -447,7 +448,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN, ContextMenu.NONE, "View Collection");
       mi.setIcon(R.drawable.view);
     }
-    String viewString = row.getDisplayTextOfData(this.getActivity(), cellInfo.elementKey, true);
+    String viewString = row.getDisplayTextOfData(this.getActivity(), cp.getColumnType(), cellInfo.elementKey, true);
     // TODO: display value and use edit icon...
     mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE, getString(R.string.edit_cell, viewString));
     mi.setIcon(R.drawable.ic_action_edit);
@@ -534,7 +535,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       setButton.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-          String value = dataUtil.validifyValue(
+          String value = ParseUtil.validifyValue(dataUtil,
               spreadsheetTable.getColumnByElementKey(CellEditDialog.this.cell.elementKey),
               cev.getValue());
           if (value == null) {
@@ -550,7 +551,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           String formId = null; // formId used by ODK Collect
           String locale = null; // current locale
 
-          DbTable dbTable = DbTable.getDbTable(getTableProperties());
+          DbTable dbTable = new DbTable(getTableProperties());
           dbTable.updateRow(cell.row.getRowId(), formId, locale, timestamp, savepointCreator,
               values);
           init();

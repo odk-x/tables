@@ -1,8 +1,7 @@
 package org.opendatakit.tables.activities;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
@@ -93,19 +92,16 @@ public abstract class AbsBaseActivity extends Activity {
     Cursor c = null;
 
     StringBuilder b = new StringBuilder();
-    b.append("SELECT ").append(TableDefinitionsColumns.DB_TABLE_NAME).append(", ")
-     .append(TableDefinitionsColumns.TABLE_ID).append(" FROM \"")
+    b.append("SELECT ").append(TableDefinitionsColumns.TABLE_ID).append(" FROM \"")
      .append(DataModelDatabaseHelper.TABLE_DEFS_TABLE_NAME).append("\"");
 
-    Map<String,String> tableMap = new TreeMap<String,String>();
+    ArrayList<String> tableIds = new ArrayList<String>();
     try {
       c = db.rawQuery(b.toString(), null);
       int idxId = c.getColumnIndex(TableDefinitionsColumns.TABLE_ID);
-      int idxName = c.getColumnIndex(TableDefinitionsColumns.DB_TABLE_NAME);
       if ( c.moveToFirst() ) {
         do {
-          tableMap.put(ODKDatabaseUtils.getIndexAsString(c, idxId), 
-              ODKDatabaseUtils.getIndexAsString(c, idxName));
+          tableIds.add(ODKDatabaseUtils.getIndexAsString(c, idxId));
         } while ( c.moveToNext() );
       }
       c.close();
@@ -118,13 +114,11 @@ public abstract class AbsBaseActivity extends Activity {
     Bundle checkpointTables = new Bundle();
     Bundle conflictTables = new Bundle();
     
-    for ( Map.Entry<String,String> table : tableMap.entrySet() ) {
-      String tableId = table.getKey();
-      String dbTableName = table.getValue();
+    for ( String tableId : tableIds ) {
       b.setLength(0);
       b.append("SELECT SUM(case when _savepoint_type is null then 1 else 0 end) as checkpoints,")
        .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts from \"")
-       .append(dbTableName).append("\"");
+       .append(tableId).append("\"");
       
       try {
         c = db.rawQuery(b.toString(), null);
@@ -136,10 +130,10 @@ public abstract class AbsBaseActivity extends Activity {
         c.close();
         
         if ( checkpoints != null && checkpoints != 0 ) {
-          checkpointTables.putString(tableId, dbTableName);
+          checkpointTables.putString(tableId, tableId);
         }
         if ( conflicts != null && conflicts != 0 ) {
-          conflictTables.putString(tableId, dbTableName);
+          conflictTables.putString(tableId, tableId);
         }
       } finally {
         if ( c != null && !c.isClosed() ) {

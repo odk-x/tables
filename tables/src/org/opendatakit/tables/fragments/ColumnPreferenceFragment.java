@@ -6,7 +6,10 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.ElementTypeManipulator;
+import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
 import org.opendatakit.tables.utils.PreferenceUtil;
+import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.os.Bundle;
@@ -108,7 +111,9 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   private void initializeColumnType() {
     EditTextPreference pref =
         this.findEditTextPreference(Constants.PreferenceKeys.Column.TYPE);
-    pref.setSummary(this.retrieveColumnProperties().getColumnType().label());
+    ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
+    ITypeManipulatorFragment r = m.getDefaultRenderer(this.retrieveColumnProperties().getColumnType());
+    pref.setSummary(r.getElementTypeDisplayLabel());
   }
 
   private void initializeElementName() {

@@ -50,8 +50,10 @@ public class SpreadsheetFragmentTest {
     TableProperties tablePropertiesMock = mock(TableProperties.class);
     doReturn(new ArrayList<String>()).when(tablePropertiesMock).getColumnOrder();
     UserTable userTableMock = mock(UserTable.class);
-    doReturn(tablePropertiesMock).when(userTableMock).getTableProperties();
+    doReturn("emptyTable").when(userTableMock).getTableId();
+    doReturn("tables").when(userTableMock).getAppName();
     doReturn(0).when(userTableMock).getWidth();
+    TableDisplayActivityStub.TABLE_PROPERTIES = tablePropertiesMock;
     TableDisplayActivityStub.USER_TABLE = userTableMock;
     doGlobalSetup();
   }

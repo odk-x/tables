@@ -10,14 +10,19 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.common.android.data.ElementDataType;
+import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.utils.ElementTypeManipulator;
+import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
+import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
 
-import android.app.Activity;
 import android.util.Log;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -54,16 +59,6 @@ public class TableData {
   private Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup = new HashMap<String, ColorRuleGroup>();
   private ColorRuleGroup mStatusColumnColorRuleGroup = null;
   private ColorRuleGroup mRowColorRuleGroup = null;
-
-  protected Activity mActivity;
-
-  public TableData(Activity activity, UserTable table) {
-    Log.d(TAG, "calling TableData constructor with Table");
-    this.mActivity = activity;
-    this.mTable = table;
-    this.mSelectedMapMarkerIndex = INVALID_INDEX;
-    initMaps();
-  }
 
   public TableData(UserTable table) {
     Log.d(TAG, "calling TableData constructor with UserTable");
@@ -103,6 +98,13 @@ public class TableData {
   private void initMaps() {
   }
 
+  private TableProperties getTableProperties() {
+    TableProperties tp = 
+        TableProperties.getTablePropertiesForTable(
+            Tables.getInstance().getApplicationContext(), mTable.getAppName(), mTable.getTableId());
+    return tp;
+  }
+  
   // Returns the number of rows in the table being viewed.
   public int getCount() {
     return this.mTable.getNumberOfRows();
@@ -126,7 +128,7 @@ public class TableData {
    *         for the given column name format: [row1, row2, row3, row4]
    */
   public String getColumnData(String elementPath, int requestedRows) {
-    String elementKey = this.mTable.getTableProperties().getElementKeyFromElementPath(elementPath);
+    String elementKey = getTableProperties().getElementKeyFromElementPath(elementPath);
     if (elementKey == null) {
       Log.e(TAG, "column not found with element path: " + elementPath);
       return null;
@@ -155,7 +157,7 @@ public class TableData {
    */
   public String getColumns() {
     Map<String, String> colInfo = new HashMap<String, String>();
-    for (String elementKey : mTable.getTableProperties().getAllColumns().keySet()) {
+    for (String elementKey : getTableProperties().getAllColumns().keySet()) {
       String label = getColumnTypeLabelForElementKey(elementKey);
       colInfo.put(elementKey, label);
     }
@@ -170,9 +172,11 @@ public class TableData {
    * @return
    */
   private String getColumnTypeLabelForElementKey(String elementKey) {
-    TableProperties tp = mTable.getTableProperties();
+    TableProperties tp = getTableProperties();
     ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-    String label = cp.getColumnType().label();
+    ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
+    ITypeManipulatorFragment r = m.getDefaultRenderer(cp.getColumnType());
+    String label = r.getElementTypeDisplayLabel();
     return label;
   }
 
@@ -180,7 +184,7 @@ public class TableData {
     int correctedIndex = getIndexIntoDataTable(rowNumber);
     int foregroundColor = -16777216;
 
-    TableProperties tp = mTable.getTableProperties();
+    TableProperties tp = getTableProperties();
     String elementKey = tp.getElementKeyFromElementPath(elementPath);
     if (elementKey == null) {
       return String.format("#%06X", (0xFFFFFF & foregroundColor));
@@ -206,7 +210,7 @@ public class TableData {
     int foregroundColor = -16777216;
 
     if (mStatusColumnColorRuleGroup == null) {
-      TableProperties tp = mTable.getTableProperties();
+      TableProperties tp = getTableProperties();
       mStatusColumnColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
     }
 
@@ -224,7 +228,7 @@ public class TableData {
     int foregroundColor = -16777216;
 
     if (mRowColorRuleGroup == null) {
-      TableProperties tp = mTable.getTableProperties();
+      TableProperties tp = getTableProperties();
       mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
     }
 
@@ -248,26 +252,26 @@ public class TableData {
       return null;
     }
 
-    String elementKey = mTable.getTableProperties().getElementKeyFromElementPath(elementPath);
+    String elementKey = getTableProperties().getElementKeyFromElementPath(elementPath);
     if (elementKey == null) {
       Log.e(TAG, "column with elementPath: " + elementPath + " does not" + " exist.");
       return null;
     }
-    ColumnProperties cp = mTable.getTableProperties().getColumnByElementKey(elementKey);
-    if ( cp.getColumnType().name().equals("array") ) {
+    ColumnProperties cp = getTableProperties().getColumnByElementKey(elementKey);
+    ElementDataType type = cp.getColumnType().getDataType();
+    if ( type == ElementDataType.array ) {
       String result = row.getRawDataOrMetadataByElementKey(elementKey);
       return result;
     }
 
-    List<String> listChildElementKeys = cp.getListChildElementKeys();
-    if ( listChildElementKeys == null || listChildElementKeys.isEmpty() ) {
+    if ( cp.getChildren().isEmpty() ) {
       String result = row.getRawDataOrMetadataByElementKey(elementKey);
       return result;
     }
 
     try {
       Map<String,Object> resultSet = new HashMap<String,Object>();
-      assembleNonNullParts(row, resultSet, listChildElementKeys);
+      assembleNonNullParts(row, resultSet, cp.getChildren());
       if ( resultSet.isEmpty() ) {
         return null;
       }
@@ -285,25 +289,26 @@ public class TableData {
     }
   }
 
-  private void assembleNonNullParts( Row row, Map<String, Object> resultSet, List<String> elementKeys ) throws JsonParseException, JsonMappingException, IOException {
-    for ( String elementKey : elementKeys ) {
-      ColumnProperties cp = mTable.getTableProperties().getColumnByElementKey(elementKey);
-      if ( cp.getColumnType().name().equals("array") ) {
-        String result = row.getRawDataOrMetadataByElementKey(elementKey);
-        resultSet.put(cp.getElementName(), ODKFileUtils.mapper.readValue(result, ArrayList.class));
+  private void assembleNonNullParts( Row row, Map<String, Object> resultSet, List<ColumnDefinition> colDefns ) throws JsonParseException, JsonMappingException, IOException {
+    for ( ColumnDefinition colDefn : colDefns ) {
+      ElementType type = ElementType.parseElementType(colDefn.getElementType(), !colDefn.getChildren().isEmpty());
+      ElementDataType dataType = type.getDataType();
+      if ( dataType == ElementDataType.array ) {
+        String result = row.getRawDataOrMetadataByElementKey(colDefn.getElementKey());
+        resultSet.put(colDefn.getElementName(), ODKFileUtils.mapper.readValue(result, ArrayList.class));
       } else {
-        List<String> subKeys = cp.getListChildElementKeys();
-        if ( subKeys == null || subKeys.isEmpty() ) {
-          Class<?> clazz = cp.getDataType();
-          Object value = row.getRawDataType(elementKey, clazz);
+        List<ColumnDefinition> children = colDefn.getChildren();
+        if ( children.isEmpty() ) {
+          Class<?> clazz = ColumnProperties.getDataType(dataType);
+          Object value = row.getRawDataType(colDefn.getElementKey(), clazz);
           if ( value != null ) {
-            resultSet.put(cp.getElementName(), value);
+            resultSet.put(colDefn.getElementName(), value);
           }
         } else {
           Map<String, Object> subValues = new HashMap<String,Object>();
-          assembleNonNullParts(row, subValues, subKeys);
+          assembleNonNullParts(row, subValues, children);
           if ( !subValues.isEmpty() ) {
-            resultSet.put(cp.getElementName(), subValues);
+            resultSet.put(colDefn.getElementName(), subValues);
           }
         }
       }
@@ -366,7 +371,7 @@ public class TableData {
   }
 
   public String getTableId() {
-    return mTable.getTableProperties().getTableId();
+    return getTableProperties().getTableId();
   }
 
   public String getRowId(int index) {

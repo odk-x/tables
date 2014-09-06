@@ -87,7 +87,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
       Log.e(TAG, "asking to retrieve single row table for null row id");
     }
     String rowId = getRowId();
-    DbTable dbTable = DbTable.getDbTable(getTableProperties());
+    DbTable dbTable = new DbTable(getTableProperties());
     UserTable result = dbTable.getTableForSingleRow(rowId);
     if (result.getNumberOfRows() > 1 ) {
       Log.e(TAG, "Single row table for row id " + rowId + " returned > 1 row");

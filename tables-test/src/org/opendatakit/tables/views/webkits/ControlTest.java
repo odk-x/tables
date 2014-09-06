@@ -16,7 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -196,13 +196,13 @@ public class ControlTest {
     TableProperties tpMock = ControlStub.TABLE_PROPERTIES_FOR_ID;
     ColumnProperties stringColumn = TestConstants.getColumnPropertiesMock(
         TestConstants.ElementKeys.STRING_COLUMN,
-        ColumnType.STRING);
+        ElementType.parseElementType("string", false));
     ColumnProperties intColumn = TestConstants.getColumnPropertiesMock(
         TestConstants.ElementKeys.INT_COLUMN,
-        ColumnType.INTEGER);
+        ElementType.parseElementType("integer", false));
     ColumnProperties numberColumn = TestConstants.getColumnPropertiesMock(
         TestConstants.ElementKeys.NUMBER_COLUMN,
-        ColumnType.NUMBER);
+        ElementType.parseElementType("number", false));
     doReturn(stringColumn).when(tpMock).getColumnByElementKey(
         TestConstants.ElementKeys.STRING_COLUMN);
     doReturn(intColumn).when(tpMock).getColumnByElementKey(

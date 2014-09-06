@@ -3,6 +3,7 @@ package org.opendatakit.tables.fragments;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.application.Tables;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -28,7 +29,10 @@ public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
    * @return
    */
   TableProperties getTableProperties() {
-    TableProperties result = this.getUserTable().getTableProperties();
+    UserTable table = this.getUserTable();
+    TableProperties result = 
+        TableProperties.getTablePropertiesForTable(
+            Tables.getInstance().getApplicationContext(), table.getAppName(), table.getTableId());
     return result;
   }
   

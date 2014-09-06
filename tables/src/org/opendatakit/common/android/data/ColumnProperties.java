@@ -19,13 +19,21 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
+import org.opendatakit.common.android.utilities.DataHelper;
+import org.opendatakit.common.android.utilities.NameUtil;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 
+import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -38,7 +46,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
  * <p>
  * Column properties are located in several places. The more, although not
  * completely, immutable properties are located in a table that is defined in
- * {@link ColumnDefinitions}. The mutable, mostly ODK Tables-specific columns
+ * {@link ColumnDefinition}. The mutable, mostly ODK Tables-specific columns
  * are located in {@link KeyValueStoreColumn}. ColumnProperties is this an
  * abstraction of both of these.
  * <p>
@@ -288,16 +296,12 @@ public class ColumnProperties {
    * actual column itself.
    */
   private final TableProperties tp;
-  /** computed flag indicating whether this column is a database column */
-  private boolean isUnitOfRetention = true;
+  
+  private final ColumnDefinition ci;
   /*
    * The fields that reside in ColumnDefinitions
    */
   private final String tableId;
-  private final String elementKey;
-  private String elementName;
-  private ColumnType elementType;
-  private List<String> listChildElementKeys;
   /*
    * The fields that reside in the key value store.
    */
@@ -322,17 +326,13 @@ public class ColumnProperties {
    * @param displayFormat
    * @param joins
    */
-  private ColumnProperties(TableProperties tp, String elementKey, String elementName,
-      ColumnType elementType, List<String> listChildElementKeys,
+  private ColumnProperties(TableProperties tp, ColumnDefinition ci,
       boolean displayVisible, String jsonStringifyDisplayName,
       ArrayList<String> displayChoicesList, String displayFormat,
       ArrayList<JoinColumn> joins) {
     this.tp = tp;
     this.tableId = tp.getTableId();
-    this.elementKey = elementKey;
-    this.elementName = elementName;
-    this.elementType = elementType;
-    this.listChildElementKeys = listChildElementKeys;
+    this.ci = ci;
     this.joins = (joins == null) ? new ArrayList<JoinColumn>() : joins;
     this.displayVisible = displayVisible;
     this.jsonStringifyDisplayName = jsonStringifyDisplayName;
@@ -342,7 +342,7 @@ public class ColumnProperties {
   }
 
 
-  public void addMetaDataEntries(List<OdkTablesKeyValueStoreEntry> entries) {
+  public void addMetaDataEntries(List<KeyValueStoreEntry> entries) {
     KeyValueStore kvs = tp.getStoreForTable();
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
@@ -364,12 +364,13 @@ public class ColumnProperties {
    * @return a map of elementKey to ColumnProperties for all columns.
    */
   static Map<String, ColumnProperties> getColumnPropertiesForTable(SQLiteDatabase db, TableProperties tp) {
-    List<String> elementKeys = ColumnDefinitions.getAllColumnNamesForTable(db, tp.getTableId());
+    List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, tp.getTableId());
+    List<ColumnDefinition> colDefns = ColumnDefinition.buildColumnDefinitions(columns);
     Map<String, ColumnProperties> elementKeyToColumnProperties = new HashMap<String, ColumnProperties>();
-    for (int i = 0; i < elementKeys.size(); i++) {
-      ColumnProperties cp = getColumnProperties(db, tp, elementKeys.get(i));
+    for ( ColumnDefinition colDefn : colDefns ) {
+      ColumnProperties cp = getColumnProperties(db, tp, colDefn);
       if ( cp == null ) continue;
-      elementKeyToColumnProperties.put(elementKeys.get(i), cp);
+      elementKeyToColumnProperties.put(colDefn.getElementKey(), cp);
     }
     return elementKeyToColumnProperties;
   }
@@ -386,19 +387,13 @@ public class ColumnProperties {
    *          column properties
    * @return
    */
-  private static ColumnProperties getColumnProperties(SQLiteDatabase db, TableProperties tp, String elementKey) {
+  private static ColumnProperties getColumnProperties(SQLiteDatabase db, TableProperties tp, ColumnDefinition column) {
     // Get the KVS values
     KeyValueStore intendedKVS = tp.getStoreForTable();
     Map<String, String> kvsMap = intendedKVS.getKeyValues(db, ColumnProperties.KVS_PARTITION,
-        elementKey);
+        column.getElementKey());
 
-    // Get the ColumnDefinition entries
-    Map<String, String> columnDefinitionsMap = ColumnDefinitions.getColumnDefinitionFields(db,
-        tp.getTableId(), elementKey);
-
-    if ( columnDefinitionsMap.size() == 0 ) return null;
-
-    return constructPropertiesFromMap(tp, elementKey, columnDefinitionsMap, kvsMap);
+    return constructPropertiesFromMap(tp, column.getElementKey(), column, kvsMap);
   }
 
   /**
@@ -416,7 +411,7 @@ public class ColumnProperties {
    * @return
    */
   private static ColumnProperties constructPropertiesFromMap(TableProperties tp,
-      String elementKey, Map<String, String> columnDefinitions, Map<String, String> kvsProps) {
+      String elementKey, ColumnDefinition column, Map<String, String> kvsProps) {
     // First convert the non-string types to their appropriate types. This is
     // probably going to go away when the map becomes key->TypeValuePair.
     // KEY_DISPLAY_VISIBLE
@@ -425,8 +420,7 @@ public class ColumnProperties {
     // KEY_JOINS
 
     // DB_COLUMN_TYPE
-    String columnTypeStr = columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_TYPE);
-    ColumnType columnType = ColumnType.valueOf(columnTypeStr);
+    String columnTypeStr = column.getElementType();
 
     // Now we need to reclaim the list values from their db entries.
     String parseValue = null;
@@ -440,9 +434,8 @@ public class ColumnProperties {
         displayChoicesList = ODKFileUtils.mapper.readValue(displayChoicesListValue, ArrayList.class);
       }
 
-      if (columnDefinitions.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS) != null) {
-        String listChildElementKeysValue = columnDefinitions
-            .get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
+      if (column.getListChildElementKeys() != null) {
+        String listChildElementKeysValue = column.getListChildElementKeys();
         parseValue = listChildElementKeysValue;
         listChildElementKeys = ODKFileUtils.mapper.readValue(listChildElementKeysValue, ArrayList.class);
       }
@@ -462,10 +455,85 @@ public class ColumnProperties {
       e.printStackTrace();
       throw new IllegalArgumentException("invalid db value: " + parseValue, e);
     }
-    return new ColumnProperties(tp, elementKey,
-        columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
-        listChildElementKeys, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
+    ElementType columnType = ElementType.parseElementType(columnTypeStr, 
+        (listChildElementKeys != null && !listChildElementKeys.isEmpty()));
+
+    return new ColumnProperties(tp, column, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
         displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), joins);
+  }
+  
+  /*
+   * Get the where sql clause for the table id and the given element key.
+   */
+  private static final String WHERE_SQL_FOR_ELEMENT =
+      ColumnDefinitionsColumns.TABLE_ID + " = ? AND " + ColumnDefinitionsColumns.ELEMENT_KEY + " = ?";
+
+
+  /**
+   * Add the definition of the column to the column_definitions table in
+   * the SQLite database. All of the values in {@ColumnDefinitions.columnNames}
+   * are added. Those with values not passed in are set to their default values
+   * as defined in ColumnDefinitions.
+   * <p>
+   * Does NOT restructure the user table to add the column. Only adds a column
+   * to column_definitions.
+   * <p>
+   * Returns a Map<String,String> of columnName->value. This is intended to
+   * play nicely with {@link ColumnProperties}, which requires construction of
+   * a ColumnProperties object with this information during table adding.
+   * <p>
+   * Does not close the passed in database.
+   * TODO: check for redundant names
+   * TODO: make this method also create the actual table for the rows.
+   * TODO: make this return String->TypeValuePair, not the String represenation
+   * of all the types.
+   * @param db
+   * @param tableId
+   * @param elementKey
+   * @param elementName
+   * @param elementType type of the column. null values will be converted to
+   * DEFAULT_DB_ELEMENT_TYPE
+   * @param listChild
+   * @return a map of column names to fields for the new table
+   */
+  public static void assertColumnDefinition(SQLiteDatabase db,
+      String tableId, ColumnDefinition ci) {
+    ContentValues values = new ContentValues();
+    values.put(ColumnDefinitionsColumns.ELEMENT_NAME, ci.getElementName());
+    values.put(ColumnDefinitionsColumns.ELEMENT_TYPE, ci.getElementType());
+    values.put(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, ci.getListChildElementKeys());
+
+    Cursor c = null;
+    try {
+       c = db.query(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
+                    null, WHERE_SQL_FOR_ELEMENT,
+                    new String[] {tableId, ci.getElementKey()}, null, null, null);
+       int count = c.getCount();
+       c.close();
+       if ( count == 1 ) {
+         // update...
+         db.update(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
+             values, WHERE_SQL_FOR_ELEMENT,
+             new String[] {tableId, ci.getElementKey()});
+       } else {
+         if ( count > 1 ) {
+           // remove and re-insert...
+           int delCount = db.delete(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
+               WHERE_SQL_FOR_ELEMENT, new String[] {tableId, ci.getElementKey()});
+           if (delCount != 1) {
+             Log.e(TAG, "deleteColumn() deleted " + delCount + " rows");
+           }
+         }
+         // insert...
+         values.put(ColumnDefinitionsColumns.TABLE_ID, tableId);
+         values.put(ColumnDefinitionsColumns.ELEMENT_KEY, ci.getElementKey());
+         db.insert(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME, null, values);
+       }
+    } finally {
+      if ( c != null && !c.isClosed()) {
+         c.close();
+      }
+    }
   }
 
   /**
@@ -483,56 +551,22 @@ public class ColumnProperties {
    */
   void persistColumn(SQLiteDatabase db) throws JsonGenerationException, JsonMappingException, IOException {
     // First prepare the entries for the key value store.
-    List<OdkTablesKeyValueStoreEntry> values = new ArrayList<OdkTablesKeyValueStoreEntry>();
-    values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
+    List<KeyValueStoreEntry> values = new ArrayList<KeyValueStoreEntry>();
+    values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION, ci.getElementKey(),
         KEY_DISPLAY_VISIBLE, displayVisible));
-    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, ci.getElementKey(),
         KEY_DISPLAY_NAME, jsonStringifyDisplayName));
-    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, ci.getElementKey(),
         KEY_DISPLAY_CHOICES_LIST, ODKFileUtils.mapper.writeValueAsString(displayChoicesList)));
-    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, ci.getElementKey(),
         KEY_DISPLAY_FORMAT, displayFormat));
-    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, ci.getElementKey(),
         KEY_JOINS, JoinColumn.toSerialization(joins)));
 
     KeyValueStore kvs = tp.getStoreForTable();
     kvs.addEntriesToStore(db, values);
 
-    ColumnDefinitions.assertColumnDefinition(db, tableId, elementKey, elementName, elementType,
-        ODKFileUtils.mapper.writeValueAsString(listChildElementKeys));
-  }
-
-  public enum ColumnDefinitionChange {
-    IDENTICAL, SAME_ELEMENT_TYPE, CHANGE_ELEMENT_TYPE, INCOMPATIBLE
-  };
-
-  /**
-   * Determine if the changes between the current and supplied cp are
-   * incompatible (cannot be reconciled), require altering the column type,
-   * and/or require modifying the joins definition.
-   *
-   * @param cp
-   * @return
-   */
-  ColumnDefinitionChange compareColumnDefinitions(ColumnProperties cp) {
-    if ((this.getElementName() == null &&
-         cp.getElementName() != null) ||
-        (this.getElementName() != null &&
-         (cp.getElementName() == null ||
-           !this.getElementName().equals(cp.getElementName())))) {
-      return ColumnDefinitionChange.INCOMPATIBLE;
-    }
-    if (!this.getListChildElementKeys().equals(cp.getListChildElementKeys())) {
-      return ColumnDefinitionChange.INCOMPATIBLE;
-    }
-    if (this.getColumnType() != cp.getColumnType()) {
-      return ColumnDefinitionChange.CHANGE_ELEMENT_TYPE;
-    } else {
-      // TODO: could save some reloading if we determine that
-      // the two definitions are identical. For now, assume
-      // they are not.
-      return ColumnDefinitionChange.SAME_ELEMENT_TYPE;
-    }
+    assertColumnDefinition(db, tableId, ci);
   }
 
   /**
@@ -554,171 +588,102 @@ public class ColumnProperties {
    * @return
    */
   static ColumnProperties createNotPersisted(TableProperties tp,
-      String jsonStringifyDisplayName, String elementKey, String elementName, ColumnType columnType,
-      List<String> listChildElementKeys, boolean displayVisible) {
+      String jsonStringifyDisplayName, ColumnDefinition ci, boolean displayVisible) {
 
-    ColumnProperties cp = new ColumnProperties(tp, elementKey, elementName, columnType,
-        listChildElementKeys, displayVisible, jsonStringifyDisplayName,
+    ColumnProperties cp = new ColumnProperties(tp, ci, displayVisible, jsonStringifyDisplayName,
         null, null, null);
 
     return cp;
   }
 
-  /**
-   * Deletes the column represented by this ColumnProperties by deleting it from
-   * the ColumnDefinitions table as well as the given key value store.
-   * <p>
-   * Also clears all the column color rules for the column. TODO: should maybe
-   * delete the column from ALL the column key value stores to avoid conflict
-   * with ColumnDefinitions?
-   *
-   * @param db
-   */
-  void deleteColumn(SQLiteDatabase db) {
-    ColumnDefinitions.deleteColumnDefinition(db, tableId, elementKey);
-    KeyValueStore kvs = tp.getStoreForTable();
-    kvs.clearEntries(db, ColumnProperties.KVS_PARTITION, elementKey);
-    // this is to clear all the color rules. If we didn't do this, you could
-    // have old color rules build up, and worse still, if you deleted this
-    // column and then added a new column whose element key ended up being the
-    // same, you would have rules suddenly applying to them.
-    kvs.clearEntries(db, ColorRuleGroup.KVS_PARTITION_COLUMN, elementKey);
-  }
-
-  private static OdkTablesKeyValueStoreEntry createStringEntry(String tableId, String partition,
+  private static KeyValueStoreEntry createStringEntry(String tableId, String partition,
       String elementKey, String key, String value) {
-    OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
+    KeyValueStoreEntry entry = new KeyValueStoreEntry();
     entry.tableId = tableId;
     entry.partition = partition;
     entry.aspect = elementKey;
-    entry.type = ColumnType.STRING.name();
+    entry.type = ElementDataType.string.name();
     entry.value = value;
     entry.key = key;
     return entry;
   }
 
-  private static OdkTablesKeyValueStoreEntry createIntEntry(String tableId, String partition,
+  private static KeyValueStoreEntry createIntEntry(String tableId, String partition,
       String elementKey, String key, int value) {
-    OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
+    KeyValueStoreEntry entry = new KeyValueStoreEntry();
     entry.tableId = tableId;
     entry.partition = partition;
     entry.aspect = elementKey;
-    entry.type = ColumnType.INTEGER.name();
+    entry.type = ElementDataType.integer.name();
     entry.value = Integer.toString(value);
     entry.key = key;
     return entry;
   }
 
-  private static OdkTablesKeyValueStoreEntry createBooleanEntry(String tableId, String partition,
+  private static KeyValueStoreEntry createBooleanEntry(String tableId, String partition,
       String elementKey, String key, boolean value) {
-    OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
+    KeyValueStoreEntry entry = new KeyValueStoreEntry();
     entry.tableId = tableId;
     entry.partition = partition;
     entry.aspect = elementKey;
-    entry.type = ColumnType.BOOLEAN.name();
+    entry.type = ElementDataType.bool.name();
     entry.value = Boolean.toString(value);
     entry.key = key;
     return entry;
   }
 
   public String getElementKey() {
-    return elementKey;
+    return ci.getElementKey();
   }
 
   public String getElementName() {
-    return elementName;
+    return ci.getElementName();
   }
 
   public boolean isUnitOfRetention() {
-    return isUnitOfRetention;
+    return ci.isUnitOfRetention();
   }
   
-  public void setNotUnitOfRetention() {
-    isUnitOfRetention = false;
-    // display is not visible also
-    displayVisible = false;
+  public ColumnProperties getContainingElement() {
+    return tp.getColumnByElementKey(ci.getParent().getElementKey());
   }
   
+  public List<ColumnDefinition> getChildren() {
+    return ci.getChildren();
+  }
+
+  public String getListChildElementKeys() {
+    return ci.getListChildElementKeys();
+  }
   /**
    * @return the column's type
    */
-  public ColumnType getColumnType() {
-    return elementType;
+  public ElementType getColumnType() {
+    return ElementType.parseElementType(ci.getElementType(), !ci.getChildren().isEmpty());
   }
 
-  public Class<?> getDataType() {
-    if ( getColumnType().name().equals("array") ) {
+  public static Class<?> getDataType(ElementDataType dataType) {
+    
+    if ( dataType == ElementDataType.array ) {
       return ArrayList.class;
     }
-    List<String> listChildren = getListChildElementKeys();
-    if ( listChildren != null && !listChildren.isEmpty() ) {
+    if (dataType == ElementDataType.object) {
       return HashMap.class;
     }
-
-    if ( getColumnType().name().equals("integer") ) {
+    
+    if ( dataType == ElementDataType.integer ) {
       return Integer.class;
     }
 
-    if ( getColumnType().name().equals("number") ) {
+    if ( dataType == ElementDataType.number ) {
       return Double.class;
     }
 
-    if ( getColumnType().name().equals("boolean") ) {
+    if ( dataType == ElementDataType.bool ) {
       return Boolean.class;
     }
 
     return String.class;
-  }
-
-  /**
-   * Sets the column's type.
-   *
-   * @param columnType
-   *          the new type
-   */
-  public void setColumnType(SQLiteDatabase dbOuter, TableProperties tp, ColumnType columnType) {
-    // start a nested transaction...
-    SQLiteDatabase db = tp.getWritableDatabase();
-    try {
-      db.beginTransaction();
-      setStringProperty(db, ColumnDefinitionsColumns.ELEMENT_TYPE, columnType.name());
-      // TODO: we should run validation rules on the input, converting it to a
-      // form that SQLite will properly convert into the new datatype.
-      tp.reformTable(db, this.elementKey);
-      db.setTransactionSuccessful();
-      this.elementType = columnType;
-    } finally {
-      db.endTransaction();
-      db.close();
-      tp.refreshColumns(dbOuter);
-    }
-  }
-
-  public List<String> getListChildElementKeys() {
-    return listChildElementKeys;
-  }
-
-  public void setListChildElementKeys(SQLiteDatabase db, ArrayList<String> listChildElementKeys) {
-    try {
-      String strListChildElementKeys = null;
-      if (listChildElementKeys != null && listChildElementKeys.size() > 0) {
-        strListChildElementKeys = ODKFileUtils.mapper.writeValueAsString(listChildElementKeys);
-      }
-      setStringProperty(db, ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, strListChildElementKeys);
-      this.listChildElementKeys = listChildElementKeys;
-    } catch (JsonGenerationException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setListChildElementKeys failed: "
-          + listChildElementKeys.toString(), e);
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setListChildElementKeys failed: "
-          + listChildElementKeys.toString(), e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setListChildElementKeys failed: "
-          + listChildElementKeys.toString(), e);
-    }
   }
 
   /**
@@ -762,28 +727,39 @@ public class ColumnProperties {
         if ( displayObject instanceof String ) {
           this.displayName = (String)  displayObject;
           if ( this.displayName == null || this.displayName.length() == 0 ) {
-          	// just use the elementName and fudge it back into the serialization
-          	this.jsonStringifyDisplayName = (this.elementName != null) ? "\"" + this.elementName + "\"" : "\"\"";
-          	this.displayName = this.elementName;
+          	// just use the elementKey and fudge it back into the serialization
+          	this.displayName = NameUtil.constructSimpleDisplayName(ci.getElementKey());
+          	this.jsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(this.displayName);
           }
         } else if ( displayObject instanceof Map ) {
           // TODO: get current locale; deal with non-default locales
           @SuppressWarnings("rawtypes")
-          Object v = ((Map) displayObject).get("default");
-          if ( v != null && v instanceof String ) {
-            this.displayName = (String) v;
+          String lang = Locale.getDefault().getLanguage();
+          if ( lang != null ) {
+            Object v = ((Map) displayObject).get(lang);
+            if ( v != null && v instanceof String ) {
+              this.displayName = (String) v;
+            }
+          }
+          if ( this.displayName == null ) {
+            @SuppressWarnings("rawtypes")
+            Object v = ((Map) displayObject).get(ODKDatabaseUtils.DEFAULT_LOCALE);
+            if ( v != null && v instanceof String ) {
+              this.displayName = (String) v;
+            }
           }
           if ( this.displayName == null || this.displayName.length() == 0 ) {
-    	  	((Map) displayObject).put("default", this.elementName);
-    	  	this.jsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayObject);
-        	this.displayName = this.elementName;
+            this.displayName = NameUtil.constructSimpleDisplayName(ci.getElementKey());
+            ((Map) displayObject).put(ODKDatabaseUtils.DEFAULT_LOCALE, this.displayName);
+            this.jsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayObject);
           }
         }
       }
+      
       if ( this.displayName == null || this.displayName.length() == 0 ) {
-    	// just use the elementName and write it back into the serialization
-    	this.jsonStringifyDisplayName = "\"" + this.elementName + "\"";
-    	this.displayName = this.elementName;
+        // no idea what this is -- overwrite it with a simple string.
+        this.displayName = NameUtil.constructSimpleDisplayName(ci.getElementKey());
+        this.jsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(this.displayName);
       }
     } catch (JsonParseException e) {
       e.printStackTrace();
@@ -823,20 +799,20 @@ public class ColumnProperties {
         if ( displayObject instanceof String ) {
           // just overwrite it...
           String newJsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayName);
-          setStringProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+          setStringProperty(db, KEY_DISPLAY_NAME, ElementDataType.object, newJsonStringifyDisplayName);
           this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
           this.displayName = displayName;
         } else if ( displayObject instanceof Map ) {
           // TODO: get current locale; deal with non-default locales
           ((Map) displayObject).put("default", displayName);
           String newJsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayObject);
-          setStringProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+          setStringProperty(db, KEY_DISPLAY_NAME, ElementDataType.object, newJsonStringifyDisplayName);
           this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
           this.displayName = displayName;
         }
       } else {
         String newJsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayName);
-        setStringProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+        setStringProperty(db, KEY_DISPLAY_NAME, ElementDataType.object, newJsonStringifyDisplayName);
         this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
         this.displayName = displayName;
       }
@@ -866,7 +842,7 @@ public class ColumnProperties {
    *          the new abbreviation (or null for no abbreviation)
    */
   public void setDisplayFormat(SQLiteDatabase db, String format) {
-    setStringProperty(db, KEY_DISPLAY_FORMAT, format);
+    setStringProperty(db, KEY_DISPLAY_FORMAT, ElementDataType.string, format);
     this.displayFormat = format;
   }
 
@@ -889,7 +865,7 @@ public class ColumnProperties {
   public void setJoins(SQLiteDatabase db, ArrayList<JoinColumn> joins) {
     try {
       String joinsStr = JoinColumn.toSerialization(joins);
-      setStringProperty(db, KEY_JOINS, joinsStr);
+      setStringProperty(db, KEY_JOINS, ElementDataType.object, joinsStr);
       this.joins = joins;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
@@ -925,7 +901,7 @@ public class ColumnProperties {
       if (options != null && options.size() > 0) {
         encoding = ODKFileUtils.mapper.writeValueAsString(options);
       }
-      setStringProperty(db, KEY_DISPLAY_CHOICES_LIST, encoding);
+      setStringProperty(db, KEY_DISPLAY_CHOICES_LIST, ElementDataType.array, encoding);
       displayChoicesList = options;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
@@ -940,43 +916,31 @@ public class ColumnProperties {
   }
 
   private void setIntProperty(SQLiteDatabase db, String property, int value) {
-    if (ColumnDefinitions.contains(property)) {
-      ColumnDefinitions.setValue(db, tableId, elementKey, property, value);
-    } else {
-      // or a kvs property?
-      KeyValueStore kvs = tp.getStoreForTable();
-      kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, elementKey, property,
-          ColumnType.INTEGER.name(), Integer.toString(value));
-    }
+    // or a kvs property?
+    KeyValueStore kvs = tp.getStoreForTable();
+    kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, ci.getElementKey(), property,
+        ElementDataType.integer.name(), Integer.toString(value));
     Log.d(TAG, "updated int property " + property + " to " + value + " for table " + tableId
-        + ", column " + elementKey);
+        + ", column " + ci.getElementKey());
   }
 
-  private void setStringProperty(SQLiteDatabase db, String property, String value) {
-    // is it a column definition property?
-    if (ColumnDefinitions.contains(property)) {
-      ColumnDefinitions.setValue(db, tableId, elementKey, property, value);
-    } else {
-      // or a kvs property?
-      KeyValueStore kvs = tp.getStoreForTable();
-      kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, elementKey, property,
-          ColumnType.STRING.name(), value);
-    }
+  private void setStringProperty(SQLiteDatabase db, String property, ElementDataType base, String value) {
+    // or a kvs property?
+    KeyValueStore kvs = tp.getStoreForTable();
+    kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, ci.getElementKey(), property,
+        base.name(), value);
+
     Log.d(TAG, "updated string property " + property + " to " + value + " for table " + tableId
-        + ", column " + elementKey);
+        + ", column " + ci.getElementKey());
   }
 
   private void setBooleanProperty(SQLiteDatabase db, String property, boolean value) {
-    if (ColumnDefinitions.contains(property)) {
-      ColumnDefinitions.setValue(db, tableId, elementKey, property, value);
-    } else {
-      // or a kvs property?
-      KeyValueStore kvs = tp.getStoreForTable();
-      kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, elementKey, property,
-          ColumnType.BOOLEAN.name(), Boolean.toString(value));
-    }
-    Log.d(TAG, "updated int property " + property + " to " + value + " for table " + tableId
-        + ", column " + elementKey);
+    // or a kvs property?
+    KeyValueStore kvs = tp.getStoreForTable();
+    kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, ci.getElementKey(), property,
+        ElementDataType.bool.name(), Boolean.toString(value));
+    Log.d(TAG, "updated boolean property " + property + " to " + value + " for table " + tableId
+        + ", column " + ci.getElementKey());
   }
 
 }

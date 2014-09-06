@@ -165,6 +165,6 @@ public interface KeyValueHelper {
    * @param key
    * @return
    */
-  public OdkTablesKeyValueStoreEntry getEntry(String key);
+  public KeyValueStoreEntry getEntry(String key);
 
 }

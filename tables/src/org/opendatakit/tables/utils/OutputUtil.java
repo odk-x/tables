@@ -151,7 +151,7 @@ public class OutputUtil {
   public static String getStringForDataObject(Context context, String appName, String tableId,
       int numberOfRows) {
     TableProperties tableProperties = TableProperties.getTablePropertiesForTable(context, appName, tableId);
-    DbTable dbTable = DbTable.getDbTable(tableProperties);
+    DbTable dbTable = new DbTable(tableProperties);
     UserTable userTable = dbTable.rawSqlQuery(null, null, null, null, null, null);
 
     // TODO: This is broken w.r.t. elementKey != elementPath
@@ -230,7 +230,7 @@ public class OutputUtil {
     // We don't want the real count, as that could interfere with for loops in
     // the code. We in fact want the number of rows that are written, as that
     // will be the number of rows available to the javascript.
-    outputObject.put(DATA_KEY_TABLE_ID, userTable.getTableProperties().getTableId());
+    outputObject.put(DATA_KEY_TABLE_ID, userTable.getTableId());
     outputObject.put(DATA_KEY_COUNT, numRowsToWrite);
     outputObject.put(DATA_KEY_COLUMNS, columnJsonMap);
     outputObject.put(DATA_KEY_COLUMN_DATA, elementKeyToColumnData);

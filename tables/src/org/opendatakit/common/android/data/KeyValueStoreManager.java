@@ -149,18 +149,18 @@ class KeyValueStoreManager {
       KeyValueStoreColumns.VALUE + " = ? ";
 
   /**
-   * Compare the two {@link OdkTablesKeyValueStoreEntry} objects based on
+   * Compare the two {@link KeyValueStoreEntry} objects based on
    * their partition, aspect, and key, in that order. Must be from the same
    * table (i.e. have the same tableId) to have any meaning.
    * @author sudar.sam@gmail.com
    *
    */
   public static class KVSEntryComparator implements
-      Comparator<OdkTablesKeyValueStoreEntry> {
+      Comparator<KeyValueStoreEntry> {
 
     @Override
-    public int compare(OdkTablesKeyValueStoreEntry lhs,
-        OdkTablesKeyValueStoreEntry rhs) {
+    public int compare(KeyValueStoreEntry lhs,
+        KeyValueStoreEntry rhs) {
       int partitionComparison = lhs.partition.compareTo(rhs.partition);
       if (partitionComparison != 0) {
         return partitionComparison;

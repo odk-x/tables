@@ -10,7 +10,7 @@ import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
@@ -28,12 +28,12 @@ public class WebViewUtilsTest {
 
   @Test
   public void getContentValuesInvalidIntFails() {
-    this.assertInvalidHelper(ColumnType.INTEGER, "invalid");
+    this.assertInvalidHelper(ElementType.parseElementType("integer", false), "invalid");
   }
 
   @Test
   public void getContentValuesInvalidNumberFails() {
-    this.assertInvalidHelper(ColumnType.NUMBER, "invalid");
+    this.assertInvalidHelper(ElementType.parseElementType("number", false), "invalid");
   }
 
   /**
@@ -46,7 +46,7 @@ public class WebViewUtilsTest {
    * Otherwise it calls {@link Control#updateRow(String, String, String)}.
    */
   private void assertInvalidHelper(
-      ColumnType columnType,
+      ElementType columnType,
       String invalidValue) {
     String elementKey = "anyElementKey";
     TableProperties tpMock = mock(TableProperties.class);
