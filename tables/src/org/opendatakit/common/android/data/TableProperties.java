@@ -30,14 +30,11 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
-import org.opendatakit.common.android.sync.aggregate.SyncTag;
 import org.opendatakit.common.android.utilities.ColorRuleUtil;
-import org.opendatakit.common.android.utilities.DataHelper;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.NameUtil;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
@@ -279,11 +276,11 @@ public class TableProperties {
    * The fields that reside in TableDefintions
    */
   private final String tableId;
-  private SyncTag syncTag;
+  private String schemaETag;
+  private String lastDataETag;
   // TODO lastSyncTime should probably eventually be an int?
   // keeping as a string for now to minimize errors.
   private String lastSyncTime;
-  private boolean transactioning;
   /*
    * The fields that are in the key value store.
    */
@@ -304,7 +301,8 @@ public class TableProperties {
   private TableProperties(Context context, String appName, SQLiteDatabase db, String tableId,
       String displayName, ArrayList<String> columnOrder,
       ArrayList<String> groupByColumns, String sortColumn, String sortOrder, String indexColumn,
-      SyncTag syncTag, String lastSyncTime, TableViewType defaultViewType, boolean transactioning) {
+      String tableSchemaETag, String tableDataETag,
+      String lastSyncTime, TableViewType defaultViewType) {
     this.context = context;
     this.appName = appName;
     this.tableId = tableId;
@@ -330,10 +328,10 @@ public class TableProperties {
     } else {
       this.indexColumn = indexColumn;
     }
-    this.syncTag = syncTag;
+    this.schemaETag = tableSchemaETag;
+    this.lastDataETag = tableDataETag;
     this.lastSyncTime = lastSyncTime;
     this.defaultViewType = defaultViewType;
-    this.transactioning = transactioning;
     this.tableKVSH = this.getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_TABLE);
 
     // This should be OK even when we are creating a new database
@@ -473,7 +471,7 @@ public class TableProperties {
    */
   private static TableDefinitionEntry getFields(SQLiteDatabase db, String tableId ) {
     Cursor c = null;
-    TableDefinitionEntry entry = new TableDefinitionEntry();
+    TableDefinitionEntry entry = new TableDefinitionEntry(tableId);
     try {
       c = db.query(DataModelDatabaseHelper.TABLE_DEFS_TABLE_NAME, null, 
           WHERE_SQL_FOR_TABLE_DEFINITION,
@@ -493,23 +491,16 @@ public class TableProperties {
       c.moveToFirst();
       int idxId = c.getColumnIndex(TableDefinitionsColumns.TABLE_ID);
       int idxLastTime = c.getColumnIndex(TableDefinitionsColumns.LAST_SYNC_TIME);
-      int idxSyncState = c.getColumnIndex(TableDefinitionsColumns.SYNC_STATE);
-      int idxSyncTag = c.getColumnIndex(TableDefinitionsColumns.SYNC_TAG);
-      int idxTransact = c.getColumnIndex(TableDefinitionsColumns.TRANSACTIONING);
+      int idxSchemaETag = c.getColumnIndex(TableDefinitionsColumns.SCHEMA_ETAG);
+      int idxTableDataETag = c.getColumnIndex(TableDefinitionsColumns.LAST_DATA_ETAG);
 
       if ( c.isNull(idxId) ) {
         throw new IllegalStateException("unexpected null tableId!");
       }
       entry.tableId = c.getString(idxId);
       entry.lastSyncTime = c.isNull(idxLastTime) ? null : c.getString(idxLastTime);
-      String syncStateStr = c.isNull(idxSyncState) ? null : c.getString(idxSyncState);
-      entry.syncState = (syncStateStr == null) ? null : SyncState.valueOf(syncStateStr);
-      String syncTagStr = c.isNull(idxSyncTag) ? null : c.getString(idxSyncTag);
-      entry.syncTag = syncTagStr;
-      if ( c.isNull(idxTransact) ) {
-        throw new IllegalStateException("unexpected null transactioning field!");
-      }
-      entry.transactioning = c.getInt(idxTransact);
+      entry.schemaETag = c.isNull(idxSchemaETag) ? null : c.getString(idxSchemaETag);
+      entry.lastDataETag = c.isNull(idxTableDataETag) ? null : c.getString(idxTableDataETag);
 
       return entry;
     } finally {
@@ -553,9 +544,8 @@ public class TableProperties {
       // table definitions wins -- apply it 2nd
       mapProps.putAll(kvsMap);
       mapProps.put(TableDefinitionsColumns.LAST_SYNC_TIME, tableDefn.lastSyncTime);
-      mapProps.put(TableDefinitionsColumns.SYNC_STATE, tableDefn.syncState.name());
-      mapProps.put(TableDefinitionsColumns.SYNC_TAG, tableDefn.syncTag);
-      mapProps.put(TableDefinitionsColumns.TRANSACTIONING, Integer.toString(tableDefn.transactioning));
+      mapProps.put(TableDefinitionsColumns.SCHEMA_ETAG, tableDefn.schemaETag);
+      mapProps.put(TableDefinitionsColumns.LAST_DATA_ETAG, tableDefn.lastDataETag);
 
       if (mapProps.get(TableDefinitionsColumns.TABLE_ID) == null) {
         mapProps.put(TableDefinitionsColumns.TABLE_ID, tableId);
@@ -596,12 +586,6 @@ public class TableProperties {
    */
   private static TableProperties constructPropertiesFromMap(Context context, String appName,
       SQLiteDatabase db, Map<String, String> props) {
-    String transactioningStr = props.get(TableDefinitionsColumns.TRANSACTIONING);
-    boolean transactioning = false;
-    if (transactioningStr != null) {
-      int transactioningInt = Integer.parseInt(transactioningStr);
-      transactioning = DataHelper.intToBool(transactioningInt);
-    }
     String columnOrderValue = props.get(KeyValueStoreConstants.TABLE_COL_ORDER);
     String defaultViewTypeStr = props.get(KEY_DEFAULT_VIEW_TYPE);
     TableViewType defaultViewType;
@@ -660,19 +644,16 @@ public class TableProperties {
         props.get(KeyValueStoreConstants.TABLE_DISPLAY_NAME), columnOrder, groupByCols,
         props.get(KeyValueStoreConstants.TABLE_SORT_COL),
         props.get(KeyValueStoreConstants.TABLE_SORT_ORDER),
-        props.get(KeyValueStoreConstants.TABLE_INDEX_COL), SyncTag.valueOf(props
-            .get(TableDefinitionsColumns.SYNC_TAG)),
-        props.get(TableDefinitionsColumns.LAST_SYNC_TIME), defaultViewType, transactioning);
+        props.get(KeyValueStoreConstants.TABLE_INDEX_COL), 
+        props.get(TableDefinitionsColumns.SCHEMA_ETAG),
+        props.get(TableDefinitionsColumns.LAST_DATA_ETAG),
+        props.get(TableDefinitionsColumns.LAST_SYNC_TIME), defaultViewType);
   }
   
   /***********************************
    *  Default values for those columns which require them.
    ***********************************/
   public static final int DEFAULT_DB_LAST_SYNC_TIME = -1;
-  public static final String DEFAULT_DB_SYNC_TAG = "";
-  public static final SyncState DEFAULT_DB_SYNC_STATE = SyncState.new_row;
-  public static final int DEFAULT_DB_TRANSACTIONING = 0;
-  public static final String DEFAULT_DB_TABLE_ID_ACCESS_CONTROLS = "";
 
   /**
    * Add a table to the database. The intendedStore type exists to force you to
@@ -706,10 +687,9 @@ public class TableProperties {
       try {
         ContentValues values = new ContentValues();
         values.put(TableDefinitionsColumns.TABLE_ID, tableId);
-        values.put(TableDefinitionsColumns.SYNC_TAG, DEFAULT_DB_SYNC_TAG);
+        values.putNull(TableDefinitionsColumns.SCHEMA_ETAG);
+        values.putNull(TableDefinitionsColumns.LAST_DATA_ETAG);
         values.put(TableDefinitionsColumns.LAST_SYNC_TIME, DEFAULT_DB_LAST_SYNC_TIME);
-        values.put(TableDefinitionsColumns.SYNC_STATE, DEFAULT_DB_SYNC_STATE.name());
-        values.put(TableDefinitionsColumns.TRANSACTIONING, DEFAULT_DB_TRANSACTIONING);
         db.insert(DataModelDatabaseHelper.TABLE_DEFS_TABLE_NAME, null, values);
 
         Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId);
@@ -1101,18 +1081,6 @@ public class TableProperties {
     }
   }
 
-  private static class RowUpdate {
-    String id;
-    String savepointTimestamp;
-    String value;
-
-    RowUpdate(String id, String timestamp, String value) {
-      this.id = id;
-      this.savepointTimestamp = timestamp;
-      this.value = value;
-    }
-  }
-
   /**
    * The column order is specified by an ordered list of element keys.
    *
@@ -1262,28 +1230,47 @@ public class TableProperties {
     this.indexColumn = indexColumnElementKey;
   }
 
-  /**
-   * @return the sync tag. Unsynched tables return the empty string.
-   */
-  public SyncTag getSyncTag() {
-    return syncTag;
+  public String getSchemaETag() {
+    return this.schemaETag;
+  }
+  
+  public String getDataETag() {
+    return this.lastDataETag;
   }
 
-  /**
-   * Sets the table's sync tag.
-   *
-   * @param syncTag
-   *          the new sync tag
-   */
-  public void setSyncTag(SyncTag syncTag) {
+  public void setSchemaETag(String schemaETag) {
     SQLiteDatabase db = getWritableDatabase();
     try {
       db.beginTransaction();
       ContentValues values = new ContentValues();
-      values.put(TableDefinitionsColumns.SYNC_TAG, syncTag.toString());
+      boolean clear = false;
+      values.put(TableDefinitionsColumns.SCHEMA_ETAG, schemaETag);
+      if ( schemaETag == null ? (schemaETag != null) : !schemaETag.equals(schemaETag) ) {
+        clear = true;
+        values.putNull(TableDefinitionsColumns.LAST_DATA_ETAG); // reset
+      }
       db.update(DataModelDatabaseHelper.TABLE_DEFS_TABLE_NAME, values, WHERE_SQL_FOR_TABLE_DEFINITION,
           new String[] {tableId});
-      this.syncTag = syncTag;
+      this.schemaETag = schemaETag;
+      if ( clear ) {
+        this.lastDataETag = null;
+      }
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      db.close();
+    }
+  }
+  
+  public void setDataETag(String dataETag) {
+    SQLiteDatabase db = getWritableDatabase();
+    try {
+      db.beginTransaction();
+      ContentValues values = new ContentValues();
+      values.put(TableDefinitionsColumns.LAST_DATA_ETAG, dataETag); // reset
+      db.update(DataModelDatabaseHelper.TABLE_DEFS_TABLE_NAME, values, WHERE_SQL_FOR_TABLE_DEFINITION,
+          new String[] {tableId});
+      this.lastDataETag = dataETag;
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -1320,25 +1307,6 @@ public class TableProperties {
       db.endTransaction();
       db.close();
     }
-  }
-
-  /**
-   * @return the transactioning status
-   */
-  public boolean isTransactioning() {
-    return transactioning;
-  }
-
-  /**
-   * Sets the transactioning status.
-   *
-   * @param transactioning
-   *          the new transactioning status
-   */
-  public void setTransactioning(boolean transactioning) {
-    tableKVSH.setInteger(TableDefinitionsColumns.TRANSACTIONING,
-        DataHelper.boolToInt(transactioning));
-    this.transactioning = transactioning;
   }
 
   /**

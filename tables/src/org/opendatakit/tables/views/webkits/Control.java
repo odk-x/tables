@@ -10,6 +10,8 @@ import java.util.UUID;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
@@ -558,17 +560,21 @@ public class Control {
      // If we've made it here, all appears to be well.
      SQLiteDatabase writableDatabase = getWritableDatabase();
      ODKDatabaseUtilsWrapper dbUtils = this.getODKDatabaseUtilsWrapper();
+     ArrayList<Column> columns = dbUtils.getUserDefinedColumns(writableDatabase, tableId);
+     ArrayList<ColumnDefinition> orderedColumns = ColumnDefinition.buildColumnDefinitions(columns);
      if (isUpdate) {
        dbUtils.updateDataInExistingDBTableWithId(
            writableDatabase,
            tableId,
+           orderedColumns,
            contentValues,
            rowId);
        
      } else {
-       dbUtils.writeDataIntoExistingDBTableWithId(
+       dbUtils.insertDataIntoExistingDBTableWithId(
            writableDatabase,
            tableId,
+           orderedColumns,
            contentValues,
            rowId);
      }

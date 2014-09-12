@@ -9,13 +9,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.robolectric.Robolectric.shadowOf;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
@@ -209,6 +215,14 @@ public class ControlTest {
         TestConstants.ElementKeys.INT_COLUMN);
     doReturn(numberColumn).when(tpMock).getColumnByElementKey(
         TestConstants.ElementKeys.NUMBER_COLUMN);
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
+        ElementDataType.string.name(), "[]"));
+    columns.add(new Column(TestConstants.ElementKeys.INT_COLUMN, TestConstants.ElementKeys.INT_COLUMN,
+        ElementDataType.integer.name(), "[]"));
+    columns.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
+        ElementDataType.number.name(), "[]"));
+
     // Now we'll do the call and make sure that we called through to the mock
     // object successfully.
     String tableId = "anyTableId";
@@ -217,19 +231,22 @@ public class ControlTest {
     ContentValues contentValues = getContentValuesForValidMap();
     ControlStub.CONTENT_VALUES = contentValues;
     String rowId = "aRowId";
+    doReturn(columns).when(wrapperMock).getUserDefinedColumns(eq(ControlStub.DATABASE), eq(tableId));
     if (isUpdate) {
       this.control.updateRow(tableId, validMapString, rowId);
       verify(wrapperMock, times(1)).updateDataInExistingDBTableWithId(
           eq(ControlStub.DATABASE),
           eq(tableId),
+          (ArrayList<ColumnDefinition>) Matchers.anyListOf(ColumnDefinition.class),
           eq(contentValues),
           eq(rowId));
     } else {
       ControlStub.GENERATED_ROW_ID = rowId;
       String returnedRowId = control.addRow(tableId, validMapString);
-      verify(wrapperMock, times(1)).writeDataIntoExistingDBTableWithId(
+      verify(wrapperMock, times(1)).insertDataIntoExistingDBTableWithId(
           eq(ControlStub.DATABASE),
           eq(tableId),
+          (ArrayList<ColumnDefinition>) Matchers.anyListOf(ColumnDefinition.class),
           eq(contentValues),
           eq(rowId));
       assertThat(returnedRowId).isEqualTo(rowId);

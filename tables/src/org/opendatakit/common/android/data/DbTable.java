@@ -18,6 +18,7 @@ package org.opendatakit.common.android.data;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -172,7 +173,8 @@ public class DbTable {
            c = db.query(tp.getTableId(), null,
                    sqlQuery,
                    selectionArgs, groupByClause, havingClause, orderByClause);
-           UserTable table = buildTable(c, tp, sqlQuery, selectionArgs,
+           UserTable table = buildTable(c, tp.getAppName(), tp.getTableId(), tp.getPersistedColumns(),
+               sqlQuery, selectionArgs,
                groupByArgs, havingClause, orderByElementKey, orderByDirection);
            return table;
         } finally {
@@ -230,7 +232,7 @@ public class DbTable {
         String sqlQuery = s.toString();
         db = tp.getReadableDatabase();
         c = db.rawQuery(sqlQuery, selectionArgs);
-        UserTable table = buildTable(c, tp,
+        UserTable table = buildTable(c, tp.getAppName(), tp.getTableId(), tp.getPersistedColumns(),
             whereClause, selectionArgs, groupBy, having, orderByElementKey, orderByDirection);
         return table;
       } finally {
@@ -335,11 +337,11 @@ public class DbTable {
      * @param c Cursor meeting the requirements above
      * @param userColumnOrder the user-specified column order
      */
-    private UserTable buildTable(Cursor c, TableProperties tp,
+    private UserTable buildTable(Cursor c, String appName, String tableId, List<String> persistedColumns,
         String whereClause, String[] selectionArgs, String[] groupByArgs, String havingClause,
         String orderByElementKey, String orderByDirection) {
-      return new UserTable(c, tp.getAppName(), tp.getTableId(), 
-          tp.getPersistedColumns(), whereClause, selectionArgs,
+      return new UserTable(c, appName, tableId, 
+          persistedColumns, whereClause, selectionArgs,
           groupByArgs, havingClause, orderByElementKey, orderByDirection);
     }
 
@@ -426,6 +428,7 @@ public class DbTable {
         SQLiteDatabase db = tp.getWritableDatabase();
         try {
           db.beginTransaction();
+          // TODO: This is WRONG
 	       values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
 	       long result = db.insertOrThrow(tp.getTableId(), null, values);
 	       if ( result != -1 ) {

@@ -1,5 +1,9 @@
 package org.opendatakit.tables.utils;
 
+import java.util.ArrayList;
+
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 
 import android.content.ContentValues;
@@ -18,26 +22,35 @@ import android.database.sqlite.SQLiteDatabase;
  */
 public class ODKDatabaseUtilsWrapper {
   
-  public void writeDataIntoExistingDBTableWithId(
+  public ArrayList<Column> getUserDefinedColumns(
+      SQLiteDatabase db, String tableId) {
+    return ODKDatabaseUtils.getUserDefinedColumns(db, tableId);
+  }
+  
+  public void insertDataIntoExistingDBTableWithId(
       SQLiteDatabase database,
-      String tableName,
+      String tableId,
+      ArrayList<ColumnDefinition> orderedColumns,
       ContentValues contentValues,
       String uuid) {
-    ODKDatabaseUtils.writeDataIntoExistingDBTableWithId(
+    ODKDatabaseUtils.insertDataIntoExistingDBTableWithId(
         database,
-        tableName,
+        tableId,
+        orderedColumns,
         contentValues,
         uuid);
   }
   
   public void updateDataInExistingDBTableWithId(
       SQLiteDatabase database,
-      String tableName,
+      String tableId,
+      ArrayList<ColumnDefinition> orderedColumns,
       ContentValues contentValues,
       String uuid) {
     ODKDatabaseUtils.updateDataInExistingDBTableWithId(
         database, 
-        tableName, 
+        tableId, 
+        orderedColumns,
         contentValues, 
         uuid);
   }
