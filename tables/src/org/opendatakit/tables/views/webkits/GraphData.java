@@ -1,22 +1,30 @@
 package org.opendatakit.tables.views.webkits;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.data.KeyValueStoreEntry;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 
-import android.util.Log;
+import android.database.sqlite.SQLiteDatabase;
 
 public class GraphData {
 
   private static final String TAG = "GraphData";
 
   // These are the partition and aspect helpers for setting info in the KVS.
-  private KeyValueStoreHelper kvsh;
-  private AspectHelper aspectHelper;
-  private String graphString;
+  private final String mAppName;
+  private final String mTableId;
+  private final KeyValueStoreHelper kvsh;
+  private final AspectHelper aspectHelper;
+  private final String graphString;
   private boolean isModified;
   private static final String GRAPH_TYPE = "graphtype";
   private static final String X_AXIS = "selectx";
@@ -33,12 +41,14 @@ public class GraphData {
     return new GraphDataIf(this);
   }
 
-  public GraphData(TableProperties tableProperties, String graphString) {
+  public GraphData(TableProperties tp, String graphString) {
     isModified = false;
     this.graphString = graphString;
-    this.kvsh = tableProperties.getKeyValueStoreHelper(
-        LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
+    this.mAppName = tp.getAppName();
+    this.mTableId = tp.getTableId();
+    this.kvsh = new KeyValueStoreHelper(LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS, tp);
     this.aspectHelper = kvsh.getAspectHelper(this.graphString);
+    
 // TODO
 //    if (potentialGraphName != null) {
 //      this.aspectHelper = saveGraphToName(potentialGraphName);
@@ -106,11 +116,23 @@ public class GraphData {
   }
 
   public boolean hasGraph(String graph) {
-    List<String> list = kvsh.getAspectsForPartition();
-    for (String s : list) {
-      Log.d("stufftotest", "in list: " + s);
-      if (graph.equals(s))
+    List<KeyValueStoreEntry> graphViewEntries = new ArrayList<KeyValueStoreEntry>();
+    SQLiteDatabase db = null;
+    try {
+      DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(Tables.getInstance().getApplicationContext(), mAppName);
+      db = dbh.getReadableDatabase();
+      graphViewEntries = ODKDatabaseUtils.getDBTableMetadata(db, mTableId, 
+          LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS, null, LocalKeyValueStoreConstants.Graph.KEY_GRAPH_TYPE);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+    
+    for ( KeyValueStoreEntry e : graphViewEntries ) {
+      if ( e.aspect.equals(graph)) {
         return true;
+      }
     }
     return false;
   }

@@ -20,16 +20,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.utilities.DataHelper;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A helper class to access values in the key value store. The partition must
@@ -49,26 +50,18 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * {@link AspectKeyValueStoreHelper} must be used.
    */
 
-  private static final ObjectMapper mapper;
-  static {
-    mapper = new ObjectMapper();
-    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
-        .withFieldVisibility(Visibility.ANY));
-  }
   /*
    * This is the partition which this helper will be restricted to.
    */
   private final String partition;
-  private final KeyValueStore kvs;
   private final TableProperties tp;
 
   /**
    * @param kvs
    * @param partition
    */
-  public KeyValueStoreHelper(KeyValueStore kvs, String partition, TableProperties tp) {
+  public KeyValueStoreHelper(String partition, TableProperties tp) {
     this.partition = partition;
-    this.kvs = kvs;
     this.tp = tp;
   }
 
@@ -88,22 +81,6 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    */
   public String getPartition() {
     return this.partition;
-  }
-
-  /**
-   * Get all the aspects residing in this partition. No checking is done to
-   * avoid default or null aspects.
-   * @return
-   */
-  public List<String> getAspectsForPartition() {
-    SQLiteDatabase db = null;
-    try {
-      db = tp.getReadableDatabase();
-      List<String> aspects = this.kvs.getAspectsForPartition(db, this.partition);
-      return aspects;
-    } finally {
-      db.close();
-    }
   }
 
   @Override
@@ -141,7 +118,9 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     }
     ArrayList<Object> result = null;
     try {
-      result = mapper.readValue(entry.value, ArrayList.class);
+      if ( entry.value != null && entry.value.length() != 0 ) {
+        result = ODKFileUtils.mapper.readValue(entry.value, ArrayList.class);
+      }
     } catch (JsonParseException e) {
       Log.e(TAG, "problem parsing json list entry from the kvs");
       e.printStackTrace();
@@ -236,8 +215,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
-      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          ElementDataType.integer.name(), Integer.toString(value));
+      KeyValueStoreEntry entry = new KeyValueStoreEntry();
+      entry.tableId = tp.getTableId();
+      entry.partition = this.getPartition();
+      entry.aspect = aspect;
+      entry.key = key;
+      entry.type = ElementDataType.integer.name();
+      entry.value = Integer.toString(value);
+      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -254,8 +239,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
-      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          ElementDataType.number.name(), Double.toString(value));
+      KeyValueStoreEntry entry = new KeyValueStoreEntry();
+      entry.tableId = tp.getTableId();
+      entry.partition = this.getPartition();
+      entry.aspect = aspect;
+      entry.key = key;
+      entry.type = ElementDataType.number.name();
+      entry.value = Double.toString(value);
+      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -272,8 +263,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
-      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          ElementDataType.object.name(), jsonOfObject);
+      KeyValueStoreEntry entry = new KeyValueStoreEntry();
+      entry.tableId = tp.getTableId();
+      entry.partition = this.getPartition();
+      entry.aspect = aspect;
+      entry.key = key;
+      entry.type = ElementDataType.object.name();
+      entry.value = jsonOfObject;
+      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -296,9 +293,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
-      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          ElementDataType.bool.name(),
-        Integer.toString(DataHelper.boolToInt(value)));
+      KeyValueStoreEntry entry = new KeyValueStoreEntry();
+      entry.tableId = tp.getTableId();
+      entry.partition = this.getPartition();
+      entry.aspect = aspect;
+      entry.key = key;
+      entry.type = ElementDataType.bool.name();
+      entry.value = Integer.toString(DataHelper.boolToInt(value));
+      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -321,8 +323,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
-      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          ElementDataType.string.name(), value);
+      KeyValueStoreEntry entry = new KeyValueStoreEntry();
+      entry.tableId = tp.getTableId();
+      entry.partition = this.getPartition();
+      entry.aspect = aspect;
+      entry.key = key;
+      entry.type = ElementDataType.string.name();
+      entry.value = value;
+      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -350,12 +358,18 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param value
    */
   public void setStringEntry(SQLiteDatabase db, String aspect, String key, String value) {
-	    kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-	            ElementDataType.string.name(), value);
+    KeyValueStoreEntry entry = new KeyValueStoreEntry();
+    entry.tableId = tp.getTableId();
+    entry.partition = this.getPartition();
+    entry.aspect = aspect;
+    entry.key = key;
+    entry.type = ElementDataType.string.name();
+    entry.value = value;
+    ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
   }
 
   @Override
-  public void setArray(String key, ArrayList<Object> value) {
+  public <T> void setArray(String key, ArrayList<T> value) {
     setArrayEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key, value);
   }
 
@@ -365,11 +379,15 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param key
    * @param value
    */
-  private void setArrayEntry(String aspect, String key,
-      ArrayList<Object> value) {
+  private <T> void setArrayEntry(String aspect, String key,
+      ArrayList<T> value) {
     String entryValue = null;
     try {
-      entryValue = mapper.writeValueAsString(value);
+      if (value != null && value.size() > 0) {
+        entryValue = ODKFileUtils.mapper.writeValueAsString(value);
+      } else {
+        entryValue = ODKFileUtils.mapper.writeValueAsString(new ArrayList<T>());
+      }
     } catch (JsonGenerationException e) {
       Log.e(TAG, "problem parsing json list entry while writing to the kvs");
       e.printStackTrace();
@@ -388,8 +406,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
-      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          ElementDataType.array.name(), entryValue);
+      KeyValueStoreEntry entry = new KeyValueStoreEntry();
+      entry.tableId = tp.getTableId();
+      entry.partition = this.getPartition();
+      entry.aspect = aspect;
+      entry.key = key;
+      entry.type = ElementDataType.array.name();
+      entry.value = entryValue;
+      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -398,8 +422,8 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public int removeKey(String key) {
-    return removeEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key);
+  public void removeKey(String key) {
+    removeEntry(KeyValueStoreConstants.ASPECT_DEFAULT, key);
   }
 
   /**
@@ -408,13 +432,12 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param key
    * @return
    */
-  private int removeEntry(String aspect, String key) {
+  private void removeEntry(String aspect, String key) {
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
-      int deleteCount = kvs.deleteKey(db, this.partition, aspect, key);
+      ODKDatabaseUtils.deleteDBTableMetadata(db, tp.getTableId(), this.getPartition(), aspect, key);
       db.setTransactionSuccessful();
-      return deleteCount;
     } finally {
       db.endTransaction();
       db.close();
@@ -437,18 +460,16 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @return
    */
   private KeyValueStoreEntry getEntry(String aspect, String key) {
-    List<String> keyList = new ArrayList<String>();
-    keyList.add(key);
     SQLiteDatabase db = null;
     try {
       db = tp.getReadableDatabase();
       List<KeyValueStoreEntry> entries =
-          kvs.getEntriesForKeys(db, this.partition, aspect, keyList);
+          ODKDatabaseUtils.getDBTableMetadata(db, tp.getTableId(), this.getPartition(), aspect, key);
       // Do some sanity checking. There should only ever be one entry per key.
       if (entries.size() > 1) {
         Log.e(TAG, "request for key: " + key + " in KVS " +
-            kvs.getDbBackingName() +
-            " for table: " + kvs.getTableId() + " returned " + entries.size() +
+            DataModelDatabaseHelper.KEY_VALUE_STORE_ACTIVE_TABLE_NAME +
+            " for table: " + tp.getTableId() + " returned " + entries.size() +
             "entries. It should return at most 1, as it is a key in a set.");
       }
       if (entries.size() == 0) {
@@ -536,13 +557,13 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     }
 
     @Override
-    public void setArray(String key, ArrayList<Object> value) {
+    public <T> void setArray(String key, ArrayList<T> value) {
       KeyValueStoreHelper.this.setArrayEntry(aspect, key, value);
     }
 
     @Override
-    public int removeKey(String key) {
-      return KeyValueStoreHelper.this.removeEntry(aspect, key);
+    public void removeKey(String key) {
+      KeyValueStoreHelper.this.removeEntry(aspect, key);
     }
 
     @Override
@@ -554,13 +575,12 @@ public class KeyValueStoreHelper implements KeyValueHelper {
      * Delete all the entries in the given aspect.
      * @return
      */
-    public int deleteAllEntriesInThisAspect() {
+    public void deleteAllEntriesInThisAspect() {
       SQLiteDatabase db = tp.getWritableDatabase();
       try {
         db.beginTransaction();
-        int numDeleted = kvs.clearEntries(db, partition, aspect);
+        ODKDatabaseUtils.deleteDBTableMetadata(db, tp.getTableId(), partition, aspect, null);
         db.setTransactionSuccessful();
-        return numDeleted;
       } finally {
         db.endTransaction();
         db.close();

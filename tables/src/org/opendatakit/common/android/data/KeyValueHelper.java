@@ -51,7 +51,7 @@ public interface KeyValueHelper {
    * @return
    * @throws IllegalArgumentException if the type of the entry does not match
    */
-  public ArrayList<Object> getArray(String key);
+  public <T> ArrayList<T> getArray(String key);
 
   /**
    * Retrieve a value of type {@link KeyValueStoreEntryType.STRING} mapping to
@@ -149,14 +149,14 @@ public interface KeyValueHelper {
    * @param key
    * @param value
    */
-  public void setArray(String key, ArrayList<Object> value);
+  public <T> void setArray(String key, ArrayList<T> value);
 
   /**
    * Remove the given key from the key value store.
    * @param key
    * @return
    */
-  public int removeKey(String key);
+  public void removeKey(String key);
 
   /**
    * Return the entry matching this key.

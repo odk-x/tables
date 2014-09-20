@@ -2,18 +2,16 @@ package org.opendatakit.tables.fragments;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.TimeZone;
 
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -31,6 +29,7 @@ import org.opendatakit.tables.views.SpreadsheetUserTable.SpreadsheetCell;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -283,8 +282,16 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   }
 
   private void deleteRow(String rowId) {
-    DbTable dbTable = new DbTable(getTableProperties());
-    dbTable.markDeleted(rowId);
+    TableProperties tp = getTableProperties();
+    SQLiteDatabase db = null;
+    try {
+      db = tp.getWritableDatabase();
+      ODKDatabaseUtils.deleteDataInDBTableWithId(db, getAppName(), tp.getTableId(), rowId);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
   }
 
   @Override
@@ -542,18 +549,22 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
             // TODO: alert the user
             return;
           }
-          Map<String, String> values = new HashMap<String, String>();
+          
+          
+          ContentValues values = new ContentValues();
           values.put(CellEditDialog.this.cell.elementKey, value);
 
-          // TODO: supply reasonable values for these...
-          String savepointCreator = null; // user on phone
-          Long timestamp = null; // current time
-          String formId = null; // formId used by ODK Collect
-          String locale = null; // current locale
-
-          DbTable dbTable = new DbTable(getTableProperties());
-          dbTable.updateRow(cell.row.getRowId(), formId, locale, timestamp, savepointCreator,
-              values);
+          SQLiteDatabase db = null;
+          try {
+            TableProperties tp = getTableProperties();
+            db = tp.getWritableDatabase();
+            ODKDatabaseUtils.updateDataInExistingDBTableWithId(db, tp.getTableId(), tp.getColumnDefinitions(), values, cell.row.getRowId());
+          } finally {
+            if ( db != null ) {
+              db.close();
+            }
+          }
+          
           init();
           dismiss();
         }

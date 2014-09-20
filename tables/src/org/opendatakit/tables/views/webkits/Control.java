@@ -13,7 +13,6 @@ import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
@@ -941,16 +940,21 @@ public class Control {
           "request for table with tableId [" + tableId + "] cannot be found.");
       return null;
     }
-    DbTable dbTable = new DbTable(tp);
-    UserTable userTable = dbTable.rawSqlQuery(
-        sqlWhereClause,
-        sqlSelectionArgs,
-        sqlGroupBy,
-        sqlHaving,
-        sqlOrderByElementKey,
-        sqlOrderByDirection);
-    TableData tableData = new TableData(userTable);
-    return tableData;
+    SQLiteDatabase db = null;
+    try {
+      db = tp.getReadableDatabase();
+      UserTable userTable = ODKDatabaseUtils.rawSqlQuery(db, tp.getAppName(),
+          tp.getTableId(), tp.getPersistedColumns(),
+          sqlWhereClause, sqlSelectionArgs,
+          sqlGroupBy, sqlHaving, 
+          sqlOrderByElementKey, sqlOrderByDirection);
+      TableData tableData = new TableData(userTable);
+      return tableData;
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
   }
 
   /**

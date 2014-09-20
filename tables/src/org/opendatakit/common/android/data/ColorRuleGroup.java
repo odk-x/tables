@@ -73,7 +73,6 @@ public class ColorRuleGroup {
   }
 
   private final TableProperties tp;
-  private final ColumnProperties cp;
   // this remains its own field (which must always match cp.getElementKey())
   // b/c it is easier for the caller to just pass in the elementKey, and the
   // code currently uses null to mean "don't get me a color ruler."
@@ -99,24 +98,20 @@ public class ColorRuleGroup {
       this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_COLUMN);
       this.aspectHelper = kvsh.getAspectHelper(elementKey);
       jsonRulesString = aspectHelper.getObject(KEY_COLOR_RULES_COLUMN);
-      this.cp = tp.getColumnByElementKey(elementKey);
       break;
     case TABLE:
       this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_TABLE);
       this.aspectHelper = null;
       jsonRulesString = kvsh.getObject(KEY_COLOR_RULES_TABLE);
-      this.cp = null;
       break;
     case STATUS_COLUMN:
       this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_TABLE);
       this.aspectHelper = null;
       jsonRulesString = kvsh.getObject(KEY_COLOR_RULES_STATUS_COLUMN);
-      this.cp = null;
       break;
     default:
       Log.e(TAG, "unrecognized ColorRuleGroup type: " + type);
       this.kvsh = null;
-      this.cp = null;
       this.aspectHelper = null;
     }
     this.ruleList = parseJsonString(jsonRulesString);

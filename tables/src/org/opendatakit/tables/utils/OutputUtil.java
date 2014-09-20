@@ -10,13 +10,14 @@ import java.util.Set;
 
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -151,9 +152,18 @@ public class OutputUtil {
   public static String getStringForDataObject(Context context, String appName, String tableId,
       int numberOfRows) {
     TableProperties tableProperties = TableProperties.getTablePropertiesForTable(context, appName, tableId);
-    DbTable dbTable = new DbTable(tableProperties);
-    UserTable userTable = dbTable.rawSqlQuery(null, null, null, null, null, null);
 
+    SQLiteDatabase db = null;
+    UserTable userTable = null;
+    try {
+      db = tableProperties.getReadableDatabase();
+      userTable = ODKDatabaseUtils.rawSqlQuery(db, appName, tableId, 
+          tableProperties.getPersistedColumns(), null, null, null, null, null, null);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
     // TODO: This is broken w.r.t. elementKey != elementPath
     // TODO: HACKED HACKED HACKED HACKED
     // Because the code is so freaked up we don't have an easy way to get the

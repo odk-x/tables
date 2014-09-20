@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.common.android.utilities.DataHelper;
@@ -341,20 +342,6 @@ public class ColumnProperties {
     this.displayFormat = displayFormat;
   }
 
-
-  public void addMetaDataEntries(List<KeyValueStoreEntry> entries) {
-    KeyValueStore kvs = tp.getStoreForTable();
-    SQLiteDatabase db = tp.getWritableDatabase();
-    try {
-      db.beginTransaction();
-      kvs.addEntriesToStore(db, entries);
-      db.setTransactionSuccessful();
-    } finally {
-      db.endTransaction();
-      db.close();
-    }
-  }
-
   /**
    * Return the ColumnProperties for all the columns in a table, whether or not
    * they are written to the database table.
@@ -365,7 +352,8 @@ public class ColumnProperties {
    */
   static Map<String, ColumnProperties> getColumnPropertiesForTable(SQLiteDatabase db, TableProperties tp) {
     List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, tp.getTableId());
-    List<ColumnDefinition> colDefns = ColumnDefinition.buildColumnDefinitions(columns);
+    ArrayList<ColumnDefinition> colDefns = ColumnDefinition.buildColumnDefinitions(columns);
+    tp.setColumnDefinitions(colDefns);
     Map<String, ColumnProperties> elementKeyToColumnProperties = new HashMap<String, ColumnProperties>();
     for ( ColumnDefinition colDefn : colDefns ) {
       ColumnProperties cp = getColumnProperties(db, tp, colDefn);
@@ -389,13 +377,21 @@ public class ColumnProperties {
    */
   private static ColumnProperties getColumnProperties(SQLiteDatabase db, TableProperties tp, ColumnDefinition column) {
     // Get the KVS values
-    KeyValueStore intendedKVS = tp.getStoreForTable();
-    Map<String, String> kvsMap = intendedKVS.getKeyValues(db, ColumnProperties.KVS_PARTITION,
-        column.getElementKey());
+    List<KeyValueStoreEntry> entries = ODKDatabaseUtils.getDBTableMetadata(db, tp.getTableId(), 
+        KeyValueStoreConstants.PARTITION_COLUMN, column.getElementKey(), null);
 
-    return constructPropertiesFromMap(tp, column.getElementKey(), column, kvsMap);
+    return constructPropertiesFromMap(tp, column.getElementKey(), column, entries);
   }
 
+  private static KeyValueStoreEntry findColumnProperty(List<KeyValueStoreEntry> entries, String key) {
+    for ( KeyValueStoreEntry e : entries ) {
+      if ( key.equals(e.key) ) {
+        return e;
+      }
+    }
+    return null;
+  }
+  
   /**
    * Construct a ColumnProperties from the given json serialization. NOTE: the
    * resulting ColumnProperties object has NOT been written to the database.
@@ -411,39 +407,57 @@ public class ColumnProperties {
    * @return
    */
   private static ColumnProperties constructPropertiesFromMap(TableProperties tp,
-      String elementKey, ColumnDefinition column, Map<String, String> kvsProps) {
+      String elementKey, ColumnDefinition column, List<KeyValueStoreEntry> entries) {
     // First convert the non-string types to their appropriate types. This is
     // probably going to go away when the map becomes key->TypeValuePair.
     // KEY_DISPLAY_VISIBLE
-    String displayVisibleStr = kvsProps.get(KEY_DISPLAY_VISIBLE);
-    boolean displayVisible = DataHelper.stringToBool(displayVisibleStr);
-    // KEY_JOINS
+    String str;
+    KeyValueStoreEntry entry;
+    
+    
+    entry = findColumnProperty(entries, KeyValueStoreConstants.COLUMN_DISPLAY_VISIBLE);
 
-    // DB_COLUMN_TYPE
-    String columnTypeStr = column.getElementType();
+    boolean displayVisible = false;
+    if ( entry != null && entry.value != null && entry.value.length() != 0 ) {
+      displayVisible = DataHelper.stringToBool(entry.value);
+    } else {
+      displayVisible = column.isUnitOfRetention();
+    }
+    
+    entry = findColumnProperty(entries, KeyValueStoreConstants.COLUMN_DISPLAY_NAME);
 
+    String displayName;
+    if ( entry != null && entry.value != null && entry.value.length() != 0 ) {
+      displayName = entry.value;
+    } else {
+      displayName = NameUtil.normalizeDisplayName(NameUtil.constructSimpleDisplayName(column.getElementKey()));
+    }
+    
+    entry = findColumnProperty(entries, KeyValueStoreConstants.COLUMN_DISPLAY_FORMAT);
+
+    String displayFormat;
+    if ( entry != null && entry.value != null && entry.value.length() != 0 ) {
+      displayFormat = entry.value;
+    } else {
+      displayFormat = null;
+    }
+
+    
     // Now we need to reclaim the list values from their db entries.
     String parseValue = null;
     ArrayList<String> displayChoicesList = null;
-    ArrayList<String> listChildElementKeys = null;
     ArrayList<JoinColumn> joins = null;
     try {
-      if (kvsProps.get(KEY_DISPLAY_CHOICES_LIST) != null) {
-        String displayChoicesListValue = kvsProps.get(KEY_DISPLAY_CHOICES_LIST);
-        parseValue = displayChoicesListValue;
-        displayChoicesList = ODKFileUtils.mapper.readValue(displayChoicesListValue, ArrayList.class);
+      entry = findColumnProperty(entries, KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST);
+      if ( entry != null && entry.value != null && entry.value.length() != 0) {
+        parseValue = entry.value;
+        displayChoicesList = ODKFileUtils.mapper.readValue(entry.value, ArrayList.class);
       }
 
-      if (column.getListChildElementKeys() != null) {
-        String listChildElementKeysValue = column.getListChildElementKeys();
-        parseValue = listChildElementKeysValue;
-        listChildElementKeys = ODKFileUtils.mapper.readValue(listChildElementKeysValue, ArrayList.class);
-      }
-
-      String joinsValue = kvsProps.get(KEY_JOINS);
-      if ( joinsValue != null ) {
-        parseValue = joinsValue;
-        joins = JoinColumn.fromSerialization(joinsValue);
+      entry = findColumnProperty(entries, KeyValueStoreConstants.COLUMN_JOINS);
+      if ( entry != null && entry.value != null && entry.value.length() != 0) {
+        parseValue = entry.value;
+        joins = JoinColumn.fromSerialization(entry.value);
       }
     } catch (JsonParseException e) {
       e.printStackTrace();
@@ -455,11 +469,11 @@ public class ColumnProperties {
       e.printStackTrace();
       throw new IllegalArgumentException("invalid db value: " + parseValue, e);
     }
-    ElementType columnType = ElementType.parseElementType(columnTypeStr, 
-        (listChildElementKeys != null && !listChildElementKeys.isEmpty()));
+    ElementType columnType = ElementType.parseElementType(column.getElementType(), 
+        !column.getChildren().isEmpty());
 
-    return new ColumnProperties(tp, column, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
-        displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), joins);
+    return new ColumnProperties(tp, column, displayVisible, displayName,
+        displayChoicesList, displayFormat, joins);
   }
   
   /*
@@ -563,8 +577,8 @@ public class ColumnProperties {
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, ci.getElementKey(),
         KEY_JOINS, JoinColumn.toSerialization(joins)));
 
-    KeyValueStore kvs = tp.getStoreForTable();
-    kvs.addEntriesToStore(db, values);
+    // this updates or inserts these values into the data store
+    ODKDatabaseUtils.replaceDBTableMetadata(db, tp.getTableId(), values, false);
 
     assertColumnDefinition(db, tableId, ci);
   }
@@ -799,20 +813,20 @@ public class ColumnProperties {
         if ( displayObject instanceof String ) {
           // just overwrite it...
           String newJsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayName);
-          setStringProperty(db, KEY_DISPLAY_NAME, ElementDataType.object, newJsonStringifyDisplayName);
+          setObjectProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
           this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
           this.displayName = displayName;
         } else if ( displayObject instanceof Map ) {
           // TODO: get current locale; deal with non-default locales
           ((Map) displayObject).put("default", displayName);
           String newJsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayObject);
-          setStringProperty(db, KEY_DISPLAY_NAME, ElementDataType.object, newJsonStringifyDisplayName);
+          setObjectProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
           this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
           this.displayName = displayName;
         }
       } else {
         String newJsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayName);
-        setStringProperty(db, KEY_DISPLAY_NAME, ElementDataType.object, newJsonStringifyDisplayName);
+        setObjectProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
         this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
         this.displayName = displayName;
       }
@@ -842,7 +856,7 @@ public class ColumnProperties {
    *          the new abbreviation (or null for no abbreviation)
    */
   public void setDisplayFormat(SQLiteDatabase db, String format) {
-    setStringProperty(db, KEY_DISPLAY_FORMAT, ElementDataType.string, format);
+    setStringProperty(db, KEY_DISPLAY_FORMAT, format);
     this.displayFormat = format;
   }
 
@@ -865,7 +879,7 @@ public class ColumnProperties {
   public void setJoins(SQLiteDatabase db, ArrayList<JoinColumn> joins) {
     try {
       String joinsStr = JoinColumn.toSerialization(joins);
-      setStringProperty(db, KEY_JOINS, ElementDataType.object, joinsStr);
+      setObjectProperty(db, KEY_JOINS, joinsStr);
       this.joins = joins;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
@@ -896,51 +910,43 @@ public class ColumnProperties {
    * @throws JsonGenerationException
    */
   public void setDisplayChoicesList(SQLiteDatabase db, ArrayList<String> options) {
-    try {
-      String encoding = null;
-      if (options != null && options.size() > 0) {
-        encoding = ODKFileUtils.mapper.writeValueAsString(options);
-      }
-      setStringProperty(db, KEY_DISPLAY_CHOICES_LIST, ElementDataType.array, encoding);
-      displayChoicesList = options;
-    } catch (JsonGenerationException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
-    }
+    setArrayProperty(db, KEY_DISPLAY_CHOICES_LIST, options);
+    displayChoicesList = options;
   }
 
   private void setIntProperty(SQLiteDatabase db, String property, int value) {
     // or a kvs property?
-    KeyValueStore kvs = tp.getStoreForTable();
-    kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, ci.getElementKey(), property,
-        ElementDataType.integer.name(), Integer.toString(value));
-    Log.d(TAG, "updated int property " + property + " to " + value + " for table " + tableId
-        + ", column " + ci.getElementKey());
+    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
+    AspectHelper aspectHelper = kvsh.getAspectHelper(ci.getElementKey());
+    aspectHelper.setInteger(property, value);
   }
 
-  private void setStringProperty(SQLiteDatabase db, String property, ElementDataType base, String value) {
+  private void setObjectProperty(SQLiteDatabase db, String property, String value) {
     // or a kvs property?
-    KeyValueStore kvs = tp.getStoreForTable();
-    kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, ci.getElementKey(), property,
-        base.name(), value);
+    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
+    AspectHelper aspectHelper = kvsh.getAspectHelper(ci.getElementKey());
+    aspectHelper.setObject(property, value);
+  }
 
-    Log.d(TAG, "updated string property " + property + " to " + value + " for table " + tableId
-        + ", column " + ci.getElementKey());
+  private <T> void setArrayProperty(SQLiteDatabase db, String property, ArrayList<T> values) {
+    // or a kvs property?
+    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
+    AspectHelper aspectHelper = kvsh.getAspectHelper(ci.getElementKey());
+    aspectHelper.setArray(property, values);
+  }
+
+  private void setStringProperty(SQLiteDatabase db, String property, String value) {
+    // or a kvs property?
+    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
+    AspectHelper aspectHelper = kvsh.getAspectHelper(ci.getElementKey());
+    aspectHelper.setString(property, value);
   }
 
   private void setBooleanProperty(SQLiteDatabase db, String property, boolean value) {
     // or a kvs property?
-    KeyValueStore kvs = tp.getStoreForTable();
-    kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, ci.getElementKey(), property,
-        ElementDataType.bool.name(), Boolean.toString(value));
-    Log.d(TAG, "updated boolean property " + property + " to " + value + " for table " + tableId
-        + ", column " + ci.getElementKey());
+    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
+    AspectHelper aspectHelper = kvsh.getAspectHelper(ci.getElementKey());
+    aspectHelper.setBoolean(property, value);
   }
 
 }

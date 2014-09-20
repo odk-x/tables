@@ -45,12 +45,12 @@ import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -65,6 +65,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.util.Log;
@@ -1141,11 +1142,11 @@ public class CollectUtil {
    *
    * @return
    */
-  public static Map<String, String> getMapForInsertion(Context context, TableProperties tp,
+  public static ContentValues getMapForInsertion(Context context, TableProperties tp,
       FormValues formValues) {
     DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
 
-    Map<String, String> values = new HashMap<String, String>();
+    ContentValues values = new ContentValues();
     List<ColumnProperties> geopointList = tp.getGeopointColumns();
     List<ColumnProperties> uriList = tp.getUriColumns();
 
@@ -1200,31 +1201,31 @@ public class CollectUtil {
         // split ODK COLLECT value into the constituent elements
         String value = formValues.formValues.get(elementKey);
         if ( value == null || value.length() == 0) {
-          values.put(cplat.getElementKey(), null);
-          values.put(cplng.getElementKey(), null);
-          values.put(cpalt.getElementKey(), null);
-          values.put(cpacc.getElementKey(), null);
+          values.putNull(cplat.getElementKey());
+          values.putNull(cplng.getElementKey());
+          values.putNull(cpalt.getElementKey());
+          values.putNull(cpacc.getElementKey());
         } else {
           String[] parts = value.split(" ");
           if ( parts.length > 0 ) {
             values.put(cplat.getElementKey(), parts[0]);
           } else {
-            values.put(cplat.getElementKey(), null);
+            values.putNull(cplat.getElementKey());
           }
           if ( parts.length > 1 ) {
             values.put(cplng.getElementKey(), parts[1]);
           } else {
-            values.put(cplng.getElementKey(), null);
+            values.putNull(cplng.getElementKey());
           }
           if ( parts.length > 2 ) {
             values.put(cpalt.getElementKey(), parts[2]);
           } else {
-            values.put(cpalt.getElementKey(), null);
+            values.putNull(cpalt.getElementKey());
           }
           if ( parts.length > 3 ) {
             values.put(cpacc.getElementKey(), parts[3]);
           } else {
-            values.put(cpacc.getElementKey(), null);
+            values.putNull(cpacc.getElementKey());
           }
         }
       } else if ( uriList.contains(cp)) {
@@ -1246,8 +1247,8 @@ public class CollectUtil {
         // update the uriFragment and contentType elements
         String value = formValues.formValues.get(elementKey);
         if ( value == null || value.length() == 0) {
-          values.put(cpfrag.getElementKey(), null);
-          values.put(cptype.getElementKey(), null);
+          values.putNull(cpfrag.getElementKey());
+          values.putNull(cptype.getElementKey());
         } else {
           int dotIdx = value.lastIndexOf(".");
           String ext = (dotIdx == -1) ? "*" : value.substring(dotIdx+1);
@@ -1285,7 +1286,7 @@ public class CollectUtil {
           values.put(elementKey, value);
         } else {
           // don't we want to clear values too?
-          values.put(elementKey, null);
+          values.putNull(elementKey);
         }
       }
     }
@@ -1411,10 +1412,23 @@ public class CollectUtil {
     if (formValues == null) {
       return false;
     }
-    Map<String, String> values = CollectUtil.getMapForInsertion(context, tp, formValues);
-    DbTable dbTable = new DbTable(tp);
-    dbTable.updateRow(rowId, formValues.formId, formValues.locale, formValues.timestamp,
-        formValues.savepointCreator, values);
+    ContentValues values = CollectUtil.getMapForInsertion(context, tp, formValues);
+    values.put(DataTableColumns.ID, rowId);
+    values.put(DataTableColumns.FORM_ID, formValues.formId);
+    values.put(DataTableColumns.LOCALE, formValues.locale);
+    values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+    values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(formValues.timestamp));
+    values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
+
+    SQLiteDatabase db = null;
+    try {
+      db = tp.getWritableDatabase();
+      ODKDatabaseUtils.updateDataInExistingDBTableWithId(db, tp.getTableId(), tp.getColumnDefinitions(), values, rowId);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
     // If we made it here and there were no errors, then clear the row id
     // from the shared preferences. This is just a bit of housekeeping that
     // will mean there's no you could accidentally wind up overwriting the
@@ -1493,14 +1507,23 @@ public class CollectUtil {
     if (formValues == null) {
       return false;
     }
-    Map<String, String> values = getMapForInsertion(context, tp, formValues);
-    DbTable dbTable = new DbTable(tp);
-
-    dbTable.addRow(formValues.instanceID, formValues.formId, formValues.locale,
-        SavepointTypeManipulator.complete(),
-        TableConstants.nanoSecondsFromMillis(formValues.timestamp), formValues.savepointCreator,
-        null, null, null, values);
-
+    ContentValues values = getMapForInsertion(context, tp, formValues);
+    values.put(DataTableColumns.ID, formValues.instanceID);
+    values.put(DataTableColumns.FORM_ID, formValues.formId);
+    values.put(DataTableColumns.LOCALE, formValues.locale);
+    values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+    values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(formValues.timestamp));
+    values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
+    
+    SQLiteDatabase db = null;
+    try {
+      db = tp.getWritableDatabase();
+      ODKDatabaseUtils.insertDataIntoExistingDBTableWithId(db, tp.getTableId(), tp.getColumnDefinitions(), values, formValues.instanceID);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
     return true;
   }
 

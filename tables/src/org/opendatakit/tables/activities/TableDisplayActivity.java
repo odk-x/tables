@@ -1,10 +1,10 @@
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.DetailViewFragment;
 import org.opendatakit.tables.fragments.GraphManagerFragment;
@@ -25,6 +25,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -518,15 +519,20 @@ public class TableDisplayActivity extends AbsTableActivity
     TableProperties tableProperties = this.getTableProperties();
     SQLQueryStruct sqlQueryStruct =
         this.retrieveSQLQueryStatStructFromIntent();
-    DbTable dbTable = new DbTable(tableProperties);
-    UserTable result = dbTable.rawSqlQuery(
-        sqlQueryStruct.whereClause,
-        sqlQueryStruct.selectionArgs,
-        sqlQueryStruct.groupBy,
-        sqlQueryStruct.having,
-        sqlQueryStruct.orderByElementKey,
-        sqlQueryStruct.orderByDirection);
-    return result;
+    SQLiteDatabase db = null;
+    try {
+      db = tableProperties.getReadableDatabase();
+      UserTable result = ODKDatabaseUtils.rawSqlQuery(db, tableProperties.getAppName(),
+          tableProperties.getTableId(), tableProperties.getPersistedColumns(),
+          sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
+          sqlQueryStruct.groupBy, sqlQueryStruct.having, 
+          sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
+      return result;
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
   }
 
   /**

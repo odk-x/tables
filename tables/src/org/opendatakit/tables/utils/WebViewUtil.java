@@ -24,21 +24,20 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utilities.DataUtil;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
@@ -302,16 +301,16 @@ public class WebViewUtil {
   public static Map<String, String> getMapOfElementKeyToValue(
       TableProperties tableProperties,
       String rowId) {
-    String sqlQuery = DataTableColumns.ID + " = ? ";
-    String[] selectionArgs = { rowId };
-    DbTable dbTable = new DbTable(tableProperties);
-    UserTable userTable = dbTable.rawSqlQuery(
-        sqlQuery,
-        selectionArgs,
-        null,
-        null,
-        null,
-        null);
+    SQLiteDatabase db = null;
+    UserTable userTable = null;
+    try {
+      db = tableProperties.getReadableDatabase();
+      userTable = ODKDatabaseUtils.getDataInExistingDBTableWithId(db, tableProperties.getAppName(), tableProperties.getTableId(), tableProperties.getPersistedColumns(), rowId);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
     if (userTable.getNumberOfRows() > 1) {
       Log.e(TAG, "query returned > 1 rows for tableId: " +
           tableProperties.getTableId() +

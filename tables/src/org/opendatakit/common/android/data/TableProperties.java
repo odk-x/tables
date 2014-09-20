@@ -33,6 +33,7 @@ import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ColorRuleUtil;
 import org.opendatakit.common.android.utilities.DataUtil;
@@ -290,6 +291,8 @@ public class TableProperties {
    */
   private Map<String, ColumnProperties> mElementKeyToColumnProperties;
 
+  private ArrayList<ColumnDefinition> mDefinitions;
+  
   private List<String> columnOrder;
   private List<String> groupByColumns;
   private String sortColumn;
@@ -400,53 +403,6 @@ public class TableProperties {
     }
   }
 
-  public KeyValueStore getStoreForTable() {
-    return getKeyValueStoreManager().getStoreForTable(this.tableId);
-  }
-
-  public ArrayList<KeyValueStoreEntry> getMetaDataEntries() {
-    KeyValueStore kvs = getStoreForTable();
-    SQLiteDatabase db = null;
-    try {
-      db = getReadableDatabase();
-      ArrayList<KeyValueStoreEntry> kvsEntries = kvs.getEntries(db);
-      return kvsEntries;
-    } finally {
-      db.close();
-    }
-  }
-
-  public boolean hasMetaDataEntries() {
-    KeyValueStore kvs = getStoreForTable();
-    SQLiteDatabase db = null;
-    try {
-      db = getReadableDatabase();
-      return kvs.entriesExist(db);
-    } finally {
-      db.close();
-    }
-  }
-
-  public void addMetaDataEntries(List<KeyValueStoreEntry> entries, boolean clear) {
-    KeyValueStore kvs = getStoreForTable();
-    SQLiteDatabase db = getWritableDatabase();
-    try {
-      db.beginTransaction();
-      if (clear) {
-        kvs.clearKeyValuePairs(db);
-      }
-      kvs.addEntriesToStore(db, entries);
-      db.setTransactionSuccessful();
-    } finally {
-      db.endTransaction();
-      db.close();
-    }
-  }
-
-  private KeyValueStoreManager getKeyValueStoreManager() {
-    return new KeyValueStoreManager();
-  }
-
   public SQLiteDatabase getReadableDatabase() {
     DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
     return dh.getReadableDatabase();
@@ -511,6 +467,124 @@ public class TableProperties {
   }
 
   /*
+   * The base wehre clause for getting only the key values that are contained
+   * in the list of table properties. Its usage must be followed by appending
+   * ")".
+   */
+  private static final String WHERE_SQL_FOR_PARTITION_ASPECT_KEYS =
+      KeyValueStoreColumns.TABLE_ID + " = ? AND " +
+      KeyValueStoreColumns.PARTITION + " = ? AND " +
+      KeyValueStoreColumns.ASPECT + " = ? AND " +
+      KeyValueStoreColumns.KEY + " in (";
+
+  /**
+   * Returns a string of question marks separated by commas for use in an
+   * android sqlite query.
+   * @param numArgs number of question marks
+   * @return
+   */
+  private static String makePlaceHolders(int numArgs) {
+    String holders = "";
+    if (numArgs == 0)
+      return holders;
+    for (int i = 0; i < numArgs; i++) {
+      holders = holders + "?,";
+    }
+    holders = holders.substring(0, holders.length()-1);
+    return holders;
+  }
+
+  /*
+   * Get the full entries from the table. These are the full entries, with
+   * tableId and type information.
+   */
+  private static ArrayList<KeyValueStoreEntry> getEntriesFromCursor(Cursor c) {
+    ArrayList<KeyValueStoreEntry> entries =
+        new ArrayList<KeyValueStoreEntry>();
+    int idIndex = c.getColumnIndexOrThrow(KeyValueStoreColumns.TABLE_ID);
+    int partitionIndex =
+        c.getColumnIndexOrThrow(KeyValueStoreColumns.PARTITION);
+    int aspectIndex = c.getColumnIndexOrThrow(KeyValueStoreColumns.ASPECT);
+    int keyIndex = c.getColumnIndexOrThrow(KeyValueStoreColumns.KEY);
+    int valueIndex = c.getColumnIndexOrThrow(KeyValueStoreColumns.VALUE);
+    int typeIndex = c.getColumnIndexOrThrow(KeyValueStoreColumns.VALUE_TYPE);
+    int i = 0;
+    c.moveToFirst();
+    while (i < c.getCount()) {
+      KeyValueStoreEntry entry = new KeyValueStoreEntry();
+      entry.tableId = ODKDatabaseUtils.getIndexAsString(c, idIndex);
+      entry.partition = ODKDatabaseUtils.getIndexAsString(c, partitionIndex);
+      entry.aspect = ODKDatabaseUtils.getIndexAsString(c, aspectIndex);
+      entry.key = ODKDatabaseUtils.getIndexAsString(c, keyIndex);
+      entry.type = ODKDatabaseUtils.getIndexAsString(c, typeIndex);
+      entry.value = ODKDatabaseUtils.getIndexAsString(c, valueIndex);
+      entries.add(entry);
+      i++;
+      c.moveToNext();
+    }
+    c.close();
+    return entries;
+  }
+
+  /*
+   * Return a map of key to value from a cursor that has queried the database
+   * backing the key value store.
+   */
+  private static Map<String, String> getKeyValuesFromCursor(Cursor c) {
+    int keyIndex = c.getColumnIndexOrThrow(KeyValueStoreColumns.KEY);
+    int valueIndex = c.getColumnIndexOrThrow(KeyValueStoreColumns.VALUE);
+    Map<String, String> keyValues = new HashMap<String, String>();
+    int i = 0;
+    c.moveToFirst();
+    while (i < c.getCount()) {
+      String value = ODKDatabaseUtils.getIndexAsString(c, valueIndex);
+      if (value == null || value.equals("")) {
+        value = null;
+      }
+      keyValues.put(ODKDatabaseUtils.getIndexAsString(c, keyIndex), value);
+      i++;
+      c.moveToNext();
+    }
+    c.close();
+    return keyValues;
+  }
+
+  /**
+   * Return a map of only the properties from the store backing this
+   * object. These
+   * are the properties as defined as the {@link INIT_KEYS} in TableProperties.
+   * Empty strings are returned as null.
+   * @param db
+   * @return
+   */
+  private static Map<String, String> getProperties(SQLiteDatabase db, String tableId) {
+    String[] basicProps = getInitKeys();
+    String[] desiredKeys = new String[basicProps.length + 3];
+    // we want the first to be the tableId, b/c that is the table id we are
+    // querying over in the database.
+    desiredKeys[0] = tableId;
+    desiredKeys[1] = KeyValueStoreConstants.PARTITION_TABLE;
+    desiredKeys[2] = KeyValueStoreConstants.ASPECT_DEFAULT;
+    for (int i = 0; i < basicProps.length; i++) {
+      desiredKeys[i+3] = basicProps[i];
+    }
+    String whereClause = WHERE_SQL_FOR_PARTITION_ASPECT_KEYS +
+        makePlaceHolders(TableProperties.getInitKeys().length) + ")";
+    Cursor c = null;
+    try {
+       c = db.query(DataModelDatabaseHelper.KEY_VALUE_STORE_ACTIVE_TABLE_NAME,
+           new String[] {KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE},
+           whereClause,
+           desiredKeys, null, null, null);
+       return getKeyValuesFromCursor(c);
+    } finally {
+      if ( c != null && !c.isClosed() ) {
+         c.close();
+      }
+    }
+  }
+
+  /*
    * Return the map of all the properties for the given table. The properties
    * include both the values of this table's row in TableDefinition and the
    * values in the key value store pointed to by INIT_KEYS.
@@ -536,10 +610,8 @@ public class TableProperties {
    */
   private static Map<String, String> getMapOfPropertiesForTable(SQLiteDatabase db, String tableId) {
     try {
-      KeyValueStoreManager kvsm = new KeyValueStoreManager();
-      KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId);
       TableDefinitionEntry tableDefn = getFields(db, tableId);
-      Map<String, String> kvsMap = intendedKVS.getProperties(db);
+      Map<String, String> kvsMap = getProperties(db, tableId);
       Map<String, String> mapProps = new HashMap<String, String>();
       // table definitions wins -- apply it 2nd
       mapProps.putAll(kvsMap);
@@ -703,7 +775,11 @@ public class TableProperties {
           throw new IllegalStateException("Unexpectedly missing " + tableId);
         }
         Log.d(t, "adding table: " + dbTableName);
-        DbTable.createDbTable(db, tp);
+        
+        // TODO: confirm that column definitions are available
+        ODKDatabaseUtils.createOrOpenDBTableWithColumns(db, 
+            tp.getTableId(), ColumnDefinition.getColumns(tp.getColumnDefinitions()));
+
         // And now set the default color rules.
         ColorRuleGroup ruleGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
         ruleGroup.replaceColorRuleList(ColorRuleUtil.getDefaultSyncStateColorRules());
@@ -889,6 +965,14 @@ public class TableProperties {
     }
   }
 
+  public void setColumnDefinitions(ArrayList<ColumnDefinition> defns) {
+    this.mDefinitions = defns;
+  }
+  
+  public ArrayList<ColumnDefinition> getColumnDefinitions() {
+    return this.mDefinitions;
+  }
+  
   /**
    * Pulls the columns from the database into this TableProperties. Also updates
    * the maps of display name and sms label.
@@ -906,6 +990,9 @@ public class TableProperties {
     return mElementKeyToColumnProperties.get(elementKey);
   }
 
+  public ColumnDefinition getColumnDefinitionByElementKey(String elementKey) {
+    return ColumnDefinition.find(mDefinitions, elementKey);
+  }
   /**
    * Return the element key of the column with the given display name. This
    * behavior is undefined if there are two columns with the same name. This
@@ -1360,8 +1447,9 @@ public class TableProperties {
   private boolean graphViewIsPossible() {
     List<String> elementKeys = getPersistedColumns();
     for (String elementKey : elementKeys) {
-      ColumnProperties cp = this.getColumnByElementKey(elementKey);
-      ElementDataType type = cp.getColumnType().getDataType();
+      ColumnDefinition cd = this.getColumnDefinitionByElementKey(elementKey);
+      ElementType elementType = ElementType.parseElementType(cd.getElementType(), !cd.getChildren().isEmpty());
+      ElementDataType type = elementType.getDataType();
       if (type == ElementDataType.number || type == ElementDataType.integer) {
         return true;
       }
@@ -1504,9 +1592,7 @@ public class TableProperties {
    * @return
    */
   public KeyValueStoreHelper getKeyValueStoreHelper(String partition) {
-    KeyValueStoreManager kvsm = new KeyValueStoreManager();
-    KeyValueStore backingStore = kvsm.getStoreForTable(this.tableId);
-    return new KeyValueStoreHelper(backingStore, partition, this);
+    return new KeyValueStoreHelper(partition, this);
   }
 
   /**
