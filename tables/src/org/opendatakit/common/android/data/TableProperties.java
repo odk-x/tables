@@ -1448,7 +1448,7 @@ public class TableProperties {
     List<String> elementKeys = getPersistedColumns();
     for (String elementKey : elementKeys) {
       ColumnDefinition cd = this.getColumnDefinitionByElementKey(elementKey);
-      ElementType elementType = ElementType.parseElementType(cd.getElementType(), !cd.getChildren().isEmpty());
+      ElementType elementType = cd.getType();
       ElementDataType type = elementType.getDataType();
       if (type == ElementDataType.number || type == ElementDataType.integer) {
         return true;
@@ -1503,14 +1503,16 @@ public class TableProperties {
     Set<ColumnProperties> contentTypeList = new HashSet<ColumnProperties>();
     
     for (ColumnProperties cp : allColumns.values() ) {
+      ColumnProperties cpParent = cp.getContainingElement();
+      
       if ( cp.getElementName().equals("uriFragment") && 
            cp.getColumnType().getDataType() == ElementDataType.rowpath &&
-           cp.getContainingElement() != null ) {
-        uriFragmentList.add(cp.getContainingElement());
+               cpParent != null ) {
+        uriFragmentList.add(cpParent);
       }
       if ( cp.getElementName().equals("contentType") &&
-           cp.getContainingElement() != null ) {
-        contentTypeList.add(cp.getContainingElement());
+          cpParent != null ) {
+        contentTypeList.add(cpParent);
       }
     }
     uriFragmentList.retainAll(contentTypeList);
@@ -1541,9 +1543,11 @@ public class TableProperties {
     ElementDataType type = cp.getColumnType().getDataType();
     if (!(type == ElementDataType.number || type == ElementDataType.integer))
       return false;
+    
+    ColumnProperties cpParent = cp.getContainingElement();
 
-    if ( cp.getContainingElement() != null &&
-        geoPointList.contains(cp.getContainingElement()) &&
+    if ( cpParent != null &&
+        geoPointList.contains(cpParent) &&
         cp.getElementName().equals("latitude")) {
       return true;
     }
@@ -1558,9 +1562,11 @@ public class TableProperties {
     ElementDataType type = cp.getColumnType().getDataType();
     if (!(type == ElementDataType.number || type == ElementDataType.integer))
       return false;
+    
+    ColumnProperties cpParent = cp.getContainingElement();
 
-    if ( cp.getContainingElement() != null &&
-        geoPointList.contains(cp.getContainingElement()) &&
+    if ( cpParent != null &&
+        geoPointList.contains(cpParent) &&
         cp.getElementName().equals("longitude")) {
       return true;
     }

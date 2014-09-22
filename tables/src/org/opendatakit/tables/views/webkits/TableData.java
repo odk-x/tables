@@ -291,7 +291,7 @@ public class TableData {
 
   private void assembleNonNullParts( Row row, Map<String, Object> resultSet, List<ColumnDefinition> colDefns ) throws JsonParseException, JsonMappingException, IOException {
     for ( ColumnDefinition colDefn : colDefns ) {
-      ElementType type = ElementType.parseElementType(colDefn.getElementType(), !colDefn.getChildren().isEmpty());
+      ElementType type = colDefn.getType();
       ElementDataType dataType = type.getDataType();
       if ( dataType == ElementDataType.array ) {
         String result = row.getRawDataOrMetadataByElementKey(colDefn.getElementKey());

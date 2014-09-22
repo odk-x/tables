@@ -469,8 +469,7 @@ public class ColumnProperties {
       e.printStackTrace();
       throw new IllegalArgumentException("invalid db value: " + parseValue, e);
     }
-    ElementType columnType = ElementType.parseElementType(column.getElementType(), 
-        !column.getChildren().isEmpty());
+    ElementType columnType = column.getType();
 
     return new ColumnProperties(tp, column, displayVisible, displayName,
         displayChoicesList, displayFormat, joins);
@@ -659,7 +658,8 @@ public class ColumnProperties {
   }
   
   public ColumnProperties getContainingElement() {
-    return tp.getColumnByElementKey(ci.getParent().getElementKey());
+    ColumnDefinition p = ci.getParent();
+    return (p == null) ? null : tp.getColumnByElementKey(p.getElementKey());
   }
   
   public List<ColumnDefinition> getChildren() {
@@ -673,7 +673,7 @@ public class ColumnProperties {
    * @return the column's type
    */
   public ElementType getColumnType() {
-    return ElementType.parseElementType(ci.getElementType(), !ci.getChildren().isEmpty());
+    return ci.getType();
   }
 
   public static Class<?> getDataType(ElementDataType dataType) {

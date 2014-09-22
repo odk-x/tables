@@ -286,7 +286,7 @@ public class ColorRuleGroup {
      * @param indexMapping a mapping of element key to index in the rowData
      * array
      * @param propertiesMapping a mapping of element key to
-     * {@link ColumnProperties}. Necessary for knowing how to interpret the
+     * {@link ColumnDefinition}. Necessary for knowing how to interpret the
      * row data (int, number, String, etc).
      * @return null or the matching rule in the group, {@link ColorGuide}.
      */
@@ -300,9 +300,13 @@ public class ColorRuleGroup {
         // will, so we'll also try to do a helpful check in case this invariant
         // changes in the future.
         String elementKey = cr.getColumnElementKey();
-        ColumnProperties cp = tp.getColumnByElementKey(cr.getColumnElementKey());
+        ColumnDefinition cd = null;
+        try {
+          cd = tp.getColumnDefinitionByElementKey(cr.getColumnElementKey());
+        } catch (Exception e) {
+        }
         ElementDataType type;
-        if (cp == null) {
+        if (cd == null) {
           // Was likely a metadata column.
           if (!ODKDatabaseUtils.getAdminColumns().contains(elementKey)) {
             throw new IllegalArgumentException("element key passed to "
@@ -311,7 +315,8 @@ public class ColorRuleGroup {
           }
           type = ElementDataType.string;
         } else {
-          type = cp.getColumnType().getDataType();
+          ElementType elementType = cd.getType();
+          type = elementType.getDataType();
         }
         if (cr.checkMatch(type, row)) {
           return new ColorGuide(cr.getForeground(), cr.getBackground());
