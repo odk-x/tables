@@ -13,6 +13,7 @@ import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 public class GraphData {
@@ -41,12 +42,13 @@ public class GraphData {
     return new GraphDataIf(this);
   }
 
-  public GraphData(TableProperties tp, String graphString) {
+  public GraphData(Context context, TableProperties tp, String graphString) {
     isModified = false;
     this.graphString = graphString;
     this.mAppName = tp.getAppName();
     this.mTableId = tp.getTableId();
-    this.kvsh = new KeyValueStoreHelper(LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS, tp);
+    this.kvsh = new KeyValueStoreHelper(context, 
+        tp.getAppName(), tp.getTableId(), LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
     this.aspectHelper = kvsh.getAspectHelper(this.graphString);
     
 // TODO

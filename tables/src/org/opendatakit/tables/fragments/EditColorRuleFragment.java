@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.preferences.EditColorPreference;
+import org.opendatakit.tables.utils.ColumnUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;
@@ -187,8 +187,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     this.mColumnElementKeys = new CharSequence[elementKeys.size()];
     for (int i = 0; i < elementKeys.size(); i++) {
       String elementKey = elementKeys.get(i);
-      ColumnProperties cp = tableProperties.getColumnByElementKey(elementKey);
-      this.mColumnDisplayNames[i] = cp.getLocalizedDisplayName();
+      this.mColumnDisplayNames[i] = ColumnUtil.getLocalizedDisplayName(tableProperties, elementKey);
       this.mColumnElementKeys[i] = elementKey;
     }
   }
@@ -226,12 +225,11 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     pref.setEntries(this.mColumnDisplayNames);
     pref.setEntryValues(mColumnElementKeys);
     if (!isUnpersistedNewRule()) {
-      String displayName = tableProperties.getColumnByElementKey(
+      String displayName = ColumnUtil.getLocalizedDisplayName(tableProperties,
           this.mColorRuleGroup
               .getColorRules()
               .get(mRulePosition)
-              .getColumnElementKey())
-            .getLocalizedDisplayName();
+              .getColumnElementKey());
       pref.setSummary(displayName);
       pref.setValueIndex(pref.findIndexOfValue(mElementKey));
     }
@@ -245,10 +243,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
         Log.d(TAG, "onPreferenceChance callback invoked for value: "
             + newValue);
         mElementKey = (String) newValue;
-        String displayName =
-            tableProperties
-              .getColumnByElementKey(mElementKey)
-              .getLocalizedDisplayName();
+        String displayName = ColumnUtil.getLocalizedDisplayName(tableProperties, mElementKey);
         pref.setSummary(displayName);
         pref.setValueIndex(
             pref.findIndexOfValue(mElementKey));

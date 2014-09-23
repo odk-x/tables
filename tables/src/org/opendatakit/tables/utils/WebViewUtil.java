@@ -23,7 +23,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.TableProperties;
@@ -108,18 +108,19 @@ public class WebViewUtil {
   
   /**
    * Add a stringified value to the given content values. This respects the
-   * column's type, as defined by {@link ColumnProperties#getColumnType()}.
+   * column's type, as defined by {@link ColumnDefinition#getType()}.
    * @param columnProperties
    * @param rawValue
    * @param contentValues
    * @return false if the data was invalid for the given type
    */
   public static boolean addValueToContentValues(DataUtil du,
-      ColumnProperties columnProperties,
+      TableProperties tp,
+      ColumnDefinition colDefn,
       String rawValue,
       ContentValues contentValues) {
     // the value we're going to key things against in the database.
-    String contentValuesKey = columnProperties.getElementKey();
+    String contentValuesKey = colDefn.getElementKey();
     if (rawValue == null) {
       // Then we can trust that it is ok, as we allow nulls.
       // TODO: verify that nulls are permissible for the column?
@@ -128,7 +129,7 @@ public class WebViewUtil {
     } else {
       // we have to validate it. this validate function just returns null if
       // valid, rather than a boolean.
-      String nullMeansInvalid = ParseUtil.validifyValue(du, columnProperties, rawValue);
+      String nullMeansInvalid = ParseUtil.validifyValue(du, tp, colDefn, rawValue);
       if (nullMeansInvalid == null) {
         // return false, indicating that the value was not acceptable.
         Log.e(
@@ -136,29 +137,29 @@ public class WebViewUtil {
             "[addRow] could not parse [" +
               rawValue +
               "] for column [" +
-              columnProperties.getElementKey() +
+              colDefn.getElementKey() +
               "] to type: " +
-              columnProperties.getColumnType());
+              colDefn.getType());
         return false;
       }
     }
     // This means all is well, and we can parse the value.
-    ElementType columnType = columnProperties.getColumnType();
+    ElementType columnType = colDefn.getType();
     ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
     org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment r = m.getDefaultRenderer(columnType);
     ElementDataType type = columnType.getDataType();
     if ( type == ElementDataType.integer ) {
       contentValues.put(contentValuesKey, 
-        (Integer) r.parseStringValue(du, columnProperties.getDisplayChoicesList(), rawValue, Integer.class));
+        (Integer) r.parseStringValue(du, ColumnUtil.getDisplayChoicesList(tp, colDefn.getElementKey()), rawValue, Integer.class));
     } else if ( type == ElementDataType.number ) {
       contentValues.put(contentValuesKey, 
-        (Double) r.parseStringValue(du, columnProperties.getDisplayChoicesList(), rawValue, Double.class));
+        (Double) r.parseStringValue(du, ColumnUtil.getDisplayChoicesList(tp, colDefn.getElementKey()), rawValue, Double.class));
     } else if ( type == ElementDataType.bool ) {
       contentValues.put(contentValuesKey, 
-        (Boolean) r.parseStringValue(du, columnProperties.getDisplayChoicesList(), rawValue, Boolean.class));
+        (Boolean) r.parseStringValue(du, ColumnUtil.getDisplayChoicesList(tp, colDefn.getElementKey()), rawValue, Boolean.class));
     } else {
       contentValues.put(contentValuesKey, 
-        (String) r.parseStringValue(du, columnProperties.getDisplayChoicesList(), rawValue, String.class));
+        (String) r.parseStringValue(du, ColumnUtil.getDisplayChoicesList(tp, colDefn.getElementKey()), rawValue, String.class));
     }
     return true;
   }
@@ -188,18 +189,19 @@ public class WebViewUtil {
       String elementKey = entry.getKey();
       String rawValue = entry.getValue();
       // Get the column so we know what type we need to handle.
-      ColumnProperties columnProperties =
-          tableProperties.getColumnByElementKey(elementKey);
-      if (columnProperties == null) {
+      ColumnDefinition columnDefn =
+          tableProperties.getColumnDefinitionByElementKey(elementKey);
+      if (columnDefn == null) {
         // uh oh, no column for the given id. problem on the part of the caller
         Log.e(
             TAG,
             "[addRow] could not find column for element key: " + elementKey);
         return null;
       }
-      ElementType columnType = columnProperties.getColumnType();
+      ElementType columnType = columnDefn.getType();
       boolean parsedSuccessfully = addValueToContentValues(dataUtil,
-          columnProperties,
+          tableProperties,
+          columnDefn,
           rawValue,
           result);
       if (!parsedSuccessfully) {

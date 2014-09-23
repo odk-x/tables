@@ -26,7 +26,6 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +43,6 @@ import org.kxml2.kdom.Node;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.KeyValueHelper;
@@ -201,11 +199,10 @@ public class CollectUtil {
 
     OutputStreamWriter writer = null;
     try {
-      List<ColumnProperties> geopointList = tp.getGeopointColumns();
-      List<ColumnProperties> uriList = tp.getUriColumns();
+      List<ColumnDefinition> geopointList = tp.getGeopointColumnDefinitions();
+      List<ColumnDefinition> uriList = tp.getUriColumnDefinitions();
 
-      List<String> elementKeys = new ArrayList<String>(tp.getAllColumns().keySet());
-      Collections.sort(elementKeys);
+      ArrayList<ColumnDefinition> orderedElements = tp.getColumnDefinitions();
       FileOutputStream out = new FileOutputStream(file);
       writer = new OutputStreamWriter(out, CharEncoding.UTF_8);
       writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" "
@@ -225,25 +222,24 @@ public class CollectUtil {
       writer.write("id=\"");
       writer.write(StringEscapeUtils.escapeXml(formId));
       writer.write("\">");
-      for (String elementKey : elementKeys) {
-        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-        ColumnProperties cpContainingElement = cp.getContainingElement();
+      for (ColumnDefinition cd : orderedElements) {
+        ColumnDefinition cdContainingElement = cd.getParent();
 
-        if (cpContainingElement != null) {
-          if (geopointList.contains(cpContainingElement) || uriList.contains(cpContainingElement)) {
+        if (cdContainingElement != null) {
+          if (geopointList.contains(cdContainingElement) || uriList.contains(cdContainingElement)) {
             // processed by the containing type
             continue;
           }
           // and if this is not a unit of retention, a containing element is
           // handling it.
-          if (!cp.isUnitOfRetention()) {
+          if (!cd.isUnitOfRetention()) {
             continue;
           }
         }
         // ok. we are directly processing this... and possibly sucking values
         // out of sub-elements...
         writer.write("<");
-        writer.write(elementKey);
+        writer.write(cd.getElementKey());
         writer.write("/>");
       }
       writer.write("<meta><instanceID/></meta>");
@@ -252,32 +248,31 @@ public class CollectUtil {
       writer.write(">");
       writer.write("</instance>");
       ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
-      for (String elementKey : elementKeys) {
-        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-        ColumnProperties cpContainingElement = cp.getContainingElement();
+      for (ColumnDefinition cd : orderedElements) {
+        ColumnDefinition cdContainingElement = cd.getParent();
 
-        if (cpContainingElement != null) {
-          if (geopointList.contains(cpContainingElement) || uriList.contains(cpContainingElement)) {
+        if (cdContainingElement != null) {
+          if (geopointList.contains(cdContainingElement) || uriList.contains(cdContainingElement)) {
             // processed by the containing type
             continue;
           }
           // and if this is not a unit of retention, a containing element is
           // handling it.
-          if (!cp.isUnitOfRetention()) {
+          if (!cd.isUnitOfRetention()) {
             continue;
           }
         }
         // ok. we are directly processing this... and possibly sucking values
         // out of sub-elements...
-        ElementType type = cp.getColumnType();
-        String collectType = m.getDefaultRenderer(cp.getColumnType()).getCollectType();
+        ElementType type = cd.getType();
+        String collectType = m.getDefaultRenderer(cd.getType()).getCollectType();
         if (collectType == null) {
           collectType = "string";
         }
         writer.write("<bind nodeset=\"/");
         writer.write(DEFAULT_ROOT_ELEMENT);
         writer.write("/");
-        writer.write(elementKey);
+        writer.write(cd.getElementKey());
         writer.write("\" type=\"");
         writer.write(collectType);
         writer.write("\"/>");
@@ -289,18 +284,17 @@ public class CollectUtil {
 
       writer.write("<itext>");
       writer.write("<translation lang=\"eng\">");
-      for (String elementKey : elementKeys) {
-        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-        ColumnProperties cpContainingElement = cp.getContainingElement();
+      for (ColumnDefinition cd : orderedElements) {
+        ColumnDefinition cdContainingElement = cd.getParent();
 
-        if (cpContainingElement != null) {
-          if (geopointList.contains(cpContainingElement) || uriList.contains(cpContainingElement)) {
+        if (cdContainingElement != null) {
+          if (geopointList.contains(cdContainingElement) || uriList.contains(cdContainingElement)) {
             // processed by the containing type
             continue;
           }
           // and if this is not a unit of retention, a containing element is
           // handling it.
-          if (!cp.isUnitOfRetention()) {
+          if (!cd.isUnitOfRetention()) {
             continue;
           }
         }
@@ -309,10 +303,10 @@ public class CollectUtil {
         writer.write("<text id=\"/");
         writer.write(DEFAULT_ROOT_ELEMENT);
         writer.write("/");
-        writer.write(cp.getElementKey());
+        writer.write(cd.getElementKey());
         writer.write(":label\">");
         writer.write("<value>");
-        writer.write(cp.getLocalizedDisplayName());
+        writer.write(ColumnUtil.getLocalizedDisplayName(tp, cd.getElementKey()));
         writer.write("</value>");
         writer.write("</text>");
       }
@@ -321,18 +315,17 @@ public class CollectUtil {
       writer.write("</model>");
       writer.write("</h:head>");
       writer.write("<h:body>");
-      for (String elementKey : elementKeys) {
-        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-        ColumnProperties cpContainingElement = cp.getContainingElement();
+      for (ColumnDefinition cd : orderedElements) {
+        ColumnDefinition cdContainingElement = cd.getParent();
 
-        if (cpContainingElement != null) {
-          if (geopointList.contains(cpContainingElement) || uriList.contains(cpContainingElement)) {
+        if (cdContainingElement != null) {
+          if (geopointList.contains(cdContainingElement) || uriList.contains(cdContainingElement)) {
             // processed by the containing type
             continue;
           }
           // and if this is not a unit of retention, a containing element is
           // handling it.
-          if (!cp.isUnitOfRetention()) {
+          if (!cd.isUnitOfRetention()) {
             continue;
           }
         }
@@ -340,17 +333,17 @@ public class CollectUtil {
         // out of sub-elements...
         String action = "input";
         String additionalAttributes = "";
-        if ( uriList.contains(cp) ) {
+        if ( uriList.contains(cd) ) {
           action = "upload";
-          String basetype = cp.getElementName().substring(0, cp.getElementName().length()-3);
+          String basetype = cd.getElementName().substring(0, cd.getElementName().length()-3);
           if ( basetype.equals("mime")) {
             basetype = "*"; // not supported by ODK Collect... launch OI File Manager?
           }
           additionalAttributes = " mediatype=\"" + basetype + "/*\"";
         }
         writer.write("<" + action + additionalAttributes + " ref=\"/" + DEFAULT_ROOT_ELEMENT + "/"
-            + cp.getElementKey() + "\">");
-        writer.write("<label ref=\"jr:itext('/" + DEFAULT_ROOT_ELEMENT + "/" + cp.getElementKey()
+            + cd.getElementKey() + "\">");
+        writer.write("<label ref=\"jr:itext('/" + DEFAULT_ROOT_ELEMENT + "/" + cd.getElementKey()
             + ":label')\"/>");
         writer.write("</" + action + ">");
       }
@@ -461,8 +454,8 @@ public class CollectUtil {
      * form will simply ignore those for which it does not have matching entry
      * fields.
      */
-    List<ColumnProperties> geopointList = tp.getGeopointColumns();
-    List<ColumnProperties> uriList = tp.getUriColumns();
+    List<ColumnDefinition> geopointList = tp.getGeopointColumnDefinitions();
+    List<ColumnDefinition> uriList = tp.getUriColumnDefinitions();
 
     OutputStreamWriter writer = null;
     try {
@@ -473,44 +466,42 @@ public class CollectUtil {
       writer.write(" id=\"");
       writer.write(StringEscapeUtils.escapeXml(params.getFormId()));
       writer.write("\">");
-      List<String> elementKeys = new ArrayList<String>(tp.getAllColumns().keySet());
-      Collections.sort(elementKeys);
-      for (String elementKey : elementKeys) {
-        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-        ColumnProperties cpContainingElement = cp.getContainingElement();
+      ArrayList<ColumnDefinition> orderedElements = tp.getColumnDefinitions();
+      for (ColumnDefinition cd : orderedElements) {
+        ColumnDefinition cdContainingElement = cd.getParent();
 
-        if (cpContainingElement != null) {
-          if (geopointList.contains(cpContainingElement) || uriList.contains(cpContainingElement)) {
+        if (cdContainingElement != null) {
+          if (geopointList.contains(cdContainingElement) || uriList.contains(cdContainingElement)) {
             // processed by the containing type
             continue;
           }
           // and if this is not a unit of retention, a containing element is
           // handling it.
-          if (!cp.isUnitOfRetention()) {
+          if (!cd.isUnitOfRetention()) {
             continue;
           }
         }
         // ok. we are directly processing this... and possibly sucking values
         // out of sub-elements...
-        ElementType type = cp.getColumnType();
-        if (geopointList.contains(cp)) {
+        ElementType type = cd.getType();
+        if (geopointList.contains(cd)) {
           // find its children...
-          List<ColumnDefinition> children = cp.getChildren();
-          ColumnProperties[] cparray = new ColumnProperties[4];
+          List<ColumnDefinition> children = cd.getChildren();
+          ColumnDefinition[] cparray = new ColumnDefinition[4];
           if (!children.isEmpty()) {
-            cparray[0] = tp.getColumnByElementKey(children.get(0).getElementKey());
+            cparray[0] = tp.getColumnDefinitionByElementKey(children.get(0).getElementKey());
           }
           if (children.size() > 1) {
-            cparray[1] = tp.getColumnByElementKey(children.get(1).getElementKey());
+            cparray[1] = tp.getColumnDefinitionByElementKey(children.get(1).getElementKey());
           }
           if (children.size() > 2) {
-            cparray[2] = tp.getColumnByElementKey(children.get(2).getElementKey());
+            cparray[2] = tp.getColumnDefinitionByElementKey(children.get(2).getElementKey());
           }
           if (children.size() > 3) {
-            cparray[3] = tp.getColumnByElementKey(children.get(3).getElementKey());
+            cparray[3] = tp.getColumnDefinitionByElementKey(children.get(3).getElementKey());
           }
-          ColumnProperties cplat = null, cplng = null, cpalt = null, cpacc = null;
-          for (ColumnProperties scp : cparray) {
+          ColumnDefinition cplat = null, cplng = null, cpalt = null, cpacc = null;
+          for (ColumnDefinition scp : cparray) {
             if (scp.getElementName().equals("latitude")) {
               cplat = scp;
             } else if (scp.getElementName().equals("longitude")) {
@@ -564,27 +555,27 @@ public class CollectUtil {
           }
           if (nonNull) {
             writer.write("<");
-            writer.write(cp.getElementKey());
+            writer.write(cd.getElementKey());
             writer.write(">");
             writer.write(StringEscapeUtils.escapeXml(b.toString()));
             writer.write("</");
-            writer.write(cp.getElementKey());
+            writer.write(cd.getElementKey());
             writer.write(">");
           } else {
             writer.write("<");
-            writer.write(cp.getElementKey());
+            writer.write(cd.getElementKey());
             writer.write("/>");
           }
-        } else if (uriList.contains(cp)) {
+        } else if (uriList.contains(cd)) {
           // find its children...
-          List<ColumnDefinition> children = cp.getChildren();
-          ColumnProperties[] cparray = new ColumnProperties[children.size()];
+          List<ColumnDefinition> children = cd.getChildren();
+          ColumnDefinition[] cparray = new ColumnDefinition[children.size()];
           for (int i = 0; i < children.size(); ++i) {
-            cparray[i] = tp.getColumnByElementKey(children.get(i).getElementKey());
+            cparray[i] = tp.getColumnDefinitionByElementKey(children.get(i).getElementKey());
           }
           // find the uriFragment
-          ColumnProperties cpfrag = null;
-          for (ColumnProperties scp : cparray) {
+          ColumnDefinition cpfrag = null;
+          for (ColumnDefinition scp : cparray) {
             if (scp.getElementName().equals("uriFragment")) {
               cpfrag = scp;
             }
@@ -599,24 +590,24 @@ public class CollectUtil {
           }
           if (value != null) {
             writer.write("<");
-            writer.write(cp.getElementKey());
+            writer.write(cd.getElementKey());
             writer.write(">");
             writer.write(StringEscapeUtils.escapeXml(value));
             writer.write("</");
-            writer.write(cp.getElementKey());
+            writer.write(cd.getElementKey());
             writer.write(">");
           } else {
             writer.write("<");
-            writer.write(cp.getElementKey());
+            writer.write(cd.getElementKey());
             writer.write("/>");
           }
-        } else if (cp.isUnitOfRetention()) {
+        } else if (cd.isUnitOfRetention()) {
 
-          String value = (values == null) ? null : values.get(cp.getElementKey());
+          String value = (values == null) ? null : values.get(cd.getElementKey());
 
           if (value != null) {
             writer.write("<");
-            writer.write(cp.getElementKey());
+            writer.write(cd.getElementKey());
             writer.write(">");
             if (type.getElementType().equals(ElementType.DATE)) {
               // TODO: get this in the correct format...
@@ -631,11 +622,11 @@ public class CollectUtil {
               writer.write(StringEscapeUtils.escapeXml(value));
             }
             writer.write("</");
-            writer.write(cp.getElementKey());
+            writer.write(cd.getElementKey());
             writer.write(">");
           } else {
             writer.write("<");
-            writer.write(cp.getElementKey());
+            writer.write(cd.getElementKey());
             writer.write("/>");
           }
         }
@@ -1147,47 +1138,45 @@ public class CollectUtil {
     DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
 
     ContentValues values = new ContentValues();
-    List<ColumnProperties> geopointList = tp.getGeopointColumns();
-    List<ColumnProperties> uriList = tp.getUriColumns();
+    List<ColumnDefinition> geopointList = tp.getGeopointColumnDefinitions();
+    List<ColumnDefinition> uriList = tp.getUriColumnDefinitions();
 
-    List<String> elementKeys = new ArrayList<String>(tp.getAllColumns().keySet());
-    Collections.sort(elementKeys);
-    for (String elementKey : elementKeys) {
-      ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-      ColumnProperties cpContainingElement = cp.getContainingElement();
+    ArrayList<ColumnDefinition> orderedElements = tp.getColumnDefinitions();
+    for (ColumnDefinition cd : orderedElements) {
+      ColumnDefinition cdContainingElement = cd.getParent();
 
-      if (cpContainingElement != null) {
-        if (geopointList.contains(cpContainingElement) || uriList.contains(cpContainingElement)) {
+      if (cdContainingElement != null) {
+        if (geopointList.contains(cdContainingElement) || uriList.contains(cdContainingElement)) {
           // processed by the containing type
           continue;
         }
         // and if this is not a unit of retention, a containing element is
         // handling it.
-        if (!cp.isUnitOfRetention()) {
+        if (!cd.isUnitOfRetention()) {
           continue;
         }
       }
       // ok. we are directly processing this... and possibly sucking values
       // out of sub-elements...
-      ElementType type = cp.getColumnType();
-      if (geopointList.contains(cp)) {
+      ElementType type = cd.getType();
+      if (geopointList.contains(cd)) {
         // find its children...
-        List<ColumnDefinition> children = cp.getChildren();
-        ColumnProperties[] cparray = new ColumnProperties[4];
+        List<ColumnDefinition> children = cd.getChildren();
+        ColumnDefinition[] cparray = new ColumnDefinition[4];
         if (!children.isEmpty()) {
-          cparray[0] = tp.getColumnByElementKey(children.get(0).getElementKey());
+          cparray[0] = tp.getColumnDefinitionByElementKey(children.get(0).getElementKey());
         }
         if (children.size() > 1) {
-          cparray[1] = tp.getColumnByElementKey(children.get(1).getElementKey());
+          cparray[1] = tp.getColumnDefinitionByElementKey(children.get(1).getElementKey());
         }
         if (children.size() > 2) {
-          cparray[2] = tp.getColumnByElementKey(children.get(2).getElementKey());
+          cparray[2] = tp.getColumnDefinitionByElementKey(children.get(2).getElementKey());
         }
         if (children.size() > 3) {
-          cparray[3] = tp.getColumnByElementKey(children.get(3).getElementKey());
+          cparray[3] = tp.getColumnDefinitionByElementKey(children.get(3).getElementKey());
         }
-        ColumnProperties cplat = null, cplng = null, cpalt = null, cpacc = null;
-        for (ColumnProperties scp : cparray) {
+        ColumnDefinition cplat = null, cplng = null, cpalt = null, cpacc = null;
+        for (ColumnDefinition scp : cparray) {
           if (scp.getElementName().equals("latitude")) {
             cplat = scp;
           } else if (scp.getElementName().equals("longitude")) {
@@ -1199,7 +1188,7 @@ public class CollectUtil {
           }
         }
         // split ODK COLLECT value into the constituent elements
-        String value = formValues.formValues.get(elementKey);
+        String value = formValues.formValues.get(cd.getElementKey());
         if ( value == null || value.length() == 0) {
           values.putNull(cplat.getElementKey());
           values.putNull(cplng.getElementKey());
@@ -1228,65 +1217,65 @@ public class CollectUtil {
             values.putNull(cpacc.getElementKey());
           }
         }
-      } else if ( uriList.contains(cp)) {
+      } else if ( uriList.contains(cd)) {
         // find its children...
-        List<ColumnDefinition> children = cp.getChildren();
-        ColumnProperties[] cparray = new ColumnProperties[children.size()];
+        List<ColumnDefinition> children = cd.getChildren();
+        ColumnDefinition[] cdarray = new ColumnDefinition[children.size()];
         for (int i = 0; i < children.size(); ++i) {
-          cparray[i] = tp.getColumnByElementKey(children.get(i).getElementKey());
+          cdarray[i] = tp.getColumnDefinitionByElementKey(children.get(i).getElementKey());
         }
         // find the uriFragment
-        ColumnProperties cpfrag = null, cptype = null;
-        for (ColumnProperties scp : cparray) {
+        ColumnDefinition cdfrag = null, cdtype = null;
+        for (ColumnDefinition scp : cdarray) {
           if (scp.getElementName().equals("uriFragment")) {
-            cpfrag = scp;
+            cdfrag = scp;
           } else if ( scp.getElementName().equals("contentType")) {
-            cptype = scp;
+            cdtype = scp;
           }
         }
         // update the uriFragment and contentType elements
-        String value = formValues.formValues.get(elementKey);
+        String value = formValues.formValues.get(cd.getElementKey());
         if ( value == null || value.length() == 0) {
-          values.putNull(cpfrag.getElementKey());
-          values.putNull(cptype.getElementKey());
+          values.putNull(cdfrag.getElementKey());
+          values.putNull(cdtype.getElementKey());
         } else {
           int dotIdx = value.lastIndexOf(".");
           String ext = (dotIdx == -1) ? "*" : value.substring(dotIdx+1);
           if ( ext.length() == 0 ) {
             ext = "*";
           }
-          String baseContentType = cp.getElementName().substring(0, cp.getElementName().length()-3);
+          String baseContentType = cd.getElementName().substring(0, cd.getElementName().length()-3);
           if ( baseContentType.equals("mime") ) {
             baseContentType = "*";
           }
           String mimeType = baseContentType + "/" + ext;
-          if ( cp.getColumnType().getDataType() == ElementDataType.configpath) {
-            values.put(cpfrag.getElementKey(),
+          if ( cd.getType().getDataType() == ElementDataType.configpath) {
+            values.put(cdfrag.getElementKey(),
                 ODKFileUtils.asUriFragment(tp.getAppName(), 
                     new File( ODKFileUtils.getAppFolder(tp.getAppName()), value)));
-            values.put(cptype.getElementKey(), 
+            values.put(cdtype.getElementKey(), 
                 mimeType);
           } else {
             File ifolder = new File(ODKFileUtils.getInstanceFolder(
                 tp.getAppName(), tp.getTableId(), formValues.instanceID));
-            values.put(cpfrag.getElementKey(),
+            values.put(cdfrag.getElementKey(),
                 ODKFileUtils.asUriFragment(tp.getAppName(), 
                     new File( ifolder, value)));
-            values.put(cptype.getElementKey(), 
+            values.put(cdtype.getElementKey(), 
                 mimeType);
             
           }
         }
-      } else if (cp.isUnitOfRetention()) {
+      } else if (cd.isUnitOfRetention()) {
 
-        String value = formValues.formValues.get(elementKey);
-        value = ParseUtil.validifyValue(du, cp, formValues.formValues.get(elementKey));
+        String value = formValues.formValues.get(cd.getElementKey());
+        value = ParseUtil.validifyValue(du, tp, cd, formValues.formValues.get(cd.getElementKey()));
 
         if (value != null) {
-          values.put(elementKey, value);
+          values.put(cd.getElementKey(), value);
         } else {
           // don't we want to clear values too?
-          values.putNull(elementKey);
+          values.putNull(cd.getElementKey());
         }
       }
     }

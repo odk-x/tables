@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
@@ -91,19 +91,19 @@ public class TestConstants {
   }
   
   /**
-   * Get a mock {@link ColumnProperties} object. Returns the element key and
+   * Get a mock {@link ColumnDefinition} object. Returns the element key and
    * column types given. As more mockable parameters are needed, they should be
    * added here.
    * @param elementKey
    * @param columnType
    * @return
    */
-  public static ColumnProperties getColumnPropertiesMock(
+  public static ColumnDefinition getColumnDefinitionMock(
       String elementKey,
       ElementType columnType) {
-    ColumnProperties result = mock(ColumnProperties.class);
+    ColumnDefinition result = mock(ColumnDefinition.class);
     doReturn(elementKey).when(result).getElementKey();
-    doReturn(columnType).when(result).getColumnType();
+    doReturn(columnType).when(result).getType();
     return result;
   }
 

@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
@@ -339,10 +339,10 @@ public class TableMapInnerFragment extends MapFragment {
     UserTable table = this.retrieveUserTable();
 
     // Try to find the map columns in the store.
-    ColumnProperties latitudeColumn =
-        tp.getColumnByElementKey(latitudeElementKey);
-    ColumnProperties longitudeColumn =
-        tp.getColumnByElementKey(longitudeElementKey);
+    ColumnDefinition latitudeColumn =
+        tp.getColumnDefinitionByElementKey(latitudeElementKey);
+    ColumnDefinition longitudeColumn =
+        tp.getColumnDefinitionByElementKey(longitudeElementKey);
 
     // Find the locations from entries in the table.
     LatLng firstLocation = null;
@@ -418,7 +418,7 @@ public class TableMapInnerFragment extends MapFragment {
 
   private String getLatitudeElementKey() {
     TableProperties tp = this.retrieveTableProperties();
-    final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
+    final List<ColumnDefinition> geoPointCols = tp.getGeopointColumnDefinitions();
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper =
         tp.getKeyValueStoreHelper(LocalKeyValueStoreConstants.Map.PARTITION);
@@ -427,10 +427,10 @@ public class TableMapInnerFragment extends MapFragment {
     if (latitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labeled latitude or longitude.
-      for (String elementKey : tp.getPersistedColumns()) {
-        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-        if (tp.isLatitudeColumn(geoPointCols, cp)) {
-          latitudeElementKey = elementKey;
+      ArrayList<ColumnDefinition> orderedDefns = tp.getColumnDefinitions();
+      for (ColumnDefinition cd : orderedDefns) {
+        if (tp.isLatitudeColumnDefinition(geoPointCols, cd)) {
+          latitudeElementKey = cd.getElementKey();
           kvsHelper.setString(
               LocalKeyValueStoreConstants.Map.KEY_MAP_LAT_COL,
               latitudeElementKey);
@@ -443,7 +443,7 @@ public class TableMapInnerFragment extends MapFragment {
 
   private String getLongitudeElementKey() {
     TableProperties tp = this.retrieveTableProperties();
-    final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
+    final List<ColumnDefinition> geoPointCols = tp.getGeopointColumnDefinitions();
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper =
         tp.getKeyValueStoreHelper(LocalKeyValueStoreConstants.Map.PARTITION);
@@ -452,10 +452,10 @@ public class TableMapInnerFragment extends MapFragment {
     if (longitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labled longitude
-      for (String elementKey : tp.getPersistedColumns()) {
-        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-        if (tp.isLongitudeColumn(geoPointCols, cp)) {
-          longitudeElementKey = elementKey;
+      ArrayList<ColumnDefinition> orderedDefns = tp.getColumnDefinitions();
+      for (ColumnDefinition cd : orderedDefns) {
+        if (tp.isLongitudeColumnDefinition(geoPointCols, cd)) {
+          longitudeElementKey = cd.getElementKey();
           kvsHelper.setString(
               LocalKeyValueStoreConstants.Map.KEY_MAP_LONG_COL,
               longitudeElementKey);
@@ -490,9 +490,9 @@ public class TableMapInnerFragment extends MapFragment {
    * Parses the latitude and longitude strings and creates a LatLng.
    */
   private LatLng parseLocationFromString(
-      ColumnProperties latitudeColumn,
+      ColumnDefinition latitudeColumn,
       String latitude,
-      ColumnProperties longitudeColumn,
+      ColumnDefinition longitudeColumn,
       String longitude) {
     try {
       return new LatLng(
@@ -530,12 +530,13 @@ public class TableMapInnerFragment extends MapFragment {
       public void onMapLongClick(LatLng location) {
         // Create a mapping from the lat and long columns to the
         // values in the location.
+        Map<String, String> elementNameToValue = new HashMap<String, String>();
+
         TableProperties tp =
             ((TableDisplayActivity) getActivity()).getTableProperties();
-        Map<String, String> elementNameToValue = new HashMap<String, String>();
-        for (String elementKey : tp.getPersistedColumns()) {
-          ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-          elementNameToValue.put(cp.getElementName(), "");
+        ArrayList<ColumnDefinition> orderedDefns = tp.getColumnDefinitions();
+        for (ColumnDefinition cd : orderedDefns) {
+          elementNameToValue.put(cd.getElementName(), "");
         }
         final KeyValueStoreHelper kvsHelper = tp
             .getKeyValueStoreHelper(
@@ -547,16 +548,16 @@ public class TableMapInnerFragment extends MapFragment {
             kvsHelper.getString(
                 LocalKeyValueStoreConstants.Map.KEY_MAP_LONG_COL);
         {
-          ColumnProperties latitudeColumn =
-              tp.getColumnByElementKey(latitudeElementKey);
+          ColumnDefinition latitudeColumn =
+              tp.getColumnDefinitionByElementKey(latitudeElementKey);
           elementNameToValue.put(
                 latitudeElementKey,
                 Double.toString(location.latitude));
         }
 
         {
-          ColumnProperties longitudeColumn =
-              tp.getColumnByElementKey(longitudeElementKey);
+          ColumnDefinition longitudeColumn =
+              tp.getColumnDefinitionByElementKey(longitudeElementKey);
           elementNameToValue.put(
                 longitudeElementKey,
                 Double.toString(location.longitude));

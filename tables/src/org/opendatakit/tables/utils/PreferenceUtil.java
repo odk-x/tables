@@ -1,6 +1,6 @@
 package org.opendatakit.tables.utils;
 
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
@@ -61,7 +61,7 @@ public class PreferenceUtil {
       TableProperties tableProperties,
       String elementKey) {
     KeyValueStoreHelper kvsh =
-        tableProperties.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
+        tableProperties.getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_COLUMN);
     KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
     Integer result = aspectHelper.getInteger(
         LocalKeyValueStoreConstants.Spreadsheet.KEY_COLUMN_WIDTH);
@@ -76,7 +76,7 @@ public class PreferenceUtil {
       String elementKey,
       int newColumnWith) {
     KeyValueStoreHelper kvsh =
-        tableProperties.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
+        tableProperties.getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_COLUMN);
     KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
     aspectHelper.setInteger(
         LocalKeyValueStoreConstants.Spreadsheet.KEY_COLUMN_WIDTH,

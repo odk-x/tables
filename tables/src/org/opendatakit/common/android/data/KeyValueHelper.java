@@ -51,7 +51,7 @@ public interface KeyValueHelper {
    * @return
    * @throws IllegalArgumentException if the type of the entry does not match
    */
-  public <T> ArrayList<T> getArray(String key);
+  public <T> ArrayList<T> getArray(String key, Class<T> clazz);
 
   /**
    * Retrieve a value of type {@link KeyValueStoreEntryType.STRING} mapping to

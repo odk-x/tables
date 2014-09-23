@@ -8,6 +8,7 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.ColumnUtil;
 
 import android.content.Context;
 import android.util.Log;
@@ -96,8 +97,7 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
           description = "unknown";
         }
       } else {
-        description = this.mTableProperties.getColumnByElementKey(elementKey)
-            .getLocalizedDisplayName();
+        description = ColumnUtil.getLocalizedDisplayName(this.mTableProperties, elementKey);
       }
     }
     if (!isMetadataRule) {

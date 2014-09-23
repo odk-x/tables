@@ -1,16 +1,18 @@
 package org.opendatakit.tables.views;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.utils.ColumnUtil;
 
 import android.content.Context;
 
@@ -43,8 +45,7 @@ public class SpreadsheetUserTable {
     for ( int i = 0 ; i < colOrder.size(); ++i ) {
       String elementKey = colOrder.get(i);
       spreadsheetIndexToUserTableIndexRemap[i] = this.table.getColumnIndexOfElementKey(elementKey);
-      ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-      header[i] = cp.getLocalizedDisplayName();
+      header[i] = ColumnUtil.getLocalizedDisplayName(tp, elementKey);
       spreadsheetIndexToElementKey[i] = elementKey;
       elementKeyToSpreadsheetIndex.put(elementKey, i);
     }
@@ -69,8 +70,8 @@ public class SpreadsheetUserTable {
     return table.getAppName();
   }
 
-  public Map<String, ColumnProperties> getAllColumns() {
-    return getTableProperties().getAllColumns();
+  public ArrayList<ColumnDefinition> getColumnDefinitions() {
+    return getTableProperties().getColumnDefinitions();
   }
 
   public ColorRuleGroup getColumnColorRuleGroup(String elementKey) {
@@ -125,18 +126,18 @@ public class SpreadsheetUserTable {
     cell.rowNum = cellInfo.rowId;
     cell.row = getRowAtIndex(cellInfo.rowId);
     cell.elementKey = cellInfo.elementKey;
-    ColumnProperties cp = getTableProperties().getColumnByElementKey(cellInfo.elementKey);
-    cell.displayText = cell.row.getDisplayTextOfData(context, cp.getColumnType(), cellInfo.elementKey, true);
+    ColumnDefinition cd = getTableProperties().getColumnDefinitionByElementKey(cellInfo.elementKey);
+    cell.displayText = cell.row.getDisplayTextOfData(context, cd.getType(), cellInfo.elementKey, true);
     cell.value = cell.row.getRawDataOrMetadataByElementKey(cellInfo.elementKey);
     return cell;
   }
 
-  public ColumnProperties getColumnByIndex(int headerCellNum) {
-    return getTableProperties().getColumnByElementKey(spreadsheetIndexToElementKey[headerCellNum]);
+  public ColumnDefinition getColumnByIndex(int headerCellNum) {
+    return getTableProperties().getColumnDefinitionByElementKey(spreadsheetIndexToElementKey[headerCellNum]);
   }
 
-  public ColumnProperties getColumnByElementKey(String elementKey) {
-    return getTableProperties().getColumnByElementKey(elementKey);
+  public ColumnDefinition getColumnByElementKey(String elementKey) {
+    return getTableProperties().getColumnDefinitionByElementKey(elementKey);
   }
 
   public int getWidth() {

@@ -20,8 +20,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.Preferences;
@@ -116,9 +117,9 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // We have to initialize the items that will be shared across the
     // TabularView objects.
     this.mElementKeyToColorRuleGroup = new HashMap<String, ColorRuleGroup>();
-    for (ColumnProperties cp : table.getAllColumns().values()) {
-      mElementKeyToColorRuleGroup.put(cp.getElementKey(),
-          table.getColumnColorRuleGroup(cp.getElementKey()));
+    for (ColumnDefinition cd : table.getColumnDefinitions()) {
+      mElementKeyToColorRuleGroup.put(cd.getElementKey(),
+          table.getColumnColorRuleGroup(cd.getElementKey()));
     }
 
     // if a custom font size is defined in the KeyValueStore, use that
@@ -365,8 +366,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     TabularView dataTable;
     TabularView headerTable;
     if (isIndexed) {
-      ColumnProperties cp = table.getColumnByElementKey(indexElementKey);
-      elementKeysToDisplay.add(cp.getElementKey());
+      ColumnDefinition cd = table.getColumnByElementKey(indexElementKey);
+      elementKeysToDisplay.add(cd.getElementKey());
       colWidths = new int[1];
       colWidths[0] = completeColWidths[table.getColumnIndexOfElementKey(indexElementKey)];
       dataTable = TabularView.getIndexDataTable(context, this, table, elementKeysToDisplay,
@@ -378,11 +379,11 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       colWidths = new int[width];
       int addIndex = 0;
       for (int i = 0; i < table.getWidth(); i++) {
-        ColumnProperties cp = table.getColumnByIndex(i);
-        if (cp.getElementKey().equals(indexElementKey)) {
+        ColumnDefinition cd = table.getColumnByIndex(i);
+        if (cd.getElementKey().equals(indexElementKey)) {
           continue;
         }
-        elementKeysToDisplay.add(cp.getElementKey());
+        elementKeysToDisplay.add(cd.getElementKey());
         colWidths[addIndex] = completeColWidths[i];
         addIndex++;
       }
@@ -568,10 +569,10 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // lot of columns you're really working the gut of the database.
     int numberOfDisplayColumns = table.getNumberOfDisplayColumns();
     int[] columnWidths = new int[numberOfDisplayColumns];
-    KeyValueStoreHelper columnKVSH = table.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
+    KeyValueStoreHelper columnKVSH = table.getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_COLUMN);
     for (int i = 0; i < numberOfDisplayColumns; i++) {
-      ColumnProperties cp = table.getColumnByIndex(i);
-      String elementKey = cp.getElementKey();
+      ColumnDefinition cd = table.getColumnByIndex(i);
+      String elementKey = cd.getElementKey();
       KeyValueHelper aspectHelper = columnKVSH.getAspectHelper(elementKey);
       Integer value = aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);
       if (value == null) {

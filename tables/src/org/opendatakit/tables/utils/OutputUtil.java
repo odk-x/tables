@@ -4,12 +4,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
@@ -119,11 +120,12 @@ public class OutputUtil {
     Map<String, Object> controlTable = new HashMap<String, Object>();
     Map<String, String> pathToKey = new HashMap<String, String>();
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
-    for (ColumnProperties columnProperties : tableProperties.getAllColumns().values()) {
-      String elementName = columnProperties.getElementName();
+    ArrayList<ColumnDefinition> orderedDefns = tableProperties.getColumnDefinitions();
+    for (ColumnDefinition cd : orderedDefns) {
+      String elementName = cd.getElementName();
       if ( elementName != null ) {
-        pathToKey.put(columnProperties.getElementName(), columnProperties.getElementKey());
-        keyToDisplayName.put(columnProperties.getElementKey(), columnProperties.getLocalizedDisplayName());
+        pathToKey.put(cd.getElementName(), cd.getElementKey());
+        keyToDisplayName.put(cd.getElementKey(), ColumnUtil.getLocalizedDisplayName(tableProperties, cd.getElementKey()));
       }
     }
     String defaultDetailFileName = tableProperties.getDetailViewFileName();
@@ -173,9 +175,9 @@ public class OutputUtil {
     // We need to also store the element key to the index of the data so that
     // we know how to access it out of the array representing each row.
     Map<String, Integer> elementKeyToIndex = new HashMap<String, Integer>();
-    Set<String> elementKeys = tableProperties.getAllColumns().keySet();
-    for (String elementKey : elementKeys) {
-      elementKeyToIndex.put(elementKey, userTable.getColumnIndexOfElementKey(elementKey));
+    ArrayList<ColumnDefinition> orderedDefns = tableProperties.getColumnDefinitions();
+    for (ColumnDefinition cd : orderedDefns) {
+      elementKeyToIndex.put(cd.getElementKey(), userTable.getColumnIndexOfElementKey(cd.getElementKey()));
     }
     // We don't want to try and write more rows than we have.
     int numRowsToWrite = Math.min(numberOfRows, userTable.getNumberOfRows());

@@ -11,7 +11,6 @@ import org.json.JSONObject;
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.TableProperties;
@@ -19,6 +18,7 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.utils.ColumnUtil;
 import org.opendatakit.tables.utils.ElementTypeManipulator;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
@@ -157,9 +157,10 @@ public class TableData {
    */
   public String getColumns() {
     Map<String, String> colInfo = new HashMap<String, String>();
-    for (String elementKey : getTableProperties().getAllColumns().keySet()) {
-      String label = getColumnTypeLabelForElementKey(elementKey);
-      colInfo.put(elementKey, label);
+    ArrayList<ColumnDefinition> orderedDefn = getTableProperties().getColumnDefinitions();
+    for (ColumnDefinition cd : orderedDefn) {
+      String label = getColumnTypeLabelForElementKey(cd.getElementKey());
+      colInfo.put(cd.getElementKey(), label);
     }
     return new JSONObject(colInfo).toString();
   }
@@ -173,9 +174,9 @@ public class TableData {
    */
   private String getColumnTypeLabelForElementKey(String elementKey) {
     TableProperties tp = getTableProperties();
-    ColumnProperties cp = tp.getColumnByElementKey(elementKey);
+    ColumnDefinition cd = tp.getColumnDefinitionByElementKey(elementKey);
     ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
-    ITypeManipulatorFragment r = m.getDefaultRenderer(cp.getColumnType());
+    ITypeManipulatorFragment r = m.getDefaultRenderer(cd.getType());
     String label = r.getElementTypeDisplayLabel();
     return label;
   }
@@ -257,21 +258,21 @@ public class TableData {
       Log.e(TAG, "column with elementPath: " + elementPath + " does not" + " exist.");
       return null;
     }
-    ColumnProperties cp = getTableProperties().getColumnByElementKey(elementKey);
-    ElementDataType type = cp.getColumnType().getDataType();
+    ColumnDefinition cd = getTableProperties().getColumnDefinitionByElementKey(elementKey);
+    ElementDataType type = cd.getType().getDataType();
     if ( type == ElementDataType.array ) {
       String result = row.getRawDataOrMetadataByElementKey(elementKey);
       return result;
     }
 
-    if ( cp.getChildren().isEmpty() ) {
+    if ( cd.getChildren().isEmpty() ) {
       String result = row.getRawDataOrMetadataByElementKey(elementKey);
       return result;
     }
 
     try {
       Map<String,Object> resultSet = new HashMap<String,Object>();
-      assembleNonNullParts(row, resultSet, cp.getChildren());
+      assembleNonNullParts(row, resultSet, cd.getChildren());
       if ( resultSet.isEmpty() ) {
         return null;
       }
@@ -299,7 +300,7 @@ public class TableData {
       } else {
         List<ColumnDefinition> children = colDefn.getChildren();
         if ( children.isEmpty() ) {
-          Class<?> clazz = ColumnProperties.getDataType(dataType);
+          Class<?> clazz = ColumnUtil.getDataType(dataType);
           Object value = row.getRawDataType(colDefn.getElementKey(), clazz);
           if ( value != null ) {
             resultSet.put(colDefn.getElementName(), value);

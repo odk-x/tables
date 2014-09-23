@@ -18,9 +18,10 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.ColumnUtil;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -42,16 +43,16 @@ public class MultipleChoiceSettingDialog extends Dialog {
 
     private Context context;
     private TableProperties tp;
-    private ColumnProperties cp;
+    private ColumnDefinition cd;
     private LinearLayout layout;
     private ArrayList<String> optionValues;
     private List<EditText> optionFields;
 
-    public MultipleChoiceSettingDialog(Context context, TableProperties tp, ColumnProperties cp) {
+    public MultipleChoiceSettingDialog(Context context, TableProperties tp, ColumnDefinition cd) {
         super(context);
         this.context = context;
         this.tp = tp;
-        this.cp = cp;
+        this.cd = cd;
         setTitle(context.getString(R.string.multiple_choice_options));
         layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -64,7 +65,8 @@ public class MultipleChoiceSettingDialog extends Dialog {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         optionValues.clear();
-        for (String option : cp.getDisplayChoicesList()) {
+        ArrayList<String> choices = ColumnUtil.getDisplayChoicesList(tp, cd.getElementKey());
+        for (String option : choices) {
             optionValues.add(option);
         }
         init();
@@ -119,7 +121,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
                 SQLiteDatabase db =  tp.getWritableDatabase();
                 try {
                   db.beginTransaction();
-                  cp.setDisplayChoicesList(db, optionValues);
+                  ColumnUtil.setDisplayChoicesList(db, tp.getTableId(), cd, optionValues);
                   db.setTransactionSuccessful();
                 } finally {
                   db.endTransaction();

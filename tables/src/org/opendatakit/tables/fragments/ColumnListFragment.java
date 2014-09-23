@@ -6,6 +6,7 @@ import java.util.List;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.utils.ColumnUtil;
 
 import android.app.Activity;
 import android.app.ListFragment;
@@ -81,8 +82,7 @@ public class ColumnListFragment extends ListFragment {
     List<String> elementKeys = this.retrieveAllElementKeys();
     TableProperties tableProperties = this.retrieveTableProperties();
     for (String elementKey : elementKeys) {
-      String displayName = 
-          tableProperties.getColumnByElementKey(elementKey).getDisplayName();
+      String displayName = ColumnUtil.getLocalizedDisplayName(tableProperties, elementKey);
       result.add(displayName);
     }
     return result;

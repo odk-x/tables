@@ -4,6 +4,7 @@ import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,7 +21,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.TableProperties;
@@ -145,7 +145,7 @@ public class ControlTest {
     TableProperties tpMock = TestConstants.getTablePropertiesMock();
     ControlStub.TABLE_PROPERTIES_FOR_ID = tpMock;
     String nonExistentColumn = "thisColumnDoesNotExist";
-    doReturn(null).when(tpMock).getColumnByElementKey(nonExistentColumn);
+    doThrow(new IllegalArgumentException("nonexistent")).when(tpMock).getColumnDefinitionByElementKey(nonExistentColumn);
     ControlStub.TABLE_PROPERTIES_FOR_ID = tpMock;
     String stringifiedMap = WebViewUtil.stringify(getValidMap());
     if (isUpdate) {
@@ -200,20 +200,20 @@ public class ControlTest {
       boolean isUpdate) {
     setupControlWithTablePropertiesMock();
     TableProperties tpMock = ControlStub.TABLE_PROPERTIES_FOR_ID;
-    ColumnProperties stringColumn = TestConstants.getColumnPropertiesMock(
+    ColumnDefinition stringCD = TestConstants.getColumnDefinitionMock(
         TestConstants.ElementKeys.STRING_COLUMN,
         ElementType.parseElementType("string", false));
-    ColumnProperties intColumn = TestConstants.getColumnPropertiesMock(
+    ColumnDefinition intCD = TestConstants.getColumnDefinitionMock(
         TestConstants.ElementKeys.INT_COLUMN,
         ElementType.parseElementType("integer", false));
-    ColumnProperties numberColumn = TestConstants.getColumnPropertiesMock(
+    ColumnDefinition numberCD = TestConstants.getColumnDefinitionMock(
         TestConstants.ElementKeys.NUMBER_COLUMN,
         ElementType.parseElementType("number", false));
-    doReturn(stringColumn).when(tpMock).getColumnByElementKey(
+    doReturn(stringCD).when(tpMock).getColumnDefinitionByElementKey(
         TestConstants.ElementKeys.STRING_COLUMN);
-    doReturn(intColumn).when(tpMock).getColumnByElementKey(
+    doReturn(intCD).when(tpMock).getColumnDefinitionByElementKey(
         TestConstants.ElementKeys.INT_COLUMN);
-    doReturn(numberColumn).when(tpMock).getColumnByElementKey(
+    doReturn(numberCD).when(tpMock).getColumnDefinitionByElementKey(
         TestConstants.ElementKeys.NUMBER_COLUMN);
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,

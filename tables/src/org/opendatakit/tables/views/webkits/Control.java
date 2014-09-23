@@ -12,7 +12,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
@@ -25,6 +24,7 @@ import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.WebViewActivity;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.ColumnUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -453,13 +453,13 @@ public class Control {
     if (tp == null) {
       return null;
     }
-    ColumnProperties columnProperties = tp.getColumnByElementKey(elementKey);
-    if (columnProperties == null) {
+    try {
+      ColumnDefinition cd = tp.getColumnDefinitionByElementKey(elementKey);
+      return ColumnUtil.getLocalizedDisplayName(tp, elementKey);
+    } catch ( IllegalArgumentException e ) {
       Log.e(TAG, "column with elementKey does not exist: " + elementKey);
       return null;
     }
-    String displayName = columnProperties.getLocalizedDisplayName();
-    return displayName;
   }
 
   /**
@@ -641,8 +641,12 @@ public class Control {
     if (tp == null) {
       return false;
     }
-    ColumnProperties columnProperties = tp.getColumnByElementKey(elementKey);
-    return columnProperties != null;
+    try {
+      tp.getColumnDefinitionByElementKey(elementKey);
+      return true;
+    } catch ( IllegalArgumentException e ) {
+      return false;
+    }
   }
 
   /**

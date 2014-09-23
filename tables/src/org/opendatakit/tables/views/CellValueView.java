@@ -17,7 +17,9 @@ package org.opendatakit.tables.views;
 
 import java.util.ArrayList;
 
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.tables.utils.ColumnUtil;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;
@@ -27,10 +29,11 @@ import android.widget.Spinner;
 
 public class CellValueView {
 
-  public static CellEditView getCellEditView(Context context, ColumnProperties cp, String value) {
+  public static CellEditView getCellEditView(Context context, TableProperties tp, ColumnDefinition cd, String value) {
 
-    if (cp.getDisplayChoicesList() != null) {
-      return new MultipleChoiceEditView(context, cp, value);
+    ArrayList<String> displayChoices = ColumnUtil.getDisplayChoicesList(tp, cd.getElementKey());
+    if (displayChoices != null) {
+      return new MultipleChoiceEditView(context, cd, displayChoices, value);
     } else {
       return new DefaultEditView(context, value);
     }
@@ -49,18 +52,17 @@ public class CellValueView {
 
     private final Spinner spinner;
 
-    public MultipleChoiceEditView(Context context, ColumnProperties cp, String value) {
+    public MultipleChoiceEditView(Context context, ColumnDefinition cd,  ArrayList<String> displayChoices, String value) {
       super(context);
-      ArrayList<String> opts = cp.getDisplayChoicesList();
       int selection = -1;
-      for (int i = 0; i < opts.size(); i++) {
-        if (opts.get(i).equals(value)) {
+      for (int i = 0; i < displayChoices.size(); i++) {
+        if (displayChoices.get(i).equals(value)) {
           selection = i;
           break;
         }
       }
       ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
-          android.R.layout.simple_spinner_item, cp.getDisplayChoicesList());
+          android.R.layout.simple_spinner_item, displayChoices);
       adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
       spinner = new Spinner(context);
       spinner.setAdapter(adapter);

@@ -19,7 +19,7 @@ import java.util.ArrayList;
 
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulator.InputView;
@@ -40,13 +40,13 @@ public class InputScreenUtil {
 //        du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());;
     }
 
-    public InputView getInputView(ColumnProperties cp, DataUtil du) {
-        return getInputView(cp, du, null);
+    public InputView getInputView(ColumnDefinition cd, DataUtil du) {
+        return getInputView(cd, du, null);
     }
 
-    public InputView getInputView(ColumnProperties cp, DataUtil du, String value) {
+    public InputView getInputView(ColumnDefinition cd, DataUtil du, String value) {
       ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
-      ITypeManipulatorFragment r = m.getDefaultRenderer(cp.getColumnType());
+      ITypeManipulatorFragment r = m.getDefaultRenderer(cd.getType());
       return r.getInputView(context, du, value);
     }
 

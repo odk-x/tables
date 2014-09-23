@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable.Row;
@@ -17,6 +17,7 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.ActivityUtil;
+import org.opendatakit.tables.utils.ColumnUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -136,10 +137,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     return new SpreadsheetView(this.getActivity(), SpreadsheetFragment.this, spreadsheetTable);
   }
 
-  private void addGroupByColumn(ColumnProperties cp) {
+  private void addGroupByColumn(ColumnDefinition cd) {
     TableProperties tp = this.getTableProperties();
     List<String> newGroupBys = tp.getGroupByColumns();
-    newGroupBys.add(cp.getElementKey());
+    newGroupBys.add(cd.getElementKey());
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
@@ -156,10 +157,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     }
   }
 
-  void removeGroupByColumn(ColumnProperties cp) {
+  void removeGroupByColumn(ColumnDefinition cd) {
     TableProperties tp = this.getTableProperties();
     List<String> newGroupBys = tp.getGroupByColumns();
-    newGroupBys.remove(cp.getElementKey());
+    newGroupBys.remove(cd.getElementKey());
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
@@ -176,12 +177,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     }
   }
 
-  void setColumnAsSort(ColumnProperties cp) {
+  void setColumnAsSort(ColumnDefinition cd) {
     TableProperties tp = this.getTableProperties();
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
-      tp.setSortColumn(db, (cp == null) ? null : cp.getElementKey());
+      tp.setSortColumn(db, (cd == null) ? null : cd.getElementKey());
       db.setTransactionSuccessful();
     } catch (Exception e) {
       e.printStackTrace();
@@ -194,12 +195,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     }
   }
 
-  void setColumnAsIndexedCol(ColumnProperties cp) {
+  void setColumnAsIndexedCol(ColumnDefinition cd) {
     TableProperties tp = this.getTableProperties();
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
-      tp.setIndexColumn(db, (cp == null) ? null : cp.getElementKey());
+      tp.setIndexColumn(db, (cd == null) ? null : cd.getElementKey());
       db.setTransactionSuccessful();
     } catch (Exception e) {
       e.printStackTrace();
@@ -342,9 +343,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       return true;
     case MENU_ITEM_ID_OPEN_JOIN_TABLE:
       cell = spreadsheetTable.getSpreadsheetCell(this.getActivity(), this.mLastDataCellMenued);
-      ColumnProperties cp = spreadsheetTable.getColumnByElementKey(cell.elementKey);
+      ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
       // Get the JoinColumn.
-      ArrayList<JoinColumn> joinColumns = cp.getJoins();
+      ArrayList<JoinColumn> joinColumns = ColumnUtil.getJoins(this.getTableProperties(), cd.getElementKey());
       AlertDialog.Builder badJoinDialog;
       // TODO should check for valid table properties and
       // column properties here. or rather valid ids and keys.
@@ -354,7 +355,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
         badJoinDialog.setMessage("A join column has not been " + "set in Column Properties.");
         badJoinDialog.create().show();
         Log.e(TAG, "cp.getJoins was null but open join table " + "was requested for cp: "
-            + cp.getElementKey());
+            + cd.getElementKey());
       } else if (joinColumns.size() != 1) {
         badJoinDialog = new AlertDialog.Builder(this.getActivity());
         badJoinDialog.setTitle("Bad Join");
@@ -362,7 +363,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
             + "set in Column Properties.");
         badJoinDialog.create().show();
         Log.e(TAG, "cp.getJoins has multiple joins "
-            + "(missing code is needed to handle this) for cp: " + cp.getElementKey());
+            + "(missing code is needed to handle this) for cp: " + cd.getElementKey());
       } else {
         JoinColumn joinColumn = joinColumns.get(0);
         if (joinColumn.getTableId().equals(JoinColumn.DEFAULT_NOT_SET_VALUE)
@@ -378,8 +379,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           String elementKey = joinColumn.getElementKey();
           TableProperties joinedTable = TableProperties.getTablePropertiesForTable(
               getActivity(), spreadsheetTable.getAppName(), tableId);
-          String joinedColDisplayName = joinedTable.getColumnByElementKey(elementKey)
-              .getElementKey();
+          String joinedColDisplayName = ColumnUtil.getLocalizedDisplayName(joinedTable,elementKey);
           // I would prefer this kind of query to be set in another
           // object, but alas, it looks like atm it is hardcoded.
           Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
@@ -445,8 +445,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   @Override
   public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo) {
     this.mLastDataCellMenued = cellInfo;
-    ColumnProperties cp = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
-    String columnName = cp.getLocalizedDisplayName();
+    ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
+    String columnName = ColumnUtil.getLocalizedDisplayName(this.getTableProperties(), cd.getElementKey());
     menu.setHeaderTitle(columnName);
 
     MenuItem mi;
@@ -455,7 +455,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN, ContextMenu.NONE, "View Collection");
       mi.setIcon(R.drawable.view);
     }
-    String viewString = row.getDisplayTextOfData(this.getActivity(), cp.getColumnType(), cellInfo.elementKey, true);
+    String viewString = row.getDisplayTextOfData(this.getActivity(), cd.getType(), cellInfo.elementKey, true);
     // TODO: display value and use edit icon...
     mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE, getString(R.string.edit_cell, viewString));
     mi.setIcon(R.drawable.ic_action_edit);
@@ -467,7 +467,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
     // check a join association with this column; add a join... option if
     // it is applicable.
-    if (cp.getJoins() != null && cp.getJoins().size() != 0) {
+    ArrayList<JoinColumn> joins = ColumnUtil.getJoins(this.getTableProperties(), cd.getElementKey());
+    if (joins != null && joins.size() != 0) {
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_JOIN_TABLE, ContextMenu.NONE, getString(R.string.open_join_table));
       mi.setIcon(R.drawable.ic_action_search);
     }
@@ -486,12 +487,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   @Override
   public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo) {
     this.mLastHeaderCellMenued = cellInfo;
-    ColumnProperties cp = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
-    if (this.getTableProperties().isGroupByColumn(cp.getElementKey())) {
+    ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
+    if (this.getTableProperties().isGroupByColumn(cd.getElementKey())) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
           "Unset as Group By");
     } else if ((this.getTableProperties().getSortColumn() != null)
-        && this.getTableProperties().getSortColumn().equals(cp.getElementKey())) {
+        && this.getTableProperties().getSortColumn().equals(cd.getElementKey())) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_SORT, ContextMenu.NONE,
           "Unset as Sort");
     } else {
@@ -531,8 +532,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       super(getActivity());
       this.cell = cell;
       this.dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
-      ColumnProperties cp = spreadsheetTable.getColumnByElementKey(cell.elementKey);
-      cev = CellValueView.getCellEditView(getActivity(), cp, cell.value);
+      ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
+      cev = CellValueView.getCellEditView(getActivity(), SpreadsheetFragment.this.getTableProperties(), cd, cell.value);
       this.buildView(getActivity());
     }
 
@@ -542,7 +543,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       setButton.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-          String value = ParseUtil.validifyValue(dataUtil,
+          String value = ParseUtil.validifyValue(dataUtil, SpreadsheetFragment.this.getTableProperties(),
               spreadsheetTable.getColumnByElementKey(CellEditDialog.this.cell.elementKey),
               cev.getValue());
           if (value == null) {

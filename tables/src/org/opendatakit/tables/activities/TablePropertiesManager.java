@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.LocalKeyValueStoreConstants;
@@ -28,6 +28,7 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.ColumnUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
@@ -303,16 +304,21 @@ public class TablePropertiesManager extends PreferenceActivity {
       String[] colorColElementKeys = new String[elementKeys.size()];
       for (int i = 0; i < elementKeys.size(); i++) {
         String elementKey = elementKeys.get(i);
-        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
-        colorColDisplayNames[i] = cp.getLocalizedDisplayName();
+        ColumnDefinition cd = tp.getColumnDefinitionByElementKey(elementKey);
+        colorColDisplayNames[i] = ColumnUtil.getLocalizedDisplayName(tp, elementKey);
         colorColElementKeys[i] = elementKey;
       }
 
-      ColumnProperties colorColumn = tp.getColumnByElementKey(
+      ColumnDefinition colorColumn = null;
+      try {
+        colorColumn = tp.getColumnDefinitionByElementKey(
           kvsHelper.getString(KEY_COLOR_RULE_COLUMN));
+      } catch ( IllegalArgumentException e ) {
+        // no-op
+      }
       if (colorColumn == null && elementKeys.size() > 0) {
         kvsHelper.setString(KEY_COLOR_RULE_COLUMN, elementKeys.get(0));
-        colorColumn = tp.getColumnByElementKey(elementKeys.get(0));
+        colorColumn = tp.getColumnDefinitionByElementKey(elementKeys.get(0));
       }
 
       ListPreference colorColumnPref = new ListPreference(this);
@@ -321,7 +327,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       colorColumnPref.setEntryValues(colorColElementKeys);
       colorColumnPref.setEntries(colorColDisplayNames);
       colorColumnPref.setValue(colorColumn.getElementKey());
-      colorColumnPref.setSummary(colorColumn.getLocalizedDisplayName());
+      colorColumnPref.setSummary(ColumnUtil.getLocalizedDisplayName(tp, colorColumn.getElementKey()));
       colorColumnPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object newValue) {

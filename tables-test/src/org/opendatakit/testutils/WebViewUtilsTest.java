@@ -9,7 +9,7 @@ import java.util.Map;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.utils.WebViewUtil;
@@ -50,10 +50,10 @@ public class WebViewUtilsTest {
       String invalidValue) {
     String elementKey = "anyElementKey";
     TableProperties tpMock = mock(TableProperties.class);
-    ColumnProperties intColumn = TestConstants.getColumnPropertiesMock(
+    ColumnDefinition intCD = TestConstants.getColumnDefinitionMock(
         elementKey,
         columnType);
-    doReturn(intColumn).when(tpMock).getColumnByElementKey(
+    doReturn(intCD).when(tpMock).getColumnDefinitionByElementKey(
         elementKey);
     Map<String, String> invalidMap = new HashMap<String, String>();
     invalidMap.put(elementKey, invalidValue);

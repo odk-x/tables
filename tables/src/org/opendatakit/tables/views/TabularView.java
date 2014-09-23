@@ -22,7 +22,7 @@ import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable.Row;
 
 import android.content.Context;
@@ -323,7 +323,7 @@ class TabularView extends View {
    * @param type
    * @param fontSize
    * @param elementKeyToColumnProperties mapping of element key to the
-   * corresponding {@link ColumnProperties} object. Must be all the columns,
+   * corresponding {@link ColumnDefinition} object. Must be all the columns,
    * NOT just those displayed in thie TabularView.
    * @param elementKeyToColorRuleGroup mapping of element key to their
    * corresponding {@link ColorRuleGroup} objects.
@@ -698,8 +698,8 @@ class TabularView extends View {
         } else if (this.type == TableType.INDEX_DATA ||
                    this.type == TableType.MAIN_DATA) {
 
-          ColumnProperties cp = this.mTable.getColumnByIndex(userDataIndex[j]);
-          datum = theRow.getDisplayTextOfData(this.getContext(), cp.getColumnType(), cp.getElementKey(), true);          
+          ColumnDefinition cd = this.mTable.getColumnByIndex(userDataIndex[j]);
+          datum = theRow.getDisplayTextOfData(this.getContext(), cd.getType(), cd.getElementKey(), true);          
         } else {
           Log.e(TAG, "unrecognized table type: " + this.type.name());
           datum = null;
@@ -820,7 +820,7 @@ class TabularView extends View {
   interface ColorDecider {
     public ColorGuide getColor(int index, String[] rowData,
         Map<String, Integer> columnMapping,
-        Map<String, ColumnProperties> propertiesMapping);
+        Map<String, ColumnDefinition> definitionMapping);
   }
 
   interface Controller {

@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +29,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.provider.DataTableColumns;
@@ -37,7 +37,6 @@ import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ColorRuleUtil;
 import org.opendatakit.common.android.utilities.DataUtil;
-import org.opendatakit.common.android.utilities.NameUtil;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -45,7 +44,6 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -286,10 +284,6 @@ public class TableProperties {
    * The fields that are in the key value store.
    */
   private String displayName;
-  /**
-   * Maps the elementKey of a column to its ColumnProperties object.
-   */
-  private Map<String, ColumnProperties> mElementKeyToColumnProperties;
 
   private ArrayList<ColumnDefinition> mDefinitions;
   
@@ -310,8 +304,7 @@ public class TableProperties {
     this.appName = appName;
     this.tableId = tableId;
     this.displayName = displayName;
-    // columns = null;
-    this.mElementKeyToColumnProperties = null;
+    this.mDefinitions = null;
     if (groupByColumns == null) {
       groupByColumns = new ArrayList<String>();
     }
@@ -933,28 +926,6 @@ public class TableProperties {
     this.defaultViewType = viewType;
   }
 
-  /**
-   * Return all the columns for the given table. These will be the element keys
-   * that are 'units of retention' (stored as columns in the database) AND the
-   * element keys that define super- or sub- structural elements such as
-   * composite types whose sub-elements are written individually to the database
-   * (e.g., geopoint) or subsumed by the enclosing element (e.g., lists of
-   * items).
-   *
-   * @return map of all the columns in the table
-   */
-  public Map<String, ColumnProperties> getAllColumns() {
-    if (mElementKeyToColumnProperties == null) {
-      refreshColumnsFromDatabase();
-    }
-    Map<String, ColumnProperties> defensiveCopy = new HashMap<String, ColumnProperties>();
-    for (String col : mElementKeyToColumnProperties.keySet()) {
-      ColumnProperties cp = mElementKeyToColumnProperties.get(col);
-      defensiveCopy.put(col, cp);
-    }
-    return defensiveCopy;
-  }
-
   private void refreshColumnsFromDatabase() {
     SQLiteDatabase db = null;
     try {
@@ -977,48 +948,16 @@ public class TableProperties {
    * Pulls the columns from the database into this TableProperties. Also updates
    * the maps of display name and sms label.
    */
-  public void refreshColumns(SQLiteDatabase db) {
-    Map<String, ColumnProperties> elementKeyToColumnProperties = ColumnProperties
-        .getColumnPropertiesForTable(db, this);
-    this.mElementKeyToColumnProperties = elementKeyToColumnProperties;
-  }
-
-  public ColumnProperties getColumnByElementKey(String elementKey) {
-    if (this.mElementKeyToColumnProperties == null) {
-      refreshColumnsFromDatabase();
-    }
-    return mElementKeyToColumnProperties.get(elementKey);
+  private void refreshColumns(SQLiteDatabase db) {
+    List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, getTableId());
+    ArrayList<ColumnDefinition> colDefns = ColumnDefinition.buildColumnDefinitions(columns);
+    this.setColumnDefinitions(colDefns);
   }
 
   public ColumnDefinition getColumnDefinitionByElementKey(String elementKey) {
     return ColumnDefinition.find(mDefinitions, elementKey);
   }
-  /**
-   * Return the element key of the column with the given display name. This
-   * behavior is undefined if there are two columns with the same name. This
-   * means that all the methods in {@link ColumnProperties} for creating a
-   * column must be used for creation and changing of display names to ensure
-   * there are no collisions.
-   *
-   * @param displayName
-   * @return
-   */
-  private ColumnProperties getColumnByDisplayName(String displayName) {
-    if (this.mElementKeyToColumnProperties == null) {
-      refreshColumnsFromDatabase();
-    }
-    for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
-      if (cp.getLocalizedDisplayName().equals(displayName)) {
-        return cp;
-      }
-    }
-    return null;
-  }
-
-  public boolean isLocalizedColumnDisplayNameInUse(String localizedName) {
-    ColumnProperties cp = getColumnByDisplayName(localizedName);
-    return (cp != null);
-  }
+  
 
   /**
    * Return the element key for the column based on the element path.
@@ -1032,140 +971,6 @@ public class TableProperties {
     // TODO: do this correctly. This is just a hack that often works.
     String hackPath = elementPath.replace(".", "_");
     return hackPath;
-  }
-
-  /**
-   * Take the proposed display name and return a display name that has no
-   * conflicts with other display names in the table. If there is a conflict,
-   * integers are appended to the proposed name until there are no conflicts.
-   *
-   * @param proposedDisplayName
-   * @return
-   */
-  public String createDisplayName(String proposedDisplayName) {
-    if (!isLocalizedColumnDisplayNameInUse(proposedDisplayName)) {
-      return proposedDisplayName;
-    }
-    // otherwise we need to create a non-conflicting name.
-    int suffix = 1;
-    while (true) {
-      String nextName = proposedDisplayName + suffix;
-      if (getColumnByDisplayName(nextName) == null) {
-        return nextName;
-      }
-      suffix++;
-    }
-  }
-
-  /**
-   * Adds a column to the table.
-   * <p>
-   * The column is set to the default visibility. The column is added to the
-   * backing store.
-   * <p>
-   * The elementKey and elementName must be unique to a given table. If you are
-   * not ensuring this yourself, you should pass in null values and it will
-   * generate names based on the displayName via
-   * {@link ColumnProperties.createDbElementKey} and
-   * {@link ColumnProperties.createDbElementName}.
-   *
-   * @param displayName
-   *          the column's display name
-   * @param elementKey
-   *          should either be received from the server or null
-   * @param elementName
-   *          should either be received from the server or null
-   * @return ColumnProperties for the new table
-   */
-  public ColumnProperties createNoPersistColumn(ColumnDefinition ci) {
-    // at this time, we don't know whether the element is retained in the
-    // database or not. For now, assume it is visible.
-    String jsonStringifyDisplayName = null;
-    if (displayName == null) {
-      displayName = NameUtil.constructSimpleDisplayName(ci.getElementKey());
-    }
-    jsonStringifyDisplayName = NameUtil.normalizeDisplayName(displayName);
-    ColumnProperties cp = null;
-    // make it visible if it is retained in the db.
-    cp = ColumnProperties.createNotPersisted(this, jsonStringifyDisplayName, ci, 
-        ci.isUnitOfRetention());
-
-    return cp;
-  }
-
-  public void createColumnsForTable(Map<String, ColumnProperties> defns) {
-    boolean failure = false;
-    SQLiteDatabase db = null;
-    try {
-      db = getWritableDatabase();
-      try {
-        db.beginTransaction();
-        List<String> newColumnOrder = new ArrayList<String>();
-
-        for (ColumnProperties cp : defns.values()) {
-          // ensuring columns is initialized
-          // refreshColumns();
-          // adding column
-          // ensure that we have persisted this column's values
-          cp.persistColumn(db);
-          if (cp.isUnitOfRetention()) {
-            StringBuilder b = new StringBuilder();
-            b.append("ALTER TABLE \"").append(tableId).append("\"");
-            b.append(" ADD COLUMN \"").append(cp.getElementKey()).append("\" ");
-            ElementDataType type = cp.getColumnType().getDataType();
-            if (type == ElementDataType.string) {
-              b.append("TEXT");
-            } else if (type == ElementDataType.integer) {
-              b.append("INTEGER");
-            } else if (type == ElementDataType.number) {
-              b.append("REAL");
-            } else if (type == ElementDataType.bool) {
-              b.append("INTEGER"); // 0 and 1
-            } else {
-              b.append("TEXT"); // everything else
-            }
-            b.append(" NULL");
-            String sql = b.toString();
-            db.execSQL(sql);
-          }
-
-          if (cp.getDisplayVisible()) {
-            newColumnOrder.add(cp.getElementKey());
-          }
-        }
-        mElementKeyToColumnProperties = defns;
-
-        setColumnOrder(db, newColumnOrder);
-        db.setTransactionSuccessful();
-      } finally {
-        db.endTransaction();
-        db.close();
-      }
-    } catch (SQLException e) {
-      failure = true;
-      e.printStackTrace();
-      throw e;
-    } catch (IllegalStateException e) {
-      failure = true;
-      e.printStackTrace();
-      throw e;
-    } catch (JsonGenerationException e) {
-      failure = true;
-      e.printStackTrace();
-      throw new IllegalArgumentException("[createColumnsForTable] failed", e);
-    } catch (JsonMappingException e) {
-      failure = true;
-      e.printStackTrace();
-      throw new IllegalArgumentException("[createColumnsForTable] failed", e);
-    } catch (IOException e) {
-      failure = true;
-      e.printStackTrace();
-      throw new IllegalArgumentException("[createColumnsForTable] failed", e);
-    } finally {
-      if (failure) {
-        refreshColumnsFromDatabase();
-      }
-    }
   }
 
   /**
@@ -1187,16 +992,16 @@ public class TableProperties {
    */
   public List<String> getPersistedColumns() {
     List<String> persistedColumns = new ArrayList<String>();
-    if (mElementKeyToColumnProperties == null) {
+    if (mDefinitions == null) {
       refreshColumnsFromDatabase();
     }
-    for (String elementKey : mElementKeyToColumnProperties.keySet()) {
-      ColumnProperties cp = mElementKeyToColumnProperties.get(elementKey);
-      if (cp.isUnitOfRetention()) {
-        persistedColumns.add(elementKey);
+
+    ArrayList<ColumnDefinition> orderedDefns = this.getColumnDefinitions();
+    for ( ColumnDefinition cd : orderedDefns ) {
+      if ( cd.isUnitOfRetention() ) {
+        persistedColumns.add(cd.getElementKey());
       }
     }
-    Collections.sort(persistedColumns);
     return persistedColumns;
   }
 
@@ -1424,15 +1229,15 @@ public class TableProperties {
    * @return true if a map view can be displayed for the table.
    */
   private boolean mapViewIsPossible() {
-    List<ColumnProperties> geoPoints = getGeopointColumns();
+    List<ColumnDefinition> geoPoints = getGeopointColumnDefinitions();
     if (geoPoints.size() != 0) {
       return true;
     }
 
     List<String> elementKeys = getPersistedColumns();
     for (String elementKey : elementKeys) {
-      ColumnProperties cp = this.getColumnByElementKey(elementKey);
-      if (isLatitudeColumn(geoPoints, cp) || isLongitudeColumn(geoPoints, cp)) {
+      ColumnDefinition cd = this.getColumnDefinitionByElementKey(elementKey);
+      if (isLatitudeColumnDefinition(geoPoints, cd) || isLongitudeColumnDefinition(geoPoints, cd)) {
         return true;
       }
     }
@@ -1497,81 +1302,87 @@ public class TableProperties {
    * 
    * @return
    */
-  public List<ColumnProperties> getUriColumns() {
-    Map<String, ColumnProperties> allColumns = this.getAllColumns();
-    Set<ColumnProperties> uriFragmentList = new HashSet<ColumnProperties>();
-    Set<ColumnProperties> contentTypeList = new HashSet<ColumnProperties>();
+  public List<ColumnDefinition> getUriColumnDefinitions() {
+    ArrayList<ColumnDefinition> orderedDefns = this.getColumnDefinitions();
     
-    for (ColumnProperties cp : allColumns.values() ) {
-      ColumnProperties cpParent = cp.getContainingElement();
+    Set<ColumnDefinition> uriFragmentList = new HashSet<ColumnDefinition>();
+    Set<ColumnDefinition> contentTypeList = new HashSet<ColumnDefinition>();
+    
+    for (ColumnDefinition cd : orderedDefns ) {
+      ColumnDefinition cdParent = cd.getParent();
       
-      if ( cp.getElementName().equals("uriFragment") && 
-           cp.getColumnType().getDataType() == ElementDataType.rowpath &&
-               cpParent != null ) {
-        uriFragmentList.add(cpParent);
+      if ( cd.getElementName().equals("uriFragment") && 
+          cd.getType().getDataType() == ElementDataType.rowpath &&
+              cdParent != null ) {
+        uriFragmentList.add(cdParent);
       }
-      if ( cp.getElementName().equals("contentType") &&
-          cpParent != null ) {
-        contentTypeList.add(cpParent);
+      if ( cd.getElementName().equals("contentType") &&
+          cdParent != null ) {
+        contentTypeList.add(cdParent);
       }
     }
     uriFragmentList.retainAll(contentTypeList);
     
-    List<ColumnProperties> cpList = new ArrayList<ColumnProperties>(uriFragmentList);
-    Collections.sort(cpList, new Comparator<ColumnProperties>() {
-
-      @Override
-      public int compare(ColumnProperties lhs, ColumnProperties rhs) {
-        return lhs.getElementKey().compareTo(rhs.getElementKey());
-      }});
-    return cpList;
+    List<ColumnDefinition> cdList = new ArrayList<ColumnDefinition>(uriFragmentList);
+    Collections.sort(cdList);
+    return cdList;
   }
 
-  public List<ColumnProperties> getGeopointColumns() {
-    Map<String, ColumnProperties> allColumns = this.getAllColumns();
-    List<ColumnProperties> cpList = new ArrayList<ColumnProperties>();
+  public List<ColumnDefinition> getGeopointColumnDefinitions() {
+    List<ColumnDefinition> cdList = new ArrayList<ColumnDefinition>();
 
-    for (ColumnProperties cp : allColumns.values()) {
-      if (cp.getColumnType().getElementType().equals(ElementType.GEOPOINT)) {
-        cpList.add(cp);
+    ArrayList<ColumnDefinition> orderedDefns = getColumnDefinitions();
+    for (ColumnDefinition cd : orderedDefns) {
+      if (cd.getType().getElementType().equals(ElementType.GEOPOINT)) {
+        cdList.add(cd);
       }
     }
-    return cpList;
+    return cdList;
   }
 
-  public boolean isLatitudeColumn(List<ColumnProperties> geoPointList, ColumnProperties cp) {
-    ElementDataType type = cp.getColumnType().getDataType();
-    if (!(type == ElementDataType.number || type == ElementDataType.integer))
+  public boolean isLatitudeColumnDefinition(List<ColumnDefinition> geoPointList, ColumnDefinition cd) {
+    if ( !cd.isUnitOfRetention() ) {
       return false;
+    }
     
-    ColumnProperties cpParent = cp.getContainingElement();
+    ElementDataType type = cd.getType().getDataType();
+    if (!(type == ElementDataType.number || type == ElementDataType.integer)) {
+      return false;
+    }
+    
+    ColumnDefinition cdParent = cd.getParent();
 
-    if ( cpParent != null &&
-        geoPointList.contains(cpParent) &&
-        cp.getElementName().equals("latitude")) {
+    if ( cdParent != null &&
+        geoPointList.contains(cdParent) &&
+        cd.getElementName().equals("latitude")) {
       return true;
     }
 
-    if (endsWithIgnoreCase(cp.getElementName(), "latitude")) {
+    if (endsWithIgnoreCase(cd.getElementName(), "latitude")) {
       return true;
     }
+    
     return false;
   }
 
-  public boolean isLongitudeColumn(List<ColumnProperties> geoPointList, ColumnProperties cp) {
-    ElementDataType type = cp.getColumnType().getDataType();
+  public boolean isLongitudeColumnDefinition(List<ColumnDefinition> geoPointList, ColumnDefinition cd) {
+    if ( !cd.isUnitOfRetention() ) {
+      return false;
+    }
+    
+    ElementDataType type = cd.getType().getDataType();
     if (!(type == ElementDataType.number || type == ElementDataType.integer))
       return false;
     
-    ColumnProperties cpParent = cp.getContainingElement();
+    ColumnDefinition cdParent = cd.getParent();
 
-    if ( cpParent != null &&
-        geoPointList.contains(cpParent) &&
-        cp.getElementName().equals("longitude")) {
+    if ( cdParent != null &&
+        geoPointList.contains(cdParent) &&
+        cd.getElementName().equals("longitude")) {
       return true;
     }
 
-    if (endsWithIgnoreCase(cp.getElementName(), "longitude")) {
+    if (endsWithIgnoreCase(cd.getElementName(), "longitude")) {
       return true;
     }
 
@@ -1598,7 +1409,7 @@ public class TableProperties {
    * @return
    */
   public KeyValueStoreHelper getKeyValueStoreHelper(String partition) {
-    return new KeyValueStoreHelper(partition, this);
+    return new KeyValueStoreHelper(context, this.getAppName(), this.getTableId(), partition);
   }
 
   /**
