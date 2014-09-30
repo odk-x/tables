@@ -2,7 +2,7 @@ package org.opendatakit.tables.views.webkits;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -21,13 +21,13 @@ import org.mockito.Matchers;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementDataType;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.WebViewActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.ODKDatabaseUtilsWrapper;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.testutils.TestCaseUtils;
@@ -40,6 +40,7 @@ import org.robolectric.shadows.ShadowActivity.IntentForResult;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 
 /**
  *
@@ -49,18 +50,33 @@ import android.content.ContentValues;
 @RunWith(RobolectricTestRunner.class)
 public class ControlTest {
 
+  public static final String PRESENT_TABLE_ID = "anyTableId";
+  public static final String MISSING_TABLE_ID = "anyId";
   public static final String VALID_STRING_VALUE = "a string value";
   public static final String VALID_INT_VALUE = "1";
   public static final String VALID_NUMBER_VALUE = "12.3512";
 
   Control control;
   Activity activity;
-  /** The wrapper that should be used by the control stub. */
-  ODKDatabaseUtilsWrapper wrapperMock;
 
   @Before
   public void before() {
-    TableProperties.clearCaches();
+    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
+    String tableId = PRESENT_TABLE_ID;
+    List<String> tableIds = new ArrayList<String>();
+    tableIds.add(tableId);
+    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
+
+    List<Column> columns = new ArrayList<Column>();
+    columns.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
+        ElementDataType.string.name(), "[]"));
+    columns.add(new Column(TestConstants.ElementKeys.INT_COLUMN, TestConstants.ElementKeys.INT_COLUMN,
+        ElementDataType.integer.name(), "[]"));
+    columns.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
+        ElementDataType.number.name(), "[]"));
+    doReturn(columns).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(tableId));
+    ODKDatabaseUtils.set(wrapperMock);
+
     TestCaseUtils.setExternalStorageMounted();
     AbsBaseActivityStub activityStub = Robolectric.buildActivity(
         AbsBaseActivityStub.class)
@@ -69,10 +85,6 @@ public class ControlTest {
           .resume()
           .visible()
           .get();
-    // First set up the database utils wrapper mock.
-    this.wrapperMock = mock(ODKDatabaseUtilsWrapper.class);
-    ControlStub.DATABASE = TestConstants.getDatabaseMock();
-    ControlStub.DB_UTILS_WRAPPER = wrapperMock;
     Control control = new ControlStub(
         activityStub,
         TestConstants.TABLES_DEFAULT_APP_NAME);
@@ -88,11 +100,6 @@ public class ControlTest {
     // null them out just to make sure.
     this.activity = null;
     this.control = null;
-  }
-
-  protected void setupControlWithTablePropertiesMock() {
-    TableProperties mock = mock(TableProperties.class);
-    ControlStub.TABLE_PROPERTIES_FOR_ID = mock;
   }
 
   @Test
@@ -116,15 +123,14 @@ public class ControlTest {
   }
 
   protected void helperAddOrUpdateFailsIfTableDoesNotExist(boolean isUpdate) {
-    // we don't want the tp to be present
-    ControlStub.TABLE_PROPERTIES_FOR_ID = null;
+    // we don't want the table to be present
     if (isUpdate) {
       boolean result =
-          this.control.updateRow("anyId", "anyString", "anyRowId");
+          this.control.updateRow(MISSING_TABLE_ID, "anyString", "anyRowId");
       assertThat(result).isFalse();
     } else {
       this.setupControlStubToReturnGeneratedRowId("some id");
-      String rowId = this.control.addRow("anyId", "anyString");
+      String rowId = this.control.addRow(MISSING_TABLE_ID, "anyString");
       assertThat(rowId).isNull();
     }
   }
@@ -140,16 +146,15 @@ public class ControlTest {
    * {@link Control#updateRow(String, String, String)}.
    */
   protected void helperAddOrUpdateFailsIfColumnDoesNotExist(boolean isUpdate) {
-    TableProperties tpMock = TestConstants.getTablePropertiesMock();
-    ControlStub.TABLE_PROPERTIES_FOR_ID = tpMock;
-    String stringifiedMap = WebViewUtil.stringify(getValidMap());
+    // use this mock object...
+    String stringifiedMap = WebViewUtil.stringify(getInvalidMap());
     if (isUpdate) {
       boolean result =
-          this.control.updateRow("anyId", stringifiedMap, "anyRowId");
+          this.control.updateRow(PRESENT_TABLE_ID, stringifiedMap, "anyRowId");
       assertThat(result).isFalse();
     } else {
       this.setupControlStubToReturnGeneratedRowId("some id");
-      String rowId = this.control.addRow("anyId", stringifiedMap);
+      String rowId = this.control.addRow(PRESENT_TABLE_ID, stringifiedMap);
       assertThat(rowId).isNull();
     }
   }
@@ -166,18 +171,24 @@ public class ControlTest {
 
   protected void helperAddOrUpdateWithNullContentValuesFails(
       boolean isUpdate) {
-    setupControlWithTablePropertiesMock();
+
+    // Now we'll do the call and make sure that we called through to the mock
+    // object successfully.
+    Map<String, String> validMap = getValidMap();
+    String validMapString = WebViewUtil.stringify(validMap);
+    ContentValues contentValues = getContentValuesForValidMap();
+    ControlStub.CONTENT_VALUES = contentValues;
     // we need to return a null ContentValues when we ask for it.
     ControlStub.CONTENT_VALUES = null;
     String stringifiedJSON = WebViewUtil.stringify(getValidMap());
     if (isUpdate) {
       boolean result =
-          this.control.updateRow("anyTableId", stringifiedJSON, "anyRowId");
+          this.control.updateRow(PRESENT_TABLE_ID, stringifiedJSON, "anyRowId");
       assertThat(result).isFalse();
     } else {
       this.setupControlStubToReturnGeneratedRowId("some row id");
-      String rowId = this.control.addRow("anyTableId", stringifiedJSON);
-      assertThat(rowId).isNull();
+      String newRowId = this.control.addRow(PRESENT_TABLE_ID, stringifiedJSON);
+      assertThat(newRowId).isNull();
     }
   }
 
@@ -193,49 +204,28 @@ public class ControlTest {
 
   protected void helperAddOrUpdateRowWithValuesCallsDBUtilsWrapper(
       boolean isUpdate) {
-    setupControlWithTablePropertiesMock();
-    TableProperties tpMock = ControlStub.TABLE_PROPERTIES_FOR_ID;
-    List<Column> columns = new ArrayList<Column>();
-    columns.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
-        ElementDataType.string.name(), "[]"));
-    columns.add(new Column(TestConstants.ElementKeys.INT_COLUMN, TestConstants.ElementKeys.INT_COLUMN,
-        ElementDataType.integer.name(), "[]"));
-    columns.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
-        ElementDataType.number.name(), "[]"));
-    ArrayList<ColumnDefinition> orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
-    
-    ColumnDefinition stringCD = ColumnDefinition.find(orderedDefns, 
-        TestConstants.ElementKeys.STRING_COLUMN);
-    ColumnDefinition intCD = ColumnDefinition.find(orderedDefns, 
-        TestConstants.ElementKeys.INT_COLUMN);
-    ColumnDefinition numberCD = ColumnDefinition.find(orderedDefns,
-        TestConstants.ElementKeys.NUMBER_COLUMN);
-    doReturn(orderedDefns).when(tpMock).getColumnDefinitions();
-    
     // Now we'll do the call and make sure that we called through to the mock
     // object successfully.
-    String tableId = "anyTableId";
     Map<String, String> validMap = getValidMap();
     String validMapString = WebViewUtil.stringify(validMap);
     ContentValues contentValues = getContentValuesForValidMap();
     ControlStub.CONTENT_VALUES = contentValues;
     String rowId = "aRowId";
-    doReturn(columns).when(wrapperMock).getUserDefinedColumns(eq(ControlStub.DATABASE), eq(tableId));
     if (isUpdate) {
-      this.control.updateRow(tableId, validMapString, rowId);
-      verify(wrapperMock, times(1)).updateDataInExistingDBTableWithId(
-          eq(ControlStub.DATABASE),
-          eq(tableId),
+      this.control.updateRow(PRESENT_TABLE_ID, validMapString, rowId);
+      verify(ODKDatabaseUtils.get(), times(1)).updateDataInExistingDBTableWithId(
+          any(SQLiteDatabase.class),
+          eq(PRESENT_TABLE_ID),
           (ArrayList<ColumnDefinition>) Matchers.anyListOf(ColumnDefinition.class),
           eq(contentValues),
           eq(rowId));
     } else {
       ControlStub.GENERATED_ROW_ID = rowId;
-      String returnedRowId = control.addRow(tableId, validMapString);
-      verify(wrapperMock, times(1)).insertDataIntoExistingDBTableWithId(
-          eq(ControlStub.DATABASE),
-          eq(tableId),
-          (ArrayList<ColumnDefinition>) Matchers.anyListOf(ColumnDefinition.class),
+      String returnedRowId = control.addRow(PRESENT_TABLE_ID, validMapString);
+      verify(ODKDatabaseUtils.get(), times(1)).insertDataIntoExistingDBTableWithId(
+          any(SQLiteDatabase.class),
+          eq(PRESENT_TABLE_ID),
+          Matchers.any(ArrayList.class),
           eq(contentValues),
           eq(rowId));
       assertThat(returnedRowId).isEqualTo(rowId);
@@ -357,6 +347,14 @@ public class ControlTest {
    */
   protected Map<String, String> getValidMap() {
     Map<String, String> map = TestConstants.getMapOfElementKeyToValue(
+        VALID_STRING_VALUE,
+        VALID_INT_VALUE,
+        VALID_NUMBER_VALUE);
+    return map;
+  }
+
+  protected Map<String, String> getInvalidMap() {
+    Map<String, String> map = TestConstants.getMapOfElementKeyToValueIncludingMissing(
         VALID_STRING_VALUE,
         VALID_INT_VALUE,
         VALID_NUMBER_VALUE);

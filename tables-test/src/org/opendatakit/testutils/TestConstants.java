@@ -1,20 +1,24 @@
 package org.opendatakit.testutils;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.webkits.Control;
@@ -62,6 +66,7 @@ public class TestConstants {
     public static final String STRING_COLUMN = "stringColumn";
     public static final String INT_COLUMN = "intColumn";
     public static final String NUMBER_COLUMN = "numberColumn";
+    public static final String MISSING_COLUMN = "missingColumn";
   }
 
   /**
@@ -75,27 +80,22 @@ public class TestConstants {
   /**
    * Return an unimplemented mock of {@link TableProperties}.
    */
-  public static final TableProperties TABLE_PROPERTIES_MOCK =
-      mock(TableProperties.class);
-
-  public static TableProperties getTablePropertiesMock() {
-    TableProperties tpMock = mock(TableProperties.class);
+  public static void setSingleTableSchemeMock() {
+    ODKDatabaseUtils dbUtilMock = mock(ODKDatabaseUtils.class);
     
-    when(tpMock.getTableId()).thenReturn("aTable");
+    ArrayList<String> tableIds = new ArrayList<String>();
+    tableIds.add("aTable");
+    when(dbUtilMock.getAllTableIds(any(SQLiteDatabase.class))).thenReturn(tableIds);
+    ArrayList<Column> columns = new ArrayList<Column>();
+    when(dbUtilMock.getUserDefinedColumns(any(SQLiteDatabase.class), eq("aTable"))).thenReturn(columns);
+    ODKDatabaseUtils.set(dbUtilMock);
     
     TableUtil util = mock(TableUtil.class);
     when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
-        "aTable")).thenReturn("aTable");
+        eq("aTable"))).thenReturn("aTable");
     when(util.getDefaultViewType(any(SQLiteDatabase.class), 
-        "aTable")).thenReturn(TableViewType.SPREADSHEET);
+        eq("aTable"))).thenReturn(TableViewType.SPREADSHEET);
     TableUtil.set(util);
-
-    return tpMock;
-  }
-  
-  public static SQLiteDatabase getDatabaseMock() {
-    SQLiteDatabase result = mock(SQLiteDatabase.class);
-    return result;
   }
   
   /**
@@ -163,6 +163,23 @@ public class TestConstants {
     return result;
   }
 
+  /**
+   * Returns a map with the element keys in {@link ElementKeys}
+   * including the missing one.
+   * @return
+   */
+  public static Map<String, String> getMapOfElementKeyToValueIncludingMissing(
+      String rawStringValue,
+      String rawIntValue,
+      String rawNumberValue) {
+    Map<String, String> result = new HashMap<String, String>();
+    result.put(ElementKeys.STRING_COLUMN, rawStringValue);
+    result.put(ElementKeys.INT_COLUMN, rawIntValue);
+    result.put(ElementKeys.NUMBER_COLUMN, rawNumberValue);
+    result.put(ElementKeys.MISSING_COLUMN, rawStringValue);
+    return result;
+  }
+  
   public static WebView getWebViewMock() {
     return mock(WebView.class);
   }

@@ -47,12 +47,8 @@ public class TableUtil {
    * KVS are moved to the respective classes that use them, these should go
    * there most likely.
    ***********************************/
-  // public static final String DEFAULT_KEY_GROUP_BY_COLUMNS = "";
-  // public static final String DEFAULT_KEY_SORT_COLUMN = "";
   public static final String DEFAULT_KEY_SORT_ORDER = "ASC";
-  // public static final String DEFAULT_KEY_INDEX_COLUMN = "";
   public static final TableViewType DEFAULT_KEY_CURRENT_VIEW_TYPE = TableViewType.SPREADSHEET;
-  // public static final String DEFAULT_KEY_COLUMN_ORDER = "";
 
   private static TableUtil tableUtil = new TableUtil();
   
@@ -72,7 +68,7 @@ public class TableUtil {
   protected TableUtil() {}
   
   public ArrayList<ColumnDefinition> getColumnDefinitions(SQLiteDatabase db, String tableId) {
-    List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, tableId);
+    List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
     return ColumnDefinition.buildColumnDefinitions(columns);
   }
   
@@ -117,7 +113,7 @@ public class TableUtil {
     e.key = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
     e.type = ElementDataType.object.name();
     e.value = rawDisplayName;
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
 
   /**
@@ -159,7 +155,7 @@ public class TableUtil {
     e.key = TABLE_DEFAULT_VIEW_TYPE;
     e.type = ElementDataType.string.name();
     e.value = viewType.name();
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
 
   /**
@@ -193,7 +189,7 @@ public class TableUtil {
     e.key = Tables.KEY_DETAIL_VIEW_FILE_NAME;
     e.type = ElementDataType.string.name();
     e.value = detailViewFilename;
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
 
   /**
@@ -227,7 +223,7 @@ public class TableUtil {
     e.key = Tables.KEY_LIST_VIEW_FILE_NAME;
     e.type = ElementDataType.string.name();
     e.value = listViewFilename;
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
 
   /**
@@ -261,7 +257,7 @@ public class TableUtil {
     e.key = Tables.KEY_MAP_LIST_VIEW_FILE_NAME;
     e.type = ElementDataType.string.name();
     e.value = listViewFilename;
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
 
   /**
@@ -295,7 +291,7 @@ public class TableUtil {
     e.key = KeyValueStoreConstants.TABLE_SORT_COL;
     e.type = ElementDataType.string.name();
     e.value = elementKey;
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
 
   /**
@@ -329,7 +325,7 @@ public class TableUtil {
     e.key = KeyValueStoreConstants.TABLE_SORT_ORDER;
     e.type = ElementDataType.string.name();
     e.value = sortOrder;
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
 
   /**
@@ -360,7 +356,7 @@ public class TableUtil {
     e.key = KeyValueStoreConstants.TABLE_INDEX_COL;
     e.type = ElementDataType.string.name();
     e.value = elementKey;
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
 
   /**
@@ -402,7 +398,7 @@ public class TableUtil {
       e1.printStackTrace();
       throw new IllegalArgumentException("Unexpected groupByCols conversion failure!");
     }
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
 
   /**
@@ -445,6 +441,6 @@ public class TableUtil {
       e1.printStackTrace();
       throw new IllegalArgumentException("Unexpected columnOrder conversion failure!");
     }
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
 }

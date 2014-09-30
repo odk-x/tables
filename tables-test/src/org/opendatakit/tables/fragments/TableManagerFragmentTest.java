@@ -2,6 +2,8 @@ package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
@@ -12,6 +14,9 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.data.ElementDataType;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -19,6 +24,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
+import org.opendatakit.testutils.TestConstants;
 import org.opendatakit.testutils.TestContextMenu;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
@@ -58,8 +64,29 @@ public class TableManagerFragmentTest {
   }
 
   private List<String> getMockListWithTwoItems() {
-    TableProperties tp1 = mock(TableProperties.class);
-    TableProperties tp2 = mock(TableProperties.class);
+    
+    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
+
+    ArrayList<String> tableIds = new ArrayList<String>();
+    tableIds.add(mockTableId1);
+    tableIds.add(mockTableId2);
+    doReturn(tableIds).when(wrapperMock.getAllTableIds(any(SQLiteDatabase.class)));
+    
+    List<Column> columns1 = new ArrayList<Column>();
+    columns1.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
+        ElementDataType.string.name(), "[]"));
+    columns1.add(new Column(TestConstants.ElementKeys.INT_COLUMN, TestConstants.ElementKeys.INT_COLUMN,
+        ElementDataType.integer.name(), "[]"));
+    columns1.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
+        ElementDataType.number.name(), "[]"));
+
+    List<Column> columns2 = new ArrayList<Column>();
+    columns2.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
+        ElementDataType.string.name(), "[]"));
+    
+    doReturn(columns1).when(wrapperMock.getUserDefinedColumns(any(SQLiteDatabase.class), eq(mockTableId1)));
+    doReturn(columns2).when(wrapperMock.getUserDefinedColumns(any(SQLiteDatabase.class), eq(mockTableId2)));
+    ODKDatabaseUtils.set(wrapperMock);
     
     TableUtil util = mock(TableUtil.class);
     when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
@@ -68,8 +95,6 @@ public class TableManagerFragmentTest {
         mockTableId2)).thenReturn(mockTableName2);
     TableUtil.set(util);
 
-    when(tp1.getTableId()).thenReturn(mockTableId1);
-    when(tp2.getTableId()).thenReturn(mockTableId2);
     List<String> listOfMocks = new ArrayList<String>();
     listOfMocks.add(mockTableId1);
     listOfMocks.add(mockTableId2);
@@ -78,14 +103,47 @@ public class TableManagerFragmentTest {
 
   private List<String> getMockListWithThreeItems() {
     
+    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
+
+    ArrayList<String> tableIds = new ArrayList<String>();
+    tableIds.add(mockTableId1);
+    tableIds.add(mockTableId2);
+    tableIds.add(mockTableId3);
+    doReturn(tableIds).when(wrapperMock.getAllTableIds(any(SQLiteDatabase.class)));
+    
+    List<Column> columns1 = new ArrayList<Column>();
+    columns1.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
+        ElementDataType.string.name(), "[]"));
+    columns1.add(new Column(TestConstants.ElementKeys.INT_COLUMN, TestConstants.ElementKeys.INT_COLUMN,
+        ElementDataType.integer.name(), "[]"));
+    columns1.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
+        ElementDataType.number.name(), "[]"));
+
+    List<Column> columns2 = new ArrayList<Column>();
+    columns2.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
+        ElementDataType.string.name(), "[]"));
+    
+    List<Column> columns3 = new ArrayList<Column>();
+    columns3.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
+        ElementDataType.number.name(), "[]"));
+    
+    doReturn(columns1).when(wrapperMock.getUserDefinedColumns(any(SQLiteDatabase.class), eq(mockTableId1)));
+    doReturn(columns2).when(wrapperMock.getUserDefinedColumns(any(SQLiteDatabase.class), eq(mockTableId2)));
+    doReturn(columns3).when(wrapperMock.getUserDefinedColumns(any(SQLiteDatabase.class), eq(mockTableId3)));
+    ODKDatabaseUtils.set(wrapperMock);
+    
     TableUtil util = mock(TableUtil.class);
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
+        mockTableId1)).thenReturn(mockTableName1);
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
+        mockTableId2)).thenReturn(mockTableName2);
     when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
         mockTableId3)).thenReturn(mockTableName3);
     TableUtil.set(util);
 
-    TableProperties tp3 = mock(TableProperties.class);
-    when(tp3.getTableId()).thenReturn(mockTableId3);
-    List<String> listOfMocks = this.getMockListWithTwoItems();
+    List<String> listOfMocks = new ArrayList<String>();
+    listOfMocks.add(mockTableId1);
+    listOfMocks.add(mockTableId2);
     listOfMocks.add(mockTableId3);
     return listOfMocks;
   }

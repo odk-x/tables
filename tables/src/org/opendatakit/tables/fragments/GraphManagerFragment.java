@@ -98,7 +98,7 @@ public class GraphManagerFragment extends AbsTableDisplayFragment {
       currentDefaultGraphName = kvshForGraphWritLarge.getString(
           LocalKeyValueStoreConstants.Graph.KEY_GRAPH_VIEW_NAME);
 
-      graphViewEntries = ODKDatabaseUtils.getDBTableMetadata(db, tableId, 
+      graphViewEntries = ODKDatabaseUtils.get().getDBTableMetadata(db, tableId, 
           LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS, null, LocalKeyValueStoreConstants.Graph.KEY_GRAPH_TYPE);
     } finally {
       if ( db != null ) {

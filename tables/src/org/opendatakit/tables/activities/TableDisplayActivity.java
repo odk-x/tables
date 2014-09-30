@@ -534,7 +534,7 @@ public class TableDisplayActivity extends AbsTableActivity
     SQLiteDatabase db = null;
     try {
       db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
-      UserTable result = ODKDatabaseUtils.rawSqlQuery(db, this.getAppName(),
+      UserTable result = ODKDatabaseUtils.get().rawSqlQuery(db, this.getAppName(),
           this.getTableId(), 
           ColumnDefinition.getRetentionColumnNames(getColumnDefinitions()),
           sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,

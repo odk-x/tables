@@ -93,7 +93,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
     SQLiteDatabase db = null;
     try {
       db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
-      UserTable result = ODKDatabaseUtils.getDataInExistingDBTableWithId(db, 
+      UserTable result = ODKDatabaseUtils.get().getDataInExistingDBTableWithId(db, 
           getAppName(), getTableId(), 
           ColumnDefinition.getRetentionColumnNames(getColumnDefinitions()), rowId);
       if (result.getNumberOfRows() > 1 ) {

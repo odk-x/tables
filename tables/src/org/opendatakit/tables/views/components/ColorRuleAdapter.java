@@ -73,7 +73,7 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
         mType == ColorRuleGroup.Type.TABLE) {
       ColorRule colorRule = mColorRules.get(currentPosition);
       String elementKey = colorRule.getColumnElementKey();
-      if (ODKDatabaseUtils.getAdminColumns().contains(elementKey)) {
+      if (ODKDatabaseUtils.get().getAdminColumns().contains(elementKey)) {
         isMetadataRule = true;
         // We know it must be a String rep of an int.
         SyncState targetState = SyncState.valueOf(colorRule.getVal());

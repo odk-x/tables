@@ -105,7 +105,7 @@ public class OutputUtil {
     SQLiteDatabase db = null;
     try {
       db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
-      ArrayList<String> tableIds = ODKDatabaseUtils.getAllTableIds(db);
+      ArrayList<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
       for (String tableId : tableIds) {
 
         String localizedDisplayName;
@@ -152,7 +152,7 @@ public class OutputUtil {
     String defaultListFileName = null;
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
     
-    List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, tableId);
+    List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
     orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
     defaultDetailFileName = TableUtil.get().getDetailViewFilename(db, tableId);
     defaultListFileName = TableUtil.get().getListViewFilename(db, tableId);
@@ -193,11 +193,11 @@ public class OutputUtil {
   private static String getStringForDataObject(SQLiteDatabase db, String appName, String tableId,
       int numberOfRows) {
 
-    List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, tableId);
+    List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
     ArrayList<ColumnDefinition> orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
     
     UserTable userTable = null;
-    userTable = ODKDatabaseUtils.rawSqlQuery(db, appName, tableId, 
+    userTable = ODKDatabaseUtils.get().rawSqlQuery(db, appName, tableId, 
         ColumnDefinition.getRetentionColumnNames(orderedDefns),
         null, null, null, null, null, null);
 
@@ -324,7 +324,7 @@ public class OutputUtil {
     SQLiteDatabase db = null;
     try {
       db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
-      ArrayList<String> tableIds = ODKDatabaseUtils.getAllTableIds(db);
+      ArrayList<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
       for (String tableId : tableIds) {
         writeDataObject(db, appName, tableId, numberOfRows);
       }

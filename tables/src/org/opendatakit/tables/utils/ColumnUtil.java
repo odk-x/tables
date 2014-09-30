@@ -120,7 +120,7 @@ public class ColumnUtil {
       e1.printStackTrace();
       throw new IllegalArgumentException("Unexpected displayChoices conversion failure!");
     }
-    ODKDatabaseUtils.replaceDBTableMetadata(db, e);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, e);
   }
   
   public ArrayList<JoinColumn> getJoins(SQLiteDatabase db, String tableId, String elementKey) {

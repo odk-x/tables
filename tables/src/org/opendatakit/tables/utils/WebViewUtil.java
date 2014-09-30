@@ -328,7 +328,7 @@ public class WebViewUtil {
     try {
       db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
 
-      userTable = ODKDatabaseUtils.getDataInExistingDBTableWithId(db, 
+      userTable = ODKDatabaseUtils.get().getDataInExistingDBTableWithId(db, 
           appName, tableId,
           ColumnDefinition.getRetentionColumnNames(orderedDefns),
           rowId);
@@ -353,7 +353,7 @@ public class WebViewUtil {
     Row requestedRow = userTable.getRowAtIndex(0);
     List<String> userDefinedElementKeys = 
         ColumnDefinition.getRetentionColumnNames(orderedDefns);
-    List<String> adminElementKeys = ODKDatabaseUtils.getAdminColumns();
+    List<String> adminElementKeys = ODKDatabaseUtils.get().getAdminColumns();
     List<String> allElementKeys = new ArrayList<String>();
     allElementKeys.addAll(userDefinedElementKeys);
     allElementKeys.addAll(adminElementKeys);

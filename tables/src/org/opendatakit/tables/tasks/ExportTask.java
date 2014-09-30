@@ -42,7 +42,7 @@ public class ExportTask
         try {
           String tableId = request.getTableId();
           db = DataModelDatabaseHelperFactory.getDatabase(this.exportCSVActivity, appName);
-          List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, tableId);
+          List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
           ArrayList<ColumnDefinition> orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
           // export goes to output/csv directory...
           return cu.exportSeparable(this, db, tableId, orderedDefns, request.getFileQualifier());

@@ -314,7 +314,7 @@ public class ColorRuleGroup {
         ElementDataType type;
         if (cd == null) {
           // Was likely a metadata column.
-          if (!ODKDatabaseUtils.getAdminColumns().contains(elementKey)) {
+          if (!ODKDatabaseUtils.get().getAdminColumns().contains(elementKey)) {
             throw new IllegalArgumentException("element key passed to "
                 + "ColorRule#checkMatch didn't have a mapping and was "
                 + "not a metadata elementKey: " + elementKey);

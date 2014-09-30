@@ -360,7 +360,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       db = null;
       try {
         db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
-        List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, tableId);
+        List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
         ArrayList<ColumnDefinition> orderedDefns = 
             ColumnDefinition.buildColumnDefinitions(columns);
         for (ColumnDefinition cd : orderedDefns) {

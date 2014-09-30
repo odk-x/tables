@@ -13,7 +13,6 @@ import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
@@ -27,7 +26,6 @@ import org.opendatakit.tables.utils.ColumnUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.ODKDatabaseUtilsWrapper;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.TableUtil;
@@ -72,7 +70,7 @@ public class Control {
     SQLiteDatabase db = null;
     try {
       db = DataModelDatabaseHelperFactory.getDatabase(mActivity, mAppName);
-      this.mTableIds = ODKDatabaseUtils.getAllTableIds(db);
+      this.mTableIds = ODKDatabaseUtils.get().getAllTableIds(db);
     } finally {
       if ( db != null ) {
         db.close();
@@ -578,56 +576,43 @@ public class Control {
        elementKeyToValue = WebViewUtil.getMapFromJson(stringifiedJSON);
      }
 
-     SQLiteDatabase writableDatabase = getWritableDatabase();
-     ODKDatabaseUtilsWrapper dbUtils = this.getODKDatabaseUtilsWrapper();
-     ArrayList<Column> columns = dbUtils.getUserDefinedColumns(writableDatabase, tableId);
-     ArrayList<ColumnDefinition> orderedColumns = ColumnDefinition.buildColumnDefinitions(columns);
-     ContentValues contentValues = getContentValuesFromMap(
-         mActivity, mAppName, tableId, orderedColumns,
-         elementKeyToValue);
-     if (contentValues == null) {
-       // something went wrong parsing.
-       Log.e(TAG, "[addRow] cannot assemble assignment data for table: " + tableId);
-       return false;
-     }
-     // If we've made it here, all appears to be well.
-     if (isUpdate) {
-       dbUtils.updateDataInExistingDBTableWithId(
-           writableDatabase,
-           tableId,
-           orderedColumns,
-           contentValues,
-           rowId);
-       
-     } else {
-       dbUtils.insertDataIntoExistingDBTableWithId(
-           writableDatabase,
-           tableId,
-           orderedColumns,
-           contentValues,
-           rowId);
+     SQLiteDatabase db = null;
+     try {
+       db = DataModelDatabaseHelperFactory.getDatabase(mActivity, mAppName);
+
+       ArrayList<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
+       ArrayList<ColumnDefinition> orderedColumns = ColumnDefinition.buildColumnDefinitions(columns);
+       ContentValues contentValues = getContentValuesFromMap(
+           mActivity, mAppName, tableId, orderedColumns,
+           elementKeyToValue);
+       if (contentValues == null) {
+         // something went wrong parsing.
+         Log.e(TAG, "[addRow] cannot assemble assignment data for table: " + tableId);
+         return false;
+       }
+       // If we've made it here, all appears to be well.
+       if (isUpdate) {
+         ODKDatabaseUtils.get().updateDataInExistingDBTableWithId(
+             db,
+             tableId,
+             orderedColumns,
+             contentValues,
+             rowId);
+         
+       } else {
+         ODKDatabaseUtils.get().insertDataIntoExistingDBTableWithId(
+             db,
+             tableId,
+             orderedColumns,
+             contentValues,
+             rowId);
+       }
+     } finally {
+       if ( db != null ) {
+         db.close();
+       }
      }
      return true;
-  }
-
-  /**
-   * Very basic method to facilitate testing.
-   * @return
-   */
-  protected SQLiteDatabase getWritableDatabase() {
-    DataModelDatabaseHelper dmDbHelper =
-        DataModelDatabaseHelperFactory.getDbHelper(mActivity, mAppName);
-    SQLiteDatabase result = dmDbHelper.getWritableDatabase();
-    return result;
-  }
-
-  /**
-   * Very basic method to facilitate stubbing and injection of a mock object.
-   * @return
-   */
-  protected ODKDatabaseUtilsWrapper getODKDatabaseUtilsWrapper() {
-    ODKDatabaseUtilsWrapper result = new ODKDatabaseUtilsWrapper();
-    return result;
   }
 
   /**
@@ -993,7 +978,7 @@ public class Control {
     SQLiteDatabase db = null;
     try {
       db = DataModelDatabaseHelperFactory.getDatabase(mActivity, mAppName);
-      UserTable userTable = ODKDatabaseUtils.rawSqlQuery(db, mAppName,
+      UserTable userTable = ODKDatabaseUtils.get().rawSqlQuery(db, mAppName,
           tableId, 
           ColumnDefinition.getRetentionColumnNames(retrieveColumnDefinitions(tableId)),
           sqlWhereClause, sqlSelectionArgs,

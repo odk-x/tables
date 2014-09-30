@@ -45,7 +45,7 @@ public class SpreadsheetUserTable {
     SQLiteDatabase db = null;
     try {
       db = DataModelDatabaseHelperFactory.getDatabase(context, table.getAppName());
-      List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, table.getTableId());
+      List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, table.getTableId());
       orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
       colOrder = TableUtil.get().getColumnOrder(db, table.getTableId());
     } finally {

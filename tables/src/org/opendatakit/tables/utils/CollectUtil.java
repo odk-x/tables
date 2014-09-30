@@ -773,7 +773,7 @@ public class CollectUtil {
             int collectInstanceKey; // this is the primary key of the form in
             // Collect's
             // database.
-            collectInstanceKey = ODKDatabaseUtils.getIndexAsType(c, Integer.class,
+            collectInstanceKey = ODKDatabaseUtils.get().getIndexAsType(c, Integer.class,
                 c.getColumnIndexOrThrow(BaseColumns._ID));
             uriOfForm = (Uri.parse(CONTENT_INSTANCE_URI + "/" + collectInstanceKey));
             c.close();
@@ -880,7 +880,7 @@ public class CollectUtil {
         int collectFormKey; // this is the primary key of the form in
         // Collect's
         // database.
-        collectFormKey = ODKDatabaseUtils.getIndexAsType(c, Integer.class,
+        collectFormKey = ODKDatabaseUtils.get().getIndexAsType(c, Integer.class,
             c.getColumnIndexOrThrow(BaseColumns._ID));
         resultUri = (Uri.parse(CollectUtil.CONTENT_FORM_URI + "/" + collectFormKey));
       }
@@ -1364,7 +1364,7 @@ public class CollectUtil {
         return false;
       }
       c.moveToFirst();
-      String status = ODKDatabaseUtils.getIndexAsString(c,
+      String status = ODKDatabaseUtils.get().getIndexAsString(c,
           c.getColumnIndexOrThrow(COLLECT_KEY_STATUS));
       // potential status values are incomplete, complete, submitted,
       // submission_failed
@@ -1413,9 +1413,9 @@ public class CollectUtil {
       }
       c.moveToFirst();
       FormValues fv = new FormValues();
-      fv.timestamp = ODKDatabaseUtils.getIndexAsType(c, Long.class,
+      fv.timestamp = ODKDatabaseUtils.get().getIndexAsType(c, Long.class,
           c.getColumnIndexOrThrow(COLLECT_KEY_LAST_STATUS_CHANGE_DATE));
-      String instancepath = ODKDatabaseUtils.getIndexAsString(c,
+      String instancepath = ODKDatabaseUtils.get().getIndexAsString(c,
           c.getColumnIndexOrThrow("instanceFilePath"));
       File instanceFile = new File(instancepath);
       parseXML(fv, instanceFile);
@@ -1477,7 +1477,7 @@ public class CollectUtil {
       values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(formValues.timestamp));
       values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
 
-      ODKDatabaseUtils.updateDataInExistingDBTableWithId(db, tableId, orderedDefns, values, rowId);
+      ODKDatabaseUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedDefns, values, rowId);
     } finally {
       if ( db != null ) {
         db.close();
@@ -1575,7 +1575,7 @@ public class CollectUtil {
       values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(formValues.timestamp));
       values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
 
-      ODKDatabaseUtils.insertDataIntoExistingDBTableWithId(db, tableId, orderedDefns, values, formValues.instanceID);
+      ODKDatabaseUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedDefns, values, formValues.instanceID);
     } finally {
       if ( db != null ) {
         db.close();

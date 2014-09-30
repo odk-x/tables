@@ -3,8 +3,8 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
@@ -86,64 +86,68 @@ public abstract class AbsBaseActivity extends Activity {
     long now = System.currentTimeMillis();
     Log.i(this.getClass().getSimpleName(), "scanAllTables -- searching for conflicts and checkpoints ");
     
-    DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(this, getAppName());
-    
-    SQLiteDatabase db = dbh.getReadableDatabase();
+    SQLiteDatabase db = null;
     Cursor c = null;
 
     StringBuilder b = new StringBuilder();
     b.append("SELECT ").append(TableDefinitionsColumns.TABLE_ID).append(" FROM \"")
-     .append(DataModelDatabaseHelper.TABLE_DEFS_TABLE_NAME).append("\"");
+     .append(DatabaseConstants.TABLE_DEFS_TABLE_NAME).append("\"");
 
     ArrayList<String> tableIds = new ArrayList<String>();
     try {
-      c = db.rawQuery(b.toString(), null);
-      int idxId = c.getColumnIndex(TableDefinitionsColumns.TABLE_ID);
-      if ( c.moveToFirst() ) {
-        do {
-          tableIds.add(ODKDatabaseUtils.getIndexAsString(c, idxId));
-        } while ( c.moveToNext() );
-      }
-      c.close();
-    } finally {
-      if ( c != null && !c.isClosed() ) {
-        c.close();
-      }
-    }
-    
-    Bundle checkpointTables = new Bundle();
-    Bundle conflictTables = new Bundle();
-    
-    for ( String tableId : tableIds ) {
-      b.setLength(0);
-      b.append("SELECT SUM(case when _savepoint_type is null then 1 else 0 end) as checkpoints,")
-       .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts from \"")
-       .append(tableId).append("\"");
-      
+      db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
       try {
         c = db.rawQuery(b.toString(), null);
-        int idxCheckpoints = c.getColumnIndex("checkpoints");
-        int idxConflicts = c.getColumnIndex("conflicts");
-        c.moveToFirst();
-        Integer checkpoints = ODKDatabaseUtils.getIndexAsType(c, Integer.class, idxCheckpoints);
-        Integer conflicts = ODKDatabaseUtils.getIndexAsType(c, Integer.class, idxConflicts);
+        int idxId = c.getColumnIndex(TableDefinitionsColumns.TABLE_ID);
+        if ( c.moveToFirst() ) {
+          do {
+            tableIds.add(ODKDatabaseUtils.get().getIndexAsString(c, idxId));
+          } while ( c.moveToNext() );
+        }
         c.close();
-        
-        if ( checkpoints != null && checkpoints != 0 ) {
-          checkpointTables.putString(tableId, tableId);
-        }
-        if ( conflicts != null && conflicts != 0 ) {
-          conflictTables.putString(tableId, tableId);
-        }
       } finally {
         if ( c != null && !c.isClosed() ) {
           c.close();
         }
       }
+      
+      Bundle checkpointTables = new Bundle();
+      Bundle conflictTables = new Bundle();
+      
+      for ( String tableId : tableIds ) {
+        b.setLength(0);
+        b.append("SELECT SUM(case when _savepoint_type is null then 1 else 0 end) as checkpoints,")
+         .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts from \"")
+         .append(tableId).append("\"");
+        
+        try {
+          c = db.rawQuery(b.toString(), null);
+          int idxCheckpoints = c.getColumnIndex("checkpoints");
+          int idxConflicts = c.getColumnIndex("conflicts");
+          c.moveToFirst();
+          Integer checkpoints = ODKDatabaseUtils.get().getIndexAsType(c, Integer.class, idxCheckpoints);
+          Integer conflicts = ODKDatabaseUtils.get().getIndexAsType(c, Integer.class, idxConflicts);
+          c.close();
+          
+          if ( checkpoints != null && checkpoints != 0 ) {
+            checkpointTables.putString(tableId, tableId);
+          }
+          if ( conflicts != null && conflicts != 0 ) {
+            conflictTables.putString(tableId, tableId);
+          }
+        } finally {
+          if ( c != null && !c.isClosed() ) {
+            c.close();
+          }
+        }
+      }
+      mCheckpointTables = checkpointTables;
+      mConflictTables = conflictTables;
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
     }
-    mCheckpointTables = checkpointTables;
-    mConflictTables = conflictTables;
-    
     
     long elapsed = System.currentTimeMillis() - now;
     Log.i(this.getClass().getSimpleName(), "scanAllTables -- full table scan completed: " + Long.toString(elapsed) + " ms");

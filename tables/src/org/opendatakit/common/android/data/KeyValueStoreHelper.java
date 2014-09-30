@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.utilities.DataHelper;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -78,22 +78,18 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     this.db = db;
   }
 
-  private SQLiteDatabase getWritableDatabase() {
+  private SQLiteDatabase acquireDatabase() {
     if ( this.db != null ) {
       return db;
     }
-    DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
-    return dbh.getWritableDatabase();
+    return DataModelDatabaseHelperFactory.getDatabase(context, appName);
   }
 
-  private SQLiteDatabase getReadableDatabase() {
-    if ( this.db != null ) {
-      return db;
+  private void releaseDatabase(SQLiteDatabase db) {
+    if ( this.db != db ) {
+      db.close();
     }
-    DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
-    return dbh.getReadableDatabase();
   }
-  
   /**
    * Get the accessor for the partition specified by this object as well as
    * the given aspect.
@@ -249,7 +245,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private void setIntegerEntry(String aspect, String key, Integer value) {
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.acquireDatabase();
     try {
       db.beginTransaction();
       KeyValueStoreEntry entry = new KeyValueStoreEntry();
@@ -259,11 +255,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       entry.key = key;
       entry.type = ElementDataType.integer.name();
       entry.value = Integer.toString(value);
-      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
+      ODKDatabaseUtils.get().replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
-      db.close();
+      releaseDatabase(db);
     }
   }
 
@@ -273,7 +269,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private void setNumberEntry(String aspect, String key, Double value) {
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.acquireDatabase();
     try {
       db.beginTransaction();
       KeyValueStoreEntry entry = new KeyValueStoreEntry();
@@ -283,11 +279,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       entry.key = key;
       entry.type = ElementDataType.number.name();
       entry.value = Double.toString(value);
-      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
+      ODKDatabaseUtils.get().replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
-      db.close();
+      releaseDatabase(db);
     }
   }
 
@@ -297,7 +293,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private void setObjectEntry(String aspect, String key, String jsonOfObject) {
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.acquireDatabase();
     try {
       db.beginTransaction();
       KeyValueStoreEntry entry = new KeyValueStoreEntry();
@@ -307,11 +303,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       entry.key = key;
       entry.type = ElementDataType.object.name();
       entry.value = jsonOfObject;
-      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
+      ODKDatabaseUtils.get().replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
-      db.close();
+      releaseDatabase(db);
     }
   }
 
@@ -327,7 +323,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param value
    */
   private void setBooleanEntry(String aspect, String key, Boolean value) {
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.acquireDatabase();
     try {
       db.beginTransaction();
       KeyValueStoreEntry entry = new KeyValueStoreEntry();
@@ -337,11 +333,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       entry.key = key;
       entry.type = ElementDataType.bool.name();
       entry.value = Integer.toString(DataHelper.boolToInt(value));
-      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
+      ODKDatabaseUtils.get().replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
-      db.close();
+      releaseDatabase(db);
     }
   }
 
@@ -357,7 +353,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param value
    */
   private void setStringEntry(String aspect, String key, String value) {
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.acquireDatabase();
     try {
       db.beginTransaction();
       KeyValueStoreEntry entry = new KeyValueStoreEntry();
@@ -367,11 +363,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       entry.key = key;
       entry.type = ElementDataType.string.name();
       entry.value = value;
-      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
+      ODKDatabaseUtils.get().replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
-      db.close();
+      releaseDatabase(db);
     }
   }
 
@@ -402,7 +398,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     entry.key = key;
     entry.type = ElementDataType.string.name();
     entry.value = value;
-    ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
+    ODKDatabaseUtils.get().replaceDBTableMetadata(db, entry);
   }
 
   @Override
@@ -440,7 +436,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       Log.e(TAG, "problem parsing list to json, not updating key");
       return;
     }
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.acquireDatabase();
     try {
       db.beginTransaction();
       KeyValueStoreEntry entry = new KeyValueStoreEntry();
@@ -450,11 +446,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       entry.key = key;
       entry.type = ElementDataType.array.name();
       entry.value = entryValue;
-      ODKDatabaseUtils.replaceDBTableMetadata(db, entry);
+      ODKDatabaseUtils.get().replaceDBTableMetadata(db, entry);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
-      db.close();
+      releaseDatabase(db);
     }
   }
 
@@ -470,14 +466,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @return
    */
   private void removeEntry(String aspect, String key) {
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.acquireDatabase();
     try {
       db.beginTransaction();
-      ODKDatabaseUtils.deleteDBTableMetadata(db, this.getTableId(), this.getPartition(), aspect, key);
+      ODKDatabaseUtils.get().deleteDBTableMetadata(db, this.getTableId(), this.getPartition(), aspect, key);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
-      db.close();
+      releaseDatabase(db);
     }
   }
 
@@ -499,13 +495,13 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   private KeyValueStoreEntry getEntry(String aspect, String key) {
     SQLiteDatabase db = null;
     try {
-      db = this.getReadableDatabase();
+      db = this.acquireDatabase();
       List<KeyValueStoreEntry> entries =
-          ODKDatabaseUtils.getDBTableMetadata(db, this.getTableId(), this.getPartition(), aspect, key);
+          ODKDatabaseUtils.get().getDBTableMetadata(db, this.getTableId(), this.getPartition(), aspect, key);
       // Do some sanity checking. There should only ever be one entry per key.
       if (entries.size() > 1) {
         Log.e(TAG, "request for key: " + key + " in KVS " +
-            DataModelDatabaseHelper.KEY_VALUE_STORE_ACTIVE_TABLE_NAME +
+            DatabaseConstants.KEY_VALUE_STORE_ACTIVE_TABLE_NAME +
             " for table: " + this.getTableId() + " returned " + entries.size() +
             "entries. It should return at most 1, as it is a key in a set.");
       }
@@ -515,7 +511,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
         return entries.get(0);
       }
     } finally {
-      db.close();
+      releaseDatabase(db);
     }
   }
 
@@ -613,14 +609,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
      * @return
      */
     public void deleteAllEntriesInThisAspect() {
-      SQLiteDatabase db = KeyValueStoreHelper.this.getWritableDatabase();
+      SQLiteDatabase db = KeyValueStoreHelper.this.acquireDatabase();
       try {
         db.beginTransaction();
-        ODKDatabaseUtils.deleteDBTableMetadata(db, KeyValueStoreHelper.this.getTableId(), partition, aspect, null);
+        ODKDatabaseUtils.get().deleteDBTableMetadata(db, KeyValueStoreHelper.this.getTableId(), partition, aspect, null);
         db.setTransactionSuccessful();
       } finally {
         db.endTransaction();
-        db.close();
+        releaseDatabase(db);
       }
     }
 

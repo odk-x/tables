@@ -118,7 +118,7 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
     SQLiteDatabase db = null;
     try {
       db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
-      tableIds = ODKDatabaseUtils.getAllTableIds(db);
+      tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
     } finally {
       if (db != null) {
         db.close();

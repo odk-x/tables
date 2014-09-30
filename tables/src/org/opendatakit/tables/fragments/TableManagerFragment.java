@@ -142,7 +142,7 @@ public class TableManagerFragment extends ListFragment {
     List<String> tableIds;
     try {
       db = DataModelDatabaseHelperFactory.getDatabase(baseActivity, baseActivity.getAppName());
-      tableIds = ODKDatabaseUtils.getAllTableIds(db);
+      tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
     } finally {
       if ( db != null ) {
         db.close();
@@ -231,7 +231,7 @@ public class TableManagerFragment extends ListFragment {
           SQLiteDatabase db = null;
           try {
             db = DataModelDatabaseHelperFactory.getDatabase(baseActivity, baseActivity.getAppName());
-            ODKDatabaseUtils.deleteTableAndData(db, baseActivity.getAppName(), tableIdOfSelectedItem);
+            ODKDatabaseUtils.get().deleteTableAndData(db, baseActivity.getAppName(), tableIdOfSelectedItem);
           } finally {
             if ( db != null ) {
               db.close();

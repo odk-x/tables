@@ -110,7 +110,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
       SQLiteDatabase db = null;
       try {
         db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
-        ArrayList<String> rawTableIds = ODKDatabaseUtils.getAllTableIds(db);
+        ArrayList<String> rawTableIds = ODKDatabaseUtils.get().getAllTableIds(db);
         ArrayList<String> localizedNames = new ArrayList<String>();
         for (String tableId : rawTableIds ) {
 		    String localizedDisplayName;
