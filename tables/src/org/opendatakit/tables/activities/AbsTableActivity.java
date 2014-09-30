@@ -1,8 +1,14 @@
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.tables.utils.Constants;
+import java.util.ArrayList;
 
+import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.TableUtil;
+
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -18,29 +24,29 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
   private static final String TAG = 
       AbsTableActivity.class.getSimpleName();
   
-  /** 
-   * The {@link TableProperties} of the table for which you're displaying
-   * preferences.
-   */
-  protected TableProperties mTableProperties;
+  private String mTableId;
+  private ArrayList<ColumnDefinition> mColumnDefinitions;
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    String tableId = retrieveTableIdFromIntent();
-    if (tableId == null) {
+    mTableId = retrieveTableIdFromIntent();
+    if (mTableId == null) {
       Log.e(TAG, "[onCreate] table id was not present in Intent.");
       throw new IllegalStateException(
           "A table id was not passed to a table activity");
     }
-    TableProperties retrievedProperties = 
-        retrieveTablePropertiesForId(tableId);
-    if (retrievedProperties == null) {
-      Log.e(TAG, "TableProperties not found for id: " + tableId);
-      throw new IllegalStateException(
-          "did not find TableProperties for table id: " + tableId);
+    
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(
+          Tables.getInstance().getApplicationContext(), getAppName());
+      mColumnDefinitions = TableUtil.get().getColumnDefinitions(db, getTableId());
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
     }
-    this.mTableProperties = retrievedProperties;
   }
   
   /**
@@ -50,26 +56,12 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
   String retrieveTableIdFromIntent() {
     return this.getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
   }
-  
-  /**
-   * Retrieves the table properties for the given tableId from the database.
-   * @param tableId the id of the table
-   * @return
-   */
-  TableProperties retrieveTablePropertiesForId(String tableId) {
-    TableProperties result = TableProperties.getTablePropertiesForTable(
-        this,
-        this.getAppName(),
-        tableId);
-    return result;
-  }
-  
-  /**
-   * Returns the {@link TableProperties} that this activity is displaying.
-   * @return
-   */
-  public TableProperties getTableProperties() {
-    return this.mTableProperties;
-  }
 
+  public String getTableId() {
+    return this.mTableId;
+  }
+  
+  public ArrayList<ColumnDefinition> getColumnDefinitions() {
+    return this.mColumnDefinitions;
+  }
 }

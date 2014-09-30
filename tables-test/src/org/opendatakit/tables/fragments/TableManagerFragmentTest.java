@@ -1,6 +1,7 @@
 package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
@@ -11,11 +12,11 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestContextMenu;
@@ -26,6 +27,7 @@ import org.robolectric.shadows.ShadowLog;
 
 import android.app.Activity;
 import android.content.ComponentName;
+import android.database.sqlite.SQLiteDatabase;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.View;
@@ -51,34 +53,45 @@ public class TableManagerFragmentTest {
   }
 
   public void setupFragmentWithNoItems() {
-    this.fragment = getSpy(new ArrayList<TableProperties>());
+    this.fragment = getSpy(new ArrayList<String>());
     doGlobalSetup();
   }
 
-  private List<TableProperties> getMockListWithTwoItems() {
+  private List<String> getMockListWithTwoItems() {
     TableProperties tp1 = mock(TableProperties.class);
     TableProperties tp2 = mock(TableProperties.class);
-    when(tp1.getLocalizedDisplayName()).thenReturn(mockTableName1);
-    when(tp2.getLocalizedDisplayName()).thenReturn(mockTableName2);
+    
+    TableUtil util = mock(TableUtil.class);
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
+        mockTableId1)).thenReturn(mockTableName1);
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
+        mockTableId2)).thenReturn(mockTableName2);
+    TableUtil.set(util);
+
     when(tp1.getTableId()).thenReturn(mockTableId1);
     when(tp2.getTableId()).thenReturn(mockTableId2);
-    List<TableProperties> listOfMocks = new ArrayList<TableProperties>();
-    listOfMocks.add(tp1);
-    listOfMocks.add(tp2);
+    List<String> listOfMocks = new ArrayList<String>();
+    listOfMocks.add(mockTableId1);
+    listOfMocks.add(mockTableId2);
     return listOfMocks;
   }
 
-  private List<TableProperties> getMockListWithThreeItems() {
+  private List<String> getMockListWithThreeItems() {
+    
+    TableUtil util = mock(TableUtil.class);
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
+        mockTableId3)).thenReturn(mockTableName3);
+    TableUtil.set(util);
+
     TableProperties tp3 = mock(TableProperties.class);
-    when(tp3.getLocalizedDisplayName()).thenReturn(mockTableName3);
     when(tp3.getTableId()).thenReturn(mockTableId3);
-    List<TableProperties> listOfMocks = this.getMockListWithTwoItems();
-    listOfMocks.add(tp3);
+    List<String> listOfMocks = this.getMockListWithTwoItems();
+    listOfMocks.add(mockTableId3);
     return listOfMocks;
   }
 
   public void setupFragmentWithTwoItems() {
-    List<TableProperties> listOfMocks = this.getMockListWithTwoItems();
+    List<String> listOfMocks = this.getMockListWithTwoItems();
     this.fragment = getSpy(listOfMocks);
     doGlobalSetup();
   }
@@ -103,7 +116,7 @@ public class TableManagerFragmentTest {
    * @param toDisplay
    * @return
    */
-  private TableManagerFragmentStub getSpy(List<TableProperties> toDisplay) {
+  private TableManagerFragmentStub getSpy(List<String> toDisplay) {
     TableManagerFragmentStub stub = new TableManagerFragmentStub(toDisplay);
     return stub;
   }
@@ -198,8 +211,8 @@ public class TableManagerFragmentTest {
     org.fest.assertions.api.Assertions.assertThat(
         this.fragment.getListView().getAdapter().getCount())
         .isEqualTo(2);
-    List<TableProperties> threeItemList = this.getMockListWithThreeItems();
-    this.fragment.setPropertiesList(threeItemList);
+    List<String> threeItemList = this.getMockListWithThreeItems();
+    this.fragment.setTableIdList(threeItemList);
     org.fest.assertions.api.Assertions.assertThat(
         this.fragment.getListAdapter().getCount())
         .isEqualTo(3);

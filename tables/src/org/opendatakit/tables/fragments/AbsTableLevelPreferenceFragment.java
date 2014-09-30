@@ -1,6 +1,8 @@
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.common.android.data.TableProperties;
+import java.util.ArrayList;
+
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.tables.activities.AbsTableActivity;
 
 import android.os.Bundle;
@@ -10,7 +12,7 @@ import android.preference.PreferenceFragment;
 
 /**
  * This fragment should be extended to display any preferences that apply at a
- * table level. Any preference fragments that expect a TableProperties object
+ * table level. Any preference fragments that expect a tableId
  * to be available should extend this fragment.
  * <p>
  * This Fragment can only be used inside a {@link AbsTableActivity}.
@@ -24,7 +26,7 @@ public abstract class AbsTableLevelPreferenceFragment
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     // We have to verify that we are attached to an AbsTableActivity, or else
-    // we won't have a TableProperties available.
+    // we won't have a tableId available.
     if (!(this.getActivity() instanceof AbsTableActivity)) {
       throw new IllegalStateException("AbsTableLevelPreferenceFragment can " +
       		"only be used with AbsTableActivity. " +
@@ -33,15 +35,19 @@ public abstract class AbsTableLevelPreferenceFragment
     }
   }
 
-  TableProperties getTableProperties() {
-    // We know this will succeed because we've checked it in onActivityCreated.
-    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
-    return activity.getTableProperties();
-  }
-
   String getAppName() {
     AbsTableActivity activity = (AbsTableActivity) this.getActivity();
     return activity.getAppName();
+  }
+  
+  String getTableId() {
+    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
+    return activity.getTableId();
+  }
+  
+  ArrayList<ColumnDefinition> getColumnDefinitions() {
+    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
+    return activity.getColumnDefinitions();
   }
 
   /**

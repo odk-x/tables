@@ -1,8 +1,10 @@
 package org.opendatakit.tables.fragments;
 
+import java.util.ArrayList;
+
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.ColumnUtil;
@@ -13,6 +15,7 @@ import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
 import org.opendatakit.tables.utils.PreferenceUtil;
 import org.opendatakit.tables.views.SpreadsheetView;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
@@ -46,27 +49,18 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   }
 
   /**
-   * Get the {@link TableProperties} associated with this activity.
-   */
-  TableProperties retrieveTableProperties() {
-    TableLevelPreferencesActivity activity =
-        this.retrieveTableLevelPreferenceActivity();
-    TableProperties result = activity.getTableProperties();
-    return result;
-  }
-
-  /**
    * Retrieve the {@link ColumnDefinition} associated with the column this
    * activity is displaying.
    * 
    * @return
    */
   ColumnDefinition retrieveColumnDefinition() {
-    String elementKey =
-        this.retrieveTableLevelPreferenceActivity().getElementKey();
+    TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
+    String elementKey = activity.getElementKey();
     try {
+      ArrayList<ColumnDefinition> orderedDefns = activity.getColumnDefinitions();
       ColumnDefinition result =
-        this.retrieveTableProperties().getColumnDefinitionByElementKey(elementKey);
+          ColumnDefinition.find(orderedDefns, elementKey);
       return result;
     } catch ( IllegalArgumentException e ) {
       Log.e(
@@ -101,8 +95,20 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   private void initializeDisplayName() {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
-    pref.setSummary(ColumnUtil.getRawDisplayName(getTableProperties(), 
-                      this.retrieveColumnDefinition().getElementKey()));
+
+    String rawDisplayName;
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      rawDisplayName = ColumnUtil.get().getRawDisplayName(db, getTableId(), 
+          this.retrieveColumnDefinition().getElementKey());
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+
+    pref.setSummary(rawDisplayName);
 
   }
 
@@ -129,7 +135,8 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   private void initializeColumnWidth() {
     final EditTextPreference pref =
         this.findEditTextPreference(Constants.PreferenceKeys.Column.WIDTH);
-    int columnWidth = PreferenceUtil.getColumnWidth(getTableProperties(),
+    int columnWidth = PreferenceUtil.getColumnWidth(getActivity(),
+        getAppName(), getTableId(),
         retrieveColumnDefinition().getElementKey());
     pref.setSummary(Integer.toString(columnWidth));
 
@@ -147,7 +154,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
           return false;
         }
         PreferenceUtil.setColumnWidth(
-            getTableProperties(),
+            getActivity(), getAppName(), getTableId(),
             retrieveColumnDefinition().getElementKey(),
             newWidth);
         pref.setSummary(Integer.toString(newWidth));

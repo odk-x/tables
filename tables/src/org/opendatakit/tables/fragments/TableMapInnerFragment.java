@@ -11,12 +11,12 @@ import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TablePropertiesManager;
+import org.opendatakit.tables.utils.GeoColumnUtil;
 import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 
 import android.app.Activity;
@@ -256,11 +256,11 @@ public class TableMapInnerFragment extends MapFragment {
    */
   private void findColorGroup() {
     // Grab the color group
-    TableProperties tp = ((TableDisplayActivity) getActivity())
-        .getTableProperties();
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     // Grab the key value store helper from the map fragment.
-    final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(
+    final KeyValueStoreHelper kvsHelper = new KeyValueStoreHelper(
+        activity, activity.getAppName(), activity.getTableId(),
         LocalKeyValueStoreConstants.Map.PARTITION);
     String colorType = kvsHelper.getString(
         TablePropertiesManager.KEY_COLOR_RULE_TYPE);
@@ -274,30 +274,22 @@ public class TableMapInnerFragment extends MapFragment {
     // Create a guide depending on what type of color rule is selected.
     mColorGroup = null;
     if (colorType.equals(TablePropertiesManager.COLOR_TYPE_TABLE)) {
-      mColorGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
+      mColorGroup = ColorRuleGroup.getTableColorRuleGroup(
+          getActivity(), activity.getAppName(), activity.getTableId());
     }
     if (colorType.equals(TablePropertiesManager.COLOR_TYPE_STATUS)) {
-      mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
+      mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(
+          getActivity(), activity.getAppName(), activity.getTableId());
     }
     if (colorType.equals(TablePropertiesManager.COLOR_TYPE_COLUMN)) {
       String colorColumnKey =
           kvsHelper.getString(TablePropertiesManager.KEY_COLOR_RULE_COLUMN);
       if (colorColumnKey != null) {
         mColorGroup =
-            ColorRuleGroup.getColumnColorRuleGroup(tp, colorColumnKey);
+            ColorRuleGroup.getColumnColorRuleGroup(
+                getActivity(), activity.getAppName(), activity.getTableId(), colorColumnKey);
       }
     }
-  }
-
-  /**
-   * Get the {@link TableProperties} that is associated with the table this
-   * view is displaying.
-   * @return
-   */
-  TableProperties retrieveTableProperties() {
-    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-    TableProperties result = activity.getTableProperties();
-    return result;
   }
 
   /**
@@ -315,6 +307,8 @@ public class TableMapInnerFragment extends MapFragment {
    * properties.
    */
   private void setMarkers() {
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+
     if (mMarkerIds != null) {
       mMarkerIds.clear();
     }
@@ -335,14 +329,14 @@ public class TableMapInnerFragment extends MapFragment {
       return;
     }
 
-    TableProperties tp = this.retrieveTableProperties();
     UserTable table = this.retrieveUserTable();
 
+    ArrayList<ColumnDefinition> orderedDefns = activity.getColumnDefinitions();
     // Try to find the map columns in the store.
     ColumnDefinition latitudeColumn =
-        tp.getColumnDefinitionByElementKey(latitudeElementKey);
+        ColumnDefinition.find(orderedDefns, latitudeElementKey);
     ColumnDefinition longitudeColumn =
-        tp.getColumnDefinitionByElementKey(longitudeElementKey);
+        ColumnDefinition.find(orderedDefns, longitudeElementKey);
 
     // Find the locations from entries in the table.
     LatLng firstLocation = null;
@@ -401,10 +395,12 @@ public class TableMapInnerFragment extends MapFragment {
    *         marker color if no rules apply to the row.
    */
   private float getHueForRow(int index) {
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+
     UserTable table = this.retrieveUserTable();
     // Create a guide depending on the color group.
     if (mColorGroup != null) {
-      ColorGuide guide = mColorGroup.getColorGuide(table.getRowAtIndex(index));
+      ColorGuide guide = mColorGroup.getColorGuide(activity.getColumnDefinitions(), table.getRowAtIndex(index));
       // Based on if the guide matched or not, grab the hue.
       if (guide != null) {
         float[] hsv = new float[3];
@@ -417,19 +413,22 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   private String getLatitudeElementKey() {
-    TableProperties tp = this.retrieveTableProperties();
-    final List<ColumnDefinition> geoPointCols = tp.getGeopointColumnDefinitions();
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+    
+    ArrayList<ColumnDefinition> orderedDefns = activity.getColumnDefinitions();
+    final List<ColumnDefinition> geoPointCols = 
+        GeoColumnUtil.get().getGeopointColumnDefinitions(orderedDefns);
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper =
-        tp.getKeyValueStoreHelper(LocalKeyValueStoreConstants.Map.PARTITION);
+        new KeyValueStoreHelper(activity, activity.getAppName(), 
+            activity.getTableId(), LocalKeyValueStoreConstants.Map.PARTITION);
     String latitudeElementKey =
         kvsHelper.getString(LocalKeyValueStoreConstants.Map.KEY_MAP_LAT_COL);
     if (latitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labeled latitude or longitude.
-      ArrayList<ColumnDefinition> orderedDefns = tp.getColumnDefinitions();
       for (ColumnDefinition cd : orderedDefns) {
-        if (tp.isLatitudeColumnDefinition(geoPointCols, cd)) {
+        if (GeoColumnUtil.get().isLatitudeColumnDefinition(geoPointCols, cd)) {
           latitudeElementKey = cd.getElementKey();
           kvsHelper.setString(
               LocalKeyValueStoreConstants.Map.KEY_MAP_LAT_COL,
@@ -442,19 +441,22 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   private String getLongitudeElementKey() {
-    TableProperties tp = this.retrieveTableProperties();
-    final List<ColumnDefinition> geoPointCols = tp.getGeopointColumnDefinitions();
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+    ArrayList<ColumnDefinition> orderedDefns = activity.getColumnDefinitions();
+
+    final List<ColumnDefinition> geoPointCols = 
+        GeoColumnUtil.get().getGeopointColumnDefinitions(orderedDefns);
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper =
-        tp.getKeyValueStoreHelper(LocalKeyValueStoreConstants.Map.PARTITION);
+        new KeyValueStoreHelper(activity, activity.getAppName(), 
+            activity.getTableId(), LocalKeyValueStoreConstants.Map.PARTITION);
     String longitudeElementKey =
         kvsHelper.getString(LocalKeyValueStoreConstants.Map.KEY_MAP_LONG_COL);
     if (longitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labled longitude
-      ArrayList<ColumnDefinition> orderedDefns = tp.getColumnDefinitions();
       for (ColumnDefinition cd : orderedDefns) {
-        if (tp.isLongitudeColumnDefinition(geoPointCols, cd)) {
+        if (GeoColumnUtil.get().isLongitudeColumnDefinition(geoPointCols, cd)) {
           longitudeElementKey = cd.getElementKey();
           kvsHelper.setString(
               LocalKeyValueStoreConstants.Map.KEY_MAP_LONG_COL,
@@ -528,19 +530,19 @@ public class TableMapInnerFragment extends MapFragment {
     return new OnMapLongClickListener() {
       @Override
       public void onMapLongClick(LatLng location) {
+        TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+        
         // Create a mapping from the lat and long columns to the
         // values in the location.
         Map<String, String> elementNameToValue = new HashMap<String, String>();
 
-        TableProperties tp =
-            ((TableDisplayActivity) getActivity()).getTableProperties();
-        ArrayList<ColumnDefinition> orderedDefns = tp.getColumnDefinitions();
+        ArrayList<ColumnDefinition> orderedDefns = activity.getColumnDefinitions();
         for (ColumnDefinition cd : orderedDefns) {
           elementNameToValue.put(cd.getElementName(), "");
         }
-        final KeyValueStoreHelper kvsHelper = tp
-            .getKeyValueStoreHelper(
-                LocalKeyValueStoreConstants.Map.PARTITION);
+        final KeyValueStoreHelper kvsHelper =
+            new KeyValueStoreHelper(activity, activity.getAppName(), 
+                activity.getTableId(), LocalKeyValueStoreConstants.Map.PARTITION);
         String latitudeElementKey =
             kvsHelper.getString(
                 LocalKeyValueStoreConstants.Map.KEY_MAP_LAT_COL);
@@ -549,7 +551,7 @@ public class TableMapInnerFragment extends MapFragment {
                 LocalKeyValueStoreConstants.Map.KEY_MAP_LONG_COL);
         {
           ColumnDefinition latitudeColumn =
-              tp.getColumnDefinitionByElementKey(latitudeElementKey);
+              ColumnDefinition.find(orderedDefns, latitudeElementKey);
           elementNameToValue.put(
                 latitudeElementKey,
                 Double.toString(location.latitude));
@@ -557,7 +559,7 @@ public class TableMapInnerFragment extends MapFragment {
 
         {
           ColumnDefinition longitudeColumn =
-              tp.getColumnDefinitionByElementKey(longitudeElementKey);
+              ColumnDefinition.find(orderedDefns, longitudeElementKey);
           elementNameToValue.put(
                 longitudeElementKey,
                 Double.toString(location.longitude));

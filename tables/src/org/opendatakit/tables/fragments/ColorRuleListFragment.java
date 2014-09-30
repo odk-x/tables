@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ColorRuleUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
@@ -110,9 +109,10 @@ public class ColorRuleListFragment extends ListFragment {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
     ColorRuleAdapter result = new ColorRuleAdapter(
         getActivity(),
+        getAppName(),
+        getTableId(),
         R.layout.row_for_edit_view_entry,
         this.mColorRuleGroup.getColorRules(),
-        this.retrieveTableLevelPreferencesActivity().getTableProperties(),
         type);
     return result;
   }
@@ -283,24 +283,33 @@ public class ColorRuleListFragment extends ListFragment {
     return result;
   }
   
+  String getAppName() {
+    TableLevelPreferencesActivity result = retrieveTableLevelPreferencesActivity();
+    return result.getAppName();
+  }
+  
+  String getTableId() {
+    TableLevelPreferencesActivity result = retrieveTableLevelPreferencesActivity();
+    return result.getTableId();
+  }
+  
   ColorRuleGroup retrieveColorRuleGroup() {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
     ColorRuleGroup result = null;
-    TableProperties tableProperties =
-        this.retrieveTableLevelPreferencesActivity().getTableProperties();
     switch (type) {
     case COLUMN:
       String elementKey =
           this.retrieveTableLevelPreferencesActivity().getElementKey();
       result = ColorRuleGroup.getColumnColorRuleGroup(
-          tableProperties,
-          elementKey);
+          getActivity(), getAppName(), getTableId(), elementKey);
       break;
     case STATUS_COLUMN:
-      result = ColorRuleGroup.getStatusColumnRuleGroup(tableProperties);
+      result = ColorRuleGroup.getStatusColumnRuleGroup(
+          getActivity(), getAppName(), getTableId());
       break;
     case TABLE:
-      result = ColorRuleGroup.getTableColorRuleGroup(tableProperties);
+      result = ColorRuleGroup.getTableColorRuleGroup(
+          getActivity(), getAppName(), getTableId());
       break;
     default:
       throw new IllegalArgumentException(

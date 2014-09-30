@@ -4,6 +4,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +12,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementType;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.robolectric.RobolectricTestRunner;
@@ -50,15 +50,20 @@ public class WebViewUtilsTest {
       String invalidValue) {
     String elementKey = "anyElementKey";
     TableProperties tpMock = mock(TableProperties.class);
+    doReturn("table1").when(tpMock).getTableId();
     ColumnDefinition intCD = TestConstants.getColumnDefinitionMock(
         elementKey,
         columnType);
-    doReturn(intCD).when(tpMock).getColumnDefinitionByElementKey(
-        elementKey);
+    ArrayList<ColumnDefinition> cdMock = new ArrayList<ColumnDefinition>();
+    cdMock.add(intCD);
+    doReturn(cdMock).when(tpMock).getColumnDefinitions();
     Map<String, String> invalidMap = new HashMap<String, String>();
     invalidMap.put(elementKey, invalidValue);
     ContentValues contentValues = WebViewUtil.getContentValuesFromMap(
-        tpMock,
+        null, 
+        "tables",
+        "table1",
+        cdMock,
         invalidMap);
     assertThat(contentValues).isNull();
   }

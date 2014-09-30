@@ -20,8 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
@@ -72,12 +75,8 @@ public class ColorRuleGroup {
     COLUMN, TABLE, STATUS_COLUMN;
   }
 
-  private final TableProperties tp;
-  // this remains its own field (which must always match cp.getElementKey())
-  // b/c it is easier for the caller to just pass in the elementKey, and the
-  // code currently uses null to mean "don't get me a color ruler."
-  private final String elementKey;
   private final KeyValueStoreHelper kvsh;
+  // NOTE: the aspectHelper encodes the elementKey
   private final KeyValueHelper aspectHelper;
   // This is the list of actual rules that make up the ruler.
   private List<ColorRule> ruleList;
@@ -88,46 +87,52 @@ public class ColorRuleGroup {
    * @param tp
    * @param elementKey
    */
-  private ColorRuleGroup(TableProperties tp, String elementKey, Type type) {
-    this.tp = tp;
+  private ColorRuleGroup(Context ctxt, String appName, String tableId, String elementKey, Type type) {
     this.mType = type;
-    this.elementKey = elementKey;
     String jsonRulesString = DEFAULT_KEY_COLOR_RULES;
-    switch (type) {
-    case COLUMN:
-      this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_COLUMN);
-      this.aspectHelper = kvsh.getAspectHelper(elementKey);
-      jsonRulesString = aspectHelper.getObject(KEY_COLOR_RULES_COLUMN);
-      break;
-    case TABLE:
-      this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_TABLE);
-      this.aspectHelper = null;
-      jsonRulesString = kvsh.getObject(KEY_COLOR_RULES_TABLE);
-      break;
-    case STATUS_COLUMN:
-      this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_TABLE);
-      this.aspectHelper = null;
-      jsonRulesString = kvsh.getObject(KEY_COLOR_RULES_STATUS_COLUMN);
-      break;
-    default:
-      Log.e(TAG, "unrecognized ColorRuleGroup type: " + type);
-      this.kvsh = null;
-      this.aspectHelper = null;
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(ctxt, appName);
+      switch (type) {
+      case COLUMN:
+        this.kvsh = new KeyValueStoreHelper(db, tableId, KVS_PARTITION_COLUMN);
+        this.aspectHelper = kvsh.getAspectHelper(elementKey);
+        jsonRulesString = aspectHelper.getObject(KEY_COLOR_RULES_COLUMN);
+        break;
+      case TABLE:
+        this.kvsh = new KeyValueStoreHelper(db, tableId, KVS_PARTITION_COLUMN);
+        this.aspectHelper = null;
+        jsonRulesString = kvsh.getObject(KEY_COLOR_RULES_TABLE);
+        break;
+      case STATUS_COLUMN:
+        this.kvsh = new KeyValueStoreHelper(db, tableId, KVS_PARTITION_COLUMN);
+        this.aspectHelper = null;
+        jsonRulesString = kvsh.getObject(KEY_COLOR_RULES_STATUS_COLUMN);
+        break;
+      default:
+        Log.e(TAG, "unrecognized ColorRuleGroup type: " + type);
+        this.kvsh = null;
+        this.aspectHelper = null;
+      }
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
     }
     this.ruleList = parseJsonString(jsonRulesString);
   }
 
-    public static ColorRuleGroup getColumnColorRuleGroup(TableProperties tp,
+    public static ColorRuleGroup getColumnColorRuleGroup(Context ctxt, String appName, String tableId,
         String elementKey) {
-      return new ColorRuleGroup(tp, elementKey, Type.COLUMN);
+      return new ColorRuleGroup(ctxt, appName, tableId, elementKey, Type.COLUMN);
     }
 
-    public static ColorRuleGroup getTableColorRuleGroup(TableProperties tp) {
-      return new ColorRuleGroup(tp, null, Type.TABLE);
+    public static ColorRuleGroup getTableColorRuleGroup(Context ctxt, String appName, String tableId) {
+      return new ColorRuleGroup(ctxt, appName, tableId, null, Type.TABLE);
     }
 
-    public static ColorRuleGroup getStatusColumnRuleGroup(TableProperties tp) {
-      return new ColorRuleGroup(tp, null, Type.STATUS_COLUMN);
+    public static ColorRuleGroup getStatusColumnRuleGroup(Context ctxt, String appName, String tableId) {
+      return new ColorRuleGroup(ctxt, appName, tableId, null, Type.STATUS_COLUMN);
     }
 
     /**
@@ -290,7 +295,7 @@ public class ColorRuleGroup {
      * row data (int, number, String, etc).
      * @return null or the matching rule in the group, {@link ColorGuide}.
      */
-    public ColorGuide getColorGuide(Row row) {
+    public ColorGuide getColorGuide(ArrayList<ColumnDefinition> orderedDefns, Row row) {
       for (int i = 0; i < ruleList.size(); i++) {
         ColorRule cr = ruleList.get(i);
         // First get the data about the column. It is possible that we are trying
@@ -302,8 +307,9 @@ public class ColorRuleGroup {
         String elementKey = cr.getColumnElementKey();
         ColumnDefinition cd = null;
         try {
-          cd = tp.getColumnDefinitionByElementKey(cr.getColumnElementKey());
+          cd = ColumnDefinition.find(orderedDefns, cr.getColumnElementKey());
         } catch (Exception e) {
+          // elementKey must be a metadata column...
         }
         ElementDataType type;
         if (cd == null) {

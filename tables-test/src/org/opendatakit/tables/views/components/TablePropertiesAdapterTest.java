@@ -2,6 +2,7 @@ package org.opendatakit.tables.views.components;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
@@ -14,13 +15,14 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.TableUtil;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowDrawable;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -37,12 +39,21 @@ public class TablePropertiesAdapterTest {
   public void setup() {
     TableProperties tp1 = mock(TableProperties.class);
     TableProperties tp2 = mock(TableProperties.class);
-    when(tp1.getLocalizedDisplayName()).thenReturn("alpha");
-    when(tp2.getLocalizedDisplayName()).thenReturn("beta");
-    List<TableProperties> listOfMocks = new ArrayList<TableProperties>();
-    listOfMocks.add(tp1);
-    listOfMocks.add(tp2);
-    this.mAdapter = new TablePropertiesAdapter(listOfMocks);
+    
+    TableUtil util = mock(TableUtil.class);
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
+        "alpha")).thenReturn("alpha");
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
+        "beta")).thenReturn("beta");
+    TableUtil.set(util);
+
+    when(tp1.getTableId()).thenReturn("alpha");
+    when(tp2.getTableId()).thenReturn("beta");
+    
+    List<String> listOfMocks = new ArrayList<String>();
+    listOfMocks.add("alpha");
+    listOfMocks.add("beta");
+    this.mAdapter = new TablePropertiesAdapter(null, "tables", listOfMocks);
   }
 
   @Test

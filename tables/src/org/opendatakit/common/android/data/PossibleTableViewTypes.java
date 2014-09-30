@@ -1,7 +1,13 @@
 package org.opendatakit.common.android.data;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.opendatakit.tables.utils.GeoColumnUtil;
+import org.opendatakit.tables.utils.TableUtil;
+
+import android.database.sqlite.SQLiteDatabase;
 
 /**
  * Contains information about which {@link TableViewType}s are valid for a
@@ -17,17 +23,28 @@ public class PossibleTableViewTypes {
   private boolean mMapIsValid;
   private boolean mGraphIsValid;
   
-  public PossibleTableViewTypes(
-      boolean spreadsheetIsValid,
-      boolean listIsValid,
-      boolean mapIsValid,
-      boolean graphIsValid) {
-    this.mSpreadsheetIsValid = spreadsheetIsValid;
-    this.mListIsValid = listIsValid;
-    this.mMapIsValid = mapIsValid;
-    this.mGraphIsValid = graphIsValid;
+  public PossibleTableViewTypes(SQLiteDatabase db, String tableId, ArrayList<ColumnDefinition> orderedDefns) {
+    this.mSpreadsheetIsValid = true; // always
+    this.mListIsValid = (null != TableUtil.get().getListViewFilename(db, tableId));
+    this.mMapIsValid = (null != TableUtil.get().getMapListViewFilename(db, tableId)) &&
+        GeoColumnUtil.get().mapViewIsPossible(orderedDefns);
+    this.mGraphIsValid = graphViewIsPossible(orderedDefns);
   }
   
+  private static boolean graphViewIsPossible(ArrayList<ColumnDefinition> orderedDefns) {
+    for (ColumnDefinition cd : orderedDefns) {
+      if (!cd.isUnitOfRetention()) {
+        continue;
+      }
+      ElementType elementType = cd.getType();
+      ElementDataType type = elementType.getDataType();
+      if (type == ElementDataType.number || type == ElementDataType.integer) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Get a set with all the {@link TableViewType}s that are valid. If only a
    * spreadsheet and list view are possible, for instance, it will contain

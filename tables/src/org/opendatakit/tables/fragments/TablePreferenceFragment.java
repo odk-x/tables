@@ -5,8 +5,8 @@ import java.io.File;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -18,9 +18,12 @@ import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.preferences.FileSelectorPreference;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 import org.opendatakit.tables.utils.PreferenceUtil;
+import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -112,9 +115,10 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * @param relativePath
    */
   void setListViewFileName(String relativePath) {
-    KeyValueStoreHelper kvsh = getTableProperties().getKeyValueStoreHelper(
+      KeyValueStoreHelper kvsh = 
+        new KeyValueStoreHelper( getActivity(), getAppName(), getTableId(),
         KeyValueStoreConstants.PARTITION_TABLE);
-    kvsh.setString(TableProperties.KEY_LIST_VIEW_FILE_NAME, relativePath);
+    kvsh.setString(LocalKeyValueStoreConstants.Tables.KEY_LIST_VIEW_FILE_NAME, relativePath);
   }
 
   /**
@@ -122,9 +126,10 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * @param relativePath
    */
   void setDetailViewFileName(String relativePath) {
-    KeyValueStoreHelper kvsh = getTableProperties().getKeyValueStoreHelper(
+    KeyValueStoreHelper kvsh = 
+        new KeyValueStoreHelper( getActivity(), getAppName(), getTableId(),
         KeyValueStoreConstants.PARTITION_TABLE);
-    kvsh.setString(TableProperties.KEY_DETAIL_VIEW_FILE_NAME, relativePath);
+    kvsh.setString(LocalKeyValueStoreConstants.Tables.KEY_DETAIL_VIEW_FILE_NAME, relativePath);
   }
 
   /**
@@ -132,9 +137,10 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * @param relativePath
    */
   void setMapListViewFileName(String relativePath) {
-    KeyValueStoreHelper kvsh = getTableProperties().getKeyValueStoreHelper(
+    KeyValueStoreHelper kvsh = 
+        new KeyValueStoreHelper( getActivity(), getAppName(), getTableId(),
         KeyValueStoreConstants.PARTITION_TABLE);
-    kvsh.setString(TableProperties.KEY_MAP_LIST_VIEW_FILE_NAME, relativePath);
+    kvsh.setString(LocalKeyValueStoreConstants.Tables.KEY_MAP_LIST_VIEW_FILE_NAME, relativePath);
   }
 
   /**
@@ -143,30 +149,42 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * {@link TablePreferenceFragment#onActivityCreated(Bundle)}.
    */
   protected void initializeAllPreferences() {
-    this.initializeDisplayNamePreference();
-    this.initializeTableIdPreference();
-    this.initializeDefaultForm();
-    this.initializeDefaultViewType();
-    this.initializeTableColorRules();
-    this.initializeStatusColorRules();
-    this.initializeMapColorRule();
-    this.initializeDetailFile();
-    this.initializeListFile();
-    this.initializeGraphManager();
-    this.initializeMapListFile();
-    this.initializeColumns();
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+
+      this.initializeDisplayNamePreference(db);
+      this.initializeTableIdPreference();
+      this.initializeDefaultForm();
+      this.initializeDefaultViewType();
+      this.initializeTableColorRules();
+      this.initializeStatusColorRules();
+      this.initializeMapColorRule();
+      this.initializeDetailFile(db);
+      this.initializeListFile(db);
+      this.initializeGraphManager();
+      this.initializeMapListFile(db);
+      this.initializeColumns();
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
   }
 
-  private void initializeDisplayNamePreference() {
+  private void initializeDisplayNamePreference(SQLiteDatabase db) {
     EditTextPreference displayPref = this.findEditTextPreference(
         Constants.PreferenceKeys.Table.DISPLAY_NAME);
-    displayPref.setSummary(getTableProperties().getDisplayName());
+
+    String rawDisplayName = TableUtil.get().getRawDisplayName(db, getTableId());
+
+    displayPref.setSummary(rawDisplayName);
   }
 
   private void initializeTableIdPreference() {
     EditTextPreference idPref = this.findEditTextPreference(
         Constants.PreferenceKeys.Table.TABLE_ID);
-    idPref.setSummary(getTableProperties().getTableId());
+    idPref.setSummary(getTableId());
   }
 
   private void initializeDefaultViewType() {
@@ -175,7 +193,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     DefaultViewTypePreference viewPref = (DefaultViewTypePreference)
         this.findListPreference(
             Constants.PreferenceKeys.Table.DEFAULT_VIEW_TYPE);
-    viewPref.setFields(getTableProperties());
+    viewPref.setFields(getAppName(), getTableId(), getColumnDefinitions());
     viewPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 
       @Override
@@ -184,7 +202,8 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         String selectedValue = newValue.toString();
         PreferenceUtil.setDefaultViewType(
             getActivity(),
-            getTableProperties(),
+            getAppName(),
+            getTableId(),
             TableViewType.valueOf(selectedValue));
         return true;
       }
@@ -216,42 +235,39 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     });
   }
 
-  private void initializeListFile() {
+  private void initializeListFile(SQLiteDatabase db) {
     FileSelectorPreference listPref = (FileSelectorPreference)
         this.findPreference(Constants.PreferenceKeys.Table.LIST_FILE);
     listPref.setFields(
         this,
         Constants.RequestCodes.CHOOSE_LIST_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    TableProperties tableProperties = getTableProperties();
-    listPref.setSummary(tableProperties.getListViewFileName());
+    listPref.setSummary(TableUtil.get().getListViewFilename(db, getTableId()));
   }
 
 
-  private void initializeMapListFile() {
+  private void initializeMapListFile(SQLiteDatabase db) {
     FileSelectorPreference mapListPref = (FileSelectorPreference)
         this.findPreference(Constants.PreferenceKeys.Table.MAP_LIST_FILE);
     mapListPref.setFields(
         this,
         Constants.RequestCodes.CHOOSE_MAP_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    TableProperties tableProperties = getTableProperties();
+    String mapListViewFileName = TableUtil.get().getMapListViewFilename(db, getTableId());
     Log.d(
         TAG,
-        "[initializeMapListFile] file is: " +
-            tableProperties.getMapListViewFileName());
-    mapListPref.setSummary(tableProperties.getMapListViewFileName());
+        "[initializeMapListFile] file is: " + mapListViewFileName);
+    mapListPref.setSummary(mapListViewFileName);
   }
 
-  private void initializeDetailFile() {
+  private void initializeDetailFile(SQLiteDatabase db) {
     FileSelectorPreference detailPref = (FileSelectorPreference)
         this.findPreference(Constants.PreferenceKeys.Table.DETAIL_FILE);
     detailPref.setFields(
         this,
         Constants.RequestCodes.CHOOSE_DETAIL_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    TableProperties tableProperties = getTableProperties();
-    detailPref.setSummary(tableProperties.getDetailViewFileName());
+    detailPref.setSummary(TableUtil.get().getDetailViewFilename(db, getTableId()));
   }
 
   private void initializeStatusColorRules() {
@@ -293,7 +309,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
             Constants.IntentKeys.APP_NAME, getAppName());
         selectGraphViewIntent.putExtra(
             Constants.IntentKeys.TABLE_ID,
-            getTableProperties().getTableId());
+            getTableId());
         IntentUtil.addFragmentViewTypeToBundle(
             selectGraphViewIntent.getExtras(),
             ViewFragmentType.GRAPH_MANAGER);

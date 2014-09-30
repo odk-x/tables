@@ -1,7 +1,8 @@
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
@@ -91,10 +92,10 @@ public class DetailViewFragment extends AbsWebTableFragment {
     String rowId = getRowId();
     SQLiteDatabase db = null;
     try {
-      TableProperties tp = getTableProperties();
-      db = tp.getReadableDatabase();
+      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
       UserTable result = ODKDatabaseUtils.getDataInExistingDBTableWithId(db, 
-          tp.getAppName(), tp.getTableId(), getTableProperties().getPersistedColumns(), rowId);
+          getAppName(), getTableId(), 
+          ColumnDefinition.getRetentionColumnNames(getColumnDefinitions()), rowId);
       if (result.getNumberOfRows() > 1 ) {
         Log.e(TAG, "Single row table for row id " + rowId + " returned > 1 row");
       }

@@ -47,7 +47,7 @@ import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
@@ -153,8 +153,8 @@ public class CollectUtil {
    * @param tp
    * @return
    */
-  private static String getDefaultAddRowFormId(TableProperties tp) {
-    return COLLECT_ADDROW_FORM_ID_PREFIX + tp.getTableId();
+  private static String getDefaultAddRowFormId(String tableId) {
+    return COLLECT_ADDROW_FORM_ID_PREFIX + tableId;
   }
 
   /**
@@ -164,8 +164,8 @@ public class CollectUtil {
    *
    * @return
    */
-  private static File getAddRowFormFile(TableProperties tp) {
-    return new File(ODKFileUtils.getTablesFolder(tp.getAppName(), tp.getTableId()),
+  private static File getAddRowFormFile(String appName, String tableId) {
+    return new File(ODKFileUtils.getTablesFolder(appName, tableId),
         "addrowform.xml");
   }
 
@@ -176,8 +176,8 @@ public class CollectUtil {
    *
    * @return
    */
-  private static File getEditRowFormFile(TableProperties tp, String rowId) {
-    return new File(ODKFileUtils.getInstanceFolder(tp.getAppName(), tp.getTableId(), rowId),
+  private static File getEditRowFormFile(String appName, String tableId, String rowId) {
+    return new File(ODKFileUtils.getInstanceFolder(appName, tableId, rowId),
         "editRowData.xml");
   }
 
@@ -195,14 +195,27 @@ public class CollectUtil {
    *          the id of the form
    * @return true if the file was successfully written
    */
-  private static boolean buildBlankForm(File file, TableProperties tp, String formId) {
+  private static boolean buildBlankForm(Context context, String appName, String tableId,
+      ArrayList<ColumnDefinition> orderedDefns, File file, String formId) {
 
     OutputStreamWriter writer = null;
     try {
-      List<ColumnDefinition> geopointList = tp.getGeopointColumnDefinitions();
-      List<ColumnDefinition> uriList = tp.getUriColumnDefinitions();
+      List<ColumnDefinition> geopointList = GeoColumnUtil.get().getGeopointColumnDefinitions(orderedDefns);
+      List<ColumnDefinition> uriList = RowPathColumnUtil.get().getUriColumnDefinitions(orderedDefns);
 
-      ArrayList<ColumnDefinition> orderedElements = tp.getColumnDefinitions();
+      ArrayList<ColumnDefinition> orderedElements = orderedDefns;
+      
+      String localizedDisplayName;
+      SQLiteDatabase db = null;
+      try {
+        db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+
       FileOutputStream out = new FileOutputStream(file);
       writer = new OutputStreamWriter(out, CharEncoding.UTF_8);
       writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" "
@@ -212,7 +225,7 @@ public class CollectUtil {
           + "xmlns:jr=\"http://openrosa.org/javarosa\">");
       writer.write("<h:head>");
       writer.write("<h:title>");
-      writer.write(StringEscapeUtils.escapeXml(tp.getLocalizedDisplayName()));
+      writer.write(StringEscapeUtils.escapeXml(localizedDisplayName));
       writer.write("</h:title>");
       writer.write("<model>");
       writer.write("<instance>");
@@ -298,6 +311,18 @@ public class CollectUtil {
             continue;
           }
         }
+
+        db = null;
+        try {
+          db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId, cd.getElementKey());
+        } finally {
+          if ( db != null ) {
+            db.close();
+          }
+        }
+        
+
         // ok. we are directly processing this... and possibly sucking values
         // out of sub-elements...
         writer.write("<text id=\"/");
@@ -306,7 +331,7 @@ public class CollectUtil {
         writer.write(cd.getElementKey());
         writer.write(":label\">");
         writer.write("<value>");
-        writer.write(ColumnUtil.getLocalizedDisplayName(tp, cd.getElementKey()));
+        writer.write(localizedDisplayName);
         writer.write("</value>");
         writer.write("</text>");
       }
@@ -425,21 +450,24 @@ public class CollectUtil {
    *
    * TODO: add support for select-multiple
    * 
-   * @param table
-   *          the user table
-   * @param tp
-   *          the TableProperties for the table represented by the table param
-   * @param params
-   *          the form parameters
-   * @return true if the write succeeded
-   */
-  /*
    * The mechanics of this are modeled on the getIntentForOdkCollectEditRow
    * method in Controller that handles the case for editing every column in a
    * screen by screen fashion, generating the entire form on the fly.
+   * 
+   * @param context
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
+   * @param values
+   * @param params
+   *          the form parameters
+   * @param rowId
+   * @return true if the write succeeded
    */
-  private static boolean writeRowDataToBeEdited(Context context, Map<String, String> values,
-      TableProperties tp, CollectFormParameters params, String rowId) {
+  private static boolean writeRowDataToBeEdited(Context context, 
+      String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns, 
+      Map<String, String> values,
+      CollectFormParameters params, String rowId) {
     /*
      * This is currently implemented thinking that all you need to have is:
      * 
@@ -454,20 +482,19 @@ public class CollectUtil {
      * form will simply ignore those for which it does not have matching entry
      * fields.
      */
-    List<ColumnDefinition> geopointList = tp.getGeopointColumnDefinitions();
-    List<ColumnDefinition> uriList = tp.getUriColumnDefinitions();
+    List<ColumnDefinition> geopointList = GeoColumnUtil.get().getGeopointColumnDefinitions(orderedDefns);
+    List<ColumnDefinition> uriList = RowPathColumnUtil.get().getUriColumnDefinitions(orderedDefns);
 
     OutputStreamWriter writer = null;
     try {
-      FileOutputStream out = new FileOutputStream(getEditRowFormFile(tp, rowId));
+      FileOutputStream out = new FileOutputStream(getEditRowFormFile(appName, tableId, rowId));
       writer = new OutputStreamWriter(out, CharEncoding.UTF_8);
       writer.write("<?xml version='1.0' ?><");
       writer.write(params.getRootElement());
       writer.write(" id=\"");
       writer.write(StringEscapeUtils.escapeXml(params.getFormId()));
       writer.write("\">");
-      ArrayList<ColumnDefinition> orderedElements = tp.getColumnDefinitions();
-      for (ColumnDefinition cd : orderedElements) {
+      for (ColumnDefinition cd : orderedDefns) {
         ColumnDefinition cdContainingElement = cd.getParent();
 
         if (cdContainingElement != null) {
@@ -489,16 +516,16 @@ public class CollectUtil {
           List<ColumnDefinition> children = cd.getChildren();
           ColumnDefinition[] cparray = new ColumnDefinition[4];
           if (!children.isEmpty()) {
-            cparray[0] = tp.getColumnDefinitionByElementKey(children.get(0).getElementKey());
+            cparray[0] = children.get(0);
           }
           if (children.size() > 1) {
-            cparray[1] = tp.getColumnDefinitionByElementKey(children.get(1).getElementKey());
+            cparray[1] = children.get(1);
           }
           if (children.size() > 2) {
-            cparray[2] = tp.getColumnDefinitionByElementKey(children.get(2).getElementKey());
+            cparray[2] = children.get(2);
           }
           if (children.size() > 3) {
-            cparray[3] = tp.getColumnDefinitionByElementKey(children.get(3).getElementKey());
+            cparray[3] = children.get(3);
           }
           ColumnDefinition cplat = null, cplng = null, cpalt = null, cpacc = null;
           for (ColumnDefinition scp : cparray) {
@@ -571,7 +598,7 @@ public class CollectUtil {
           List<ColumnDefinition> children = cd.getChildren();
           ColumnDefinition[] cparray = new ColumnDefinition[children.size()];
           for (int i = 0; i < children.size(); ++i) {
-            cparray[i] = tp.getColumnDefinitionByElementKey(children.get(i).getElementKey());
+            cparray[i] = children.get(i);
           }
           // find the uriFragment
           ColumnDefinition cpfrag = null;
@@ -585,7 +612,7 @@ public class CollectUtil {
             value = (values == null) ? null : values.get(cpfrag.getElementKey());
           }
           if (value != null) {
-            File f = ODKFileUtils.getAsFile(tp.getAppName(), value);
+            File f = ODKFileUtils.getAsFile(appName, value);
             value = f.getName();
           }
           if (value != null) {
@@ -654,13 +681,13 @@ public class CollectUtil {
     }
   }
 
-  private static boolean isExistingCollectInstanceForRowData(TableProperties tp, String rowId,
-      ContentResolver resolver) {
-
+  private static boolean isExistingCollectInstanceForRowData(Context context, String appName, String tableId, String rowId) {
+    
     Cursor c = null;
     try {
-      String instanceFilePath = getEditRowFormFile(tp, rowId).getAbsolutePath();
-      c = resolver.query(CONTENT_INSTANCE_URI, null, COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
+      String instanceFilePath = getEditRowFormFile(appName, tableId, rowId).getAbsolutePath();
+      c = context.getContentResolver().query(CONTENT_INSTANCE_URI, null, 
+          COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
           new String[] { instanceFilePath }, COLLECT_INSTANCE_ORDER_BY);
       if (c.getCount() == 0) {
         c.close();
@@ -709,10 +736,10 @@ public class CollectUtil {
    * browse/src/org/odk/collect/android/tasks/SaveToDiskTask.java?repo=collect
    * in the method updateInstanceDatabase().
    */
-  private static Uri getUriForCollectInstanceForRowData(TableProperties tp,
-      CollectFormParameters params, String rowId, boolean shouldUpdate, ContentResolver resolver) {
+  private static Uri getUriForCollectInstanceForRowData(Context context, String appName, String tableId,
+      CollectFormParameters params, String rowId, boolean shouldUpdate) {
 
-    String instanceFilePath = getEditRowFormFile(tp, rowId).getAbsolutePath();
+    String instanceFilePath = getEditRowFormFile(appName, tableId, rowId).getAbsolutePath();
 
     ContentValues values = new ContentValues();
     // First we need to fill the values with various little things.
@@ -727,6 +754,7 @@ public class CollectUtil {
       values.put(COLLECT_KEY_JR_VERSION, params.getFormVersion());
     }
 
+    ContentResolver resolver = context.getContentResolver();
     Uri uriOfForm;
     if (shouldUpdate) {
       int count = resolver.update(CONTENT_INSTANCE_URI, values, COLLECT_KEY_INSTANCE_FILE_PATH
@@ -876,24 +904,40 @@ public class CollectUtil {
    * @param tp
    * @return true if every method returned successfully
    */
-  private static boolean deleteWriteAndInsertFormIntoCollect(ContentResolver resolver,
-      CollectFormParameters params, TableProperties tp) {
+  private static boolean deleteWriteAndInsertFormIntoCollect(Context context,
+      String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns,
+      CollectFormParameters params) {
     if (params.isCustom()) {
       Log.e(TAG, "passed custom form to be deleted, rewritten, and "
           + "inserted into Collect. Not performing task.");
       return false;
     }
+    ContentResolver resolver = context.getContentResolver();
+    
     CollectUtil.deleteForm(resolver, params.getFormId());
     // First we want to write the file.
-    boolean writeSuccessful = CollectUtil.buildBlankForm(getAddRowFormFile(tp), tp,
+    boolean writeSuccessful = CollectUtil.buildBlankForm(context, appName,
+        tableId, orderedDefns, getAddRowFormFile(appName, tableId),
         params.getFormId());
     if (!writeSuccessful) {
       Log.e(TAG, "problem writing file for add row");
       return false;
     }
+
+    String localizedDisplayName;
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+
     // Now we want to insert the file.
-    Uri insertedFormUri = CollectUtil.insertFormIntoCollect(resolver, getAddRowFormFile(tp)
-        .getAbsolutePath(), tp.getLocalizedDisplayName(), params.getFormId());
+    Uri insertedFormUri = CollectUtil.insertFormIntoCollect(resolver, getAddRowFormFile(appName, tableId)
+        .getAbsolutePath(), localizedDisplayName, params.getFormId());
     if (insertedFormUri == null) {
       Log.e(TAG, "problem inserting form into collect, return uri was null");
       return false;
@@ -903,42 +947,47 @@ public class CollectUtil {
 
   /**
    * Convenience method for calling
-   * {@link #getIntentForOdkCollectAddRow(Context, TableProperties, CollectFormParameters, Map)}
+   * {@link #getIntentForOdkCollectAddRow(Context, String, String, ArrayList, CollectFormParameters, Map)}
    * followed by
-   * {@link #launchCollectToAddRow(Activity, Intent, TableProperties)}.
+   * {@link #launchCollectToAddRow(Activity, Intent, String)}.
    * 
    * @param activity
-   * @param tableProperties
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
    * @param collectFormParameters
    * @param prepopulatedValues
    */
-  public static void addRowWithCollect(Activity activity, TableProperties tableProperties,
+  public static void addRowWithCollect(Activity activity, String appName, String tableId, 
+      ArrayList<ColumnDefinition> orderedDefns,
       CollectFormParameters collectFormParameters, Map<String, String> prepopulatedValues) {
-    Intent addRowIntent = getIntentForOdkCollectAddRow(activity, tableProperties,
-        collectFormParameters, prepopulatedValues);
+    Intent addRowIntent = getIntentForOdkCollectAddRow(activity, appName, tableId,
+        orderedDefns, collectFormParameters, prepopulatedValues);
     if (addRowIntent == null) {
       Log.e(TAG, "[addRowWithCollect] intent was null, returning");
       return;
     }
-    launchCollectToAddRow(activity, addRowIntent, tableProperties);
+    launchCollectToAddRow(activity, addRowIntent, tableId);
   }
 
   /**
    * Launch Collect to edit a row. Convenience method for calling
-   * {@link #getIntentForOdkCollectEditRow(Context, TableProperties, Map, String, String, String, String)
+   * {@link #getIntentForOdkCollectEditRow(Context, String, String, ArrayList, Map, String, String, String, String)
    * followed by {@link #launchCollectToEditRow(Activity, Intent, String)}.
    * 
    * @param activity
    * @param appName
+   * @param tableId
+   * @param orderedDefns
    * @param rowId
-   * @param tableProperties
    * @param collectFormParameters
    */
-  public static void editRowWithCollect(Activity activity, String appName, String rowId,
-      TableProperties tableProperties, CollectFormParameters collectFormParameters) {
-    Map<String, String> elementKeyToValue = WebViewUtil.getMapOfElementKeyToValue(tableProperties,
-        rowId);
-    Intent editRowIntent = getIntentForOdkCollectEditRow(activity, tableProperties,
+  public static void editRowWithCollect(Activity activity, String appName, String tableId,
+      ArrayList<ColumnDefinition> orderedDefns,
+      String rowId, CollectFormParameters collectFormParameters) {
+    Map<String, String> elementKeyToValue = WebViewUtil.getMapOfElementKeyToValue(activity,
+        appName, tableId, orderedDefns, rowId);
+    Intent editRowIntent = getIntentForOdkCollectEditRow(activity, appName, tableId, orderedDefns,
         elementKeyToValue, collectFormParameters.getFormId(),
         collectFormParameters.getFormVersion(), collectFormParameters.getRootElement(), rowId);
     if (editRowIntent == null) {
@@ -949,11 +998,6 @@ public class CollectUtil {
   }
 
   /**
-   * Identical to
-   * {@link #getIntentForOdkCollectEditRow(Context, TableProperties, Map, CollectFormParameters)}
-   * , except this method constructs the map of elementKey to value for you.
-   */
-  /*
    * This is a move away from the general "odk add row" usage that is going on
    * when no row is defined. As I understand it, the new case will work as
    * follows.
@@ -994,16 +1038,23 @@ public class CollectUtil {
    * and table has been elevated. Now only the
    * CollectUtil.getIntentForOdkCollectEditRow(...) method is exposed.
    * 
-   * public static Intent getIntentForOdkCollectEditRow(Context context,
-   * TableProperties tp, UserTable table, int rowNum, CollectFormParameters
-   * params) { }
+   * @param context
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
+   * @param elementKeyToValue
+   * @param formId
+   * @param formVersion
+   * @param formRootElement
+   * @param rowId
+   * @return
    */
-
-  public static Intent getIntentForOdkCollectEditRow(Context context, TableProperties tp,
+  public static Intent getIntentForOdkCollectEditRow(Context context, 
+      String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns,
       Map<String, String> elementKeyToValue, String formId, String formVersion,
       String formRootElement, String rowId) {
 
-    CollectFormParameters formParameters = CollectFormParameters.constructCollectFormParameters(tp);
+    CollectFormParameters formParameters = CollectFormParameters.constructCollectFormParameters(context, appName, tableId);
 
     if (formId != null && !formId.equals("")) {
       formParameters.setFormId(formId);
@@ -1014,8 +1065,8 @@ public class CollectUtil {
     if (formRootElement != null && !formRootElement.equals("")) {
       formParameters.setRootElement(formRootElement);
     }
-    Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(context, tp,
-        elementKeyToValue, formParameters, rowId);
+    Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(context, appName, tableId,
+        orderedDefns, elementKeyToValue, formParameters, rowId);
 
     return editRowIntent;
   }
@@ -1034,28 +1085,28 @@ public class CollectUtil {
    * @param params
    * @return
    */
-  private static Intent getIntentForOdkCollectEditRow(Context context, TableProperties tp,
+  private static Intent getIntentForOdkCollectEditRow(Context context, 
+      String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns,
       Map<String, String> elementKeyToValue, CollectFormParameters params, String rowId) {
     // Check if there is a custom form. If there is not, we want to delete
     // the old form and write the new form.
     if (!params.isCustom()) {
       boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(
-          context.getContentResolver(), params, tp);
+          context, appName, tableId, orderedDefns, params);
       if (!formIsReady) {
         Log.e(TAG, "could not delete, write, or insert a generated form");
         return null;
       }
     }
-    boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData(tp, rowId,
-        context.getContentResolver());
+    boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData(context, appName, tableId, rowId);
 
-    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, elementKeyToValue,
-        tp, params, rowId);
+    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, appName, tableId, orderedDefns, 
+        elementKeyToValue, params, rowId);
     if (!writeDataSuccessful) {
       Log.e(TAG, "could not write instance file successfully!");
     }
-    Uri insertUri = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, shouldUpdate,
-        context.getContentResolver());
+    Uri insertUri = CollectUtil.getUriForCollectInstanceForRowData(context,
+        appName, tableId, params, rowId, shouldUpdate);
 
     // Copied the below from getIntentForOdkCollectEditRow().
     Intent intent = new Intent();
@@ -1104,21 +1155,19 @@ public class CollectUtil {
    * <p>
    * Launches with the return code
    * {@link Constants.RequestCodes.ADD_ROW_COLLECT}.
-   *
+   * 
    * @param activityToAwaitReturn
    * @param collectAddIntent
-   * @param tp
-   *          the TableProperties of the table that will be receiving the add
-   *          row from Collect
+   * @param tableId
    */
   public static void launchCollectToAddRow(Activity activityToAwaitReturn, Intent collectAddIntent,
-      TableProperties tp) {
+      String tableId) {
     // We want to save the id of the table that is going to receive the row
     // that returns from Collect. We'll store it in a SharedPreference so
     // that we can get at it.
     SharedPreferences preferences = activityToAwaitReturn.getSharedPreferences(
         SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
-    preferences.edit().putString(PREFERENCE_KEY_TABLE_ID_ADD, tp.getTableId()).commit();
+    preferences.edit().putString(PREFERENCE_KEY_TABLE_ID_ADD, tableId).commit();
     activityToAwaitReturn.startActivityForResult(collectAddIntent,
         Constants.RequestCodes.ADD_ROW_COLLECT);
   }
@@ -1133,16 +1182,18 @@ public class CollectUtil {
    *
    * @return
    */
-  public static ContentValues getMapForInsertion(Context context, TableProperties tp,
+  public static ContentValues getMapForInsertion(Context context, 
+      String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns,
       FormValues formValues) {
+    
     DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
 
     ContentValues values = new ContentValues();
-    List<ColumnDefinition> geopointList = tp.getGeopointColumnDefinitions();
-    List<ColumnDefinition> uriList = tp.getUriColumnDefinitions();
 
-    ArrayList<ColumnDefinition> orderedElements = tp.getColumnDefinitions();
-    for (ColumnDefinition cd : orderedElements) {
+    List<ColumnDefinition> geopointList = GeoColumnUtil.get().getGeopointColumnDefinitions(orderedDefns);
+    List<ColumnDefinition> uriList = RowPathColumnUtil.get().getUriColumnDefinitions(orderedDefns);
+
+    for (ColumnDefinition cd : orderedDefns) {
       ColumnDefinition cdContainingElement = cd.getParent();
 
       if (cdContainingElement != null) {
@@ -1164,16 +1215,16 @@ public class CollectUtil {
         List<ColumnDefinition> children = cd.getChildren();
         ColumnDefinition[] cparray = new ColumnDefinition[4];
         if (!children.isEmpty()) {
-          cparray[0] = tp.getColumnDefinitionByElementKey(children.get(0).getElementKey());
+          cparray[0] = children.get(0);
         }
         if (children.size() > 1) {
-          cparray[1] = tp.getColumnDefinitionByElementKey(children.get(1).getElementKey());
+          cparray[1] = children.get(1);
         }
         if (children.size() > 2) {
-          cparray[2] = tp.getColumnDefinitionByElementKey(children.get(2).getElementKey());
+          cparray[2] = children.get(2);
         }
         if (children.size() > 3) {
-          cparray[3] = tp.getColumnDefinitionByElementKey(children.get(3).getElementKey());
+          cparray[3] = children.get(3);
         }
         ColumnDefinition cplat = null, cplng = null, cpalt = null, cpacc = null;
         for (ColumnDefinition scp : cparray) {
@@ -1222,7 +1273,7 @@ public class CollectUtil {
         List<ColumnDefinition> children = cd.getChildren();
         ColumnDefinition[] cdarray = new ColumnDefinition[children.size()];
         for (int i = 0; i < children.size(); ++i) {
-          cdarray[i] = tp.getColumnDefinitionByElementKey(children.get(i).getElementKey());
+          cdarray[i] = children.get(i);
         }
         // find the uriFragment
         ColumnDefinition cdfrag = null, cdtype = null;
@@ -1251,15 +1302,15 @@ public class CollectUtil {
           String mimeType = baseContentType + "/" + ext;
           if ( cd.getType().getDataType() == ElementDataType.configpath) {
             values.put(cdfrag.getElementKey(),
-                ODKFileUtils.asUriFragment(tp.getAppName(), 
-                    new File( ODKFileUtils.getAppFolder(tp.getAppName()), value)));
+                ODKFileUtils.asUriFragment(appName, 
+                    new File( ODKFileUtils.getAppFolder(appName), value)));
             values.put(cdtype.getElementKey(), 
                 mimeType);
           } else {
             File ifolder = new File(ODKFileUtils.getInstanceFolder(
-                tp.getAppName(), tp.getTableId(), formValues.instanceID));
+                appName, tableId, formValues.instanceID));
             values.put(cdfrag.getElementKey(),
-                ODKFileUtils.asUriFragment(tp.getAppName(), 
+                ODKFileUtils.asUriFragment(appName, 
                     new File( ifolder, value)));
             values.put(cdtype.getElementKey(), 
                 mimeType);
@@ -1268,8 +1319,18 @@ public class CollectUtil {
         }
       } else if (cd.isUnitOfRetention()) {
 
+        ArrayList<String> choices;
+        SQLiteDatabase db = null;
+        try {
+          db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+          choices = ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
+        } finally {
+          if ( db != null ) {
+            db.close();
+          }
+        }
         String value = formValues.formValues.get(cd.getElementKey());
-        value = ParseUtil.validifyValue(du, tp, cd, formValues.formValues.get(cd.getElementKey()));
+        value = ParseUtil.validifyValue(du, choices, cd, formValues.formValues.get(cd.getElementKey()));
 
         if (value != null) {
           values.put(cd.getElementKey(), value);
@@ -1368,7 +1429,7 @@ public class CollectUtil {
 
   /**
    * Retrieves the tableId that was stored during the call to
-   * {@link CollectUtil#launchCollectToAddRow(Activity, Intent, TableProperties)}
+   * {@link CollectUtil#launchCollectToAddRow(Activity, Intent, String)}
    * . Removes the tableId so that future calls to the same method will return
    * null.
    *
@@ -1384,7 +1445,7 @@ public class CollectUtil {
   }
 
   private static boolean updateRowFromOdkCollectInstance(Context context, String appName,
-      TableProperties tp, int instanceId) {
+      String tableId, int instanceId) {
     // First we need to check to make sure the row id is in the shared
     // preferences. If it's not, something has gone wrong.
     // TODO: This should be migrated to use metadata/instanceID in the
@@ -1401,18 +1462,22 @@ public class CollectUtil {
     if (formValues == null) {
       return false;
     }
-    ContentValues values = CollectUtil.getMapForInsertion(context, tp, formValues);
-    values.put(DataTableColumns.ID, rowId);
-    values.put(DataTableColumns.FORM_ID, formValues.formId);
-    values.put(DataTableColumns.LOCALE, formValues.locale);
-    values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
-    values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(formValues.timestamp));
-    values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
 
+    ArrayList<ColumnDefinition> orderedDefns;
     SQLiteDatabase db = null;
     try {
-      db = tp.getWritableDatabase();
-      ODKDatabaseUtils.updateDataInExistingDBTableWithId(db, tp.getTableId(), tp.getColumnDefinitions(), values, rowId);
+      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+      
+      ContentValues values = CollectUtil.getMapForInsertion(context, appName, tableId, orderedDefns, formValues);
+      values.put(DataTableColumns.ID, rowId);
+      values.put(DataTableColumns.FORM_ID, formValues.formId);
+      values.put(DataTableColumns.LOCALE, formValues.locale);
+      values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+      values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(formValues.timestamp));
+      values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
+
+      ODKDatabaseUtils.updateDataInExistingDBTableWithId(db, tableId, orderedDefns, values, rowId);
     } finally {
       if ( db != null ) {
         db.close();
@@ -1431,17 +1496,17 @@ public class CollectUtil {
    * the intent was not marked as finalized.
    * <p>
    * Otherwise returns the result of
-   * {@link #updateRowFromOdkCollectInstance(Context, TableProperties, int)}.
-   *
+   * {@link #updateRowFromOdkCollectInstance(Context, tableId, int)}.
+   *   * 
    * @param context
    * @param appName
-   * @param tp
+   * @param tableId
    * @param returnCode
    * @param data
    * @return
    */
   public static boolean handleOdkCollectEditReturn(Context context, String appName,
-      TableProperties tp, int returnCode, Intent data) {
+      String tableId, int returnCode, Intent data) {
     if (returnCode != Activity.RESULT_OK) {
       Log.i(TAG, "return code wasn't OK not inserting " + "edited data.");
       return false;
@@ -1455,7 +1520,7 @@ public class CollectUtil {
       Log.i(TAG, "instance wasn't marked as finalized--not updating");
       return false;
     }
-    return updateRowFromOdkCollectInstance(context, appName, tp, instanceId);
+    return updateRowFromOdkCollectInstance(context, appName, tableId, instanceId);
   }
 
   /**
@@ -1463,17 +1528,17 @@ public class CollectUtil {
    * the intent was not marked as finalized.
    * <p>
    * Otherwise returns the result of
-   * {@link #addRowFromOdkCollectInstance(Context, TableProperties, int)}.
+   * {@link #addRowFromOdkCollectInstance(Context, String, String, int)}.
    *
    * @param context
    * @param appName
-   * @param tp
+   * @param tableId
    * @param returnCode
    * @param data
    * @return
    */
   public static boolean handleOdkCollectAddReturn(Context context, String appName,
-      TableProperties tp, int returnCode, Intent data) {
+      String tableId, int returnCode, Intent data) {
     if (returnCode != Activity.RESULT_OK) {
       Log.i(TAG, "return code wasn't OK --not adding row");
       return false;
@@ -1487,27 +1552,30 @@ public class CollectUtil {
       Log.i(TAG, "instance wasn't finalized--not adding");
       return false;
     }
-    return addRowFromOdkCollectInstance(context, appName, tp, instanceId);
+    return addRowFromOdkCollectInstance(context, appName, tableId, instanceId);
   }
 
   private static boolean addRowFromOdkCollectInstance(Context context, String appName,
-      TableProperties tp, int instanceId) {
+      String tableId, int instanceId) {
     FormValues formValues = CollectUtil.getOdkCollectFormValuesFromInstanceId(context, instanceId);
     if (formValues == null) {
       return false;
     }
-    ContentValues values = getMapForInsertion(context, tp, formValues);
-    values.put(DataTableColumns.ID, formValues.instanceID);
-    values.put(DataTableColumns.FORM_ID, formValues.formId);
-    values.put(DataTableColumns.LOCALE, formValues.locale);
-    values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
-    values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(formValues.timestamp));
-    values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
-    
+    ArrayList<ColumnDefinition> orderedDefns;
     SQLiteDatabase db = null;
     try {
-      db = tp.getWritableDatabase();
-      ODKDatabaseUtils.insertDataIntoExistingDBTableWithId(db, tp.getTableId(), tp.getColumnDefinitions(), values, formValues.instanceID);
+      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+      
+      ContentValues values = CollectUtil.getMapForInsertion(context, appName, tableId, orderedDefns, formValues);
+      values.put(DataTableColumns.ID, formValues.instanceID);
+      values.put(DataTableColumns.FORM_ID, formValues.formId);
+      values.put(DataTableColumns.LOCALE, formValues.locale);
+      values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
+      values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(formValues.timestamp));
+      values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
+
+      ODKDatabaseUtils.insertDataIntoExistingDBTableWithId(db, tableId, orderedDefns, values, formValues.instanceID);
     } finally {
       if ( db != null ) {
         db.close();
@@ -1516,9 +1584,11 @@ public class CollectUtil {
     return true;
   }
 
-  public static Intent getIntentForOdkCollectAddRowByQuery(Context context, String appName,
-      TableProperties tp, CollectFormParameters params) {
-    Intent intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(context, tp, params, null);
+  public static Intent getIntentForOdkCollectAddRowByQuery(Context context, 
+      String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns, 
+      CollectFormParameters params) {
+    Intent intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(context, 
+        appName, tableId, orderedDefns, params, null);
     return intentAddRow;
   }
 
@@ -1532,7 +1602,8 @@ public class CollectUtil {
    *          values with which you want to prepopulate the add row form.
    * @return
    */
-  public static Intent getIntentForOdkCollectAddRow(Context context, TableProperties tp,
+  public static Intent getIntentForOdkCollectAddRow(Context context, 
+      String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns,
       CollectFormParameters params, Map<String, String> elementKeyToValue) {
     /*
      * So, there are several things to check here. The first thing we want to do
@@ -1546,7 +1617,7 @@ public class CollectUtil {
     // the old form and write the new form.
     if (!params.isCustom()) {
       boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(
-          context.getContentResolver(), params, tp);
+          context, appName, tableId, orderedDefns, params);
       if (!formIsReady) {
         Log.e(TAG, "could not delete, write, or insert a generated form");
         return null;
@@ -1555,20 +1626,22 @@ public class CollectUtil {
     // manufacture a rowId for this record...
     String rowId = "uuid:" + UUID.randomUUID().toString();
 
-    boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData(tp, rowId,
-        context.getContentResolver());
+    boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData(
+        context, appName, tableId, rowId);
 
     // emit the empty or partially-populated instance
     // we've received some values to prepopulate the add row with.
-    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, elementKeyToValue,
-        tp, params, rowId);
+    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, 
+        appName, tableId, orderedDefns, elementKeyToValue,
+        params, rowId);
     if (!writeDataSuccessful) {
       Log.e(TAG, "could not write instance file successfully!");
     }
     // Here we'll just act as if we're inserting 0, which
     // really doesn't matter?
-    Uri formToLaunch = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId,
-        shouldUpdate, context.getContentResolver());
+    Uri formToLaunch = CollectUtil.getUriForCollectInstanceForRowData(
+        context, appName, tableId, params, rowId,
+        shouldUpdate);
 
     // And now finally create the intent.
     Intent intent = new Intent();
@@ -1703,45 +1776,74 @@ public class CollectUtil {
       this.mRowDisplayName = rowDisplayName;
     }
 
-    public static CollectFormParameters constructDefaultCollectFormParameters(TableProperties tp) {
-      return new CollectFormParameters(false, getDefaultAddRowFormId(tp), null,
-          DEFAULT_ROOT_ELEMENT, tp.getLocalizedDisplayName());
+    public static CollectFormParameters constructDefaultCollectFormParameters(Context context, String appName, String tableId) {
+      String localizedDisplayName;
+      SQLiteDatabase db = null;
+      try {
+        db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+
+      return new CollectFormParameters(false, getDefaultAddRowFormId(tableId), null,
+          DEFAULT_ROOT_ELEMENT, localizedDisplayName);
     }
 
     /**
-     * Construct a CollectFormProperties object from the given TableProperties.
+     * Construct a CollectFormProperties object from the given tableId.
      * The object is determined to have custom parameters if a formId can be
-     * retrieved from the TableProperties object. Otherwise the default addrow
+     * retrieved for this tableId. Otherwise the default addrow
      * parameters are set. If no formVersion is defined, it is left as null, as
      * later on a check is used that if none is defined (ie is null), do not
      * insert it to a map. If no root element is defined, the default root
      * element is added.
      * <p>
      * The display name of the row will be the display name of the table.
-     *
-     * @param tp
+     * 
+     * @param context
+     * @param appName
+     * @param tableId
      * @return
      */
-    public static CollectFormParameters constructCollectFormParameters(TableProperties tp) {
-      KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(CollectUtil.KVS_PARTITION);
-      KeyValueHelper aspectHelper = kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);
-      String formId = aspectHelper.getString(CollectUtil.KEY_FORM_ID);
+    public static CollectFormParameters constructCollectFormParameters(Context context, String appName, String tableId) {
+      String formId;
+      String formVersion = null;
+      String rootElement = null;
+      String localizedDisplayName;
+      SQLiteDatabase db = null;
+      try {
+        db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+        KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, CollectUtil.KVS_PARTITION);
+        KeyValueHelper aspectHelper = kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);
+        formId = aspectHelper.getString(CollectUtil.KEY_FORM_ID);
+        if ( formId != null ) {
+          formVersion = aspectHelper.getString(CollectUtil.KEY_FORM_VERSION);
+          rootElement = aspectHelper.getString(CollectUtil.KEY_FORM_ROOT_ELEMENT);
+        }
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+
       if (formId == null) {
-        return new CollectFormParameters(false, getDefaultAddRowFormId(tp), null,
-            DEFAULT_ROOT_ELEMENT, tp.getLocalizedDisplayName());
+        return new CollectFormParameters(false, getDefaultAddRowFormId(tableId), null,
+            DEFAULT_ROOT_ELEMENT, 
+            localizedDisplayName);
       }
       // Else we know it is custom.
-      String formVersion = aspectHelper.getString(CollectUtil.KEY_FORM_VERSION);
-      String rootElement = aspectHelper.getString(CollectUtil.KEY_FORM_ROOT_ELEMENT);
       if (rootElement == null) {
         rootElement = DEFAULT_ROOT_ELEMENT;
       }
-      return new CollectFormParameters(true, formId, formVersion, rootElement,
-          tp.getLocalizedDisplayName());
+      return new CollectFormParameters(true, formId, formVersion, rootElement, localizedDisplayName);
     }
 
-    public void persist(TableProperties tp) {
-      KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(CollectUtil.KVS_PARTITION);
+    public void persist(SQLiteDatabase db, String tableId) {
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, CollectUtil.KVS_PARTITION);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);
       if (this.isCustom()) {
         aspectHelper.setString(CollectUtil.KEY_FORM_ID, this.mFormId);

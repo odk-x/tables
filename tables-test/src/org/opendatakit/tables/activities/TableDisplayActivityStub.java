@@ -1,6 +1,5 @@
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.fragments.DetailViewFragment;
 import org.opendatakit.tables.fragments.GraphManagerFragment;
@@ -23,15 +22,12 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   // be reset to these default values so that tests begin in a known state.
   public static final String DEFAULT_APP_NAME = 
       TestConstants.TABLES_DEFAULT_APP_NAME;
-  public static final TableProperties DEFAULT_TABLE_PROPERTIES = 
-      TestConstants.getTablePropertiesMock();
   public static final String DEFAULT_TABLE_ID = TestConstants.DEFAULT_TABLE_ID;
   public static final SQLQueryStruct DEFAULT_SQL_QUERY_STRUCT = 
       TestConstants.getSQLQueryStructMock();
   public static final UserTable DEFAULT_USER_TABLE = null;
   
   public static String APP_NAME = DEFAULT_APP_NAME;
-  public static TableProperties TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
   public static String TABLE_ID = DEFAULT_TABLE_ID;
   public static SQLQueryStruct SQL_QUERY_STRUCT = DEFAULT_SQL_QUERY_STRUCT;
   public static UserTable USER_TABLE = DEFAULT_USER_TABLE;
@@ -55,11 +51,6 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   public static TableMapInnerFragment MAP_INNER_FRAGMENT = null;
   public static ListViewFragment LIST_VIEW_FRAGMENT = null;
   public static DetailViewFragment DETAIL_VIEW_FRAGMENT = null;
-  
-  @Override
-  TableProperties retrieveTablePropertiesForId(String tableId) {
-    return TABLE_PROPERTIES;
-  }
   
   @Override
   String retrieveAppNameFromIntent() {
@@ -138,7 +129,6 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   public static void resetState() {
     APP_NAME = DEFAULT_APP_NAME;
     TABLE_ID = DEFAULT_TABLE_ID;
-    TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
     SQL_QUERY_STRUCT = DEFAULT_SQL_QUERY_STRUCT;
     USER_TABLE = TestConstants.getUserTableMock();
     BUILD_MENU_FRAGMENT = DEFAULT_BUILD_MENU_FRAGMENT;

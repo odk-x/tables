@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
 
@@ -48,9 +47,10 @@ public class LocationDialogFragment extends DialogFragment {
       builder.setMessage("Would you like to add a row at: " + location + "?")
           .setPositiveButton("Add", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-              ActivityUtil.addRow(
-                  (AbsBaseActivity) getActivity(),
-                  ((AbsTableActivity) getActivity()).getTableProperties(),
+              AbsTableActivity activity = (AbsTableActivity) getActivity();
+              ActivityUtil.addRow(activity, activity.getAppName(), 
+                  activity.getTableId(),
+                  activity.getColumnDefinitions(),
                   mapping);
             }
           }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

@@ -60,7 +60,7 @@ public class GraphViewFragment extends AbsWebTableFragment {
         getAppName(),
         new File(relativePathToGraphFile));
     GraphData graphData =
-        new GraphData(this.getActivity(), getTableProperties(), this.getGraphName());
+        new GraphData(this.getActivity(), getAppName(), getTableId(), this.getGraphName());
     result.addJavascriptInterface(
         graphData.getJavascriptInterfaceWithWeakReference(), 
         Constants.JavaScriptHandles.GRAPH);

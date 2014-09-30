@@ -1,9 +1,10 @@
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.DetailViewFragment;
@@ -19,6 +20,7 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
+import org.opendatakit.tables.utils.TableUtil;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -129,7 +131,17 @@ public class TableDisplayActivity extends AbsTableActivity
       menuInflater.inflate(
           R.menu.top_level_table_menu,
           menu);
-      PossibleTableViewTypes viewTypes = this.retrievePossibleViewTypes();
+      SQLiteDatabase db = null;
+      PossibleTableViewTypes viewTypes = null;
+      try { 
+        db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+        viewTypes = new PossibleTableViewTypes(db, 
+            getTableId(), getColumnDefinitions());
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
       this.enableAndDisableViewTypes(viewTypes, menu);
       this.selectCorrectViewType(menu);
       break;
@@ -141,15 +153,6 @@ public class TableDisplayActivity extends AbsTableActivity
       break;
     }
     return super.onCreateOptionsMenu(menu);
-  }
-
-  /**
-   * Retrieve the {@link PossibleTableViewTypes} representing the valid views
-   * for this table.
-   * @return
-   */
-  PossibleTableViewTypes retrievePossibleViewTypes() {
-    return this.getTableProperties().getPossibleViewTypes();
   }
 
   @Override
@@ -171,14 +174,16 @@ public class TableDisplayActivity extends AbsTableActivity
       Log.d(TAG, "[onOptionsItemSelected] add selected");
       ActivityUtil.addRow(
           this,
-          this.getTableProperties(),
+          this.getAppName(),
+          this.getTableId(),
+          this.getColumnDefinitions(),
           null);
       return true;
     case R.id.top_level_table_menu_table_properties:
       ActivityUtil.launchTableLevelPreferencesActivity(
           this,
           this.getAppName(),
-          this.getTableProperties().getTableId(),
+          this.getTableId(),
           TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
       return true;
     case R.id.menu_edit_row:
@@ -208,7 +213,9 @@ public class TableDisplayActivity extends AbsTableActivity
       }
       ActivityUtil.editRow(
           this,
-          this.getTableProperties(),
+          this.getAppName(),
+          this.getTableId(),
+          this.getColumnDefinitions(),
           rowId);
       return true;
     default:
@@ -233,8 +240,7 @@ public class TableDisplayActivity extends AbsTableActivity
     case Constants.RequestCodes.ADD_ROW_COLLECT:
       if (resultCode == Activity.RESULT_OK) {
         Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
-        TableProperties tableProperties = this.getTableProperties();
-        CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), tableProperties, resultCode, data);
+        CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), getTableId(), resultCode, data);
 
         this.refreshDataTable();
         // We also want to cause the fragments to redraw themselves, as their
@@ -250,8 +256,7 @@ public class TableDisplayActivity extends AbsTableActivity
     case Constants.RequestCodes.EDIT_ROW_COLLECT:
       if (resultCode == Activity.RESULT_OK) {
         Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
-        TableProperties tableProperties = this.getTableProperties();
-        CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), tableProperties, resultCode, data);
+        CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), getTableId(), resultCode, data);
 
         this.refreshDataTable();
         // We also want to cause the fragments to redraw themselves, as their
@@ -431,7 +436,7 @@ public class TableDisplayActivity extends AbsTableActivity
    * the passed in bundle takes precedence, on the assumption that is was from
    * a saved instance state. Next is any type that
    * was passed in the Intent. If neither is present, the value
-   * corresponding to {@link TableProperties#getDefaultViewType()} wins. If
+   * corresponding to {@link TableUtil#getDefaultViewType()} wins. If
    * none is present, returns {@link ViewFragmentType#SPREADSHEET}.
    * @return
    */
@@ -452,9 +457,17 @@ public class TableDisplayActivity extends AbsTableActivity
     ViewFragmentType result = retrieveViewFragmentTypeFromIntent();
     if (result == null) {
       // 3) then use the default
-      TableViewType viewType =
-          this.getTableProperties().getDefaultViewType();
-      result = this.getViewFragmentTypeFromViewType(viewType);
+      TableViewType type;
+      SQLiteDatabase db = null;
+      try {
+        db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+        type = TableUtil.get().getDefaultViewType(db, getTableId());
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+      result = this.getViewFragmentTypeFromViewType(type);
     }
     if (result == null) {
       // 4) last case, do spreadsheet
@@ -516,14 +529,14 @@ public class TableDisplayActivity extends AbsTableActivity
    * @return
    */
   UserTable retrieveUserTable() {
-    TableProperties tableProperties = this.getTableProperties();
     SQLQueryStruct sqlQueryStruct =
         this.retrieveSQLQueryStatStructFromIntent();
     SQLiteDatabase db = null;
     try {
-      db = tableProperties.getReadableDatabase();
-      UserTable result = ODKDatabaseUtils.rawSqlQuery(db, tableProperties.getAppName(),
-          tableProperties.getTableId(), tableProperties.getPersistedColumns(),
+      db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+      UserTable result = ODKDatabaseUtils.rawSqlQuery(db, this.getAppName(),
+          this.getTableId(), 
+          ColumnDefinition.getRetentionColumnNames(getColumnDefinitions()),
           sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
           sqlQueryStruct.groupBy, sqlQueryStruct.having, 
           sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
@@ -670,8 +683,15 @@ public class TableDisplayActivity extends AbsTableActivity
     String fileName =
         IntentUtil.retrieveFileNameFromBundle(this.getIntent().getExtras());
     if (fileName == null) {
-      // use the default.
-      fileName = this.getTableProperties().getMapListViewFileName();
+      SQLiteDatabase db = null;
+      try {
+        db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+        fileName = TableUtil.get().getMapListViewFilename(db, getTableId());
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
     }
     FragmentManager fragmentManager = this.getFragmentManager();
     FragmentTransaction fragmentTransaction =
@@ -760,7 +780,15 @@ public class TableDisplayActivity extends AbsTableActivity
     String fileName =
         IntentUtil.retrieveFileNameFromBundle(this.getIntent().getExtras());
     if (fileName == null) {
-      fileName = getTableProperties().getListViewFileName();
+      SQLiteDatabase db = null;
+      try {
+        db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+        fileName = TableUtil.get().getListViewFilename(db, getTableId());
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
     }
     FragmentManager fragmentManager = this.getFragmentManager();
     FragmentTransaction fragmentTransaction =
@@ -916,7 +944,15 @@ public class TableDisplayActivity extends AbsTableActivity
     // Try and use the default.
     if (fileName == null) {
       Log.d(TAG, "[showDetailFragment] fileName not found in Intent");
-      fileName = this.getTableProperties().getDetailViewFileName();
+      SQLiteDatabase db = null;
+      try {
+        db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+        fileName = TableUtil.get().getDetailViewFilename(db, getTableId());
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
     }
     String rowId = IntentUtil.retrieveRowIdFromBundle(
         this.getIntent().getExtras());

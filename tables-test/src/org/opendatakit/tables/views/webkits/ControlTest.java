@@ -4,7 +4,6 @@ import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -22,8 +21,6 @@ import org.mockito.Matchers;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementDataType;
-import org.opendatakit.common.android.data.ElementType;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
@@ -63,6 +60,7 @@ public class ControlTest {
 
   @Before
   public void before() {
+    TableProperties.clearCaches();
     TestCaseUtils.setExternalStorageMounted();
     AbsBaseActivityStub activityStub = Robolectric.buildActivity(
         AbsBaseActivityStub.class)
@@ -144,9 +142,6 @@ public class ControlTest {
   protected void helperAddOrUpdateFailsIfColumnDoesNotExist(boolean isUpdate) {
     TableProperties tpMock = TestConstants.getTablePropertiesMock();
     ControlStub.TABLE_PROPERTIES_FOR_ID = tpMock;
-    String nonExistentColumn = "thisColumnDoesNotExist";
-    doThrow(new IllegalArgumentException("nonexistent")).when(tpMock).getColumnDefinitionByElementKey(nonExistentColumn);
-    ControlStub.TABLE_PROPERTIES_FOR_ID = tpMock;
     String stringifiedMap = WebViewUtil.stringify(getValidMap());
     if (isUpdate) {
       boolean result =
@@ -200,21 +195,6 @@ public class ControlTest {
       boolean isUpdate) {
     setupControlWithTablePropertiesMock();
     TableProperties tpMock = ControlStub.TABLE_PROPERTIES_FOR_ID;
-    ColumnDefinition stringCD = TestConstants.getColumnDefinitionMock(
-        TestConstants.ElementKeys.STRING_COLUMN,
-        ElementType.parseElementType("string", false));
-    ColumnDefinition intCD = TestConstants.getColumnDefinitionMock(
-        TestConstants.ElementKeys.INT_COLUMN,
-        ElementType.parseElementType("integer", false));
-    ColumnDefinition numberCD = TestConstants.getColumnDefinitionMock(
-        TestConstants.ElementKeys.NUMBER_COLUMN,
-        ElementType.parseElementType("number", false));
-    doReturn(stringCD).when(tpMock).getColumnDefinitionByElementKey(
-        TestConstants.ElementKeys.STRING_COLUMN);
-    doReturn(intCD).when(tpMock).getColumnDefinitionByElementKey(
-        TestConstants.ElementKeys.INT_COLUMN);
-    doReturn(numberCD).when(tpMock).getColumnDefinitionByElementKey(
-        TestConstants.ElementKeys.NUMBER_COLUMN);
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
         ElementDataType.string.name(), "[]"));
@@ -222,7 +202,16 @@ public class ControlTest {
         ElementDataType.integer.name(), "[]"));
     columns.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
         ElementDataType.number.name(), "[]"));
-
+    ArrayList<ColumnDefinition> orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
+    
+    ColumnDefinition stringCD = ColumnDefinition.find(orderedDefns, 
+        TestConstants.ElementKeys.STRING_COLUMN);
+    ColumnDefinition intCD = ColumnDefinition.find(orderedDefns, 
+        TestConstants.ElementKeys.INT_COLUMN);
+    ColumnDefinition numberCD = ColumnDefinition.find(orderedDefns,
+        TestConstants.ElementKeys.NUMBER_COLUMN);
+    doReturn(orderedDefns).when(tpMock).getColumnDefinitions();
+    
     // Now we'll do the call and make sure that we called through to the mock
     // object successfully.
     String tableId = "anyTableId";

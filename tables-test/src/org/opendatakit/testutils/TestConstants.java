@@ -1,7 +1,9 @@
 package org.opendatakit.testutils;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,10 +13,10 @@ import java.util.Set;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.utils.SQLQueryStruct;
+import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
 import org.opendatakit.tables.views.webkits.TableData;
@@ -78,10 +80,16 @@ public class TestConstants {
 
   public static TableProperties getTablePropertiesMock() {
     TableProperties tpMock = mock(TableProperties.class);
-    doReturn(getAllValidPossibleTableViewTypes())
-        .when(tpMock).getPossibleViewTypes();
-    doReturn(TableViewType.SPREADSHEET)
-        .when(tpMock).getDefaultViewType();
+    
+    when(tpMock.getTableId()).thenReturn("aTable");
+    
+    TableUtil util = mock(TableUtil.class);
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
+        "aTable")).thenReturn("aTable");
+    when(util.getDefaultViewType(any(SQLiteDatabase.class), 
+        "aTable")).thenReturn(TableViewType.SPREADSHEET);
+    TableUtil.set(util);
+
     return tpMock;
   }
   

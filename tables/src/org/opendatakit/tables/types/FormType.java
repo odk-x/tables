@@ -17,9 +17,12 @@ package org.opendatakit.tables.types;
 
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 
 /**
  * Definition of the form data type.
@@ -44,43 +47,69 @@ public class FormType {
   private CollectFormParameters mCollectParams;
   private SurveyFormParameters mSurveyParams;
 
-  public static FormType constructFormType(TableProperties tp) {
-    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(FormType.KVS_PARTITION);
-    KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
-    String formType = aspectHelper.getString(FormType.KEY_FORM_TYPE);
+  public static FormType constructFormType(Context context, String appName, String tableId) {
+    String formType;
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, FormType.KVS_PARTITION);
+      KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
+      formType = aspectHelper.getString(FormType.KEY_FORM_TYPE);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
     if (formType == null) {
-      return new FormType(CollectFormParameters.constructDefaultCollectFormParameters(tp), tp);
+      return new FormType(context, appName, tableId, CollectFormParameters.constructDefaultCollectFormParameters(
+          context, appName, tableId));
     }
     try {
       Type t = Type.valueOf(formType);
       if (t == Type.COLLECT) {
-        return new FormType(CollectFormParameters.constructCollectFormParameters(tp), tp);
+        return new FormType(context, appName, tableId, CollectFormParameters.constructCollectFormParameters(
+            context, appName, tableId));
       }
-      return new FormType(SurveyFormParameters.constructSurveyFormParameters(tp), tp);
+      return new FormType(context, appName, tableId, SurveyFormParameters.constructSurveyFormParameters(
+          context, appName, tableId));
     } catch (Exception e) {
-      return new FormType(CollectFormParameters.constructCollectFormParameters(tp), tp);
+      return new FormType(context, appName, tableId, CollectFormParameters.constructCollectFormParameters(
+          context, appName, tableId));
     }
   }
 
-  public void persist(TableProperties tp) {
-    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(FormType.KVS_PARTITION);
-    KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
-    aspectHelper.setString(KEY_FORM_TYPE, type.name());
+  public void persist(Context context, String appName, String tableId) {
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db.beginTransaction();
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db,
+          tableId, FormType.KVS_PARTITION);
+      KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
+      aspectHelper.setString(KEY_FORM_TYPE, type.name());
 
-    this.mCollectParams.persist(tp);
-    this.mSurveyParams.persist(tp);
+      this.mCollectParams.persist(db, tableId);
+      this.mSurveyParams.persist(db, tableId);
+      db.setTransactionSuccessful();
+    } finally {
+      if ( db != null ) {
+        db.endTransaction();
+        db.close();
+      }
+    }
   }
 
-  public FormType(CollectFormParameters params, TableProperties tp) {
+  public FormType(Context context, String appName, String tableId, CollectFormParameters params) {
     this.type = Type.COLLECT;
     this.mCollectParams = params;
-    this.mSurveyParams = SurveyFormParameters.constructSurveyFormParameters(tp);
+    this.mSurveyParams = SurveyFormParameters.constructSurveyFormParameters(context, appName, tableId);
   }
 
-  public FormType(SurveyFormParameters params, TableProperties tp) {
+  public FormType(Context context, String appName, String tableId, SurveyFormParameters params) {
     this.type = Type.SURVEY;
     this.mSurveyParams = params;
-    this.mCollectParams = CollectFormParameters.constructCollectFormParameters(tp);
+    this.mCollectParams = CollectFormParameters.constructCollectFormParameters(
+        context, appName, tableId);
   }
 
   public boolean isCollectForm() {

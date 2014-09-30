@@ -18,10 +18,11 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.tables.utils.ColumnUtil;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -29,13 +30,21 @@ import android.widget.Spinner;
 
 public class CellValueView {
 
-  public static CellEditView getCellEditView(Context context, TableProperties tp, ColumnDefinition cd, String value) {
+  public static CellEditView getCellEditView(Context context, String appName, String tableId, ColumnDefinition cd, String value) {
 
-    ArrayList<String> displayChoices = ColumnUtil.getDisplayChoicesList(tp, cd.getElementKey());
-    if (displayChoices != null) {
-      return new MultipleChoiceEditView(context, cd, displayChoices, value);
-    } else {
-      return new DefaultEditView(context, value);
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      ArrayList<String> displayChoices = ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
+      if (displayChoices != null) {
+        return new MultipleChoiceEditView(context, cd, displayChoices, value);
+      } else {
+        return new DefaultEditView(context, value);
+      }
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
     }
   }
 

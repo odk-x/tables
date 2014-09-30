@@ -26,10 +26,12 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
 import org.opendatakit.tables.views.components.LockableScrollView;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
@@ -124,11 +126,19 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     // if a custom font size is defined in the KeyValueStore, use that
     // if not, use the general font size defined in preferences
-    KeyValueStoreHelper kvsh = table.getKeyValueStoreHelper("SpreadsheetView");
-    if (kvsh.getInteger("fontSize") == null)
-      fontSize = (new Preferences(context, table.getAppName())).getFontSize();
-    else
-      fontSize = kvsh.getInteger("fontSize");
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(context, table.getAppName());
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, table.getTableId(), "SpreadsheetView");
+      if (kvsh.getInteger("fontSize") == null)
+        fontSize = (new Preferences(context, table.getAppName())).getFontSize();
+      else
+        fontSize = kvsh.getInteger("fontSize");
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
 
     initListeners();
     if (!table.isIndexed()) {
@@ -569,16 +579,27 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // lot of columns you're really working the gut of the database.
     int numberOfDisplayColumns = table.getNumberOfDisplayColumns();
     int[] columnWidths = new int[numberOfDisplayColumns];
-    KeyValueStoreHelper columnKVSH = table.getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_COLUMN);
-    for (int i = 0; i < numberOfDisplayColumns; i++) {
-      ColumnDefinition cd = table.getColumnByIndex(i);
-      String elementKey = cd.getElementKey();
-      KeyValueHelper aspectHelper = columnKVSH.getAspectHelper(elementKey);
-      Integer value = aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);
-      if (value == null) {
-        columnWidths[i] = DEFAULT_COL_WIDTH;
-      } else {
-        columnWidths[i] = value;
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(getContext(), table.getTableId());
+      KeyValueStoreHelper columnKVSH = 
+          new KeyValueStoreHelper(db, table.getTableId(), KeyValueStoreConstants.PARTITION_COLUMN);
+
+      for (int i = 0; i < numberOfDisplayColumns; i++) {
+        ColumnDefinition cd = table.getColumnByIndex(i);
+        String elementKey = cd.getElementKey();
+        KeyValueHelper aspectHelper = columnKVSH.getAspectHelper(elementKey);
+        Integer value = aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);
+        if (value == null) {
+          columnWidths[i] = DEFAULT_COL_WIDTH;
+        } else {
+          columnWidths[i] = value;
+        }
+      }
+      
+    } finally {
+      if ( db != null ) { 
+        db.close();
       }
     }
     return columnWidths;

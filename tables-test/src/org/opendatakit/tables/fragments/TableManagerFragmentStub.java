@@ -2,27 +2,21 @@ package org.opendatakit.tables.fragments;
 
 import java.util.List;
 
-import org.opendatakit.common.android.data.TableProperties;
-
 public class TableManagerFragmentStub extends TableManagerFragment {
   
-  List<TableProperties> dummyList;
+  List<String> dummyList;
   int numberOfCallsToUpdatePropertiesList;
   
-  public TableManagerFragmentStub(List<TableProperties> toDisplay) {
+  public TableManagerFragmentStub(List<String> toDisplay) {
     this.dummyList = toDisplay;
     this.numberOfCallsToUpdatePropertiesList = 0;
   }
   
   @Override
-  List<TableProperties> retrieveContentsToDisplay() {
-    return this.dummyList;
-  }
-  
-  @Override
-  protected void updateTablePropertiesList() {
+  protected void updateTableIdList() {
     this.numberOfCallsToUpdatePropertiesList++;
-    super.updateTablePropertiesList();
+    super.updateTableIdList();
+    super.setTableIdList(dummyList);
   }
   
   /**

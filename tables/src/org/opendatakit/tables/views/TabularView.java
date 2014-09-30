@@ -682,7 +682,7 @@ class TabularView extends View {
            this.type == TableType.MAIN_DATA ) {
         // these are the only cases (below) where this value is used...
         theRow = this.mTable.getRowAtIndex(i);
-        rowGuide = mRowColorRuleGroup.getColorGuide(theRow);
+        rowGuide = mRowColorRuleGroup.getColorGuide(this.mTable.getColumnDefinitions(), theRow);
       }
 
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
@@ -717,7 +717,7 @@ class TabularView extends View {
             backgroundColor = rowGuide.getBackground();
           }
           ColorGuide columnGuide = mColumnColorRules.get(
-              this.mElementKeys.get(j)).getColorGuide(theRow);
+              this.mElementKeys.get(j)).getColorGuide(this.mTable.getColumnDefinitions(), theRow);
           // Override the role rule if a column rule matched.
           if (columnGuide != null) {
             foregroundColor = columnGuide.getForeground();

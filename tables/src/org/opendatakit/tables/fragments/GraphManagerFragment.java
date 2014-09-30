@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.KeyValueStoreEntry;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -83,22 +84,21 @@ public class GraphManagerFragment extends AbsTableDisplayFragment {
   }
   
   List<GraphViewStruct> retrieveGraphViews() {
-    KeyValueStoreHelper kvshForViews =
-        getTableProperties().getKeyValueStoreHelper(
-            LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
-    KeyValueStoreHelper kvshForGraphWritLarge =
-        getTableProperties().getKeyValueStoreHelper(
-            LocalKeyValueStoreConstants.Graph.PARTITION);
     // A graph is currently makred as default if its name is in this aspect
     // marked as the name.
-    String currentDefaultGraphName = kvshForGraphWritLarge.getString(
-        LocalKeyValueStoreConstants.Graph.KEY_GRAPH_VIEW_NAME);
-
+    String tableId = getTableId();
+    String currentDefaultGraphName = null;
     List<KeyValueStoreEntry> graphViewEntries = new ArrayList<KeyValueStoreEntry>();
     SQLiteDatabase db = null;
     try {
-      db = getTableProperties().getReadableDatabase();
-      graphViewEntries = ODKDatabaseUtils.getDBTableMetadata(db, getTableProperties().getTableId(), 
+      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      
+      KeyValueStoreHelper kvshForGraphWritLarge =
+          new KeyValueStoreHelper(db, tableId, LocalKeyValueStoreConstants.Graph.PARTITION);
+      currentDefaultGraphName = kvshForGraphWritLarge.getString(
+          LocalKeyValueStoreConstants.Graph.KEY_GRAPH_VIEW_NAME);
+
+      graphViewEntries = ODKDatabaseUtils.getDBTableMetadata(db, tableId, 
           LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS, null, LocalKeyValueStoreConstants.Graph.KEY_GRAPH_TYPE);
     } finally {
       if ( db != null ) {

@@ -59,20 +59,37 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   private final String tableId;
   private final String appName;
   private final Context context;
+  
+  private final SQLiteDatabase db;
 
   public KeyValueStoreHelper(Context context, String appName, String tableId, String partition) {
     this.context = context;
     this.appName = appName;
     this.tableId = tableId;
     this.partition = partition;
+    this.db = null;
+  }
+
+  public KeyValueStoreHelper(SQLiteDatabase db, String tableId, String partition) {
+    this.context = null;
+    this.appName = null;
+    this.tableId = tableId;
+    this.partition = partition;
+    this.db = db;
   }
 
   private SQLiteDatabase getWritableDatabase() {
+    if ( this.db != null ) {
+      return db;
+    }
     DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
     return dbh.getWritableDatabase();
   }
 
   private SQLiteDatabase getReadableDatabase() {
+    if ( this.db != null ) {
+      return db;
+    }
     DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
     return dbh.getReadableDatabase();
   }

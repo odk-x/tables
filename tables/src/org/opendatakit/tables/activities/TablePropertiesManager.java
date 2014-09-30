@@ -17,20 +17,24 @@ package org.opendatakit.tables.activities;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.LocalKeyValueStoreConstants;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.ColumnUtil;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -83,21 +87,34 @@ public class TablePropertiesManager extends PreferenceActivity {
   public static final String COLOR_TYPE_COLUMN = "Selectable Column Color Rules";
 
   private String appName;
-  private TableProperties tp;
+  private String tableId;
+  private ArrayList<ColumnDefinition> orderedDefns;
+//  private TableProperties tp;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
-    if ( appName == null ) {
+    if (appName == null) {
       appName = TableFileUtils.getDefaultAppName();
     }
-    String tableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
+    tableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
-    tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
-    setTitle(getString(R.string.table_manager_title, tp.getLocalizedDisplayName()));
+
+    String localizedDisplayName;
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+    } finally {
+      if (db != null) {
+        db.close();
+      }
+    }
+
+    setTitle(getString(R.string.table_manager_title, localizedDisplayName));
     init();
   }
 
@@ -111,28 +128,47 @@ public class TablePropertiesManager extends PreferenceActivity {
     root.addPreference(genCat);
     genCat.setTitle(getString(R.string.general_settings));
 
+    String rawDisplayName;
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+      rawDisplayName = TableUtil.get().getRawDisplayName(db, tableId);
+    } finally {
+      if (db != null) {
+        db.close();
+      }
+    }
+
     EditTextPreference dnPref = new EditTextPreference(this);
     dnPref.setTitle(getString(R.string.table_display_name));
     dnPref.setDialogTitle(getString(R.string.change_table_display_name));
-    dnPref.setText(tp.getDisplayName());
-    dnPref.setSummary(tp.getDisplayName());
+    dnPref.setText(rawDisplayName);
+    dnPref.setSummary(rawDisplayName);
     dnPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
-        SQLiteDatabase db = tp.getWritableDatabase();
+        SQLiteDatabase db = null;
+        String localizedDisplayName;
         try {
+          db = DataModelDatabaseHelperFactory.getDatabase(
+              TablePropertiesManager.this, appName);
           db.beginTransaction();
-          tp.setDisplayName(db, (String) newValue);
+          TableUtil.get().setRawDisplayName(db, tableId, (String) newValue);
+          localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
           db.setTransactionSuccessful();
-        } catch ( Exception e ) {
+        } catch (Exception e) {
           e.printStackTrace();
           Log.e(TAG, "Unable to change display name: " + e.toString());
           Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
+          init();
+          return false;
         } finally {
-          db.endTransaction();
-          db.close();
+          if ( db != null ) {
+            db.endTransaction();
+            db.close();
+          }
         }
-        setTitle(getString(R.string.table_manager_title, tp.getLocalizedDisplayName()));
+        setTitle(getString(R.string.table_manager_title, localizedDisplayName));
         init();
         return false;
       }
@@ -142,10 +178,10 @@ public class TablePropertiesManager extends PreferenceActivity {
     // display category
 
     {
-    PreferenceCategory displayCat = new PreferenceCategory(this);
-    root.addPreference(displayCat);
-    displayCat.setTitle(getString(R.string.display_settings));
-    addViewPreferences(displayCat);
+      PreferenceCategory displayCat = new PreferenceCategory(this);
+      root.addPreference(displayCat);
+      displayCat.setTitle(getString(R.string.display_settings));
+      addViewPreferences(displayCat);
     }
     PreferenceCategory displayListViewCat = new PreferenceCategory(this);
     root.addPreference(displayListViewCat);
@@ -162,56 +198,71 @@ public class TablePropertiesManager extends PreferenceActivity {
     displayMapViewCat.setTitle(getString(R.string.display_map_view_settings));
     addMapViewPreferences(displayMapViewCat);
 
-
     setPreferenceScreen(root);
   }
 
   private void addViewPreferences(PreferenceCategory prefCat) {
 
-
     // int[] viewTypes = settings.getPossibleViewTypes();
 
     // This code got all commented out with the rewrite of TableViewType.
-//    Set<TableViewType> viewTypes = tp.getPossibleViewTypes();
-//    String[] viewTypeIds = new String[viewTypes.length];
-//    String[] viewTypeNames = new String[viewTypes.length];
-//    // for (int i = 0; i < viewTypes.length; i++) {
-//    // int viewType = viewTypes[i];
-//    // viewTypeIds[i] = String.valueOf(viewType);
-//    // viewTypeNames[i] = LanguageUtil.getViewTypeLabel(viewType);
-//    // }
-//    // so now we need to populate the actual menu with the thing to save
-//    // and to the human-readable labels.
-//    for (int i = 0; i < viewTypes.length; i++) {
-//      viewTypeIds[i] = viewTypes[i].name();
-//      viewTypeNames[i] = viewTypes[i].name();
-//    }
+    // Set<TableViewType> viewTypes = tp.getPossibleViewTypes();
+    // String[] viewTypeIds = new String[viewTypes.length];
+    // String[] viewTypeNames = new String[viewTypes.length];
+    // // for (int i = 0; i < viewTypes.length; i++) {
+    // // int viewType = viewTypes[i];
+    // // viewTypeIds[i] = String.valueOf(viewType);
+    // // viewTypeNames[i] = LanguageUtil.getViewTypeLabel(viewType);
+    // // }
+    // // so now we need to populate the actual menu with the thing to save
+    // // and to the human-readable labels.
+    // for (int i = 0; i < viewTypes.length; i++) {
+    // viewTypeIds[i] = viewTypes[i].name();
+    // viewTypeNames[i] = viewTypes[i].name();
+    // }
     ListPreference viewTypePref = new ListPreference(this);
     viewTypePref.setTitle(getString(R.string.default_view_type));
     viewTypePref.setDialogTitle(getString(R.string.change_default_view_type));
-//    viewTypePref.setEntryValues(viewTypeIds);
-//    viewTypePref.setEntries(viewTypeNames);
+    // viewTypePref.setEntryValues(viewTypeIds);
+    // viewTypePref.setEntries(viewTypeNames);
     // viewTypePref.setValue(String.valueOf(settings.getViewType()));
-    viewTypePref.setValue(tp.getDefaultViewType().name());
+
+    TableViewType type;
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+      type = TableUtil.get().getDefaultViewType(db, tableId);
+    } finally {
+      if (db != null) {
+        db.close();
+      }
+    }
+    viewTypePref.setValue(type.name());
     // TODO: currently throwing an error i think
     // viewTypePref.setSummary(LanguageUtil.getViewTypeLabel(
     // settings.getViewType()));
-    viewTypePref.setSummary(tp.getDefaultViewType().name());
+    viewTypePref.setSummary(type.name());
     viewTypePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
-        SQLiteDatabase db = tp.getWritableDatabase();
+        SQLiteDatabase db = null;
         try {
+          db = DataModelDatabaseHelperFactory.getDatabase(
+              TablePropertiesManager.this, appName);
           db.beginTransaction();
-          tp.setDefaultViewType(db, TableViewType.valueOf((String) newValue));
+          TableUtil.get().setDefaultViewType(db, tableId,
+              TableViewType.valueOf((String) newValue));
           db.setTransactionSuccessful();
-        } catch ( Exception e ) {
+        } catch (Exception e) {
           e.printStackTrace();
           Log.e(TAG, "Unable to change default view type: " + e.toString());
-          Toast.makeText(getParent(), "Unable to change default view type", Toast.LENGTH_LONG).show();
+          Toast.makeText(getParent(), "Unable to change default view type", Toast.LENGTH_LONG)
+              .show();
         } finally {
-          db.endTransaction();
-          db.close();
+          if ( db != null ) {
+            db.endTransaction();
+            db.close();
+          }
         }
         init();
         return false;
@@ -219,57 +270,62 @@ public class TablePropertiesManager extends PreferenceActivity {
     });
     prefCat.addPreference(viewTypePref);
 
-//    // Now let's add the pref for the Form.
-//    EditFormDialogPreference formPref = new EditFormDialogPreference(this, tp);
-//    prefCat.addPreference(formPref);
-//    formPref.setTitle(getString(R.string.default_survey_form));
-//    formPref.setDialogTitle(getString(R.string.edit_default_form));
+    // // Now let's add the pref for the Form.
+    // EditFormDialogPreference formPref = new EditFormDialogPreference(this,
+    // tp);
+    // prefCat.addPreference(formPref);
+    // formPref.setTitle(getString(R.string.default_survey_form));
+    // formPref.setDialogTitle(getString(R.string.edit_default_form));
 
     Preference rowColorRulePrefs = new Preference(this);
     rowColorRulePrefs.setTitle(getString(R.string.edit_table_color_rules));
-//    rowColorRulePrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+    // rowColorRulePrefs.setOnPreferenceClickListener(new
+    // OnPreferenceClickListener() {
 
-//      @Override
-//      public boolean onPreferenceClick(Preference preference) {
-//        Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
-//            ColorRuleManagerActivity.class);
-//        rowColorRuleManagerIntent.putExtra(
-//            Constants.IntentKeys.APP_NAME, tp.getAppName());
-//        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-//            tp.getTableId());
-//        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
-//            ColorRuleGroup.Type.TABLE.name());
-//        startActivity(rowColorRuleManagerIntent);
-//        return true;
-//      }
+    // @Override
+    // public boolean onPreferenceClick(Preference preference) {
+    // Intent rowColorRuleManagerIntent = new
+    // Intent(TablePropertiesManager.this,
+    // ColorRuleManagerActivity.class);
+    // rowColorRuleManagerIntent.putExtra(
+    // Constants.IntentKeys.APP_NAME, tp.getAppName());
+    // rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
+    // tp.getTableId());
+    // rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
+    // ColorRuleGroup.Type.TABLE.name());
+    // startActivity(rowColorRuleManagerIntent);
+    // return true;
+    // }
 
-//    });
-//    prefCat.addPreference(rowColorRulePrefs);
-//
-//    Preference statusColumnColorRulePref = new Preference(this);
-//    statusColumnColorRulePref.setTitle(getString(R.string.edit_status_column_color_rules));
-//    statusColumnColorRulePref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-//
-//      @Override
-//      public boolean onPreferenceClick(Preference preference) {
-//        Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
-//            ColorRuleManagerActivity.class);
-//        rowColorRuleManagerIntent.putExtra(Constants.IntentKeys.APP_NAME,
-//            tp.getAppName());
-//        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-//            tp.getTableId());
-//        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
-//            ColorRuleGroup.Type.STATUS_COLUMN.name());
-//        startActivity(rowColorRuleManagerIntent);
-//        return true;
-//      }
-//
-//    });
-//    prefCat.addPreference(statusColumnColorRulePref);
+    // });
+    // prefCat.addPreference(rowColorRulePrefs);
+    //
+    // Preference statusColumnColorRulePref = new Preference(this);
+    // statusColumnColorRulePref.setTitle(getString(R.string.edit_status_column_color_rules));
+    // statusColumnColorRulePref.setOnPreferenceClickListener(new
+    // OnPreferenceClickListener() {
+    //
+    // @Override
+    // public boolean onPreferenceClick(Preference preference) {
+    // Intent rowColorRuleManagerIntent = new
+    // Intent(TablePropertiesManager.this,
+    // ColorRuleManagerActivity.class);
+    // rowColorRuleManagerIntent.putExtra(Constants.IntentKeys.APP_NAME,
+    // tp.getAppName());
+    // rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
+    // tp.getTableId());
+    // rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
+    // ColorRuleGroup.Type.STATUS_COLUMN.name());
+    // startActivity(rowColorRuleManagerIntent);
+    // return true;
+    // }
+    //
+    // });
+    // prefCat.addPreference(statusColumnColorRulePref);
 
     // Grab the key value store helper from the table activity.
-    final KeyValueStoreHelper kvsHelper = tp
-        .getKeyValueStoreHelper(KeyValueStoreConstants.PARTITION_TABLE);
+    final KeyValueStoreHelper kvsHelper = new KeyValueStoreHelper(this, appName, tableId,
+        KeyValueStoreConstants.PARTITION_TABLE);
 
     // Color Options Preference!
     String colorType = kvsHelper.getString(KEY_COLOR_RULE_TYPE);
@@ -280,8 +336,8 @@ public class TablePropertiesManager extends PreferenceActivity {
     ListPreference colorRulePref = new ListPreference(this);
     colorRulePref.setTitle("Color Rule for Graph and Map Markers");
     colorRulePref.setDialogTitle("Change which color rule markers adhere to.");
-    String[] colorRuleTypes = { COLOR_TYPE_NONE,
-        COLOR_TYPE_TABLE, COLOR_TYPE_STATUS, COLOR_TYPE_COLUMN };
+    String[] colorRuleTypes = { COLOR_TYPE_NONE, COLOR_TYPE_TABLE, COLOR_TYPE_STATUS,
+        COLOR_TYPE_COLUMN };
     colorRulePref.setEntryValues(colorRuleTypes);
     colorRulePref.setEntries(colorRuleTypes);
     colorRulePref.setValue(colorType);
@@ -299,35 +355,63 @@ public class TablePropertiesManager extends PreferenceActivity {
     // If the color rule type is columns, add the preference to select the
     // column.
     if (colorType.equals(COLOR_TYPE_COLUMN)) {
-      List<String> elementKeys = tp.getPersistedColumns();
-      String[] colorColDisplayNames = new String[elementKeys.size()];
-      String[] colorColElementKeys = new String[elementKeys.size()];
-      for (int i = 0; i < elementKeys.size(); i++) {
-        String elementKey = elementKeys.get(i);
-        ColumnDefinition cd = tp.getColumnDefinitionByElementKey(elementKey);
-        colorColDisplayNames[i] = ColumnUtil.getLocalizedDisplayName(tp, elementKey);
-        colorColElementKeys[i] = elementKey;
+      ArrayList<String> colorColDisplayNames = new ArrayList<String>();
+      ArrayList<String> colorColElementKeys = new ArrayList<String>();
+      db = null;
+      try {
+        db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+        List<Column> columns = ODKDatabaseUtils.getUserDefinedColumns(db, tableId);
+        ArrayList<ColumnDefinition> orderedDefns = 
+            ColumnDefinition.buildColumnDefinitions(columns);
+        for (ColumnDefinition cd : orderedDefns) {
+          if (cd.isUnitOfRetention()) {
+            String localizedDisplayName;
+            localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId,
+                cd.getElementKey());
+
+            colorColDisplayNames.add(localizedDisplayName);
+            colorColElementKeys.add(cd.getElementKey());
+          }
+        }
+      } finally {
+        if (db != null) {
+          db.close();
+        }
       }
 
       ColumnDefinition colorColumn = null;
       try {
-        colorColumn = tp.getColumnDefinitionByElementKey(
-          kvsHelper.getString(KEY_COLOR_RULE_COLUMN));
-      } catch ( IllegalArgumentException e ) {
+        colorColumn = ColumnDefinition.find(orderedDefns,
+            kvsHelper.getString(KEY_COLOR_RULE_COLUMN));
+      } catch (IllegalArgumentException e) {
         // no-op
       }
-      if (colorColumn == null && elementKeys.size() > 0) {
-        kvsHelper.setString(KEY_COLOR_RULE_COLUMN, elementKeys.get(0));
-        colorColumn = tp.getColumnDefinitionByElementKey(elementKeys.get(0));
+      if (colorColumn == null && colorColElementKeys.size() > 0) {
+        kvsHelper.setString(KEY_COLOR_RULE_COLUMN, colorColElementKeys.get(0));
+        colorColumn = ColumnDefinition.find(orderedDefns, colorColElementKeys.get(0));
+      }
+
+      String localizedDisplayName;
+      db = null;
+      try {
+        db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId,
+            colorColumn.getElementKey());
+      } finally {
+        if (db != null) {
+          db.close();
+        }
       }
 
       ListPreference colorColumnPref = new ListPreference(this);
       colorColumnPref.setTitle("Color Rule Column");
       colorColumnPref.setDialogTitle("Change the column that applies the color rule.");
-      colorColumnPref.setEntryValues(colorColElementKeys);
-      colorColumnPref.setEntries(colorColDisplayNames);
+      colorColumnPref.setEntryValues(colorColElementKeys.toArray(new String[colorColElementKeys
+          .size()]));
+      colorColumnPref.setEntries(colorColDisplayNames.toArray(new String[colorColDisplayNames
+          .size()]));
       colorColumnPref.setValue(colorColumn.getElementKey());
-      colorColumnPref.setSummary(ColumnUtil.getLocalizedDisplayName(tp, colorColumn.getElementKey()));
+      colorColumnPref.setSummary(localizedDisplayName);
       colorColumnPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -341,68 +425,74 @@ public class TablePropertiesManager extends PreferenceActivity {
   }
 
   private void addListViewPreferences(PreferenceCategory prefCat) {
-      Preference listViewPrefs = new Preference(this);
-      listViewPrefs.setTitle(getString(R.string.list_view_manager));
-      listViewPrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+    Preference listViewPrefs = new Preference(this);
+    listViewPrefs.setTitle(getString(R.string.list_view_manager));
+    listViewPrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
 
-        @Override
-        public boolean onPreferenceClick(Preference preference) {
-//          Intent selectListViewIntent = new Intent(TablePropertiesManager.this,
-//              ListViewManager.class);
-//          selectListViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-//          selectListViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
-//          startActivity(selectListViewIntent);
-          return true;
-        }
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        // Intent selectListViewIntent = new Intent(TablePropertiesManager.this,
+        // ListViewManager.class);
+        // selectListViewIntent.putExtra(Constants.IntentKeys.APP_NAME,
+        // tp.getAppName());
+        // selectListViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
+        // tp.getTableId());
+        // startActivity(selectListViewIntent);
+        return true;
+      }
 
-      });
-      prefCat.addPreference(listViewPrefs);
+    });
+    prefCat.addPreference(listViewPrefs);
 
-      FileSelectorPreference detailViewPref = new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
-      detailViewPref.setTitle(getString(R.string.detail_view_file));
-      detailViewPref.setDialogTitle(getString(R.string.change_detail_view_file));
-//      final KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
-//      String detailViewFilename = kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
-//      detailViewPref.setText(detailViewFilename);
-      detailViewPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue) {
-          // tp.setDetailViewFilename((String) newValue);
-//          kvsh.setString(DetailDisplayActivity.KEY_FILENAME, (String) newValue);
-          init();
-          return false;
-        }
-      });
-      prefCat.addPreference(detailViewPref);
+    FileSelectorPreference detailViewPref = new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
+    detailViewPref.setTitle(getString(R.string.detail_view_file));
+    detailViewPref.setDialogTitle(getString(R.string.change_detail_view_file));
+    // final KeyValueStoreHelper kvsh =
+    // tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+    // String detailViewFilename =
+    // kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
+    // detailViewPref.setText(detailViewFilename);
+    detailViewPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        // tp.setDetailViewFilename((String) newValue);
+        // kvsh.setString(DetailDisplayActivity.KEY_FILENAME, (String)
+        // newValue);
+        init();
+        return false;
+      }
+    });
+    prefCat.addPreference(detailViewPref);
 
   }
 
   private void addGraphViewPreferences(PreferenceCategory prefCat) {
-      Log.d(TAG, "Graph view type was selected");
-      // TODO -- should we really do the graph manager here?
-      Preference graphViewPrefs = new Preference(this);
-      graphViewPrefs.setTitle(getString(R.string.graph_view_manager));
-      graphViewPrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+    Log.d(TAG, "Graph view type was selected");
+    // TODO -- should we really do the graph manager here?
+    Preference graphViewPrefs = new Preference(this);
+    graphViewPrefs.setTitle(getString(R.string.graph_view_manager));
+    graphViewPrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
 
-        @Override
-        public boolean onPreferenceClick(Preference preference) {
-//          Intent selectGraphViewIntent = new Intent(TablePropertiesManager.this,
-//              GraphManagerActivity.class);
-//          selectGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-//          selectGraphViewIntent.putExtra(
-//              Constants.IntentKeys.TABLE_ID,
-//              tp.getTableId());
-//          startActivity(selectGraphViewIntent);
-          return true;
-        }
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        // Intent selectGraphViewIntent = new
+        // Intent(TablePropertiesManager.this,
+        // GraphManagerActivity.class);
+        // selectGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME,
+        // tp.getAppName());
+        // selectGraphViewIntent.putExtra(
+        // Constants.IntentKeys.TABLE_ID,
+        // tp.getTableId());
+        // startActivity(selectGraphViewIntent);
+        return true;
+      }
 
-      });
-      prefCat.addPreference(graphViewPrefs);
+    });
+    prefCat.addPreference(graphViewPrefs);
   }
 
   private void addMapViewPreferences(PreferenceCategory prefCat) {
-      }
-
+  }
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -418,8 +508,8 @@ public class TablePropertiesManager extends PreferenceActivity {
       uri = data.getData();
       filename = uri.getPath();
       relativePath = getRelativePathOfFile(filename);
-//      kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
-//      kvsh.setString(DetailDisplayActivity.KEY_FILENAME, relativePath);
+      // kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+      // kvsh.setString(DetailDisplayActivity.KEY_FILENAME, relativePath);
       // tp.setDetailViewFilename(filename);
       init();
       break;
@@ -429,19 +519,18 @@ public class TablePropertiesManager extends PreferenceActivity {
       // We need to get the relative path under the app name.
       relativePath = getRelativePathOfFile(filename);
       // Trying to get the new name to the _VIEWS partition.
-      kvsh = tp.getKeyValueStoreHelper(
+      kvsh = new KeyValueStoreHelper(this, this.appName, this.tableId,
           LocalKeyValueStoreConstants.ListViews.PARTITION_VIEWS);
       // Set the name here statically, just to test. Later will want to
       // allow custom naming, checking for redundancy, etc.
       KeyValueHelper aspectHelper = kvsh.getAspectHelper("List View 1");
-      aspectHelper.setString(
-          LocalKeyValueStoreConstants.ListViews.KEY_FILENAME,
-          relativePath);
+      aspectHelper.setString(LocalKeyValueStoreConstants.ListViews.KEY_FILENAME, relativePath);
       init();
       break;
     case RC_MAP_LIST_VIEW_FILE:
-//      tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION).setString(
-//          TableMapFragment.KEY_FILENAME, getRelativePathOfFile(data.getData().getPath()));
+      // tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION).setString(
+      // TableMapFragment.KEY_FILENAME,
+      // getRelativePathOfFile(data.getData().getPath()));
       init();
     default:
       super.onActivityResult(requestCode, resultCode, data);
@@ -493,8 +582,9 @@ public class TablePropertiesManager extends PreferenceActivity {
           } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-            Toast.makeText(TablePropertiesManager.this, getString(R.string.file_not_found, fullFile.getAbsolutePath()),
-                Toast.LENGTH_LONG).show();
+            Toast.makeText(TablePropertiesManager.this,
+                getString(R.string.file_not_found, fullFile.getAbsolutePath()), Toast.LENGTH_LONG)
+                .show();
           }
         }
         try {

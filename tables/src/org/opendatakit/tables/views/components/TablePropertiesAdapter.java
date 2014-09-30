@@ -2,10 +2,12 @@ package org.opendatakit.tables.views.components;
 
 import java.util.List;
 
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,10 +29,14 @@ public class TablePropertiesAdapter extends BaseAdapter
   private static final String TAG =
       TablePropertiesAdapter.class.getSimpleName();
 
-  private List<TableProperties> mTableList;
+  private Context mContext;
+  private String mAppName;
+  private List<String> mTableIdList;
 
-  public TablePropertiesAdapter(List<TableProperties> list) {
-    this.mTableList = list;
+  public TablePropertiesAdapter(Context context, String appName, List<String> list) {
+    this.mContext = context;
+    this.mAppName = appName;
+    this.mTableIdList = list;
   }
 
   @Override
@@ -43,7 +49,20 @@ public class TablePropertiesAdapter extends BaseAdapter
         createView(parent) :
         (RelativeLayout) convertView;
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
-    textView.setText(this.getList().get(position).getLocalizedDisplayName());
+    String tableId = this.getList().get(position);
+
+    String localizedDisplayName;
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+ 
+    textView.setText(localizedDisplayName);
     ImageView imageView = (ImageView) view.findViewById(R.id.row_item_icon);
     imageView.setOnClickListener(new View.OnClickListener() {
 
@@ -57,8 +76,8 @@ public class TablePropertiesAdapter extends BaseAdapter
     return view;
   }
 
-  List<TableProperties> getList() {
-    return this.mTableList;
+  List<String> getList() {
+    return this.mTableIdList;
   }
 
   private RelativeLayout createView(ViewGroup parent) {

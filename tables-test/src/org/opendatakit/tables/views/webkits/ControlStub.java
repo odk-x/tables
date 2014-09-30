@@ -1,12 +1,14 @@
 package org.opendatakit.tables.views.webkits;
 
+import java.util.ArrayList;
 import java.util.Map;
 
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.ODKDatabaseUtilsWrapper;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 public class ControlStub extends Control {
@@ -35,18 +37,14 @@ public class ControlStub extends Control {
   }
   
   @Override
-  TableProperties retrieveTablePropertiesForTable(String tableId) {
-    return TABLE_PROPERTIES_FOR_ID;
-  }
-  
-  @Override
   protected SQLiteDatabase getWritableDatabase() {
     return DATABASE;
   }
   
   @Override
   protected ContentValues getContentValuesFromMap(
-      TableProperties tableProperties,
+      Context context, String appName, String tableId,
+      ArrayList<ColumnDefinition> orderedDefns,
       Map<String, String> elementKeyToValue) {
     return CONTENT_VALUES;
   }

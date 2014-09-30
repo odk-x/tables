@@ -19,7 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.ColumnUtil;
 
@@ -42,16 +43,18 @@ import android.widget.TableRow;
 public class MultipleChoiceSettingDialog extends Dialog {
 
     private Context context;
-    private TableProperties tp;
+    private String appName;
+    private String tableId;
     private ColumnDefinition cd;
     private LinearLayout layout;
     private ArrayList<String> optionValues;
     private List<EditText> optionFields;
 
-    public MultipleChoiceSettingDialog(Context context, TableProperties tp, ColumnDefinition cd) {
+    public MultipleChoiceSettingDialog(Context context, String appName, String tableId, ColumnDefinition cd) {
         super(context);
         this.context = context;
-        this.tp = tp;
+        this.appName = appName;
+        this.tableId = tableId;
         this.cd = cd;
         setTitle(context.getString(R.string.multiple_choice_options));
         layout = new LinearLayout(context);
@@ -65,7 +68,18 @@ public class MultipleChoiceSettingDialog extends Dialog {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         optionValues.clear();
-        ArrayList<String> choices = ColumnUtil.getDisplayChoicesList(tp, cd.getElementKey());
+        ArrayList<String> choices;
+        
+        SQLiteDatabase db = null;
+        try {
+          db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+          choices = ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
+        } finally {
+          if ( db != null ) {
+            db.close();
+          }
+        }
+
         for (String option : choices) {
             optionValues.add(option);
         }
@@ -118,14 +132,18 @@ public class MultipleChoiceSettingDialog extends Dialog {
             @Override
             public void onClick(View v) {
                 updateValueList();
-                SQLiteDatabase db =  tp.getWritableDatabase();
+                SQLiteDatabase db = null;
                 try {
+                  DataModelDatabaseHelper dbh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
+                  db = dbh.getWritableDatabase();
                   db.beginTransaction();
-                  ColumnUtil.setDisplayChoicesList(db, tp.getTableId(), cd, optionValues);
+                  ColumnUtil.get().setDisplayChoicesList(db, tableId, cd, optionValues);
                   db.setTransactionSuccessful();
                 } finally {
-                  db.endTransaction();
-                  db.close();
+                  if ( db != null ) {
+                    db.endTransaction();
+                    db.close();
+                  }
                 }
                 dismiss();
             }

@@ -13,16 +13,18 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ColumnUtil;
 import org.opendatakit.tables.utils.ElementTypeManipulator;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
+import org.opendatakit.tables.utils.TableUtil;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -98,11 +100,17 @@ public class TableData {
   private void initMaps() {
   }
 
-  private TableProperties getTableProperties() {
-    TableProperties tp = 
-        TableProperties.getTablePropertiesForTable(
-            Tables.getInstance().getApplicationContext(), mTable.getAppName(), mTable.getTableId());
-    return tp;
+  private ArrayList<ColumnDefinition> getColumnDefinitions() {
+    SQLiteDatabase db = null;
+    try {
+      db = DataModelDatabaseHelperFactory.getDatabase(
+          Tables.getInstance().getApplicationContext(), mTable.getAppName());
+      return TableUtil.get().getColumnDefinitions(db, mTable.getTableId());
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
   }
   
   // Returns the number of rows in the table being viewed.
@@ -128,7 +136,7 @@ public class TableData {
    *         for the given column name format: [row1, row2, row3, row4]
    */
   public String getColumnData(String elementPath, int requestedRows) {
-    String elementKey = getTableProperties().getElementKeyFromElementPath(elementPath);
+    String elementKey = ColumnUtil.get().getElementKeyFromElementPath(elementPath);
     if (elementKey == null) {
       Log.e(TAG, "column not found with element path: " + elementPath);
       return null;
@@ -157,7 +165,7 @@ public class TableData {
    */
   public String getColumns() {
     Map<String, String> colInfo = new HashMap<String, String>();
-    ArrayList<ColumnDefinition> orderedDefn = getTableProperties().getColumnDefinitions();
+    ArrayList<ColumnDefinition> orderedDefn = getColumnDefinitions();
     for (ColumnDefinition cd : orderedDefn) {
       String label = getColumnTypeLabelForElementKey(cd.getElementKey());
       colInfo.put(cd.getElementKey(), label);
@@ -173,8 +181,7 @@ public class TableData {
    * @return
    */
   private String getColumnTypeLabelForElementKey(String elementKey) {
-    TableProperties tp = getTableProperties();
-    ColumnDefinition cd = tp.getColumnDefinitionByElementKey(elementKey);
+    ColumnDefinition cd = ColumnDefinition.find(getColumnDefinitions(), elementKey);
     ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
     ITypeManipulatorFragment r = m.getDefaultRenderer(cd.getType());
     String label = r.getElementTypeDisplayLabel();
@@ -185,20 +192,21 @@ public class TableData {
     int correctedIndex = getIndexIntoDataTable(rowNumber);
     int foregroundColor = -16777216;
 
-    TableProperties tp = getTableProperties();
-    String elementKey = tp.getElementKeyFromElementPath(elementPath);
+    String elementKey = ColumnUtil.get().getElementKeyFromElementPath(elementPath);
     if (elementKey == null) {
       return String.format("#%06X", (0xFFFFFF & foregroundColor));
     }
     ColorRuleGroup colRul = this.mElementKeyToColorRuleGroup.get(elementKey);
     if (colRul == null) {
       // If it's not already there, cache it for future use.
-      colRul = ColorRuleGroup.getColumnColorRuleGroup(tp, elementKey);
+      colRul = ColorRuleGroup.getColumnColorRuleGroup(
+          Tables.getInstance().getApplicationContext(),
+          mTable.getAppName(), mTable.getTableId(), elementKey);
       this.mElementKeyToColorRuleGroup.put(elementKey, colRul);
     }
 
     Row row = mTable.getRowAtIndex(correctedIndex);
-    ColorGuide guide = colRul.getColorGuide(row);
+    ColorGuide guide = colRul.getColorGuide(getColumnDefinitions(), row);
     if (guide != null) {
       foregroundColor = guide.getForeground();
     }
@@ -211,12 +219,13 @@ public class TableData {
     int foregroundColor = -16777216;
 
     if (mStatusColumnColorRuleGroup == null) {
-      TableProperties tp = getTableProperties();
-      mStatusColumnColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
+      mStatusColumnColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(
+          Tables.getInstance().getApplicationContext(),
+          mTable.getAppName(), mTable.getTableId());
     }
 
     Row row = mTable.getRowAtIndex(correctedIndex);
-    ColorGuide guide = mStatusColumnColorRuleGroup.getColorGuide(row);
+    ColorGuide guide = mStatusColumnColorRuleGroup.getColorGuide(getColumnDefinitions(), row);
     if (guide != null) {
       foregroundColor = guide.getForeground();
     }
@@ -229,12 +238,13 @@ public class TableData {
     int foregroundColor = -16777216;
 
     if (mRowColorRuleGroup == null) {
-      TableProperties tp = getTableProperties();
-      mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
+      mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(
+          Tables.getInstance().getApplicationContext(),
+          mTable.getAppName(), mTable.getTableId());
     }
 
     Row row = mTable.getRowAtIndex(correctedIndex);
-    ColorGuide guide = mRowColorRuleGroup.getColorGuide(row);
+    ColorGuide guide = mRowColorRuleGroup.getColorGuide(getColumnDefinitions(), row);
     if (guide != null) {
       foregroundColor = guide.getForeground();
     }
@@ -253,12 +263,13 @@ public class TableData {
       return null;
     }
 
-    String elementKey = getTableProperties().getElementKeyFromElementPath(elementPath);
+    String elementKey = ColumnUtil.get().getElementKeyFromElementPath(elementPath);
     if (elementKey == null) {
       Log.e(TAG, "column with elementPath: " + elementPath + " does not" + " exist.");
       return null;
     }
-    ColumnDefinition cd = getTableProperties().getColumnDefinitionByElementKey(elementKey);
+    ArrayList<ColumnDefinition> orderedDefns = getColumnDefinitions();
+    ColumnDefinition cd = ColumnDefinition.find(orderedDefns, elementKey);
     ElementDataType type = cd.getType().getDataType();
     if ( type == ElementDataType.array ) {
       String result = row.getRawDataOrMetadataByElementKey(elementKey);
@@ -300,7 +311,7 @@ public class TableData {
       } else {
         List<ColumnDefinition> children = colDefn.getChildren();
         if ( children.isEmpty() ) {
-          Class<?> clazz = ColumnUtil.getDataType(dataType);
+          Class<?> clazz = ColumnUtil.get().getDataType(dataType);
           Object value = row.getRawDataType(colDefn.getElementKey(), clazz);
           if ( value != null ) {
             resultSet.put(colDefn.getElementName(), value);
@@ -372,7 +383,7 @@ public class TableData {
   }
 
   public String getTableId() {
-    return getTableProperties().getTableId();
+    return mTable.getTableId();
   }
 
   public String getRowId(int index) {
