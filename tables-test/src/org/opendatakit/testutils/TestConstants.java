@@ -66,6 +66,11 @@ public class TestConstants {
     public static final String STRING_COLUMN = "stringColumn";
     public static final String INT_COLUMN = "intColumn";
     public static final String NUMBER_COLUMN = "numberColumn";
+    public static final String GEOPOINT_COLUMN = "geo";
+    public static final String LATITUDE_COLUMN = "geo_latitude";
+    public static final String LONGITUDE_COLUMN = "geo_longitude";
+    public static final String ALTITUDE_COLUMN = "geo_altitude";
+    public static final String ACCURACY_COLUMN = "geo_accuracy";
     public static final String MISSING_COLUMN = "missingColumn";
   }
 

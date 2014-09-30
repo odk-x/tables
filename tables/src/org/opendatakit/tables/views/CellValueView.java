@@ -18,7 +18,7 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.utils.ColumnUtil;
 
 import android.content.Context;
@@ -34,7 +34,7 @@ public class CellValueView {
 
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       ArrayList<String> displayChoices = ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
       if (displayChoices != null) {
         return new MultipleChoiceEditView(context, cd, displayChoices, value);

@@ -6,7 +6,7 @@ import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -151,7 +151,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
   protected void initializeAllPreferences() {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
 
       this.initializeDisplayNamePreference(db);
       this.initializeTableIdPreference();

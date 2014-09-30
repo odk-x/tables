@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.ColumnUtil;
@@ -76,7 +76,7 @@ public class ColumnListFragment extends ListFragment {
     ArrayList<String> colOrder;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(activity, activity.getAppName());
+      db = DatabaseFactory.get().getDatabase(activity, activity.getAppName());
       colOrder = TableUtil.get().getColumnOrder(db, activity.getTableId());
     } finally {
       if ( db != null ) {
@@ -105,7 +105,7 @@ public class ColumnListFragment extends ListFragment {
     List<String> elementKeys = this.retrieveAllElementKeys();
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(activity, activity.getAppName());
+      db = DatabaseFactory.get().getDatabase(activity, activity.getAppName());
       for (String elementKey : elementKeys) {
         String localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db,
             activity.getTableId(), elementKey);

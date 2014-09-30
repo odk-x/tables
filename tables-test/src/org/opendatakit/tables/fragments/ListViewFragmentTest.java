@@ -36,6 +36,7 @@ public class ListViewFragmentTest {
   
   @Before
   public void before() {
+    TestCaseUtils.setThreeTableDataset();
     TestCaseUtils.setExternalStorageMounted();
     ShadowLog.stream = System.out;
     TableDisplayActivityStub.BUILD_MENU_FRAGMENT = false;

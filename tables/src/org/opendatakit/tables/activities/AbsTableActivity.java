@@ -3,7 +3,7 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableUtil;
@@ -39,7 +39,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
     
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(
+      db = DatabaseFactory.get().getDatabase(
           Tables.getInstance().getApplicationContext(), getAppName());
       mColumnDefinitions = TableUtil.get().getColumnDefinitions(db, getTableId());
     } finally {

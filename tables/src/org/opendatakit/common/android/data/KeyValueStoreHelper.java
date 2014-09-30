@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.database.DatabaseConstants;
 import org.opendatakit.common.android.utilities.DataHelper;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
@@ -82,7 +82,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     if ( this.db != null ) {
       return db;
     }
-    return DataModelDatabaseHelperFactory.getDatabase(context, appName);
+    return DatabaseFactory.get().getDatabase(context, appName);
   }
 
   private void releaseDatabase(SQLiteDatabase db) {

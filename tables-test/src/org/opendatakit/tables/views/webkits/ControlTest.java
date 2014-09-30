@@ -2,7 +2,8 @@ package org.opendatakit.tables.views.webkits;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -19,8 +20,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.ElementDataType;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -40,6 +41,7 @@ import org.robolectric.shadows.ShadowActivity.IntentForResult;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 /**
@@ -58,9 +60,13 @@ public class ControlTest {
 
   Control control;
   Activity activity;
-
+  
   @Before
   public void before() {
+    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
+    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
+    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
+    DatabaseFactory.set(factoryMock);
     ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
     String tableId = PRESENT_TABLE_ID;
     List<String> tableIds = new ArrayList<String>();
@@ -75,6 +81,7 @@ public class ControlTest {
     columns.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
         ElementDataType.number.name(), "[]"));
     doReturn(columns).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(tableId));
+    doReturn(0).when(wrapperMock).getTableHealth(any(SQLiteDatabase.class), eq(tableId));
     ODKDatabaseUtils.set(wrapperMock);
 
     TestCaseUtils.setExternalStorageMounted();
@@ -174,8 +181,6 @@ public class ControlTest {
 
     // Now we'll do the call and make sure that we called through to the mock
     // object successfully.
-    Map<String, String> validMap = getValidMap();
-    String validMapString = WebViewUtil.stringify(validMap);
     ContentValues contentValues = getContentValuesForValidMap();
     ControlStub.CONTENT_VALUES = contentValues;
     // we need to return a null ContentValues when we ask for it.
@@ -216,7 +221,7 @@ public class ControlTest {
       verify(ODKDatabaseUtils.get(), times(1)).updateDataInExistingDBTableWithId(
           any(SQLiteDatabase.class),
           eq(PRESENT_TABLE_ID),
-          (ArrayList<ColumnDefinition>) Matchers.anyListOf(ColumnDefinition.class),
+          Matchers.any(ArrayList.class),
           eq(contentValues),
           eq(rowId));
     } else {

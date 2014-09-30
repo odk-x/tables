@@ -15,15 +15,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.ControlStub;
 import org.robolectric.RobolectricTestRunner;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 /**
@@ -58,40 +58,34 @@ public class WebViewUtilsTest {
       String invalidValue) {
     
     String tableId = "table1";
-    String elementKey = "anyElementKey";
-    ColumnDefinition intCD = TestConstants.getColumnDefinitionMock(
-        elementKey,
-        columnType);
+    String elementKey = "anyKey";
     
-    ArrayList<ColumnDefinition> cdMock = new ArrayList<ColumnDefinition>();
-    cdMock.add(intCD);
+    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
+    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
+    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
+    DatabaseFactory.set(factoryMock);
 
     ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
 
     ArrayList<String> tableIds = new ArrayList<String>();
     tableIds.add(tableId);
-    doReturn(tableIds).when(wrapperMock.getAllTableIds(any(SQLiteDatabase.class)));
+    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
     
     List<Column> columns = new ArrayList<Column>();
-    columns.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
-        ElementDataType.string.name(), "[]"));
-    columns.add(new Column(TestConstants.ElementKeys.INT_COLUMN, TestConstants.ElementKeys.INT_COLUMN,
-        ElementDataType.integer.name(), "[]"));
-    columns.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
-        ElementDataType.number.name(), "[]"));
+    columns.add(new Column(elementKey,elementKey,columnType.toString(), "[]"));
     ArrayList<ColumnDefinition> orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
     
-    doReturn(columns).when(wrapperMock.getUserDefinedColumns(any(SQLiteDatabase.class), eq(tableId)));
+    doReturn(columns).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(tableId));
     ODKDatabaseUtils.set(wrapperMock);
     
     Map<String,String> invalidMap = new HashMap<String,String>();
-    invalidMap.put("bogus","4");
+    invalidMap.put(elementKey,"bogus");
     
     ContentValues contentValues = WebViewUtil.getContentValuesFromMap(
         null, 
         "tables",
-        "table1",
-        cdMock,
+        tableId,
+        orderedDefns,
         invalidMap);
     assertThat(contentValues).isNull();
   }

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.preferences.EditColorPreference;
@@ -194,7 +194,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       for (ColumnDefinition cd : orderedDefns ) {
         if ( cd.isUnitOfRetention() ) {
           
@@ -251,7 +251,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
       String localizedDisplayName;
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+        db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
         localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(), 
             this.mColorRuleGroup
             .getColorRules()
@@ -278,7 +278,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
         String localizedDisplayName;
         SQLiteDatabase db = null;
         try {
-          db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+          db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
           localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(), 
               mElementKey);
         } finally {

@@ -2,7 +2,7 @@ package org.opendatakit.tables.views.components;
 
 import java.util.List;
 
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableUtil;
 
@@ -54,7 +54,7 @@ public class TablePropertiesAdapter extends BaseAdapter
     String localizedDisplayName;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
     } finally {
       if ( db != null ) {

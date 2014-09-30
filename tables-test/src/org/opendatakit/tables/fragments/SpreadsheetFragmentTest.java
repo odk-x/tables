@@ -32,6 +32,7 @@ public class SpreadsheetFragmentTest {
 
   @Before
   public void before() {
+    TestCaseUtils.setThreeTableDataset();
     ShadowLog.stream = System.out;
     TestCaseUtils.setExternalStorageMounted();
     // We don't want to build the menu here, as it doesn't

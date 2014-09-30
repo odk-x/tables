@@ -29,7 +29,7 @@ import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.views.webkits.TableData;
@@ -104,7 +104,7 @@ public class OutputUtil {
 
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       ArrayList<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
       for (String tableId : tableIds) {
 
@@ -323,7 +323,7 @@ public class OutputUtil {
 
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       ArrayList<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
       for (String tableId : tableIds) {
         writeDataObject(db, appName, tableId, numberOfRows);

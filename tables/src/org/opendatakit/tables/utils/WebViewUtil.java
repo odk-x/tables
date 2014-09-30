@@ -28,7 +28,7 @@ import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -134,7 +134,7 @@ public class WebViewUtil {
       ArrayList<String> choices;
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+        db = DatabaseFactory.get().getDatabase(context, appName);
         choices = ColumnUtil.get().getDisplayChoicesList(db, tableId, colDefn.getElementKey());
       } finally {
         if ( db != null ) {
@@ -326,7 +326,7 @@ public class WebViewUtil {
     SQLiteDatabase db = null;
     UserTable userTable = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
 
       userTable = ODKDatabaseUtils.get().getDataInExistingDBTableWithId(db, 
           appName, tableId,

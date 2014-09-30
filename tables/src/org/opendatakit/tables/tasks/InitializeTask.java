@@ -20,7 +20,7 @@ import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.CsvUtil;
 import org.opendatakit.common.android.utilities.CsvUtil.ImportListener;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
@@ -117,7 +117,7 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
     ODKFileUtils.assertDirectoryStructure(mAppName);
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
     } finally {
       if (db != null) {

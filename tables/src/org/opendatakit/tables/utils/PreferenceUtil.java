@@ -19,7 +19,7 @@ import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.content.Context;
@@ -51,7 +51,7 @@ public class PreferenceUtil {
       TableViewType viewType) {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       db.beginTransaction();
       TableUtil.get().setDefaultViewType(db, tableId, viewType);
       db.setTransactionSuccessful();
@@ -83,7 +83,7 @@ public class PreferenceUtil {
     Integer result;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       KeyValueStoreHelper kvsh =
           new KeyValueStoreHelper(db, tableId, KeyValueStoreConstants.PARTITION_COLUMN);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
@@ -108,7 +108,7 @@ public class PreferenceUtil {
       int newColumnWith) {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       db.beginTransaction();
       KeyValueStoreHelper kvsh =
           new KeyValueStoreHelper(db, tableId, KeyValueStoreConstants.PARTITION_COLUMN);

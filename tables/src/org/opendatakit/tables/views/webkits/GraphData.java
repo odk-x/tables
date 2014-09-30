@@ -6,7 +6,7 @@ import java.util.List;
 import org.opendatakit.common.android.data.KeyValueStoreEntry;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
@@ -61,7 +61,7 @@ public class GraphData {
   public boolean isModifiable() {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
@@ -81,7 +81,7 @@ public class GraphData {
   public void setPermissions(String graphName, boolean isImmutable) {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphName);
@@ -104,7 +104,7 @@ public class GraphData {
     }
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
@@ -147,7 +147,7 @@ public class GraphData {
     List<KeyValueStoreEntry> graphViewEntries = new ArrayList<KeyValueStoreEntry>();
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(Tables.getInstance().getApplicationContext(), mAppName);
+      db = DatabaseFactory.get().getDatabase(Tables.getInstance().getApplicationContext(), mAppName);
       graphViewEntries = ODKDatabaseUtils.get().getDBTableMetadata(db, mTableId, 
           LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS, null, LocalKeyValueStoreConstants.Graph.KEY_GRAPH_TYPE);
     } finally {
@@ -167,7 +167,7 @@ public class GraphData {
   public String getGraphType() {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
@@ -220,7 +220,7 @@ public class GraphData {
   public void saveSelection(String aspect, String value) {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
@@ -239,7 +239,7 @@ public class GraphData {
   private String loadSelection(String value) {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
@@ -259,7 +259,7 @@ public class GraphData {
   public void deleteDefaultGraph() {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);

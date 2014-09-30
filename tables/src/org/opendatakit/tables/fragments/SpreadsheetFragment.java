@@ -9,7 +9,7 @@ import java.util.TimeZone;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
@@ -143,7 +143,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     ArrayList<String> newGroupBys;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       db.beginTransaction();
       newGroupBys = TableUtil.get().getColumnOrder(db, getTableId());
       newGroupBys.add(cd.getElementKey());
@@ -166,7 +166,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     ArrayList<String> newGroupBys;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       db.beginTransaction();
       newGroupBys = TableUtil.get().getColumnOrder(db, getTableId());
       newGroupBys.remove(cd.getElementKey());
@@ -188,7 +188,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   void setColumnAsSort(ColumnDefinition cd) {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       db.beginTransaction();
       TableUtil.get().setSortColumn(db, getTableId(), (cd == null) ? null : cd.getElementKey());
       db.setTransactionSuccessful();
@@ -208,7 +208,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   void setColumnAsIndexedCol(ColumnDefinition cd) {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       db.beginTransaction();
       TableUtil.get().setIndexColumn(db, getTableId(), (cd == null) ? null : cd.getElementKey());
       db.setTransactionSuccessful();
@@ -297,7 +297,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   private void deleteRow(String rowId) {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       ODKDatabaseUtils.get().deleteDataInDBTableWithId(db, getAppName(), getTableId(), rowId);
     } finally {
       if ( db != null ) {
@@ -362,7 +362,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       ArrayList<JoinColumn> joinColumns;
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+        db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
         joinColumns = ColumnUtil.get().getJoins(db, getTableId(), cd.getElementKey());
       } finally {
         if ( db != null ) {
@@ -404,7 +404,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           String joinedColTableDisplayName;
           db = null;
           try {
-            db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+            db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
             joinedColTableDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId, elementKey);
           } finally {
             if ( db != null ) {
@@ -481,7 +481,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     String localizedDisplayName;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(), 
           cd.getElementKey());
     } finally {
@@ -513,7 +513,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     ArrayList<JoinColumn> joinColumns;
     db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       joinColumns = ColumnUtil.get().getJoins(db, getTableId(), cd.getElementKey());
     } finally {
       if ( db != null ) {
@@ -546,7 +546,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     ArrayList<String> groupByColumns;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       sortColumn = TableUtil.get().getSortColumn(db, getTableId());
       indexColumn = TableUtil.get().getIndexColumn(db, getTableId());
       groupByColumns = TableUtil.get().getColumnOrder(db, getTableId());
@@ -615,7 +615,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           SQLiteDatabase db = null;
           ArrayList<String> choices;
           try {
-            db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+            db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
             choices = ColumnUtil.get().getDisplayChoicesList(db, getTableId(), cell.elementKey);
           } finally {
             if ( db != null ) {
@@ -636,7 +636,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
           db = null;
           try {
-            db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+            db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
             ODKDatabaseUtils.get().updateDataInExistingDBTableWithId(db, getTableId(), getColumnDefinitions(), values, cell.row.getRowId());
           } finally {
             if ( db != null ) {

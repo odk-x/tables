@@ -6,7 +6,7 @@ import java.util.Arrays;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.components.TableViewTypeAdapter;
@@ -39,8 +39,7 @@ public class DefaultViewTypePreference extends ListPreference {
     
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(
-          mContext, appName);
+      db = DatabaseFactory.get().getDatabase(mContext, appName);
       
       this.mPossibleViewTypes = new PossibleTableViewTypes(db, 
               tableId, orderedDefns);

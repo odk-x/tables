@@ -17,7 +17,7 @@ package org.opendatakit.tables.types;
 
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
@@ -51,7 +51,7 @@ public class FormType {
     String formType;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, FormType.KVS_PARTITION);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
       formType = aspectHelper.getString(FormType.KEY_FORM_TYPE);
@@ -81,7 +81,7 @@ public class FormType {
   public void persist(Context context, String appName, String tableId) {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       db.beginTransaction();
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db,
           tableId, FormType.KVS_PARTITION);

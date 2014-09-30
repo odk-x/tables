@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.KeyValueStoreEntry;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -91,7 +91,7 @@ public class GraphManagerFragment extends AbsTableDisplayFragment {
     List<KeyValueStoreEntry> graphViewEntries = new ArrayList<KeyValueStoreEntry>();
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       
       KeyValueStoreHelper kvshForGraphWritLarge =
           new KeyValueStoreHelper(db, tableId, LocalKeyValueStoreConstants.Graph.PARTITION);

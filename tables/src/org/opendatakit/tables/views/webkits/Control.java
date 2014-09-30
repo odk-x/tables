@@ -13,7 +13,7 @@ import org.json.JSONObject;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -69,7 +69,7 @@ public class Control {
 
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mActivity, mAppName);
+      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
       this.mTableIds = ODKDatabaseUtils.get().getAllTableIds(db);
     } finally {
       if ( db != null ) {
@@ -87,7 +87,7 @@ public class Control {
   ArrayList<ColumnDefinition> retrieveColumnDefinitions(String tableId) {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mActivity, mAppName);
+      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
       return TableUtil.get().getColumnDefinitions(db, tableId);
     } finally {
       if ( db != null ) {
@@ -466,7 +466,7 @@ public class Control {
       String localizedDisplayName;
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(mActivity, mAppName);
+        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
         localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId, elementKey);
       } finally {
         if ( db != null ) {
@@ -489,7 +489,7 @@ public class Control {
     String localizedDisplayName;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mActivity, mAppName);
+      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
     } finally {
       if ( db != null ) {
@@ -578,7 +578,7 @@ public class Control {
 
      SQLiteDatabase db = null;
      try {
-       db = DataModelDatabaseHelperFactory.getDatabase(mActivity, mAppName);
+       db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
 
        ArrayList<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
        ArrayList<ColumnDefinition> orderedColumns = ColumnDefinition.buildColumnDefinitions(columns);
@@ -936,7 +936,7 @@ public class Control {
       String localizedDisplayName;
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(mActivity, mAppName);
+        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
         localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
       } finally {
         if ( db != null ) {
@@ -977,7 +977,7 @@ public class Control {
     }
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(mActivity, mAppName);
+      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
       UserTable userTable = ODKDatabaseUtils.get().rawSqlQuery(db, mAppName,
           tableId, 
           ColumnDefinition.getRetentionColumnNames(retrieveColumnDefinitions(tableId)),

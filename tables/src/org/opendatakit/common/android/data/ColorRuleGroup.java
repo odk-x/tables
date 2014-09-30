@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 
 import android.content.Context;
@@ -92,7 +92,7 @@ public class ColorRuleGroup {
     String jsonRulesString = DEFAULT_KEY_COLOR_RULES;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(ctxt, appName);
+      db = DatabaseFactory.get().getDatabase(ctxt, appName);
       switch (type) {
       case COLUMN:
         this.kvsh = new KeyValueStoreHelper(db, tableId, KVS_PARTITION_COLUMN);

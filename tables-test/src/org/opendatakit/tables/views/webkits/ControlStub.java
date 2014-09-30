@@ -8,7 +8,6 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 
 public class ControlStub extends Control {
   

@@ -26,7 +26,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
 import org.opendatakit.tables.views.components.LockableScrollView;
 
@@ -128,7 +128,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // if not, use the general font size defined in preferences
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, table.getAppName());
+      db = DatabaseFactory.get().getDatabase(context, table.getAppName());
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, table.getTableId(), "SpreadsheetView");
       if (kvsh.getInteger("fontSize") == null)
         fontSize = (new Preferences(context, table.getAppName())).getFontSize();
@@ -581,7 +581,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     int[] columnWidths = new int[numberOfDisplayColumns];
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getContext(), table.getTableId());
+      db = DatabaseFactory.get().getDatabase(getContext(), table.getTableId());
       KeyValueStoreHelper columnKVSH = 
           new KeyValueStoreHelper(db, table.getTableId(), KeyValueStoreConstants.PARTITION_COLUMN);
 

@@ -23,7 +23,7 @@ import java.util.UUID;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 
 import android.app.Activity;
@@ -491,7 +491,7 @@ public class SurveyUtil {
       String formId;
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+        db = DatabaseFactory.get().getDatabase(context, appName);
         KeyValueStoreHelper kvsh = new KeyValueStoreHelper(
             context, appName, tableId, SurveyUtil.KVS_PARTITION);
         KeyValueHelper aspectHelper = kvsh.getAspectHelper(SurveyUtil.KVS_ASPECT);

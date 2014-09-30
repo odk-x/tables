@@ -2,7 +2,7 @@ package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
@@ -92,7 +92,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
     String rowId = getRowId();
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(getActivity(), getAppName());
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       UserTable result = ODKDatabaseUtils.get().getDataInExistingDBTableWithId(db, 
           getAppName(), getTableId(), 
           ColumnDefinition.getRetentionColumnNames(getColumnDefinitions()), rowId);

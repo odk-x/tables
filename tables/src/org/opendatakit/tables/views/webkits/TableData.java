@@ -15,7 +15,7 @@ import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ColumnUtil;
@@ -103,7 +103,7 @@ public class TableData {
   private ArrayList<ColumnDefinition> getColumnDefinitions() {
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(
+      db = DatabaseFactory.get().getDatabase(
           Tables.getInstance().getApplicationContext(), mTable.getAppName());
       return TableUtil.get().getColumnDefinitions(db, mTable.getTableId());
     } finally {

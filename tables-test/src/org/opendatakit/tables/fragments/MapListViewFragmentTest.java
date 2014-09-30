@@ -30,6 +30,7 @@ public class MapListViewFragmentTest {
 
   @Before
   public void setupWithDefaults() {
+    TestCaseUtils.setThreeTableDataset();
     ShadowLog.stream = System.out;
     TestCaseUtils.setExternalStorageMounted();
     TableDisplayActivityStub.BUILD_MENU_FRAGMENT = false;

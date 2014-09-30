@@ -27,6 +27,7 @@ public class WebFragmentTest {
   
   @Before
   public void before() {
+    TestCaseUtils.setThreeTableDataset();
     TestCaseUtils.setExternalStorageMounted();
     ShadowLog.stream = System.out;
   }

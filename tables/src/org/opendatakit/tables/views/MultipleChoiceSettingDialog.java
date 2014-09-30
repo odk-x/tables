@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.ColumnUtil;
 
@@ -71,7 +71,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
         
         SQLiteDatabase db = null;
         try {
-          db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+          db = DatabaseFactory.get().getDatabase(context, appName);
           choices = ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
         } finally {
           if ( db != null ) {
@@ -133,7 +133,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
                 updateValueList();
                 SQLiteDatabase db = null;
                 try {
-                  db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+                  db = DatabaseFactory.get().getDatabase(context, appName);
                   db.beginTransaction();
                   ColumnUtil.get().setDisplayChoicesList(db, tableId, cd, optionValues);
                   db.setTransactionSuccessful();

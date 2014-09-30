@@ -10,7 +10,7 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ColumnUtil;
@@ -44,7 +44,7 @@ public class SpreadsheetUserTable {
     ArrayList<String> colOrder;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, table.getAppName());
+      db = DatabaseFactory.get().getDatabase(context, table.getAppName());
       List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, table.getTableId());
       orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
       colOrder = TableUtil.get().getColumnOrder(db, table.getTableId());
@@ -68,7 +68,7 @@ public class SpreadsheetUserTable {
     elementKeyToSpreadsheetIndex = new HashMap<String, Integer>();
     db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, table.getAppName());
+      db = DatabaseFactory.get().getDatabase(context, table.getAppName());
       for (int i = 0; i < colOrder.size(); ++i) {
         String elementKey = colOrder.get(i);
         spreadsheetIndexToUserTableIndexRemap[i] = this.table
@@ -131,7 +131,7 @@ public class SpreadsheetUserTable {
     String indexColumn;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(
+      db = DatabaseFactory.get().getDatabase(
           Tables.getInstance().getApplicationContext(), 
           getAppName());
       indexColumn = TableUtil.get().getIndexColumn(db, getTableId());

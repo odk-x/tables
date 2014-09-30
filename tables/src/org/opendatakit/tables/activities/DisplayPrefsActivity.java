@@ -3,7 +3,7 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 
 import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
@@ -174,7 +174,7 @@ public class DisplayPrefsActivity extends PreferenceActivity {
     String localizedDisplayName;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+      db = DatabaseFactory.get().getDatabase(this, appName);
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
     } finally {
       if ( db != null ) {

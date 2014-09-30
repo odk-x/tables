@@ -47,7 +47,7 @@ import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
@@ -208,7 +208,7 @@ public class CollectUtil {
       String localizedDisplayName;
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+        db = DatabaseFactory.get().getDatabase(context, appName);
         localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
       } finally {
         if ( db != null ) {
@@ -314,7 +314,7 @@ public class CollectUtil {
 
         db = null;
         try {
-          db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+          db = DatabaseFactory.get().getDatabase(context, appName);
           localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId, cd.getElementKey());
         } finally {
           if ( db != null ) {
@@ -927,7 +927,7 @@ public class CollectUtil {
     String localizedDisplayName;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
     } finally {
       if ( db != null ) {
@@ -1322,7 +1322,7 @@ public class CollectUtil {
         ArrayList<String> choices;
         SQLiteDatabase db = null;
         try {
-          db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+          db = DatabaseFactory.get().getDatabase(context, appName);
           choices = ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
         } finally {
           if ( db != null ) {
@@ -1466,7 +1466,7 @@ public class CollectUtil {
     ArrayList<ColumnDefinition> orderedDefns;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
       
       ContentValues values = CollectUtil.getMapForInsertion(context, appName, tableId, orderedDefns, formValues);
@@ -1564,7 +1564,7 @@ public class CollectUtil {
     ArrayList<ColumnDefinition> orderedDefns;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+      db = DatabaseFactory.get().getDatabase(context, appName);
       orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
       
       ContentValues values = CollectUtil.getMapForInsertion(context, appName, tableId, orderedDefns, formValues);
@@ -1780,7 +1780,7 @@ public class CollectUtil {
       String localizedDisplayName;
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+        db = DatabaseFactory.get().getDatabase(context, appName);
         localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
       } finally {
         if ( db != null ) {
@@ -1815,7 +1815,7 @@ public class CollectUtil {
       String localizedDisplayName;
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(context, appName);
+        db = DatabaseFactory.get().getDatabase(context, appName);
         localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
         KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, CollectUtil.KVS_PARTITION);
         KeyValueHelper aspectHelper = kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);

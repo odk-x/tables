@@ -5,7 +5,7 @@ import java.util.List;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.ColumnUtil;
@@ -105,7 +105,7 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
         String localizedDisplayName;
         SQLiteDatabase db = null;
         try {
-          db = DataModelDatabaseHelperFactory.getDatabase(mContext, mAppName);
+          db = DatabaseFactory.get().getDatabase(mContext, mAppName);
           localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, mTableId, elementKey);
         } finally {
           if ( db != null ) {

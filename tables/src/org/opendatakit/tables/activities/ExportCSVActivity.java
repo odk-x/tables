@@ -18,7 +18,7 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 import java.util.ArrayList;
 
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
@@ -109,7 +109,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		tableSpin.setId(TABLESPIN_ID);
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+        db = DatabaseFactory.get().getDatabase(this, appName);
         ArrayList<String> rawTableIds = ODKDatabaseUtils.get().getAllTableIds(db);
         ArrayList<String> localizedNames = new ArrayList<String>();
         for (String tableId : rawTableIds ) {

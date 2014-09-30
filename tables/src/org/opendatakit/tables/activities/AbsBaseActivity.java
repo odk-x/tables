@@ -3,9 +3,7 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
-import org.opendatakit.common.android.database.DatabaseConstants;
-import org.opendatakit.common.android.provider.TableDefinitionsColumns;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
@@ -15,7 +13,6 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
@@ -87,58 +84,22 @@ public abstract class AbsBaseActivity extends Activity {
     Log.i(this.getClass().getSimpleName(), "scanAllTables -- searching for conflicts and checkpoints ");
     
     SQLiteDatabase db = null;
-    Cursor c = null;
 
-    StringBuilder b = new StringBuilder();
-    b.append("SELECT ").append(TableDefinitionsColumns.TABLE_ID).append(" FROM \"")
-     .append(DatabaseConstants.TABLE_DEFS_TABLE_NAME).append("\"");
-
-    ArrayList<String> tableIds = new ArrayList<String>();
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
-      try {
-        c = db.rawQuery(b.toString(), null);
-        int idxId = c.getColumnIndex(TableDefinitionsColumns.TABLE_ID);
-        if ( c.moveToFirst() ) {
-          do {
-            tableIds.add(ODKDatabaseUtils.get().getIndexAsString(c, idxId));
-          } while ( c.moveToNext() );
-        }
-        c.close();
-      } finally {
-        if ( c != null && !c.isClosed() ) {
-          c.close();
-        }
-      }
+      db = DatabaseFactory.get().getDatabase(this, getAppName());
+      ArrayList<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
       
       Bundle checkpointTables = new Bundle();
       Bundle conflictTables = new Bundle();
       
       for ( String tableId : tableIds ) {
-        b.setLength(0);
-        b.append("SELECT SUM(case when _savepoint_type is null then 1 else 0 end) as checkpoints,")
-         .append("SUM(case when _conflict_type is not null then 1 else 0 end) as conflicts from \"")
-         .append(tableId).append("\"");
+        int health = ODKDatabaseUtils.get().getTableHealth(db, tableId);
         
-        try {
-          c = db.rawQuery(b.toString(), null);
-          int idxCheckpoints = c.getColumnIndex("checkpoints");
-          int idxConflicts = c.getColumnIndex("conflicts");
-          c.moveToFirst();
-          Integer checkpoints = ODKDatabaseUtils.get().getIndexAsType(c, Integer.class, idxCheckpoints);
-          Integer conflicts = ODKDatabaseUtils.get().getIndexAsType(c, Integer.class, idxConflicts);
-          c.close();
-          
-          if ( checkpoints != null && checkpoints != 0 ) {
+        if ( (health & ODKDatabaseUtils.TABLE_HEALTH_HAS_CHECKPOINTS) != 0) {
             checkpointTables.putString(tableId, tableId);
-          }
-          if ( conflicts != null && conflicts != 0 ) {
+        }
+        if ( (health & ODKDatabaseUtils.TABLE_HEALTH_HAS_CONFLICTS) != 0) {
             conflictTables.putString(tableId, tableId);
-          }
-        } finally {
-          if ( c != null && !c.isClosed() ) {
-            c.close();
-          }
         }
       }
       mCheckpointTables = checkpointTables;

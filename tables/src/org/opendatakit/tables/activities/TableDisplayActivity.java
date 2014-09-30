@@ -4,7 +4,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.DetailViewFragment;
@@ -134,7 +134,7 @@ public class TableDisplayActivity extends AbsTableActivity
       SQLiteDatabase db = null;
       PossibleTableViewTypes viewTypes = null;
       try { 
-        db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+        db = DatabaseFactory.get().getDatabase(this, getAppName());
         viewTypes = new PossibleTableViewTypes(db, 
             getTableId(), getColumnDefinitions());
       } finally {
@@ -460,7 +460,7 @@ public class TableDisplayActivity extends AbsTableActivity
       TableViewType type;
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+        db = DatabaseFactory.get().getDatabase(this, getAppName());
         type = TableUtil.get().getDefaultViewType(db, getTableId());
       } finally {
         if ( db != null ) {
@@ -533,7 +533,7 @@ public class TableDisplayActivity extends AbsTableActivity
         this.retrieveSQLQueryStatStructFromIntent();
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+      db = DatabaseFactory.get().getDatabase(this, getAppName());
       UserTable result = ODKDatabaseUtils.get().rawSqlQuery(db, this.getAppName(),
           this.getTableId(), 
           ColumnDefinition.getRetentionColumnNames(getColumnDefinitions()),
@@ -685,7 +685,7 @@ public class TableDisplayActivity extends AbsTableActivity
     if (fileName == null) {
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+        db = DatabaseFactory.get().getDatabase(this, getAppName());
         fileName = TableUtil.get().getMapListViewFilename(db, getTableId());
       } finally {
         if ( db != null ) {
@@ -782,7 +782,7 @@ public class TableDisplayActivity extends AbsTableActivity
     if (fileName == null) {
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+        db = DatabaseFactory.get().getDatabase(this, getAppName());
         fileName = TableUtil.get().getListViewFilename(db, getTableId());
       } finally {
         if ( db != null ) {
@@ -946,7 +946,7 @@ public class TableDisplayActivity extends AbsTableActivity
       Log.d(TAG, "[showDetailFragment] fileName not found in Intent");
       SQLiteDatabase db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(this, getAppName());
+        db = DatabaseFactory.get().getDatabase(this, getAppName());
         fileName = TableUtil.get().getDetailViewFilename(db, getTableId());
       } finally {
         if ( db != null ) {

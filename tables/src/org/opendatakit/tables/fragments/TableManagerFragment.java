@@ -3,7 +3,7 @@ package org.opendatakit.tables.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -141,7 +141,7 @@ public class TableManagerFragment extends ListFragment {
     
     List<String> tableIds;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(baseActivity, baseActivity.getAppName());
+      db = DatabaseFactory.get().getDatabase(baseActivity, baseActivity.getAppName());
       tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
     } finally {
       if ( db != null ) {
@@ -204,7 +204,7 @@ public class TableManagerFragment extends ListFragment {
     String localizedDisplayName;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(baseActivity,
+      db = DatabaseFactory.get().getDatabase(baseActivity,
           baseActivity.getAppName());
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, 
           tableIdOfSelectedItem);
@@ -230,7 +230,7 @@ public class TableManagerFragment extends ListFragment {
           // treat delete as a local removal -- not a server side deletion
           SQLiteDatabase db = null;
           try {
-            db = DataModelDatabaseHelperFactory.getDatabase(baseActivity, baseActivity.getAppName());
+            db = DatabaseFactory.get().getDatabase(baseActivity, baseActivity.getAppName());
             ODKDatabaseUtils.get().deleteTableAndData(db, baseActivity.getAppName(), tableIdOfSelectedItem);
           } finally {
             if ( db != null ) {

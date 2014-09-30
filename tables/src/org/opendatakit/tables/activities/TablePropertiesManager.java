@@ -26,7 +26,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
@@ -106,7 +106,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     String localizedDisplayName;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+      db = DatabaseFactory.get().getDatabase(this, appName);
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
     } finally {
       if (db != null) {
@@ -131,7 +131,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     String rawDisplayName;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+      db = DatabaseFactory.get().getDatabase(this, appName);
       rawDisplayName = TableUtil.get().getRawDisplayName(db, tableId);
     } finally {
       if (db != null) {
@@ -150,7 +150,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         SQLiteDatabase db = null;
         String localizedDisplayName;
         try {
-          db = DataModelDatabaseHelperFactory.getDatabase(
+          db = DatabaseFactory.get().getDatabase(
               TablePropertiesManager.this, appName);
           db.beginTransaction();
           TableUtil.get().setRawDisplayName(db, tableId, (String) newValue);
@@ -230,7 +230,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     TableViewType type;
     SQLiteDatabase db = null;
     try {
-      db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+      db = DatabaseFactory.get().getDatabase(this, appName);
       type = TableUtil.get().getDefaultViewType(db, tableId);
     } finally {
       if (db != null) {
@@ -247,7 +247,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         SQLiteDatabase db = null;
         try {
-          db = DataModelDatabaseHelperFactory.getDatabase(
+          db = DatabaseFactory.get().getDatabase(
               TablePropertiesManager.this, appName);
           db.beginTransaction();
           TableUtil.get().setDefaultViewType(db, tableId,
@@ -359,7 +359,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       ArrayList<String> colorColElementKeys = new ArrayList<String>();
       db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+        db = DatabaseFactory.get().getDatabase(this, appName);
         List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
         ArrayList<ColumnDefinition> orderedDefns = 
             ColumnDefinition.buildColumnDefinitions(columns);
@@ -394,7 +394,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       String localizedDisplayName;
       db = null;
       try {
-        db = DataModelDatabaseHelperFactory.getDatabase(this, appName);
+        db = DatabaseFactory.get().getDatabase(this, appName);
         localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId,
             colorColumn.getElementKey());
       } finally {
