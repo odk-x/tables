@@ -20,7 +20,7 @@ import java.util.Map;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.tables.utils.ColumnUtil;
+import org.opendatakit.common.android.utilities.ColumnUtil;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

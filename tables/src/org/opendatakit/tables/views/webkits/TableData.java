@@ -16,13 +16,13 @@ import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.ColumnUtil;
 import org.opendatakit.tables.utils.ElementTypeManipulator;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;

@@ -21,9 +21,9 @@ import java.util.Map;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.utils.ColumnUtil;
 
 import android.app.Dialog;
 import android.content.Context;

@@ -13,11 +13,11 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.common.android.utilities.GeoColumnUtil;
+import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TablePropertiesManager;
-import org.opendatakit.tables.utils.GeoColumnUtil;
-import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 
 import android.app.Activity;
 import android.graphics.Color;

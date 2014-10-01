@@ -581,7 +581,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     int[] columnWidths = new int[numberOfDisplayColumns];
     SQLiteDatabase db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getContext(), table.getTableId());
+      db = DatabaseFactory.get().getDatabase(getContext(), table.getAppName());
       KeyValueStoreHelper columnKVSH = 
           new KeyValueStoreHelper(db, table.getTableId(), KeyValueStoreConstants.PARTITION_COLUMN);
 

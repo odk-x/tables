@@ -5,10 +5,10 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.utils.ColumnUtil;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.app.Activity;
 import android.app.ListFragment;

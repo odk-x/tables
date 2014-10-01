@@ -4,9 +4,9 @@ import java.util.ArrayList;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;

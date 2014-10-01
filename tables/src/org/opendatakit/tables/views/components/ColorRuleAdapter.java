@@ -6,9 +6,9 @@ import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.utils.ColumnUtil;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

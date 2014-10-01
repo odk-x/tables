@@ -21,17 +21,17 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.content.Context;
@@ -152,8 +152,7 @@ public class OutputUtil {
     String defaultListFileName = null;
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
     
-    List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
-    orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
+    orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
     defaultDetailFileName = TableUtil.get().getDetailViewFilename(db, tableId);
     defaultListFileName = TableUtil.get().getListViewFilename(db, tableId);
     
@@ -193,8 +192,7 @@ public class OutputUtil {
   private static String getStringForDataObject(SQLiteDatabase db, String appName, String tableId,
       int numberOfRows) {
 
-    List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
-    ArrayList<ColumnDefinition> orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
+    ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
     
     UserTable userTable = null;
     userTable = ODKDatabaseUtils.get().rawSqlQuery(db, appName, tableId, 

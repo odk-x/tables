@@ -14,13 +14,13 @@ import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivityStub;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
-import org.opendatakit.tables.utils.TableUtil;
 import org.robolectric.Robolectric;
 import org.robolectric.shadows.ShadowEnvironment;
 

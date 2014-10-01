@@ -2,19 +2,16 @@ package org.opendatakit.tables.views;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.ColumnUtil;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -45,8 +42,7 @@ public class SpreadsheetUserTable {
     SQLiteDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(context, table.getAppName());
-      List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, table.getTableId());
-      orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
+      orderedDefns = TableUtil.get().getColumnDefinitions(db, table.getTableId());
       colOrder = TableUtil.get().getColumnOrder(db, table.getTableId());
     } finally {
       if ( db != null ) {

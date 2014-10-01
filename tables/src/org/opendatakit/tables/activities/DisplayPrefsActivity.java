@@ -5,11 +5,11 @@ import java.io.File;
 import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.OutputUtil;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;

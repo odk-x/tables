@@ -6,12 +6,12 @@ import java.util.List;
 import org.opendatakit.common.android.data.KeyValueStoreEntry;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.GraphViewStruct;
-import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 import org.opendatakit.tables.views.components.GraphViewAdapter;
 
 import android.database.sqlite.SQLiteDatabase;

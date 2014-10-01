@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.DisplayPrefsActivity;
@@ -15,7 +16,6 @@ import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.components.TablePropertiesAdapter;
 
 import android.app.AlertDialog;

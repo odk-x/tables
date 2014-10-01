@@ -21,20 +21,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.utils.ColumnUtil;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -360,9 +358,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       db = null;
       try {
         db = DatabaseFactory.get().getDatabase(this, appName);
-        List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
-        ArrayList<ColumnDefinition> orderedDefns = 
-            ColumnDefinition.buildColumnDefinitions(columns);
+        ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
         for (ColumnDefinition cd : orderedDefns) {
           if (cd.isUnitOfRetention()) {
             String localizedDisplayName;

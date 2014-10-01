@@ -20,6 +20,8 @@ import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.content.Context;

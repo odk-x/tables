@@ -1,14 +1,12 @@
 package org.opendatakit.tables.tasks;
 
 import java.util.ArrayList;
-import java.util.List;
 
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.CsvUtil;
 import org.opendatakit.common.android.utilities.CsvUtil.ExportListener;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.activities.ExportCSVActivity;
 
 import android.database.sqlite.SQLiteDatabase;
@@ -42,8 +40,7 @@ public class ExportTask
         try {
           String tableId = request.getTableId();
           db = DatabaseFactory.get().getDatabase(this.exportCSVActivity, appName);
-          List<Column> columns = ODKDatabaseUtils.get().getUserDefinedColumns(db, tableId);
-          ArrayList<ColumnDefinition> orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
+          ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
           // export goes to output/csv directory...
           return cu.exportSeparable(this, db, tableId, orderedDefns, request.getFileQualifier());
         } finally {
