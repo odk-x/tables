@@ -15,10 +15,6 @@
  */
 package org.opendatakit.tables.utils;
 
-import java.io.File;
-
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-
 import android.util.Log;
 
 /**
@@ -35,27 +31,9 @@ public class TableFileUtils {
   /** The default app name for ODK Tables */
   private static final String ODK_TABLES_APP_NAME = "tables";
 
-  /** The name of the base graphing file. */
-  private static final String TABLES_GRAPH_BASE_FILE_NAME = "optionspane.html";
-
   public static final String getDefaultAppName() {
-    Log.i("TableFileUtils", "appName is null on intent");
+    Log.i(TAG, "appName is null on intent");
     Thread.dumpStack();
     return ODK_TABLES_APP_NAME;
-  }
-
-  /**
-   * Get the path of the base file used for Tables graphing, relative to the
-   * app folder.
-   * @return
-   */
-  public static String getRelativePathToGraphFile(String appName) {
-    String frameworkPath =
-        ODKFileUtils.getFrameworkFolder(appName);
-    String result =
-        frameworkPath +
-        File.separator +
-        TABLES_GRAPH_BASE_FILE_NAME;
-    return result;
   }
 }

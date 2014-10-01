@@ -21,9 +21,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
-import org.opendatakit.common.android.data.KeyValueHelper;
-import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.KeyValueHelper;
+import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 
 import android.app.Activity;

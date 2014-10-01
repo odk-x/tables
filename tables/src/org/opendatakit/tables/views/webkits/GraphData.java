@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.data.KeyValueStoreEntry;
-import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
+import org.opendatakit.common.android.utilities.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.application.Tables;

@@ -115,6 +115,7 @@ public class WebViewUtil {
    * @param contentValues
    * @return false if the data was invalid for the given type
    */
+  @SuppressWarnings("unchecked")
   public static boolean addValueToContentValues(Context context,
       String appName, 
       String tableId, 

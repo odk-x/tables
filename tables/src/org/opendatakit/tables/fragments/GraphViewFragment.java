@@ -5,7 +5,6 @@ import java.io.File;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.GraphData;
@@ -18,7 +17,10 @@ import android.webkit.WebView;
 public class GraphViewFragment extends AbsWebTableFragment {
   
   private static final String TAG = GraphViewFragment.class.getSimpleName();
-  
+
+  /** The name of the base graphing file. */
+  private static final String TABLES_GRAPH_BASE_FILE_NAME = "optionspane.html";
+
   private String mGraphName;
   
   /** A strong reference that must be kept or else nulls will be thrown. */
@@ -55,7 +57,9 @@ public class GraphViewFragment extends AbsWebTableFragment {
         tableData.getJavascriptInterfaceWithWeakReference(),
         Constants.JavaScriptHandles.DATA);
     String relativePathToGraphFile =
-        TableFileUtils.getRelativePathToGraphFile(getAppName());
+        ODKFileUtils.getFrameworkFolder(getAppName()) + 
+        File.separator +
+        TABLES_GRAPH_BASE_FILE_NAME;
     String relativePath = ODKFileUtils.asUriFragment(
         getAppName(),
         new File(relativePathToGraphFile));
