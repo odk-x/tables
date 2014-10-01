@@ -16,6 +16,7 @@
 package org.opendatakit.tables.views;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.database.DatabaseFactory;
@@ -35,7 +36,8 @@ public class CellValueView {
     SQLiteDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(context, appName);
-      ArrayList<String> displayChoices = ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
+      ArrayList<Map<String,Object>> displayChoices = (ArrayList<Map<String, Object>>) 
+          ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
       if (displayChoices != null) {
         return new MultipleChoiceEditView(context, cd, displayChoices, value);
       } else {
@@ -61,7 +63,7 @@ public class CellValueView {
 
     private final Spinner spinner;
 
-    public MultipleChoiceEditView(Context context, ColumnDefinition cd,  ArrayList<String> displayChoices, String value) {
+    public MultipleChoiceEditView(Context context, ColumnDefinition cd,  ArrayList<Map<String,Object>> displayChoices, String value) {
       super(context);
       int selection = -1;
       for (int i = 0; i < displayChoices.size(); i++) {
@@ -70,7 +72,7 @@ public class CellValueView {
           break;
         }
       }
-      ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
+      ArrayAdapter<Map<String,Object>> adapter = new ArrayAdapter<Map<String,Object>>(context,
           android.R.layout.simple_spinner_item, displayChoices);
       adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
       spinner = new Spinner(context);

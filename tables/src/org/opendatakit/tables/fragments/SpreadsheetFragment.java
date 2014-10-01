@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
@@ -613,10 +614,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
         @Override
         public void onClick(View v) {
           SQLiteDatabase db = null;
-          ArrayList<String> choices;
+          ArrayList<Map<String,Object>> choices;
           try {
             db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-            choices = ColumnUtil.get().getDisplayChoicesList(db, getTableId(), cell.elementKey);
+            choices = (ArrayList<Map<String, Object>>) 
+                ColumnUtil.get().getDisplayChoicesList(db, getTableId(), cell.elementKey);
           } finally {
             if ( db != null ) {
               db.close();

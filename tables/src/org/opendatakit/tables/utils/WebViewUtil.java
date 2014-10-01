@@ -131,11 +131,12 @@ public class WebViewUtil {
       return true;
     } else {
       // we have to validate it -- get the choices list, if any
-      ArrayList<String> choices;
+      ArrayList<Map<String,Object>> choices;
       SQLiteDatabase db = null;
       try {
         db = DatabaseFactory.get().getDatabase(context, appName);
-        choices = ColumnUtil.get().getDisplayChoicesList(db, tableId, colDefn.getElementKey());
+        choices = (ArrayList<Map<String, Object>>) 
+            ColumnUtil.get().getDisplayChoicesList(db, tableId, colDefn.getElementKey());
       } finally {
         if ( db != null ) {
           db.close();

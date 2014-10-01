@@ -37,6 +37,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
           "A table id was not passed to a table activity");
     }
     
+    Log.e(TAG, "[onCreate] building mColumnDefinitions.");
     SQLiteDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(

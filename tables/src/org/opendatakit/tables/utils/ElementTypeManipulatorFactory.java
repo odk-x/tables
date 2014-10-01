@@ -16,6 +16,7 @@
 package org.opendatakit.tables.utils;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
@@ -53,14 +54,14 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<String> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyDateValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<String> displayChoicesList, String inValue,
+    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
         Class<T> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
@@ -96,14 +97,14 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<String> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyDateTimeValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<String> displayChoicesList, String inValue,
+    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
         Class<T> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
@@ -140,14 +141,14 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<String> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyTimeValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<String> displayChoicesList, String inValue,
+    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
         Class<T> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
@@ -183,14 +184,14 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<String> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyDateRangeValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<String> displayChoicesList, String inValue,
+    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
         Class<T> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
@@ -226,14 +227,14 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<String> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyIntegerValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<String> displayChoicesList, String inValue,
+    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
         Class<T> clazz) {
       // TODO: verify against choices list
       if ( inValue == null ) {
@@ -272,14 +273,14 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<String> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyNumberValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<String> displayChoicesList, String inValue,
+    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
         Class<T> clazz) {
       // TODO: verify against choices list
       if ( inValue == null ) {
@@ -325,7 +326,7 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<String> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       if ( inValue == null ) {
@@ -341,7 +342,7 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<String> displayChoicesList, String inValue,
+    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
         Class<T> clazz) {
       // TODO: verify against choices list
       if ( inValue == null ) {
@@ -385,14 +386,14 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<String> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return inValue;
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<String> displayChoicesList, String inValue,
+    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
         Class<T> clazz) {
       // TODO: verify against choices list
       return (T) inValue;

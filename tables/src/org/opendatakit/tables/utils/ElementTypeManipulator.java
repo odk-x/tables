@@ -17,6 +17,7 @@ package org.opendatakit.tables.utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
@@ -87,7 +88,7 @@ public class ElementTypeManipulator {
         }
 
      */
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<String> displayChoicesList, String inValue);
+    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue);
     /*
      * DataUtil:
      *        
@@ -128,7 +129,7 @@ public class ElementTypeManipulator {
       }
 
      */
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<String> displayChoicesList, String inValue, Class<T> clazz);
+    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue, Class<T> clazz);
     
     /*
      * InputScreenUtil

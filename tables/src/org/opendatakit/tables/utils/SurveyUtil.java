@@ -493,7 +493,7 @@ public class SurveyUtil {
       try {
         db = DatabaseFactory.get().getDatabase(context, appName);
         KeyValueStoreHelper kvsh = new KeyValueStoreHelper(
-            context, appName, tableId, SurveyUtil.KVS_PARTITION);
+            db, tableId, SurveyUtil.KVS_PARTITION);
         KeyValueHelper aspectHelper = kvsh.getAspectHelper(SurveyUtil.KVS_ASPECT);
         formId = aspectHelper.getString(SurveyUtil.KEY_FORM_ID);
       } finally {

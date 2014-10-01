@@ -1319,11 +1319,12 @@ public class CollectUtil {
         }
       } else if (cd.isUnitOfRetention()) {
 
-        ArrayList<String> choices;
+        ArrayList<Map<String,Object>> choices;
         SQLiteDatabase db = null;
         try {
           db = DatabaseFactory.get().getDatabase(context, appName);
-          choices = ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
+          choices = (ArrayList<Map<String, Object>>)
+              ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
         } finally {
           if ( db != null ) {
             db.close();

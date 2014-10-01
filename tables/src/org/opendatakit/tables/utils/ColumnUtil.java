@@ -18,6 +18,7 @@ package org.opendatakit.tables.utils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColumnDefinition;
@@ -96,18 +97,20 @@ public class ColumnUtil {
     return jsonDisplayName;
   }
 
-  public ArrayList<String> getDisplayChoicesList(SQLiteDatabase db, String tableId, String elementKey) {
+  public ArrayList<? extends Map<String,Object>> getDisplayChoicesList(SQLiteDatabase db, String tableId, String elementKey) {
     
     KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, KeyValueStoreConstants.PARTITION_COLUMN);
     AspectHelper ah = kvsh.getAspectHelper(elementKey);
-    ArrayList<String> jsonDisplayChoices = ah.getArray(KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST, String.class);
+    @SuppressWarnings("unchecked")
+    ArrayList<? extends Map<String,Object>> jsonDisplayChoices = (ArrayList<? extends Map<String, Object>>) 
+        ah.getArray(KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST, Map.class);
     if ( jsonDisplayChoices != null ) {
       return jsonDisplayChoices;
     }
-    return new ArrayList<String>();
+    return new ArrayList<Map<String,Object>>();
   }
 
-  public void setDisplayChoicesList( SQLiteDatabase db, String tableId, ColumnDefinition cd, ArrayList<String> choices) {
+  public void setDisplayChoicesList( SQLiteDatabase db, String tableId, ColumnDefinition cd, ArrayList<? extends Map<String,Object>> choices) {
     KeyValueStoreEntry e = new KeyValueStoreEntry();
     e.tableId = tableId;
     e.partition = KeyValueStoreConstants.PARTITION_COLUMN;
@@ -129,7 +132,7 @@ public class ColumnUtil {
     AspectHelper ah = kvsh.getAspectHelper(elementKey);
     ArrayList<JoinColumn> joins = null; 
     try {
-      joins = JoinColumn.fromSerialization(ah.getString(KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST));
+      joins = JoinColumn.fromSerialization(ah.getObject(KeyValueStoreConstants.COLUMN_JOINS));
     } catch (JsonParseException e) {
       e.printStackTrace();
     } catch (JsonMappingException e) {
