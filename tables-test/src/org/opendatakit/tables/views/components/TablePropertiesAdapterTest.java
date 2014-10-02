@@ -2,6 +2,9 @@ package org.opendatakit.tables.views.components;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
@@ -14,13 +17,19 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.data.ElementDataType;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
+import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowDrawable;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -35,14 +44,63 @@ public class TablePropertiesAdapterTest {
 
   @Before
   public void setup() {
-    TableProperties tp1 = mock(TableProperties.class);
-    TableProperties tp2 = mock(TableProperties.class);
-    when(tp1.getLocalizedDisplayName()).thenReturn("alpha");
-    when(tp2.getLocalizedDisplayName()).thenReturn("beta");
-    List<TableProperties> listOfMocks = new ArrayList<TableProperties>();
-    listOfMocks.add(tp1);
-    listOfMocks.add(tp2);
-    this.mAdapter = new TablePropertiesAdapter(listOfMocks);
+    
+    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
+    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
+    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
+    DatabaseFactory.set(factoryMock);
+    
+    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
+    List<String> tableIds = new ArrayList<String>();
+    String tableId1 = "alpha";
+    String tableId2 = "beta";
+    tableIds.add(tableId1);
+    tableIds.add(tableId2);
+    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
+    
+    String elementKey = "anyElementKey";
+    
+    List<Column> columns1 = new ArrayList<Column>();
+    columns1.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
+        ElementDataType.string.name(), "[]"));
+    columns1.add(new Column(TestConstants.ElementKeys.INT_COLUMN, TestConstants.ElementKeys.INT_COLUMN,
+        ElementDataType.integer.name(), "[]"));
+    columns1.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
+        ElementDataType.number.name(), "[]"));
+
+    List<Column> columns2 = new ArrayList<Column>();
+    columns2.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
+        ElementDataType.string.name(), "[]"));
+    columns2.add(new Column(TestConstants.ElementKeys.GEOPOINT_COLUMN,TestConstants.ElementKeys.GEOPOINT_COLUMN,
+        ElementDataType.string.name(), "[\"" +
+            TestConstants.ElementKeys.LATITUDE_COLUMN + "\",\"" +
+            TestConstants.ElementKeys.LONGITUDE_COLUMN + "\",\"" +
+            TestConstants.ElementKeys.ALTITUDE_COLUMN + "\",\"" + 
+            TestConstants.ElementKeys.ACCURACY_COLUMN + "\"]"));
+    columns2.add(new Column(TestConstants.ElementKeys.LATITUDE_COLUMN, "latitude",
+        ElementDataType.number.name(), "[]"));
+    columns2.add(new Column(TestConstants.ElementKeys.LONGITUDE_COLUMN, "longitude",
+        ElementDataType.number.name(), "[]"));
+    columns2.add(new Column(TestConstants.ElementKeys.ALTITUDE_COLUMN, "altitude",
+        ElementDataType.number.name(), "[]"));
+    columns2.add(new Column(TestConstants.ElementKeys.ACCURACY_COLUMN, "accuracy",
+        ElementDataType.number.name(), "[]"));
+    
+    doReturn(columns1).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(tableId1));
+    doReturn(columns2).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(tableId2));
+    ODKDatabaseUtils.set(wrapperMock);
+    
+    TableUtil util = mock(TableUtil.class);
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), eq(tableId1)))
+      .thenReturn(tableId1+"_name");
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), eq(tableId2)))
+      .thenReturn(tableId2+"_name");
+    TableUtil.set(util);
+
+    List<String> listOfMocks = new ArrayList<String>();
+    listOfMocks.add(tableId1);
+    listOfMocks.add(tableId2);
+    this.mAdapter = new TablePropertiesAdapter(null, "tables", listOfMocks);
   }
 
   @Test
@@ -57,7 +115,7 @@ public class TablePropertiesAdapterTest {
       .isNotNull()
       .isVisible();
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
-    assertEquals("alpha", textView.getText().toString());
+    assertEquals("alpha_name", textView.getText().toString());
   }
 
   @Test
@@ -67,7 +125,7 @@ public class TablePropertiesAdapterTest {
       .isNotNull()
       .isVisible();
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
-    assertEquals("beta", textView.getText().toString());
+    assertEquals("beta_name", textView.getText().toString());
   }
 
   @Test

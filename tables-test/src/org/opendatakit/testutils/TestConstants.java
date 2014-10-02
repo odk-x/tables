@@ -1,19 +1,25 @@
 package org.opendatakit.testutils;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
@@ -60,6 +66,12 @@ public class TestConstants {
     public static final String STRING_COLUMN = "stringColumn";
     public static final String INT_COLUMN = "intColumn";
     public static final String NUMBER_COLUMN = "numberColumn";
+    public static final String GEOPOINT_COLUMN = "geo";
+    public static final String LATITUDE_COLUMN = "geo_latitude";
+    public static final String LONGITUDE_COLUMN = "geo_longitude";
+    public static final String ALTITUDE_COLUMN = "geo_altitude";
+    public static final String ACCURACY_COLUMN = "geo_accuracy";
+    public static final String MISSING_COLUMN = "missingColumn";
   }
 
   /**
@@ -73,37 +85,38 @@ public class TestConstants {
   /**
    * Return an unimplemented mock of {@link TableProperties}.
    */
-  public static final TableProperties TABLE_PROPERTIES_MOCK =
-      mock(TableProperties.class);
-
-  public static TableProperties getTablePropertiesMock() {
-    TableProperties tpMock = mock(TableProperties.class);
-    doReturn(getAllValidPossibleTableViewTypes())
-        .when(tpMock).getPossibleViewTypes();
-    doReturn(TableViewType.SPREADSHEET)
-        .when(tpMock).getDefaultViewType();
-    return tpMock;
-  }
-  
-  public static SQLiteDatabase getDatabaseMock() {
-    SQLiteDatabase result = mock(SQLiteDatabase.class);
-    return result;
+  public static void setSingleTableSchemeMock() {
+    ODKDatabaseUtils dbUtilMock = mock(ODKDatabaseUtils.class);
+    
+    ArrayList<String> tableIds = new ArrayList<String>();
+    tableIds.add("aTable");
+    when(dbUtilMock.getAllTableIds(any(SQLiteDatabase.class))).thenReturn(tableIds);
+    ArrayList<Column> columns = new ArrayList<Column>();
+    when(dbUtilMock.getUserDefinedColumns(any(SQLiteDatabase.class), eq("aTable"))).thenReturn(columns);
+    ODKDatabaseUtils.set(dbUtilMock);
+    
+    TableUtil util = mock(TableUtil.class);
+    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
+        eq("aTable"))).thenReturn("aTable");
+    when(util.getDefaultViewType(any(SQLiteDatabase.class), 
+        eq("aTable"))).thenReturn(TableViewType.SPREADSHEET);
+    TableUtil.set(util);
   }
   
   /**
-   * Get a mock {@link ColumnProperties} object. Returns the element key and
+   * Get a mock {@link ColumnDefinition} object. Returns the element key and
    * column types given. As more mockable parameters are needed, they should be
    * added here.
    * @param elementKey
    * @param columnType
    * @return
    */
-  public static ColumnProperties getColumnPropertiesMock(
+  public static ColumnDefinition getColumnDefinitionMock(
       String elementKey,
-      ColumnType columnType) {
-    ColumnProperties result = mock(ColumnProperties.class);
+      ElementType columnType) {
+    ColumnDefinition result = mock(ColumnDefinition.class);
     doReturn(elementKey).when(result).getElementKey();
-    doReturn(columnType).when(result).getColumnType();
+    doReturn(columnType).when(result).getType();
     return result;
   }
 
@@ -155,6 +168,23 @@ public class TestConstants {
     return result;
   }
 
+  /**
+   * Returns a map with the element keys in {@link ElementKeys}
+   * including the missing one.
+   * @return
+   */
+  public static Map<String, String> getMapOfElementKeyToValueIncludingMissing(
+      String rawStringValue,
+      String rawIntValue,
+      String rawNumberValue) {
+    Map<String, String> result = new HashMap<String, String>();
+    result.put(ElementKeys.STRING_COLUMN, rawStringValue);
+    result.put(ElementKeys.INT_COLUMN, rawIntValue);
+    result.put(ElementKeys.NUMBER_COLUMN, rawNumberValue);
+    result.put(ElementKeys.MISSING_COLUMN, rawStringValue);
+    return result;
+  }
+  
   public static WebView getWebViewMock() {
     return mock(WebView.class);
   }

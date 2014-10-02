@@ -1,10 +1,26 @@
+/*
+ * Copyright (C) 2012-2014 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
@@ -31,18 +47,21 @@ public class ActivityUtil {
    * updateInstanceDatabase() method.
    */
   public static void editRow(
-      AbsBaseActivity activity, TableProperties tp, Row row) {
-    FormType formType = FormType.constructFormType(tp);
+      AbsBaseActivity activity, String appName, String tableId, 
+      ArrayList<ColumnDefinition> orderedDefns, Row row) {
+    FormType formType = FormType.constructFormType(activity, appName, tableId);
     if ( formType.isCollectForm() ) {
       Map<String, String> elementKeyToValue = new HashMap<String, String>();
-      for (String elementKey : tp.getPersistedColumns()) {
-        String value = row.getRawDataOrMetadataByElementKey(elementKey);
-        elementKeyToValue.put(elementKey, value);
+      
+      for (ColumnDefinition cd : orderedDefns) {
+        if ( cd.isUnitOfRetention() ) {
+          String value = row.getRawDataOrMetadataByElementKey(cd.getElementKey());
+          elementKeyToValue.put(cd.getElementKey(), value);
+        }
       }
 
       Intent intent = CollectUtil.getIntentForOdkCollectEditRow(
-          activity,
-          tp,
+          activity, appName, tableId, orderedDefns,
           elementKeyToValue,
           null,
           null,
@@ -59,14 +78,11 @@ public class ActivityUtil {
       SurveyFormParameters params = formType.getSurveyFormParameters();
 
       Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(
-          activity,
-          tp,
-          activity.getAppName(),
+          activity, appName, tableId,
           params,
           row.getRowId());
       if ( intent != null ) {
-        SurveyUtil.launchSurveyToEditRow(activity, intent, tp,
-            row.getRowId());
+        SurveyUtil.launchSurveyToEditRow(activity, tableId, intent, row.getRowId());
       }
     }
   }
@@ -79,34 +95,34 @@ public class ActivityUtil {
    */
   public static void editRow(
       AbsBaseActivity activity,
-      TableProperties tableProperties,
+      String appName,
+      String tableId,
+      ArrayList<ColumnDefinition> orderedDefns,
       String rowId) {
-    FormType formType = FormType.constructFormType(tableProperties);
+    FormType formType = FormType.constructFormType(activity, appName, tableId);
     if (formType.isCollectForm()) {
       Log.d(TAG, "[editRow] using collect form");
       CollectFormParameters collectFormParameters =
           CollectFormParameters.constructCollectFormParameters(
-              tableProperties);
+              activity, appName, tableId);
       Log.d(
           TAG,
           "[editRow] is custom form: " + collectFormParameters.isCustom());
       CollectUtil.editRowWithCollect(
-          activity,
-          activity.getAppName(),
+          activity, appName, tableId, orderedDefns,
           rowId,
-          tableProperties, collectFormParameters);
+          collectFormParameters);
     } else {
       Log.d(TAG, "[editRow] using survey form");
       SurveyFormParameters surveyFormParameters =
-          SurveyFormParameters.constructSurveyFormParameters(tableProperties);
+          SurveyFormParameters.constructSurveyFormParameters(
+              activity, appName, tableId);
       Log.d(
           TAG,
           "[editRow] is custom form: " + surveyFormParameters.isUserDefined());
       SurveyUtil.editRowWithSurvey(
-          activity,
-          activity.getAppName(),
+          activity, appName, tableId,
           rowId,
-          tableProperties,
           surveyFormParameters);
     }
   }
@@ -122,10 +138,10 @@ public class ActivityUtil {
    */
   public static void addRow(
       AbsBaseActivity activity,
-      TableProperties tableProperties,
+      String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns,
       Map<String, String> prepopulatedValues) {
     FormType formType =
-        FormType.constructFormType(tableProperties);
+        FormType.constructFormType(activity, appName, tableId);
     if (formType.isCollectForm()) {
       Log.d(TAG, "[onOptionsItemSelected] using Collect form");
       CollectFormParameters collectFormParameters =
@@ -135,8 +151,7 @@ public class ActivityUtil {
           "[onOptionsItemSelected] Collect form is custom: " +
               collectFormParameters.isCustom());
       CollectUtil.addRowWithCollect(
-          activity,
-          tableProperties,
+          activity, appName, tableId, orderedDefns,
           collectFormParameters,
           prepopulatedValues);
     } else {
@@ -149,9 +164,7 @@ public class ActivityUtil {
           "[onOptionsItemSelected] survey form is custom: " +
               surveyFormParameters.isUserDefined());
       SurveyUtil.addRowWithSurvey(
-          activity,
-          activity.getAppName(),
-          tableProperties,
+          activity, appName, tableId, 
           surveyFormParameters,
           prepopulatedValues);
     }

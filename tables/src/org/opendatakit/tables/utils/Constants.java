@@ -15,7 +15,7 @@
  */
 package org.opendatakit.tables.utils;
 
-import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 
@@ -91,7 +91,7 @@ public class Constants {
     /**
      * Key to the where clause if this list view is to be opened with a more
      * complex query than permissible by the simple query object. Must conform
-     * to the expectations of {@link DbTable#rawSqlQuery} and
+     * to the expectations of {@link ODKDatabaseUtils#rawSqlQuery} and
      * {@link CustomView$Control#queryWithSql}.
      *
      * @see INTENT_KEY_SQL_SELECTION_ARGS

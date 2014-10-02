@@ -1,16 +1,21 @@
 package org.opendatakit.tables.views;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 
 /**
  * Wrapper class for UserTable that presents the table in the way that the
@@ -23,55 +28,90 @@ public class SpreadsheetUserTable {
   @SuppressWarnings("unused")
   private static final String TAG = "SpreadsheetUserTable";
 
+  private final AbsTableDisplayFragment fragment;
+  private final UserTable table;
   private final String[] header;
   private final String[] spreadsheetIndexToElementKey;
   private final int[] spreadsheetIndexToUserTableIndexRemap;
-  private final Map<String,Integer> elementKeyToSpreadsheetIndex;
-  private final UserTable table;
+  private final Map<String, Integer> elementKeyToSpreadsheetIndex;
 
-  public SpreadsheetUserTable(UserTable table) {
+  public SpreadsheetUserTable(AbsTableDisplayFragment frag, UserTable table) {
+    this.fragment = frag;
     this.table = table;
-    List<String> colOrder = this.table.getTableProperties().getColumnOrder();
+    Context context = Tables.getInstance().getApplicationContext();
+
+    ArrayList<String> colOrder;
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(context, table.getAppName());
+      colOrder = TableUtil.get().getColumnOrder(db, table.getTableId());
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+
+    if (colOrder.isEmpty()) {
+      ArrayList<ColumnDefinition> orderedDefns = fragment.getColumnDefinitions();
+      for (ColumnDefinition cd : orderedDefns) {
+        if ( cd.isUnitOfRetention() ) {
+          colOrder.add(cd.getElementKey());
+        }
+      }
+    }
+
     header = new String[colOrder.size()];
     spreadsheetIndexToUserTableIndexRemap = new int[colOrder.size()];
     spreadsheetIndexToElementKey = new String[colOrder.size()];
-    elementKeyToSpreadsheetIndex = new HashMap<String,Integer>();
-    for ( int i = 0 ; i < colOrder.size(); ++i ) {
-      String elementKey = colOrder.get(i);
-      spreadsheetIndexToUserTableIndexRemap[i] = this.table.getColumnIndexOfElementKey(elementKey);
-      ColumnProperties cp = this.table.getTableProperties().getColumnByElementKey(elementKey);
-      header[i] = cp.getLocalizedDisplayName();
-      spreadsheetIndexToElementKey[i] = elementKey;
-      elementKeyToSpreadsheetIndex.put(elementKey, i);
+    elementKeyToSpreadsheetIndex = new HashMap<String, Integer>();
+    db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(context, table.getAppName());
+      for (int i = 0; i < colOrder.size(); ++i) {
+        String elementKey = colOrder.get(i);
+        spreadsheetIndexToUserTableIndexRemap[i] = this.table
+            .getColumnIndexOfElementKey(elementKey);
+
+        String localizedDisplayName;
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, table.getTableId(),
+            elementKey);
+
+        header[i] = localizedDisplayName;
+        spreadsheetIndexToElementKey[i] = elementKey;
+        elementKeyToSpreadsheetIndex.put(elementKey, i);
+      }
+    } finally {
+      if (db != null) {
+        db.close();
+      }
     }
   }
 
-  public KeyValueStoreHelper getKeyValueStoreHelper(String partition) {
-    return table.getTableProperties().getKeyValueStoreHelper(partition);
-  }
-
   public String getTableId() {
-    return table.getTableProperties().getTableId();
+    return table.getTableId();
   }
 
   public String getAppName() {
-    return table.getTableProperties().getAppName();
+    return table.getAppName();
   }
 
-  public Map<String, ColumnProperties> getAllColumns() {
-    return table.getTableProperties().getAllColumns();
+  public ArrayList<ColumnDefinition> getColumnDefinitions() {
+    return fragment.getColumnDefinitions();
   }
 
   public ColorRuleGroup getColumnColorRuleGroup(String elementKey) {
-    return ColorRuleGroup.getColumnColorRuleGroup(table.getTableProperties(), elementKey);
+    return ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance().getApplicationContext(),
+        getAppName(), getTableId(), elementKey);
   }
 
   public ColorRuleGroup getStatusColumnRuleGroup() {
-    return ColorRuleGroup.getStatusColumnRuleGroup(table.getTableProperties());
+    return ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance().getApplicationContext(),
+        getAppName(), getTableId());
   }
 
   public ColorRuleGroup getTableColorRuleGroup() {
-    return ColorRuleGroup.getTableColorRuleGroup(table.getTableProperties());
+    return ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance().getApplicationContext(),
+        getAppName(), getTableId());
   }
 
   int getNumberOfRows() {
@@ -82,19 +122,30 @@ public class SpreadsheetUserTable {
     return table.getRowAtIndex(index);
   }
 
-  /////////////////////////////////////////////////////////////////////////////
+  // ///////////////////////////////////////////////////////////////////////////
   // Whether or not we have a frozen column...
 
-
   public String getIndexedColumnElementKey() {
-    return this.table.getTableProperties().getIndexColumn();
+    String indexColumn;
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(
+          Tables.getInstance().getApplicationContext(), 
+          getAppName());
+      indexColumn = TableUtil.get().getIndexColumn(db, getTableId());
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+    return indexColumn;
   }
 
   boolean isIndexed() {
     return getIndexedColumnElementKey() != null && getIndexedColumnElementKey().length() != 0;
   }
 
-  /////////////////////////////////////
+  // ///////////////////////////////////
   // These need to be re-worked...
 
   public boolean hasData() {
@@ -114,17 +165,21 @@ public class SpreadsheetUserTable {
     cell.rowNum = cellInfo.rowId;
     cell.row = getRowAtIndex(cellInfo.rowId);
     cell.elementKey = cellInfo.elementKey;
-    cell.displayText = cell.row.getDisplayTextOfData(context, cellInfo.elementKey, true);
+    ArrayList<ColumnDefinition> orderedDefns = getColumnDefinitions();
+    ColumnDefinition cd = ColumnDefinition.find(orderedDefns, cellInfo.elementKey);
+    cell.displayText = cell.row.getDisplayTextOfData(context, cd.getType(), cellInfo.elementKey,
+        true);
     cell.value = cell.row.getRawDataOrMetadataByElementKey(cellInfo.elementKey);
     return cell;
   }
 
-  public ColumnProperties getColumnByIndex(int headerCellNum) {
-    return table.getTableProperties().getColumnByElementKey(spreadsheetIndexToElementKey[headerCellNum]);
+  public ColumnDefinition getColumnByIndex(int headerCellNum) {
+    return getColumnByElementKey(spreadsheetIndexToElementKey[headerCellNum]);
   }
 
-  public ColumnProperties getColumnByElementKey(String elementKey) {
-    return table.getTableProperties().getColumnByElementKey(elementKey);
+  public ColumnDefinition getColumnByElementKey(String elementKey) {
+    ArrayList<ColumnDefinition> orderedDefns = getColumnDefinitions();
+    return ColumnDefinition.find(orderedDefns, elementKey);
   }
 
   public int getWidth() {

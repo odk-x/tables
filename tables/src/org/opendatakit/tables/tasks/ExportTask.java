@@ -1,9 +1,15 @@
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.common.android.utils.CsvUtil;
-import org.opendatakit.common.android.utils.CsvUtil.ExportListener;
+import java.util.ArrayList;
+
+import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.CsvUtil;
+import org.opendatakit.common.android.utilities.CsvUtil.ExportListener;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.activities.ExportCSVActivity;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 
 public class ExportTask
@@ -30,8 +36,18 @@ public class ExportTask
     protected Boolean doInBackground(ExportRequest... exportRequests) {
         ExportRequest request = exportRequests[0];
         CsvUtil cu = new CsvUtil(this.exportCSVActivity, appName);
-        // export goes to output/csv directory...
-        return cu.exportSeparable(this, request.getTableProperties(), request.getFileQualifier());
+        SQLiteDatabase db = null;
+        try {
+          String tableId = request.getTableId();
+          db = DatabaseFactory.get().getDatabase(this.exportCSVActivity, appName);
+          ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+          // export goes to output/csv directory...
+          return cu.exportSeparable(this, db, tableId, orderedDefns, request.getFileQualifier());
+        } finally {
+          if ( db != null ) {
+            db.close();
+          }
+        }
     }
 
     @Override

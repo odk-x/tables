@@ -101,7 +101,6 @@
         <activity android:name=".activities.TableLevelPreferencesActivity" />
         <activity android:name=".activities.AccountInfoActivity" />
         <activity android:name=".activities.DisplayPrefsActivity"/>
-        <activity android:name=".activities.PropertyManager"/>
         <activity android:name=".activities.TablePropertiesManager"/>
         <activity android:name=".activities.ImportCSVActivity"/>
         <activity android:name=".activities.ExportCSVActivity"/>

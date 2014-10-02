@@ -2,10 +2,10 @@ package org.opendatakit.tables.activities;
 
 import java.io.File;
 
-import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -14,6 +14,7 @@ import org.opendatakit.tables.utils.OutputUtil;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
@@ -28,9 +29,8 @@ public class DisplayPrefsActivity extends PreferenceActivity {
   private static final int ABOUT_ACTIVITY_CODE = 1;
   
   private String appName;
+  private String tableId;
   private Preferences prefs;
-  private TableProperties tp;
-  private KeyValueStoreHelper kvsh;
 
   /** Alerts to confirm the output of the debug objects. */
   private AlertDialog mOutputDebugObjectsDialog;
@@ -46,14 +46,12 @@ public class DisplayPrefsActivity extends PreferenceActivity {
     prefs = new Preferences(this, appName);
     // check if this activity was called from Controller, in which case it
     // would have an extra string "tableId" bundled in
-    String tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
+    tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     if (tableId == null) {
       // was called from TableManager
       generalPreferences();
     } else {
       // was called from controller so it is table specific
-      tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
-      kvsh = tp.getKeyValueStoreHelper("SpreadsheetView");
       customPreferences();
     }
   }
@@ -160,8 +158,7 @@ public class DisplayPrefsActivity extends PreferenceActivity {
       @Override
       public boolean onPreferenceClick(Preference preference) {
         Intent i = new Intent(DisplayPrefsActivity.this, AboutWrapperActivity.class);
-        i.putExtra(Constants.IntentKeys.APP_NAME, appName);
-        startActivityForResult(i, ABOUT_ACTIVITY_CODE);
+        i.putExtra(Constants.IntentKeys.APP_NAME, appName);        startActivityForResult(i, ABOUT_ACTIVITY_CODE);
         return true;
       }
     });
@@ -174,9 +171,20 @@ public class DisplayPrefsActivity extends PreferenceActivity {
   private void customPreferences() {
     PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
 
+    String localizedDisplayName;
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(this, appName);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+
     PreferenceCategory genCat = new PreferenceCategory(this);
     root.addPreference(genCat);
-    genCat.setTitle(getString(R.string.display_prefs_for, tp.getLocalizedDisplayName()));
+    genCat.setTitle(getString(R.string.display_prefs_for, localizedDisplayName));
 
 //    final SliderPreference fontSizePref = new SliderPreference(this, prefs.getFontSize());
 //    fontSizePref.addDefaultOption(true);

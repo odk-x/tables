@@ -1,6 +1,5 @@
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.WebFragment;
 import org.opendatakit.tables.utils.CollectUtil;
@@ -91,12 +90,6 @@ public class WebViewActivity extends AbsBaseActivity {
       Intent data) {
     String tableId = this.getActionTableId();
     if ( tableId != null ) {
-      
-      TableProperties restoreTableProperties = 
-          TableProperties.getTablePropertiesForTable(
-              this,
-              this.getAppName(),
-              tableId);
 
       switch (requestCode) {
       case Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
@@ -107,7 +100,7 @@ public class WebViewActivity extends AbsBaseActivity {
       case Constants.RequestCodes.ADD_ROW_COLLECT:
         if (resultCode == Activity.RESULT_OK) {
           Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
-          CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), restoreTableProperties, resultCode, data);
+          CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), tableId, resultCode, data);
         } else {
           Log.d(
               TAG,
@@ -118,7 +111,7 @@ public class WebViewActivity extends AbsBaseActivity {
       case Constants.RequestCodes.EDIT_ROW_COLLECT:
         if (resultCode == Activity.RESULT_OK) {
           Log.d(TAG, "[onActivityResult] result ok, refreshing backing table");
-          CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), restoreTableProperties, resultCode, data);
+          CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), tableId, resultCode, data);
         } else {
           Log.d(
               TAG,

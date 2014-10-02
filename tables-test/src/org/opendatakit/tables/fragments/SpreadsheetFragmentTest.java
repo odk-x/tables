@@ -1,6 +1,7 @@
 package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -10,8 +11,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
@@ -19,6 +20,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 
 import android.app.Activity;
+import android.database.sqlite.SQLiteDatabase;
 import android.view.View;
 import android.widget.TextView;
 
@@ -30,6 +32,7 @@ public class SpreadsheetFragmentTest {
 
   @Before
   public void before() {
+    TestCaseUtils.setThreeTableDataset();
     ShadowLog.stream = System.out;
     TestCaseUtils.setExternalStorageMounted();
     // We don't want to build the menu here, as it doesn't
@@ -47,10 +50,13 @@ public class SpreadsheetFragmentTest {
 
   private void setupWithNoData() {
     // Make the UserTable show width 0.
-    TableProperties tablePropertiesMock = mock(TableProperties.class);
-    doReturn(new ArrayList<String>()).when(tablePropertiesMock).getColumnOrder();
+    TableUtil tableUtilMock = mock(TableUtil.class);
+    
+    doReturn(new ArrayList<String>()).when(tableUtilMock).getColumnOrder(any(SQLiteDatabase.class),
+        any(String.class));
     UserTable userTableMock = mock(UserTable.class);
-    doReturn(tablePropertiesMock).when(userTableMock).getTableProperties();
+    doReturn("emptyTable").when(userTableMock).getTableId();
+    doReturn("tables").when(userTableMock).getAppName();
     doReturn(0).when(userTableMock).getWidth();
     TableDisplayActivityStub.USER_TABLE = userTableMock;
     doGlobalSetup();

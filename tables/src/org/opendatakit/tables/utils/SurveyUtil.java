@@ -1,15 +1,29 @@
+/*
+ * Copyright (C) 2014 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.UUID;
 
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
-import org.opendatakit.common.android.data.KeyValueHelper;
-import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.KeyValueHelper;
+import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 
 import android.app.Activity;
@@ -17,6 +31,7 @@ import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
 
@@ -69,9 +84,6 @@ public class SurveyUtil {
   private static final String CONTENT_PREFIX_WITH_SCHEME_SUFFIX = "content://";
   private static final String FORWARD_SLASH = "/";
 
-  private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(
-                                                                                  "yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-
   private static final String SURVEY_ADDROW_FORM_ID_PREFIX = "_generated_";
 
   /**
@@ -81,19 +93,20 @@ public class SurveyUtil {
    * @param tp
    * @return
    */
-  private static String getDefaultAddRowFormId(TableProperties tp) {
-    return SURVEY_ADDROW_FORM_ID_PREFIX + tp.getTableId();
+  private static String getDefaultAddRowFormId(String tableId) {
+    return SURVEY_ADDROW_FORM_ID_PREFIX + tableId;
   }
 
   /**
    * Acquire an intent that will be set up to add a row using Survey. As with
-   * {@link CollectUtil#getIntentForOdkCollectAddRow(Context, TableProperties, org.opendatakit.tables.utils.CollectUtil.CollectFormParameters, Map)}
+   * {@link CollectUtil#getIntentForOdkCollectAddRow(Context, String, String, org.opendatakit.tables.utils.CollectUtil.CollectFormParameters, Map)}
    * , it
    * should eventually be able to prepopulate the row with the values in
    * elementKeyToValue. However! Much of this is still unimplemented.
    *
    * @param context
-   * @param tp
+   * @param appName
+   * @param tableId
    * @param elementNameToValue
    *          a mapping of elementName to value for the values
    *          that you wish to prepopulate in the add row. Note that these are
@@ -103,8 +116,9 @@ public class SurveyUtil {
    *          on elementName.
    * @return
    */
-  public static Intent getIntentForOdkSurveyAddRow(Context context, TableProperties tp,
+  public static Intent getIntentForOdkSurveyAddRow(Context context, 
                                                    String appName,
+                                                   String tableId,
                                                    SurveyFormParameters surveyFormParameters,
                                                    Map<String, String> elementNameToValue) {
 
@@ -116,7 +130,7 @@ public class SurveyUtil {
     intent.setComponent(new ComponentName(SURVEY_PACKAGE_NAME,
                                           SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME));
     intent.setAction(Intent.ACTION_EDIT);
-    Uri addUri = getUriForSurveyAddRow(tp, appName, surveyFormParameters, elementNameToValue,
+    Uri addUri = getUriForSurveyAddRow(context, appName, tableId, surveyFormParameters, elementNameToValue,
         context.getContentResolver());
     intent.setData(addUri);
     return intent;
@@ -139,8 +153,8 @@ public class SurveyUtil {
    * @param instanceId
    * @return
    */
-  public static Intent getIntentForOdkSurveyEditRow(Context context, TableProperties tp,
-                                                    String appName,
+  public static Intent getIntentForOdkSurveyEditRow(Context context, 
+                                                    String appName, String tableId,
                                                     SurveyFormParameters surveyFormParameters,
                                                     String instanceId) {
     // To launch a specific form for a particular row we need to construct up
@@ -151,7 +165,7 @@ public class SurveyUtil {
     intent.setComponent(new ComponentName(SURVEY_PACKAGE_NAME,
                                           SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME));
     intent.setAction(Intent.ACTION_EDIT);
-    Uri editUri = getUriForSurveyEditRow(tp, appName, surveyFormParameters, instanceId,
+    Uri editUri = getUriForSurveyEditRow(context, appName, tableId, surveyFormParameters, instanceId,
         context.getContentResolver());
     intent.setData(editUri);
     return intent;
@@ -176,13 +190,13 @@ public class SurveyUtil {
    * in order to get the default form for a table or something of this nature.
    * For at least the very short term, it will remain.
    */
-  private static Uri getUriForSurveyAddRow(TableProperties tp, String appName,
+  private static Uri getUriForSurveyAddRow(Context context, String appName, String tableId,
                                            SurveyFormParameters surveyFormParameters,
                                            Map<String, String> elementNameToValue,
                                            ContentResolver resolver) {
     // We'll create a UUID, as that will tell survey we want a new one.
     String newUuid = INSTANCE_UUID_PREFIX + UUID.randomUUID().toString();
-    Uri helpedUri = getUriForSurveyHelper(tp, surveyFormParameters, appName, newUuid,
+    Uri helpedUri = getUriForSurveyHelper(context, appName, tableId, surveyFormParameters, newUuid,
         elementNameToValue);
     return helpedUri;
   }
@@ -204,7 +218,7 @@ public class SurveyUtil {
    * in order to get the default form for a table or something of this nature.
    * For at least the very short term, it will remain.
    */
-  private static Uri getUriForSurveyEditRow(TableProperties tp, String appName,
+  private static Uri getUriForSurveyEditRow(Context context, String appName, String tableId,
                                             SurveyFormParameters surveyFormParameters,
                                             String instanceId, ContentResolver resolver) {
     // The helper function does most of the heavy lifting here. Unlike the
@@ -214,7 +228,7 @@ public class SurveyUtil {
     // end of the URI, since we're editing we're not going to allow this for
     // now. It's conceivable, perhaps, that we'll want to allow specification
     // of subforms or something, but for now we're not going to allow it.
-    Uri helpedUri = getUriForSurveyHelper(tp, surveyFormParameters, appName, instanceId, null);
+    Uri helpedUri = getUriForSurveyHelper(context, appName, tableId, surveyFormParameters, instanceId, null);
     return helpedUri;
   }
 
@@ -238,9 +252,10 @@ public class SurveyUtil {
    *          in an edit row for the specified id.
    * @return
    */
-  private static Uri getUriForSurveyHelper(TableProperties tp,
+  private static Uri getUriForSurveyHelper(Context context, String appName,
+                                           String tableId,
                                            SurveyFormParameters surveyFormParameters,
-                                           String appName, String instanceId,
+                                           String instanceId,
                                            Map<String, String> elementNameToValue) {
     // We're operating for the moment under the assumption that Survey expects
     // a uri like the following:
@@ -311,9 +326,9 @@ public class SurveyUtil {
    * @param surveyAddIntent
    * @param tp
    */
-  public static void launchSurveyToAddRow(AbsBaseActivity activityToAwaitReturn, Intent surveyAddIntent,
-                                          TableProperties tp) {
-    activityToAwaitReturn.setActionTableId(tp.getTableId());
+  public static void launchSurveyToAddRow(AbsBaseActivity activityToAwaitReturn, 
+      String tableId, Intent surveyAddIntent) {
+    activityToAwaitReturn.setActionTableId(tableId);
     activityToAwaitReturn.startActivityForResult(
         surveyAddIntent,
         Constants.RequestCodes.ADD_ROW_SURVEY);
@@ -321,12 +336,13 @@ public class SurveyUtil {
 
   /**
    * Add a row with Survey. Convenience method for calling
-   * {@link #getIntentForOdkSurveyAddRow(Context, TableProperties, String,
+   * {@link #getIntentForOdkSurveyAddRow(Context, String, String,
    *  SurveyFormParameters, Map)} followed by
-   *  {@link #launchSurveyToAddRow(Activity, Intent, TableProperties)}.
+   *  {@link #launchSurveyToAddRow(Activity, String, Intent)}.
+   * 
    * @param activity activity to await activity return
    * @param appName
-   * @param tableProperties
+   * @param tableId
    * @param surveyFormParameters
    * @param prepopulatedValues values you want to prepopulate the form with.
    * Should be element key to value.
@@ -334,45 +350,46 @@ public class SurveyUtil {
   public static void addRowWithSurvey(
       AbsBaseActivity activity,
       String appName,
-      TableProperties tableProperties,
+      String tableId,
       SurveyFormParameters surveyFormParameters,
       Map<String, String> prepopulatedValues) {
     Intent addRowIntent = SurveyUtil.getIntentForOdkSurveyAddRow(
         activity,
-        tableProperties,
-        appName,
+        appName, 
+        tableId,
         surveyFormParameters,
         prepopulatedValues);
-    SurveyUtil.launchSurveyToAddRow(activity, addRowIntent, tableProperties);
+    SurveyUtil.launchSurveyToAddRow(activity, tableId, addRowIntent);
   }
 
   /**
    * Launch survey to edit a row. Convenience method for calling
-   * {@link #getIntentForOdkSurveyEditRow(Context, TableProperties, String,
+   * {@link #getIntentForOdkSurveyEditRow(Context, String, String,
    *  SurveyFormParameters, String)} followed by
-   * {@link #launchSurveyToEditRow(Activity, Intent, TableProperties, String)}.
+   * {@link #launchSurveyToEditRow(Activity, Intent, String, String)}.
+   * 
    * @param activity activity to await the return of the launch
    * @param appName
+   * @param tableId
    * @param instanceId id of the row to edit
-   * @param tableProperties
    * @param surveyFormParameters
    */
   public static void editRowWithSurvey(
       AbsBaseActivity activity,
       String appName,
+      String tableId,
       String instanceId,
-      TableProperties tableProperties,
       SurveyFormParameters surveyFormParameters) {
     Intent editRowIntent = SurveyUtil.getIntentForOdkSurveyEditRow(
         activity,
-        tableProperties,
-        appName,
+        appName, 
+        tableId,
         surveyFormParameters,
         instanceId);
     SurveyUtil.launchSurveyToEditRow(
         activity,
+        tableId,
         editRowIntent,
-        tableProperties,
         instanceId);
   }
 
@@ -384,9 +401,11 @@ public class SurveyUtil {
    * @param surveyEditIntent
    * @param tp
    */
-  public static void launchSurveyToEditRow(AbsBaseActivity activityToAwaitReturn, Intent surveyEditIntent,
-                                           TableProperties tp, String rowId) {
-    activityToAwaitReturn.setActionTableId(tp.getTableId());
+  public static void launchSurveyToEditRow(AbsBaseActivity activityToAwaitReturn, 
+                                           String tableId,
+                                           Intent surveyEditIntent,
+                                           String rowId) {
+    activityToAwaitReturn.setActionTableId(tableId);
     activityToAwaitReturn.startActivityForResult(
         surveyEditIntent,
         Constants.RequestCodes.EDIT_ROW_SURVEY);
@@ -457,9 +476,9 @@ public class SurveyUtil {
     }
 
     /**
-     * Construct a SurveyFormParameters object from the given TableProperties.
+     * Construct a SurveyFormParameters object from the given tableId.
      * The object is determined to have custom parameters if a formId can be
-     * retrieved from the TableProperties object. Otherwise the default addrow
+     * retrieved from the tableId. Otherwise the default addrow
      * parameters are set.
      * <p>
      * The display name of the row will be the display name of the table.
@@ -467,19 +486,30 @@ public class SurveyUtil {
      * @param tp
      * @return
      */
-    public static SurveyFormParameters constructSurveyFormParameters(TableProperties tp) {
-      KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(SurveyUtil.KVS_PARTITION);
-      KeyValueHelper aspectHelper = kvsh.getAspectHelper(SurveyUtil.KVS_ASPECT);
-      String formId = aspectHelper.getString(SurveyUtil.KEY_FORM_ID);
+    public static SurveyFormParameters constructSurveyFormParameters(
+        Context context, String appName, String tableId) {
+      String formId;
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(context, appName);
+        KeyValueStoreHelper kvsh = new KeyValueStoreHelper(
+            db, tableId, SurveyUtil.KVS_PARTITION);
+        KeyValueHelper aspectHelper = kvsh.getAspectHelper(SurveyUtil.KVS_ASPECT);
+        formId = aspectHelper.getString(SurveyUtil.KEY_FORM_ID);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
       if (formId == null) {
-        return new SurveyFormParameters(false, getDefaultAddRowFormId(tp), null);
+        return new SurveyFormParameters(false, getDefaultAddRowFormId(tableId), null);
       }
       // Else we know it is custom.
       return new SurveyFormParameters(true, formId, null);
     }
 
-    public void persist(TableProperties tp) {
-      KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(SurveyUtil.KVS_PARTITION);
+    public void persist(SQLiteDatabase db, String tableId) {
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, SurveyUtil.KVS_PARTITION);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(SurveyUtil.KVS_ASPECT);
       if (this.isUserDefined()) {
         aspectHelper.setString(SurveyUtil.KEY_FORM_ID, this.mFormId);
@@ -487,7 +517,6 @@ public class SurveyUtil {
         aspectHelper.removeKey(SurveyUtil.KEY_FORM_ID);
       }
     }
-
   }
 
 }

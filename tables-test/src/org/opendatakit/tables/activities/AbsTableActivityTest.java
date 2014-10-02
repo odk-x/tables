@@ -1,15 +1,26 @@
 package org.opendatakit.tables.activities;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 
 /**
  * Basic test for the {@link AbsTableActivity}. Note that it is NOT an
@@ -22,6 +33,19 @@ public class AbsTableActivityTest {
   
   @Before
   public void before() {
+    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
+    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
+    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
+    DatabaseFactory.set(factoryMock);
+    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
+    String tableId = AbsTableActivityStub.DEFAULT_TABLE_ID;
+    List<String> tableIds = new ArrayList<String>();
+    tableIds.add(tableId);
+    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
+    List<Column> columns = new ArrayList<Column>();
+    doReturn(columns).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(AbsTableActivityStub.DEFAULT_TABLE_ID));
+    ODKDatabaseUtils.set(wrapperMock);
+    
     TestCaseUtils.setExternalStorageMounted();
   }
   
@@ -30,8 +54,6 @@ public class AbsTableActivityTest {
     TestCaseUtils.resetExternalStorageState();
     // Reset all these values in case they were changed.
     AbsTableActivityStub.APP_NAME = AbsTableActivityStub.DEFAULT_APP_NAME;
-    AbsTableActivityStub.TABLE_PROPERTIES =
-        AbsTableActivityStub.DEFAULT_TABLE_PROPERTIES;
     AbsTableActivityStub.TABLE_ID = AbsTableActivityStub.DEFAULT_TABLE_ID;
   }
   
@@ -39,25 +61,12 @@ public class AbsTableActivityTest {
   public void noTableIdThrowsIllegalStateException() {
     // We should get this if we create the activity without a table id.
     AbsTableActivityStub.TABLE_ID = null;
-    AbsTableActivityStub.TABLE_PROPERTIES = mock(TableProperties.class);
-    this.buildActivity();
-  }
-  
-  @Test(expected=IllegalStateException.class)
-  public void noTablePropertiesThrowsIllegalStateException() {
-    AbsTableActivityStub.TABLE_PROPERTIES = null;
     this.buildActivity();
   }
   
   @Test
   public void tablePropertiesSetCorrectly() {
-    TableProperties mockTp = mock(TableProperties.class);
-    AbsTableActivityStub.TABLE_PROPERTIES = mockTp;
-    AbsTableActivityStub activity = this.buildActivity();
-    TableProperties retrievedTp = activity.getTableProperties();
-    org.fest.assertions.api.Assertions.assertThat(retrievedTp)
-        .isNotNull()
-        .isSameAs(mockTp);
+    this.buildActivity();
   }
   
   /**

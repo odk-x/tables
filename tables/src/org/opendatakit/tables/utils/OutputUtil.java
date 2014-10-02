@@ -1,22 +1,41 @@
+/*
+ * Copyright (C) 2014 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.DbTable;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -78,16 +97,27 @@ public class OutputUtil {
    *
    * @return
    */
-  public static String getStringForControlObject(Context context, String appName) {
+  private static String getStringForControlObject(Context context, String appName) {
     Map<String, Object> controlMap = new HashMap<String, Object>();
-    TableProperties[] allTableProperties = TableProperties.getTablePropertiesForAll(
-        context, appName);
     Map<String, String> tableIdToDisplayName = new HashMap<String, String>();
     Map<String, Map<String, Object>> tableIdToControlTable = new HashMap<String, Map<String, Object>>();
-    for (TableProperties tableProperties : allTableProperties) {
-      tableIdToDisplayName.put(tableProperties.getTableId(), tableProperties.getLocalizedDisplayName());
-      Map<String, Object> controlTable = getMapForControlTable(context, tableProperties);
-      tableIdToControlTable.put(tableProperties.getTableId(), controlTable);
+
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(context, appName);
+      ArrayList<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+      for (String tableId : tableIds) {
+
+        String localizedDisplayName;
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+        tableIdToDisplayName.put(tableId, localizedDisplayName);
+        Map<String, Object> controlTable = getMapForControlTable(db, tableId);
+        tableIdToControlTable.put(tableId, controlTable);
+      }
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
     }
     Gson gson = new Gson();
     controlMap.put(CTRL_KEY_TABLE_ID_TO_DISPLAY_NAME, tableIdToDisplayName);
@@ -113,20 +143,31 @@ public class OutputUtil {
    * @param tableProperties
    * @return
    */
-  public static Map<String, Object> getMapForControlTable(Context context,
-      TableProperties tableProperties) {
+  public static Map<String, Object> getMapForControlTable(SQLiteDatabase db, String tableId) {
     Map<String, Object> controlTable = new HashMap<String, Object>();
     Map<String, String> pathToKey = new HashMap<String, String>();
+    ArrayList<ColumnDefinition> orderedDefns;
+
+    String defaultDetailFileName = null;
+    String defaultListFileName = null;
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
-    for (ColumnProperties columnProperties : tableProperties.getAllColumns().values()) {
-      String elementName = columnProperties.getElementName();
+    
+    orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+    defaultDetailFileName = TableUtil.get().getDetailViewFilename(db, tableId);
+    defaultListFileName = TableUtil.get().getListViewFilename(db, tableId);
+    
+    for (ColumnDefinition cd : orderedDefns) {
+      String elementName = cd.getElementName();
       if ( elementName != null ) {
-        pathToKey.put(columnProperties.getElementName(), columnProperties.getElementKey());
-        keyToDisplayName.put(columnProperties.getElementKey(), columnProperties.getLocalizedDisplayName());
+        pathToKey.put(cd.getElementName(), cd.getElementKey());
+
+        String localizedDisplayName;
+          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId, cd.getElementKey());
+
+        keyToDisplayName.put(cd.getElementKey(), localizedDisplayName);
       }
     }
-    String defaultDetailFileName = tableProperties.getDetailViewFileName();
-    String defaultListFileName = tableProperties.getListViewFileName();
+
     controlTable.put(CTRL_TABLE_KEY_ELEMENT_PATH_TO_KEY, pathToKey);
     controlTable.put(CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME, keyToDisplayName);
     controlTable.put(CTRL_KEY_DEFAULT_DETAIL_FILE, defaultDetailFileName);
@@ -143,16 +184,19 @@ public class OutputUtil {
    * array of rows) {@link #DATA_KEY_COLUMNS}: {elementKey: string, ...},
    * {@link #DATA_KEY_ELEMENT_KEY_TO_PATH: elementPath: elementPath, ...},
    *
-   * @param context
+   * @param db
    * @param appName
    * @param tableId
    * @return
    */
-  public static String getStringForDataObject(Context context, String appName, String tableId,
+  private static String getStringForDataObject(SQLiteDatabase db, String appName, String tableId,
       int numberOfRows) {
-    TableProperties tableProperties = TableProperties.getTablePropertiesForTable(context, appName, tableId);
-    DbTable dbTable = DbTable.getDbTable(tableProperties);
-    UserTable userTable = dbTable.rawSqlQuery(null, null, null, null, null, null);
+
+    ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+    
+    UserTable userTable = null;
+    userTable = ODKDatabaseUtils.get().rawSqlQuery(db, appName, tableId, 
+        orderedDefns, null, null, null, null, null, null);
 
     // TODO: This is broken w.r.t. elementKey != elementPath
     // TODO: HACKED HACKED HACKED HACKED
@@ -163,9 +207,8 @@ public class OutputUtil {
     // We need to also store the element key to the index of the data so that
     // we know how to access it out of the array representing each row.
     Map<String, Integer> elementKeyToIndex = new HashMap<String, Integer>();
-    Set<String> elementKeys = tableProperties.getAllColumns().keySet();
-    for (String elementKey : elementKeys) {
-      elementKeyToIndex.put(elementKey, userTable.getColumnIndexOfElementKey(elementKey));
+    for (ColumnDefinition cd : orderedDefns) {
+      elementKeyToIndex.put(cd.getElementKey(), userTable.getColumnIndexOfElementKey(cd.getElementKey()));
     }
     // We don't want to try and write more rows than we have.
     int numRowsToWrite = Math.min(numberOfRows, userTable.getNumberOfRows());
@@ -230,7 +273,7 @@ public class OutputUtil {
     // We don't want the real count, as that could interfere with for loops in
     // the code. We in fact want the number of rows that are written, as that
     // will be the number of rows available to the javascript.
-    outputObject.put(DATA_KEY_TABLE_ID, userTable.getTableProperties().getTableId());
+    outputObject.put(DATA_KEY_TABLE_ID, userTable.getTableId());
     outputObject.put(DATA_KEY_COUNT, numRowsToWrite);
     outputObject.put(DATA_KEY_COLUMNS, columnJsonMap);
     outputObject.put(DATA_KEY_COLUMN_DATA, elementKeyToColumnData);
@@ -238,19 +281,6 @@ public class OutputUtil {
     outputObject.put(DATA_KEY_ROW_IDS, rowIds);
     String outputString = gson.toJson(outputObject);
     return outputString;
-  }
-
-  /**
-   * Get the table data object with {@link #NUM_ROWS_IN_DATA_OBJECT} rows.
-   *
-   * @see #getStringForDataObject(Context, String, String, int)
-   * @param context
-   * @param appName
-   * @param tableId
-   * @return
-   */
-  public static String getStringForDataObject(Context context, String appName, String tableId) {
-    return getStringForDataObject(context, appName, tableId, NUM_ROWS_IN_DATA_OBJECT);
   }
 
   /**
@@ -287,9 +317,18 @@ public class OutputUtil {
    * @param numberOfRows
    */
   public static void writeAllDataObjects(Context context, String appName, int numberOfRows) {
-    TableProperties[] allDataTables = TableProperties.getTablePropertiesForAll(context, appName);
-    for (TableProperties tableProperties : allDataTables) {
-      writeDataObject(context, appName, tableProperties.getTableId(), numberOfRows);
+
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(context, appName);
+      ArrayList<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+      for (String tableId : tableIds) {
+        writeDataObject(db, appName, tableId, numberOfRows);
+      }
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
     }
   }
 
@@ -309,14 +348,13 @@ public class OutputUtil {
    * Write the data object with the given number of rows to the debug folder.
    * The file is tableId_DATA_FILE_SUFFIX.
    *
-   * @param context
-   * @param appName
+   * @param db
    * @param tableId
    * @param numberOfRows
    */
-  public static void writeDataObject(Context context, String appName, String tableId,
+  public static void writeDataObject(SQLiteDatabase db, String appName, String tableId,
       int numberOfRows) {
-    String dataString = getStringForDataObject(context, appName, tableId, numberOfRows);
+    String dataString = getStringForDataObject(db, appName, tableId, numberOfRows);
     if ( dataString == null ) return;
     String fileName = ODKFileUtils.getTablesDebugObjectFolder(appName) + File.separator + tableId
         + DATA_FILE_SUFFIX;

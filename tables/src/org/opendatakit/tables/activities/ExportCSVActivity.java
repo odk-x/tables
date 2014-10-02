@@ -16,9 +16,12 @@
 package org.opendatakit.tables.activities;
 
 import java.io.File;
+import java.util.ArrayList;
 
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
@@ -26,6 +29,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -74,8 +78,8 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	private String appName;
 	/* the list of table names */
 	private String[] tableNames;
-	/* the list of TableProperties */
-	private TableProperties[] tps;
+	/* the list of table Ids */
+	private String[] tableIds;
 	/* the table name spinner */
 	private Spinner tableSpin;
 	/* the text field for getting the filename */
@@ -103,11 +107,23 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		tps = TableProperties.getTablePropertiesForAll(this, appName);
-		tableNames = new String[tps.length];
-		for (int i = 0; i < tps.length; i++) {
-		    tableNames[i] = tps[i].getLocalizedDisplayName();
-		}
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(this, appName);
+        ArrayList<String> rawTableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+        ArrayList<String> localizedNames = new ArrayList<String>();
+        for (String tableId : rawTableIds ) {
+		    String localizedDisplayName;
+		    localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+		    localizedNames.add(localizedDisplayName);
+        }
+        tableIds = rawTableIds.toArray(new String[rawTableIds.size()]);
+        tableNames = localizedNames.toArray(new String[localizedNames.size()]);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item, tableNames);
 		adapter.setDropDownViewResource(
@@ -148,10 +164,10 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
             appName,
             filenameValField.getText().toString().trim()
         );
-        TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
+        String tableId = tableIds[tableSpin.getSelectedItemPosition()];
         ExportTask task = new ExportTask(this, appName);
         showDialog(EXPORT_IN_PROGRESS_DIALOG);
-        task.execute(new ExportRequest(tp, filenameValField.getText().toString().trim()));
+        task.execute(new ExportRequest(appName, tableId, filenameValField.getText().toString().trim()));
 	}
 
 	@Override

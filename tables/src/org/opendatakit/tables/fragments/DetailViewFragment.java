@@ -1,7 +1,8 @@
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -10,6 +11,7 @@ import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.app.Fragment;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
@@ -87,12 +89,21 @@ public class DetailViewFragment extends AbsWebTableFragment {
       Log.e(TAG, "asking to retrieve single row table for null row id");
     }
     String rowId = getRowId();
-    DbTable dbTable = DbTable.getDbTable(getTableProperties());
-    UserTable result = dbTable.getTableForSingleRow(rowId);
-    if (result.getNumberOfRows() > 1 ) {
-      Log.e(TAG, "Single row table for row id " + rowId + " returned > 1 row");
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
+      UserTable result = ODKDatabaseUtils.get().getDataInExistingDBTableWithId(db, 
+          getAppName(), getTableId(), 
+          getColumnDefinitions(), rowId);
+      if (result.getNumberOfRows() > 1 ) {
+        Log.e(TAG, "Single row table for row id " + rowId + " returned > 1 row");
+      }
+      return result;
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
     }
-    return result;
   }
 
   @Override

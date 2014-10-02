@@ -23,20 +23,22 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.ColumnType;
-import org.opendatakit.common.android.data.DbTable;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.ElementDataType;
+import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utils.DataUtil;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
@@ -106,6 +108,82 @@ public class WebViewUtil {
   }
   
   /**
+   * Add a stringified value to the given content values. This respects the
+   * column's type, as defined by {@link ColumnDefinition#getType()}.
+   * @param columnProperties
+   * @param rawValue
+   * @param contentValues
+   * @return false if the data was invalid for the given type
+   */
+  @SuppressWarnings("unchecked")
+  public static boolean addValueToContentValues(Context context,
+      String appName, 
+      String tableId, 
+      DataUtil du,
+      // TableProperties tp,
+      ColumnDefinition colDefn,
+      String rawValue,
+      ContentValues contentValues) {
+    // the value we're going to key things against in the database.
+    String contentValuesKey = colDefn.getElementKey();
+    if (rawValue == null) {
+      // Then we can trust that it is ok, as we allow nulls.
+      // TODO: verify that nulls are permissible for the column?
+      contentValues.putNull(contentValuesKey);
+      return true;
+    } else {
+      // we have to validate it -- get the choices list, if any
+      ArrayList<Map<String,Object>> choices;
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(context, appName);
+        choices = (ArrayList<Map<String, Object>>) 
+            ColumnUtil.get().getDisplayChoicesList(db, tableId, colDefn.getElementKey());
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+      // we have to validate it. this validate function just returns null if
+      // valid, rather than a boolean.
+      String nullMeansInvalid = ParseUtil.validifyValue(du, choices, colDefn, rawValue);
+      if (nullMeansInvalid == null) {
+        // return false, indicating that the value was not acceptable.
+        Log.e(
+            TAG,
+            "[addRow] could not parse [" +
+              rawValue +
+              "] for column [" +
+              colDefn.getElementKey() +
+              "] to type: " +
+              colDefn.getType());
+        return false;
+      }
+
+      // This means all is well, and we can parse the value.
+      ElementType columnType = colDefn.getType();
+      ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
+      org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment r = m.getDefaultRenderer(columnType);
+      ElementDataType type = columnType.getDataType();
+      
+      if ( type == ElementDataType.integer ) {
+        contentValues.put(contentValuesKey, 
+          (Integer) r.parseStringValue(du, choices, rawValue, Integer.class));
+      } else if ( type == ElementDataType.number ) {
+        contentValues.put(contentValuesKey, 
+          (Double) r.parseStringValue(du, choices, rawValue, Double.class));
+      } else if ( type == ElementDataType.bool ) {
+        contentValues.put(contentValuesKey, 
+          (Boolean) r.parseStringValue(du, choices, rawValue, Boolean.class));
+      } else {
+        contentValues.put(contentValuesKey, 
+          (String) r.parseStringValue(du, choices, rawValue, String.class));
+      }
+      return true;
+    }
+  }
+
+  /**
    * Turn the map into a {@link ContentValues} object. Returns null if any of
    * the element keys do not exist in the table, or if the value cannot be 
    * parsed to the type of the column.
@@ -113,8 +191,9 @@ public class WebViewUtil {
    * @param elementKeyToValue
    * @return
    */
-  public static ContentValues getContentValuesFromMap(
-      TableProperties tableProperties,
+  public static ContentValues getContentValuesFromMap(Context context,
+      String appName, String tableId,
+      ArrayList<ColumnDefinition> orderedDefns, 
       Map<String, String> elementKeyToValue) {
     // Note that we're not currently
     // going to handle complex types or those that map to a json value. We 
@@ -125,23 +204,27 @@ public class WebViewUtil {
     ContentValues result = new ContentValues();
     // TODO: respect locale and timezone. Getting this structure from other
     // places it is used.
+    
     DataUtil dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
     for (Map.Entry<String, String> entry : elementKeyToValue.entrySet()) {
       String elementKey = entry.getKey();
       String rawValue = entry.getValue();
       // Get the column so we know what type we need to handle.
-      ColumnProperties columnProperties =
-          tableProperties.getColumnByElementKey(elementKey);
-      if (columnProperties == null) {
+      ColumnDefinition columnDefn =
+          ColumnDefinition.find(orderedDefns, elementKey);
+      if (columnDefn == null) {
         // uh oh, no column for the given id. problem on the part of the caller
         Log.e(
             TAG,
             "[addRow] could not find column for element key: " + elementKey);
         return null;
       }
-      ColumnType columnType = columnProperties.getColumnType();
-      boolean parsedSuccessfully = dataUtil.addValueToContentValues(
-          columnProperties,
+      ElementType columnType = columnDefn.getType();
+      boolean parsedSuccessfully = addValueToContentValues(context,
+          appName, 
+          tableId,
+          dataUtil,
+          columnDefn,
           rawValue,
           result);
       if (!parsedSuccessfully) {
@@ -241,34 +324,39 @@ public class WebViewUtil {
    * @return
    */
   public static Map<String, String> getMapOfElementKeyToValue(
-      TableProperties tableProperties,
+      Context context, String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns,
       String rowId) {
-    String sqlQuery = DataTableColumns.ID + " = ? ";
-    String[] selectionArgs = { rowId };
-    DbTable dbTable = DbTable.getDbTable(tableProperties);
-    UserTable userTable = dbTable.rawSqlQuery(
-        sqlQuery,
-        selectionArgs,
-        null,
-        null,
-        null,
-        null);
+    SQLiteDatabase db = null;
+    UserTable userTable = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(context, appName);
+
+      userTable = ODKDatabaseUtils.get().getDataInExistingDBTableWithId(db, 
+          appName, tableId,
+          orderedDefns,
+          rowId);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
     if (userTable.getNumberOfRows() > 1) {
       Log.e(TAG, "query returned > 1 rows for tableId: " +
-          tableProperties.getTableId() +
+          tableId +
           " and " +
           "rowId: " +
           rowId);
     } else if (userTable.getNumberOfRows() == 0) {
       Log.e(TAG, "query returned no rows for tableId: " +
-          tableProperties.getTableId() +
+          tableId +
           " and rowId: " +
           rowId);
     }
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
     Row requestedRow = userTable.getRowAtIndex(0);
-    List<String> userDefinedElementKeys = tableProperties.getPersistedColumns();
-    List<String> adminElementKeys = DbTable.getAdminColumns();
+    List<String> userDefinedElementKeys = 
+        ColumnDefinition.getRetentionColumnNames(orderedDefns);
+    List<String> adminElementKeys = ODKDatabaseUtils.get().getAdminColumns();
     List<String> allElementKeys = new ArrayList<String>();
     allElementKeys.addAll(userDefinedElementKeys);
     allElementKeys.addAll(adminElementKeys);

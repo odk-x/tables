@@ -1,10 +1,10 @@
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.common.android.data.TableProperties;
 
 public class ExportRequest {
 
-    private final TableProperties tp;
+  private final String appName;
+  private final String tableId;
     private final String fileQualifier;
 
     /**
@@ -24,13 +24,18 @@ public class ExportRequest {
      * @param directory
      * @param fileQualifier
      */
-    public ExportRequest(TableProperties tp, String fileQualifier) {
-      this.tp = tp;
+    public ExportRequest(String appName, String tableId, String fileQualifier) {
+      this.appName = appName;
+      this.tableId = tableId;
       this.fileQualifier = fileQualifier;
     }
 
-    public TableProperties getTableProperties() {
-        return tp;
+    public String getAppName() {
+      return appName;
+    }
+    
+    public String getTableId() {
+      return tableId;
     }
 
     public String getFileQualifier() {

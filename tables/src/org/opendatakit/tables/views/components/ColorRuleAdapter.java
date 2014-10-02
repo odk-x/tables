@@ -5,11 +5,13 @@ import java.util.List;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.DbTable;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,24 +26,27 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
   
   private static final String TAG = ColorRuleAdapter.class.getSimpleName();
   
-  private Context mContext;
+  private final Context mContext;
+  private final String mAppName;
+  private final String mTableId;
   private List<ColorRule> mColorRules;
   private int mResourceId;
   private ColorRuleGroup.Type mType;
-  private TableProperties mTableProperties;
   
   public ColorRuleAdapter(
       Context context,
+      String appName,
+      String tableId,
       int resource,
       List<ColorRule> colorRules,
-      TableProperties tableProperties,
       ColorRuleGroup.Type colorRuleType) {
     super(context, resource, colorRules);
     this.mContext = context;
+    this.mAppName = appName;
+    this.mTableId = tableId;
     this.mResourceId = resource;
     this.mColorRules = colorRules;
     this.mType = colorRuleType;
-    this.mTableProperties = tableProperties;
   }
   
   private View createView(ViewGroup parent) {
@@ -68,7 +73,7 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
         mType == ColorRuleGroup.Type.TABLE) {
       ColorRule colorRule = mColorRules.get(currentPosition);
       String elementKey = colorRule.getColumnElementKey();
-      if (DbTable.getAdminColumns().contains(elementKey)) {
+      if (ODKDatabaseUtils.get().getAdminColumns().contains(elementKey)) {
         isMetadataRule = true;
         // We know it must be a String rep of an int.
         SyncState targetState = SyncState.valueOf(colorRule.getVal());
@@ -96,8 +101,19 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
           description = "unknown";
         }
       } else {
-        description = this.mTableProperties.getColumnByElementKey(elementKey)
-            .getLocalizedDisplayName();
+
+        String localizedDisplayName;
+        SQLiteDatabase db = null;
+        try {
+          db = DatabaseFactory.get().getDatabase(mContext, mAppName);
+          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, mTableId, elementKey);
+        } finally {
+          if ( db != null ) {
+            db.close();
+          }
+        }
+
+        description = localizedDisplayName;
       }
     }
     if (!isMetadataRule) {

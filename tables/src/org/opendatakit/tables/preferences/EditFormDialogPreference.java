@@ -1,6 +1,5 @@
 package org.opendatakit.tables.preferences;
 
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.types.FormType;
@@ -30,7 +29,6 @@ public class EditFormDialogPreference extends DialogPreference {
   private EditSavedViewEntryHandler callingActivity;
   // The view that will be shown in the dialog.
   private View mDialogView;
-  private TableProperties mTp;
   private FormType mFormType;
   private RadioGroup mRadioChoice;
   private EditText mFormId;
@@ -41,6 +39,11 @@ public class EditFormDialogPreference extends DialogPreference {
   public EditFormDialogPreference(Context context, AttributeSet attrs) {
     super(context, attrs);
     this.mContext = context;
+    Activity activity = (Activity) getContext();
+    if (!(activity instanceof AbsTableActivity)) {
+      throw new IllegalArgumentException("EditFormDialogPreference must " +
+            "be associated with an AbsTableActivity");
+    }
   }
   
   /**
@@ -50,31 +53,20 @@ public class EditFormDialogPreference extends DialogPreference {
     this.showDialog(getExtras());
   }
   
-  TableProperties retrieveTableProperties() {
-    // We're going to get this by assuming that we're operating inside of an
-    // AbsTableActivity.
-    Activity activity = (Activity) getContext();
-    if (!(activity instanceof AbsTableActivity)) {
-      throw new IllegalArgumentException("EditFormDialogPreference must " +
-      		"be associated with an AbsTableActivity");
-    }
-    AbsTableActivity tableActivity = (AbsTableActivity) activity;
-    TableProperties tableProperties = tableActivity.getTableProperties();
-    return tableProperties;
-  }
-  
   /**
    * Retrieve the {@link FormType} for the table.
    * @return
    */
   FormType retrieveFormType() {
-    return FormType.constructFormType(this.mTp);
+    AbsTableActivity tableActivity = (AbsTableActivity) getContext();
+    return FormType.constructFormType(
+        tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
   }
 
   @Override
   protected View onCreateDialogView() {
     Log.d(TAG, "in onCreateDialogView");
-    this.mTp = retrieveTableProperties();
+    AbsTableActivity tableActivity = (AbsTableActivity) getContext();
     this.mFormType = retrieveFormType();
     LayoutInflater inflater =
         (LayoutInflater) this.mContext.getSystemService(
@@ -152,8 +144,9 @@ public class EditFormDialogPreference extends DialogPreference {
         this.mFormType.setIsCollectForm(true);
         this.mFormType.setIsCustom(false);
       }
+      AbsTableActivity tableActivity = (AbsTableActivity) getContext();
 
-      this.mFormType.persist(mTp);
+      this.mFormType.persist(tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
     }
   }
 
@@ -161,9 +154,11 @@ public class EditFormDialogPreference extends DialogPreference {
 
     @Override
     public void onCheckedChanged(RadioGroup group, int checkedId) {
+      AbsTableActivity tableActivity = (AbsTableActivity) getContext();
 
       if ( checkedId == R.id.edit_def_form_use_survey_form ) {
-        SurveyFormParameters params = SurveyFormParameters.constructSurveyFormParameters(mTp);
+        SurveyFormParameters params = SurveyFormParameters.constructSurveyFormParameters(
+            tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
         String formId;
         if ( params.isUserDefined() ) {
           formId = params.getFormId();
@@ -183,7 +178,8 @@ public class EditFormDialogPreference extends DialogPreference {
       } else if ( checkedId == R.id.edit_def_form_use_collect_form ) {
         String formId;
         String formRootElement;
-        CollectFormParameters params = CollectFormParameters.constructCollectFormParameters(mTp);
+        CollectFormParameters params = CollectFormParameters.constructCollectFormParameters(
+            tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
         if ( params.isCustom() ) {
           formId = params.getFormId();
           formRootElement = params.getRootElement();
@@ -203,7 +199,8 @@ public class EditFormDialogPreference extends DialogPreference {
         mFormXmlRootElement.setEnabled(true);
         mFormXmlRootElement.setText(formRootElement);
       } else {
-        CollectFormParameters params = CollectFormParameters.constructDefaultCollectFormParameters(mTp);
+        CollectFormParameters params = CollectFormParameters.constructDefaultCollectFormParameters(
+            tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
         String formId = params.getFormId();
         String formRootElement = params.getRootElement();
         mFormType.setIsCollectForm(true);

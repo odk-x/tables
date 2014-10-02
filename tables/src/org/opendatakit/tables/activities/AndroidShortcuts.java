@@ -123,10 +123,10 @@ public class AndroidShortcuts extends Activity {
           c.moveToPosition(-1);
           while (c.moveToNext()) {
             String tableName = app.getName() + " > "
-                + ODKDatabaseUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
+                + ODKDatabaseUtils.get().getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
             uri = Uri.withAppendedPath(
                 Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
-                ODKDatabaseUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
+                ODKDatabaseUtils.get().getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
             choices.add(new Choice(R.drawable.tables_table, tableIcon, uri, tableName, appName));
           }
         }

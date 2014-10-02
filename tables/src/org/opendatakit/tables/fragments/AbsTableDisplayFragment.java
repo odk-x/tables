@@ -1,6 +1,8 @@
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.common.android.data.TableProperties;
+import java.util.ArrayList;
+
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 
@@ -24,19 +26,29 @@ public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
   }
   
   /**
-   * Get the {@link TableProperties} backing the {@link UserTable}.
+   * Get the tableId of the active table.
    * @return
    */
-  TableProperties getTableProperties() {
-    TableProperties result = this.getUserTable().getTableProperties();
-    return result;
+  public String getTableId() {
+    UserTable table = this.getUserTable();
+    return table.getTableId();
+  }
+  
+  /**
+   * Get the description of the table.
+   * 
+   * @return
+   */
+  public ArrayList<ColumnDefinition> getColumnDefinitions() {
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+    return activity.getColumnDefinitions();
   }
   
   /**
    * Get the {@link UserTable} being held by the {@link TableDisplayActivity}.
    * @return
    */
-  UserTable getUserTable() {
+  public UserTable getUserTable() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     UserTable result = activity.getUserTable();
     return result;

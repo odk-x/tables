@@ -1,11 +1,12 @@
 package org.opendatakit.tables.fragments;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.preferences.EditColorPreference;
@@ -13,6 +14,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -140,21 +142,24 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
    * Set up the objects that require a context.
    */
   private void initializeStateRequiringContext() {
-    TableProperties tableProperties = this.retrieveTableProperties();
+    TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
+    
     // 1) First fill in the color rule group and list.
     switch (this.mColorRuleGroupType) {
     case COLUMN:
       this.mColorRuleGroup = ColorRuleGroup.getColumnColorRuleGroup(
-          tableProperties,
+          getActivity(), getAppName(), getTableId(),
           this.mElementKey);
       break;
     case TABLE:
       this.mColorRuleGroup =
-        ColorRuleGroup.getTableColorRuleGroup(tableProperties);
+        ColorRuleGroup.getTableColorRuleGroup(
+          getActivity(), getAppName(), getTableId());
       break;
     case STATUS_COLUMN:
       this.mColorRuleGroup =
-      ColorRuleGroup.getStatusColumnRuleGroup(tableProperties);
+      ColorRuleGroup.getStatusColumnRuleGroup(
+          getActivity(), getAppName(), getTableId());
       break;
     default:
       throw new IllegalArgumentException(
@@ -182,15 +187,33 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     // 3) then fill in the static things backing the dialogs.
     this.mOperatorHumanFriendlyValues = ColorRule.RuleType.getValues();
     this.mOperatorEntryValues = ColorRule.RuleType.getValues();
-    List<String> elementKeys = tableProperties.getPersistedColumns();
-    this.mColumnDisplayNames = new CharSequence[elementKeys.size()];
-    this.mColumnElementKeys = new CharSequence[elementKeys.size()];
-    for (int i = 0; i < elementKeys.size(); i++) {
-      String elementKey = elementKeys.get(i);
-      ColumnProperties cp = tableProperties.getColumnByElementKey(elementKey);
-      this.mColumnDisplayNames[i] = cp.getLocalizedDisplayName();
-      this.mColumnElementKeys[i] = elementKey;
+    ArrayList<ColumnDefinition> orderedDefns = activity.getColumnDefinitions();
+    
+    ArrayList<String> displayNames = new ArrayList<String>();
+    ArrayList<String> elementKeys = new ArrayList<String>();
+    
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
+      for (ColumnDefinition cd : orderedDefns ) {
+        if ( cd.isUnitOfRetention() ) {
+          
+        String localizedDisplayName;
+          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(), 
+              cd.getElementKey());
+        displayNames.add(localizedDisplayName);
+        elementKeys.add(cd.getElementKey());
+        }
+      }
+      mColumnDisplayNames = displayNames.toArray(new String[displayNames.size()]);
+      mColumnElementKeys = elementKeys.toArray(new String[elementKeys.size()]);
+
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
     }
+
   }
   
   private void initializeAllPreferences() {
@@ -215,7 +238,6 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
   }
   
   private void initializeColumns() {  
-    final TableProperties tableProperties = this.retrieveTableProperties();
     final ListPreference pref = this.findListPreference(
         Constants.PreferenceKeys.ColorRule.ELEMENT_KEY);
     // And now we have to consider that we don't display this at all.
@@ -226,13 +248,21 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     pref.setEntries(this.mColumnDisplayNames);
     pref.setEntryValues(mColumnElementKeys);
     if (!isUnpersistedNewRule()) {
-      String displayName = tableProperties.getColumnByElementKey(
-          this.mColorRuleGroup
-              .getColorRules()
-              .get(mRulePosition)
-              .getColumnElementKey())
-            .getLocalizedDisplayName();
-      pref.setSummary(displayName);
+      String localizedDisplayName;
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(), 
+            this.mColorRuleGroup
+            .getColorRules()
+            .get(mRulePosition)
+            .getColumnElementKey());
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+      pref.setSummary(localizedDisplayName);
       pref.setValueIndex(pref.findIndexOfValue(mElementKey));
     }
     pref.setOnPreferenceChangeListener(
@@ -245,13 +275,19 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
         Log.d(TAG, "onPreferenceChance callback invoked for value: "
             + newValue);
         mElementKey = (String) newValue;
-        String displayName =
-            tableProperties
-              .getColumnByElementKey(mElementKey)
-              .getLocalizedDisplayName();
-        pref.setSummary(displayName);
-        pref.setValueIndex(
-            pref.findIndexOfValue(mElementKey));
+        String localizedDisplayName;
+        SQLiteDatabase db = null;
+        try {
+          db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
+          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(), 
+              mElementKey);
+        } finally {
+          if ( db != null ) {
+            db.close();
+          }
+        }
+        pref.setSummary(localizedDisplayName);
+        pref.setValueIndex(pref.findIndexOfValue(mElementKey));
         updateStateOfSaveButton();
         // false so we don't persist the value and pass it b/w rules
         return false;
@@ -447,10 +483,6 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     TableLevelPreferencesActivity result = 
         (TableLevelPreferencesActivity) this.getActivity();
     return result;
-  }
-  
-  TableProperties retrieveTableProperties() {
-    return this.retrieveTableLevelPreferenceActivity().getTableProperties();
   }
   
 }

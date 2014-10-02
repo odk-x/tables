@@ -1,10 +1,11 @@
 package org.opendatakit.tables.fragments;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.DisplayPrefsActivity;
@@ -15,7 +16,6 @@ import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.components.TablePropertiesAdapter;
 
 import android.app.AlertDialog;
@@ -23,6 +23,7 @@ import android.app.ListFragment;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -39,8 +40,8 @@ public class TableManagerFragment extends ListFragment {
 
   private static final String TAG = TableManagerFragment.class.getSimpleName();
 
-  /** All the TableProperties that should be visible to the user. */
-  private List<TableProperties> mTableList;
+  /** All the tableIds that should be visible to the user. */
+  private List<String> mTableIdList;
 
   private TablePropertiesAdapter mTpAdapter;
 
@@ -52,7 +53,7 @@ public class TableManagerFragment extends ListFragment {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.d(TAG, "[onCreate]");
-    this.mTableList = new ArrayList<TableProperties>();
+    this.mTableIdList = new ArrayList<String>();
     this.setHasOptionsMenu(true);
   }
 
@@ -126,19 +127,31 @@ public class TableManagerFragment extends ListFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     // call this here because we need a context.
-    this.updateTablePropertiesList();
+    this.updateTableIdList();
     this.registerForContextMenu(getListView());
   }
   
   /**
-   * Refresh the list of {@link TableProperties} that is being displayed by
+   * Refresh the list of tables that is being displayed by
    * the fragment.
    */
-  protected void updateTablePropertiesList() {
-    List<TableProperties> newProperties = this.retrieveContentsToDisplay();
-    Log.e(TAG, "got newProperties list of size: " + newProperties.size());
-    this.setPropertiesList(newProperties);
-    this.mTpAdapter = new TablePropertiesAdapter(this.getPropertiesList());
+  protected void updateTableIdList() {
+    AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
+    SQLiteDatabase db = null;
+    
+    List<String> tableIds;
+    try {
+      db = DatabaseFactory.get().getDatabase(baseActivity, baseActivity.getAppName());
+      tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+    Log.e(TAG, "got tableId list of size: " + tableIds.size());
+    this.setTableIdList(tableIds);
+    this.mTpAdapter = new TablePropertiesAdapter(baseActivity, baseActivity.getAppName(), 
+        this.getTableIdList());
     this.setListAdapter(this.mTpAdapter);
     this.mTpAdapter.notifyDataSetChanged();
   }
@@ -153,11 +166,10 @@ public class TableManagerFragment extends ListFragment {
       AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
       Intent intent = baseActivity.createNewIntentWithAppName();
       // Set the tableId.
-      TableProperties tableProperties =
-          (TableProperties) this.getListView().getItemAtPosition(position);
+      String tableId = (String) this.getListView().getItemAtPosition(position);
       intent.putExtra(
           Constants.IntentKeys.TABLE_ID,
-          tableProperties.getTableId());
+          tableId);
       ComponentName componentName = new ComponentName(
           baseActivity,
           TableDisplayActivity.class);
@@ -185,8 +197,23 @@ public class TableManagerFragment extends ListFragment {
   public boolean onContextItemSelected(MenuItem item) {
     AdapterView.AdapterContextMenuInfo menuInfo =
         (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-    final TableProperties tpOfSelectedItem =
-        this.getPropertiesList().get(menuInfo.position);
+    final String tableIdOfSelectedItem = 
+        this.getTableIdList().get(menuInfo.position);
+    final AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
+
+    String localizedDisplayName;
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(baseActivity,
+          baseActivity.getAppName());
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, 
+          tableIdOfSelectedItem);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+
     switch (item.getItemId()) {
     case R.id.table_manager_delete_table:
       AlertDialog confirmDeleteAlert;
@@ -195,16 +222,23 @@ public class TableManagerFragment extends ListFragment {
       alert.setTitle(getString(R.string.confirm_remove_table)).setMessage(
           getString(
               R.string.are_you_sure_remove_table,
-              tpOfSelectedItem.getLocalizedDisplayName()));
+              localizedDisplayName));
       // OK Action => delete the table
       alert.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           // treat delete as a local removal -- not a server side deletion
-          tpOfSelectedItem.deleteTable();
+          SQLiteDatabase db = null;
+          try {
+            db = DatabaseFactory.get().getDatabase(baseActivity, baseActivity.getAppName());
+            ODKDatabaseUtils.get().deleteTableAndData(db, baseActivity.getAppName(), tableIdOfSelectedItem);
+          } finally {
+            if ( db != null ) {
+              db.close();
+            }
+          }
           // Now update the list.
-          TableManagerFragment.this.setPropertiesList(
-              retrieveContentsToDisplay());
+          updateTableIdList();
         }
       });
 
@@ -220,12 +254,10 @@ public class TableManagerFragment extends ListFragment {
       confirmDeleteAlert.show();
       return true;
     case R.id.table_manager_edit_table_properties:
-      String appName = ((AbsBaseActivity) getActivity()).getAppName();
-      String tableId = tpOfSelectedItem.getTableId();
       ActivityUtil.launchTableLevelPreferencesActivity(
-          this.getActivity(),
-          appName,
-          tableId,
+          baseActivity,
+          baseActivity.getAppName(),
+          tableIdOfSelectedItem,
           TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
       return true;
     }
@@ -236,7 +268,7 @@ public class TableManagerFragment extends ListFragment {
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     switch (requestCode) {
     case Constants.RequestCodes.LAUNCH_SYNC:
-      this.updateTablePropertiesList();
+      this.updateTableIdList();
       break;
     default: 
       super.onActivityResult(requestCode, resultCode, data);
@@ -244,36 +276,23 @@ public class TableManagerFragment extends ListFragment {
   }
 
   /**
-   * Retrieve the contents that will be displayed in the list. This should be
-   * used to populate the list.
-   * @return
-   */
-  List<TableProperties> retrieveContentsToDisplay() {
-    TableProperties[] tpArray = TableProperties.getTablePropertiesForAll(
-        getActivity(),
-        TableFileUtils.getDefaultAppName());
-    List<TableProperties> tpList = Arrays.asList(tpArray);
-    return tpList;
-  }
-
-  /**
    * Get the list currently displayed by the fragment.
    * @return
    */
-  List<TableProperties> getPropertiesList() {
-    return this.mTableList;
+  List<String> getTableIdList() {
+    return this.mTableIdList;
   }
 
   /**
    * Update the contents of the list with the this new list.
    * @param list
    */
-  void setPropertiesList(List<TableProperties> list) {
+  void setTableIdList(List<String> list) {
     // We can't change the reference, which is held by the adapter.
-    List<TableProperties> adapterList = this.getPropertiesList();
+    List<String> adapterList = this.getTableIdList();
     adapterList.clear();
-    for (TableProperties tp : list) {
-      adapterList.add(tp);
+    for (String tableId : list) {
+      adapterList.add(tableId);
     }
     if ( mTpAdapter != null ) {
       mTpAdapter.notifyDataSetChanged();

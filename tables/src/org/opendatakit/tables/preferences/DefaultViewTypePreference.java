@@ -1,15 +1,19 @@
 package org.opendatakit.tables.preferences;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.views.components.TableViewTypeAdapter;
 
 import android.app.AlertDialog.Builder;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.preference.ListPreference;
 import android.util.AttributeSet;
 import android.widget.ListAdapter;
@@ -17,7 +21,7 @@ import android.widget.ListAdapter;
 public class DefaultViewTypePreference extends ListPreference {
 
   /** The view types allowed for the table this preference will display. */
-  private TableProperties mTableProperties;
+ //private TableProperties mTableProperties;
   private PossibleTableViewTypes mPossibleViewTypes;
   private Context mContext;
   private CharSequence[] mEntryValues;
@@ -27,13 +31,26 @@ public class DefaultViewTypePreference extends ListPreference {
     this.mContext = context;
   }
 
-  public void setFields(TableProperties tableProperties) {
-    this.mTableProperties = tableProperties;
-    this.mPossibleViewTypes = tableProperties.getPossibleViewTypes();
-    // Let's set the currently selected one.
+  public void setFields(String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns) {
+    
+    TableViewType defaultViewType;
     this.mEntryValues = this.mContext.getResources().getTextArray(
-        R.array.table_view_types_values);
-    TableViewType defaultViewType = tableProperties.getDefaultViewType();
+      R.array.table_view_types_values);
+    
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(mContext, appName);
+      
+      this.mPossibleViewTypes = new PossibleTableViewTypes(db, 
+              tableId, orderedDefns);
+      // Let's set the currently selected one.
+      defaultViewType = TableUtil.get().getDefaultViewType(db, tableId);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+
     if (defaultViewType == null) {
       // default to spreadsheet.
       this.setValueIndex(0);

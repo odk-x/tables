@@ -1,14 +1,21 @@
 package org.opendatakit.tables.fragments;
 
+import java.util.ArrayList;
+
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.ElementTypeManipulator;
+import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
+import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
 import org.opendatakit.tables.utils.PreferenceUtil;
 import org.opendatakit.tables.views.SpreadsheetView;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
@@ -42,33 +49,26 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   }
 
   /**
-   * Get the {@link TableProperties} associated with this activity.
-   */
-  TableProperties retrieveTableProperties() {
-    TableLevelPreferencesActivity activity =
-        this.retrieveTableLevelPreferenceActivity();
-    TableProperties result = activity.getTableProperties();
-    return result;
-  }
-
-  /**
-   * Retrieve the {@link ColumnProperties} associated with the column this
+   * Retrieve the {@link ColumnDefinition} associated with the column this
    * activity is displaying.
    * 
    * @return
    */
-  ColumnProperties retrieveColumnProperties() {
-    String elementKey =
-        this.retrieveTableLevelPreferenceActivity().getElementKey();
-    ColumnProperties result =
-        this.retrieveTableProperties().getColumnByElementKey(elementKey);
-    if (result == null) {
+  ColumnDefinition retrieveColumnDefinition() {
+    TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
+    String elementKey = activity.getElementKey();
+    try {
+      ArrayList<ColumnDefinition> orderedDefns = activity.getColumnDefinitions();
+      ColumnDefinition result =
+          ColumnDefinition.find(orderedDefns, elementKey);
+      return result;
+    } catch ( IllegalArgumentException e ) {
       Log.e(
           TAG,
-          "[retrieveColumnProperties] did not find column for element key: " +
+          "[retrieveColumnDefinition] did not find column for element key: " +
               elementKey);
+      return null;
     }
-    return result;
   }
 
   @Override
@@ -95,33 +95,49 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   private void initializeDisplayName() {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
-    pref.setSummary(this.retrieveColumnProperties().getDisplayName());
+
+    String rawDisplayName;
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
+      rawDisplayName = ColumnUtil.get().getRawDisplayName(db, getTableId(), 
+          this.retrieveColumnDefinition().getElementKey());
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+
+    pref.setSummary(rawDisplayName);
 
   }
 
   private void initializeElementKey() {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.ELEMENT_KEY);
-    pref.setSummary(this.retrieveColumnProperties().getElementKey());
+    pref.setSummary(this.retrieveColumnDefinition().getElementKey());
   }
 
   private void initializeColumnType() {
     EditTextPreference pref =
         this.findEditTextPreference(Constants.PreferenceKeys.Column.TYPE);
-    pref.setSummary(this.retrieveColumnProperties().getColumnType().label());
+    ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
+    ITypeManipulatorFragment r = m.getDefaultRenderer(this.retrieveColumnDefinition().getType());
+    pref.setSummary(r.getElementTypeDisplayLabel());
   }
 
   private void initializeElementName() {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
-    pref.setSummary(this.retrieveColumnProperties().getElementName());
+    pref.setSummary(this.retrieveColumnDefinition().getElementName());
   }
 
   private void initializeColumnWidth() {
     final EditTextPreference pref =
         this.findEditTextPreference(Constants.PreferenceKeys.Column.WIDTH);
-    int columnWidth = PreferenceUtil.getColumnWidth(getTableProperties(),
-        retrieveColumnProperties().getElementKey());
+    int columnWidth = PreferenceUtil.getColumnWidth(getActivity(),
+        getAppName(), getTableId(),
+        retrieveColumnDefinition().getElementKey());
     pref.setSummary(Integer.toString(columnWidth));
 
     pref.setOnPreferenceChangeListener(
@@ -138,8 +154,8 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
           return false;
         }
         PreferenceUtil.setColumnWidth(
-            getTableProperties(),
-            retrieveColumnProperties().getElementKey(),
+            getActivity(), getAppName(), getTableId(),
+            retrieveColumnDefinition().getElementKey(),
             newWidth);
         pref.setSummary(Integer.toString(newWidth));
         return true;
@@ -159,7 +175,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
         TableLevelPreferencesActivity activity =
             (TableLevelPreferencesActivity) getActivity();
         activity.showColorRuleListFragment(
-            retrieveColumnProperties().getElementKey(),
+            retrieveColumnDefinition().getElementKey(),
             ColorRuleGroup.Type.COLUMN);
         return true;
       }

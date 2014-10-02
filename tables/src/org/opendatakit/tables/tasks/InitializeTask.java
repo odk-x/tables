@@ -20,16 +20,18 @@ import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.CsvUtil;
+import org.opendatakit.common.android.utilities.CsvUtil.ImportListener;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utils.CsvUtil;
-import org.opendatakit.common.android.utils.CsvUtil.ImportListener;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -110,8 +112,18 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
       public boolean accept(File pathname) {
         return pathname.isDirectory();
       }});
-
-    List<String> tableIds = TableProperties.getAllTableIds(mContext, mAppName);
+    
+    List<String> tableIds;
+    ODKFileUtils.assertDirectoryStructure(mAppName);
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
+      tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+    } finally {
+      if (db != null) {
+        db.close();
+      }
+    }
 
     for ( int i = 0 ; i < tableIdDirs.length ; ++i ) {
       File tableIdDir = tableIdDirs[i];
@@ -131,7 +143,11 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
         String detail = mContext.getString(R.string.processing_file);
         publishProgress(formattedString, detail);
 
+        try {
         util.updateTablePropertiesFromCsv(this, tableId);
+        } catch (IOException e) {
+          Log.e(TAG, "Unexpected error during update from csv");
+        }
       }
     }
 
@@ -362,6 +378,25 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
           if (zipInputStream != null) {
             try {
               zipInputStream.close();
+              rawInputStream = null;
+              fd = null;
+            } catch (IOException e) {
+              e.printStackTrace();
+              Log.e(TAG, "Closing of ZipFile failed: " + e.toString());
+            }
+          }
+          if ( rawInputStream != null) {
+            try {
+              rawInputStream.close();
+              fd = null;
+            } catch (IOException e) {
+              e.printStackTrace();
+              Log.e(TAG, "Closing of ZipFile failed: " + e.toString());
+            }
+          }
+          if ( fd != null) {
+            try {
+              fd.close();
             } catch (IOException e) {
               e.printStackTrace();
               Log.e(TAG, "Closing of ZipFile failed: " + e.toString());

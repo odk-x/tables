@@ -3,15 +3,18 @@ package org.opendatakit.tables.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
+import org.opendatakit.common.android.data.KeyValueStoreEntry;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
+import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
+import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.GraphViewStruct;
-import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 import org.opendatakit.tables.views.components.GraphViewAdapter;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -81,28 +84,34 @@ public class GraphManagerFragment extends AbsTableDisplayFragment {
   }
   
   List<GraphViewStruct> retrieveGraphViews() {
-    KeyValueStoreHelper kvshForViews =
-        getTableProperties().getKeyValueStoreHelper(
-            LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
-    KeyValueStoreHelper kvshForGraphWritLarge =
-        getTableProperties().getKeyValueStoreHelper(
-            LocalKeyValueStoreConstants.Graph.PARTITION);
     // A graph is currently makred as default if its name is in this aspect
     // marked as the name.
-    String currentDefaultGraphName = kvshForGraphWritLarge.getString(
-        LocalKeyValueStoreConstants.Graph.KEY_GRAPH_VIEW_NAME);
-    List<String> graphViewNames = kvshForViews.getAspectsForPartition();
+    String tableId = getTableId();
+    String currentDefaultGraphName = null;
+    List<KeyValueStoreEntry> graphViewEntries = new ArrayList<KeyValueStoreEntry>();
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
+      
+      KeyValueStoreHelper kvshForGraphWritLarge =
+          new KeyValueStoreHelper(db, tableId, LocalKeyValueStoreConstants.Graph.PARTITION);
+      currentDefaultGraphName = kvshForGraphWritLarge.getString(
+          LocalKeyValueStoreConstants.Graph.KEY_GRAPH_VIEW_NAME);
+
+      graphViewEntries = ODKDatabaseUtils.get().getDBTableMetadata(db, tableId, 
+          LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS, null, LocalKeyValueStoreConstants.Graph.KEY_GRAPH_TYPE);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+    
     List<GraphViewStruct> result = new ArrayList<GraphViewStruct>();
-    AspectHelper aspectHelper = null;
-    String graphType = null;
-    for (String graphViewName : graphViewNames) {
-      aspectHelper = kvshForViews.getAspectHelper(graphViewName);
-      graphType = aspectHelper.getString(
-          LocalKeyValueStoreConstants.Graph.KEY_GRAPH_TYPE);
+    for ( KeyValueStoreEntry e : graphViewEntries ) {
       result.add(new GraphViewStruct(
-          graphViewName,
-          graphType,
-          graphViewName.equals(currentDefaultGraphName)));
+          e.aspect,
+          e.value,
+          e.aspect.equals(currentDefaultGraphName)));
     }
     return result;
   }

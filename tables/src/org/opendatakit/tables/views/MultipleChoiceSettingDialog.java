@@ -17,17 +17,18 @@ package org.opendatakit.tables.views;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.ODKDataUtils;
 import org.opendatakit.tables.R;
 
 import android.app.Dialog;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
@@ -41,22 +42,24 @@ import android.widget.TableRow;
 public class MultipleChoiceSettingDialog extends Dialog {
 
     private Context context;
-    private TableProperties tp;
-    private ColumnProperties cp;
+    private String appName;
+    private String tableId;
+    private ColumnDefinition cd;
     private LinearLayout layout;
-    private ArrayList<String> optionValues;
+    private ArrayList<Map<String,Object>> optionValues;
     private List<EditText> optionFields;
 
-    public MultipleChoiceSettingDialog(Context context, TableProperties tp, ColumnProperties cp) {
+    public MultipleChoiceSettingDialog(Context context, String appName, String tableId, ColumnDefinition cd) {
         super(context);
         this.context = context;
-        this.tp = tp;
-        this.cp = cp;
+        this.appName = appName;
+        this.tableId = tableId;
+        this.cd = cd;
         setTitle(context.getString(R.string.multiple_choice_options));
         layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
         setContentView(layout);
-        optionValues = new ArrayList<String>();
+        optionValues = new ArrayList<Map<String,Object>>();
         optionFields = new ArrayList<EditText>();
     }
 
@@ -64,12 +67,40 @@ public class MultipleChoiceSettingDialog extends Dialog {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         optionValues.clear();
-        for (String option : cp.getDisplayChoicesList()) {
+        ArrayList<Map<String,Object>> choices;
+        
+        SQLiteDatabase db = null;
+        try {
+          db = DatabaseFactory.get().getDatabase(context, appName);
+          choices = (ArrayList<Map<String, Object>>) 
+              ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
+        } finally {
+          if ( db != null ) {
+            db.close();
+          }
+        }
+
+        for (Map<String,Object> option : choices) {
             optionValues.add(option);
         }
         init();
     }
 
+    @SuppressWarnings("unchecked")
+    private String getLocalizedString(Map<String,Object> option) {
+      Object displayObj = option.get("display");
+      if ( displayObj != null ) {
+        Object textObj = ((Map<String,Object>) displayObj).get("text");
+        if ( textObj != null ) {
+          if ( textObj instanceof String ) {
+            return (String) textObj;
+          }
+          return ODKDataUtils.getLocalizedDisplayName((Map<String,Object>)textObj);
+        }
+      }
+      return "";
+    }
+    
     private void init() {
         layout.removeAllViews();
         optionFields.clear();
@@ -81,63 +112,66 @@ public class MultipleChoiceSettingDialog extends Dialog {
         for (int i = 0; i < optionValues.size(); i++) {
             final int index = i;
             EditText field = new EditText(context);
-            field.setText(optionValues.get(i));
+            field.setText(getLocalizedString(optionValues.get(i)));
             optionFields.add(field);
             TableRow row = new TableRow(context);
             row.addView(field);
-            Button deleteButton = new Button(context);
-            deleteButton.setText("X");
-            deleteButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    updateValueList();
-                    optionValues.remove(index);
-                    init();
-                }
-            });
-            row.addView(deleteButton);
+//            Button deleteButton = new Button(context);
+//            deleteButton.setText("X");
+//            deleteButton.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    updateValueList();
+//                    optionValues.remove(index);
+//                    init();
+//                }
+//            });
+//            row.addView(deleteButton);
             optionList.addView(row);
         }
         optionList.setColumnStretchable(0, true);
         layout.addView(optionList);
-        Button addButton = new Button(context);
-        addButton.setText(context.getString(R.string.add_choice));
-        addButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                updateValueList();
-                optionValues.add("");
-                init();
-            }
-        });
-        Button saveButton = new Button(context);
-        saveButton.setText(context.getString(R.string.save));
-        saveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                updateValueList();
-                SQLiteDatabase db =  tp.getWritableDatabase();
-                try {
-                  db.beginTransaction();
-                  cp.setDisplayChoicesList(db, optionValues);
-                  db.setTransactionSuccessful();
-                } finally {
-                  db.endTransaction();
-                  db.close();
-                }
-                dismiss();
-            }
-        });
-        LinearLayout buttonWrapper = new LinearLayout(context);
-        buttonWrapper.addView(addButton);
-        buttonWrapper.addView(saveButton);
-        layout.addView(buttonWrapper);
+//        Button addButton = new Button(context);
+//        addButton.setText(context.getString(R.string.add_choice));
+//        addButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                updateValueList();
+//                optionValues.add("");
+//                init();
+//            }
+//        });
+//        Button saveButton = new Button(context);
+//        saveButton.setText(context.getString(R.string.save));
+//        saveButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                updateValueList();
+//                SQLiteDatabase db = null;
+//                try {
+//                  db = DatabaseFactory.get().getDatabase(context, appName);
+//                  db.beginTransaction();
+//                  ColumnUtil.get().setDisplayChoicesList(db, tableId, cd, optionValues);
+//                  db.setTransactionSuccessful();
+//                } finally {
+//                  if ( db != null ) {
+//                    db.endTransaction();
+//                    db.close();
+//                  }
+//                }
+//                dismiss();
+//            }
+//        });
+//        LinearLayout buttonWrapper = new LinearLayout(context);
+//        buttonWrapper.addView(addButton);
+//        buttonWrapper.addView(saveButton);
+//        layout.addView(buttonWrapper);
     }
 
-    private void updateValueList() {
-        for (int i = 0; i < optionFields.size(); i++) {
-            EditText field = optionFields.get(i);
-            optionValues.set(i, field.getText().toString());
-        }
-    }
+//    private void updateValueList() {
+//        for (int i = 0; i < optionFields.size(); i++) {
+//            EditText field = optionFields.get(i);
+//            optionValues.set(i, field.getText().toString());
+//        }
+//    }
 }

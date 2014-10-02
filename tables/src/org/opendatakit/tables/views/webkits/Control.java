@@ -10,16 +10,13 @@ import java.util.UUID;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.DbTable;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DataModelDatabaseHelper;
-import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utils.NameUtil;
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
@@ -29,23 +26,18 @@ import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.ODKDatabaseUtilsWrapper;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.WebViewUtil;
 
-import android.app.AlertDialog;
 import android.content.ContentValues;
-import android.content.DialogInterface;
+import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.WindowManager;
-import android.widget.EditText;
-import android.widget.Toast;
 
 public class Control {
 
@@ -53,6 +45,10 @@ public class Control {
 
   protected AbsBaseActivity mActivity;
   protected String mAppName;
+  protected String mDefaultTableId;
+  protected Map<String,ArrayList<ColumnDefinition>> mCachedOrderedDefns 
+    = new HashMap<String, ArrayList<ColumnDefinition>>();
+  protected ArrayList<String> mTableIds;
 
   public Object getJavascriptInterfaceWithWeakReference() {
     return new ControlIf(this);
@@ -69,25 +65,43 @@ public class Control {
    * @param activity
    *          the activity that will be holding the view
    */
-  public Control(AbsBaseActivity activity, String appName) {
+  public Control(AbsBaseActivity activity, String appName, String defaultTableId, ArrayList<ColumnDefinition> defaultColumnDefinitions) {
     this.mActivity = activity;
     this.mAppName = appName;
+    this.mDefaultTableId = defaultTableId;
+    if ( defaultTableId != null ) {
+      this.mCachedOrderedDefns.put(defaultTableId, defaultColumnDefinitions);
+    }
+
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+      this.mTableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
   }
 
   /**
-   * Retrieve the {@link TableProperties} for the given tableId.
+   * Return the ordered array of ColumnDefinition objects.
+   * 
    * @param tableId
    * @return
    */
-  TableProperties retrieveTablePropertiesForTable(String tableId) {
-    TableProperties result =
-        TableProperties.getTablePropertiesForTable(
-          this.mActivity,
-          this.mAppName,
-          tableId);
-    return result;
-  }
+  synchronized ArrayList<ColumnDefinition> retrieveColumnDefinitions(SQLiteDatabase db, String tableId) {
 
+    ArrayList<ColumnDefinition> answer = this.mCachedOrderedDefns.get(tableId);
+    if ( answer != null ) {
+      return answer;
+    }
+    
+    answer = TableUtil.get().getColumnDefinitions(db, tableId);
+    this.mCachedOrderedDefns.put(tableId, answer);
+    return answer;
+  }
+  
   /**
    * Start the detail view.
    * @param tableId
@@ -426,10 +440,7 @@ public class Control {
    * @see {@link ControlIf#getAllTableIds()}
    */
   public String getAllTableIds() {
-    ArrayList<String> tableIdsList = new ArrayList<String>();
-    tableIdsList.addAll(TableProperties.getAllTableIds(this.mActivity, this.mAppName));
-
-    JSONArray result = new JSONArray(tableIdsList);
+    JSONArray result = new JSONArray(mTableIds);
     return result.toString();
   }
 
@@ -440,11 +451,7 @@ public class Control {
    * @return
    */
   public String getElementKey(String tableId, String elementPath) {
-    TableProperties tp = this.retrieveTablePropertiesForTable(tableId);
-    if (tp == null) {
-      return null;
-    }
-    return tp.getElementKeyFromElementPath(elementPath);
+    return ColumnUtil.get().getElementKeyFromElementPath(elementPath);
   }
 
   /**
@@ -455,17 +462,28 @@ public class Control {
    */
   public String getColumnDisplayName(String tableId, String elementPath) {
     String elementKey = this.getElementKey(tableId, elementPath);
-    TableProperties tp = this.retrieveTablePropertiesForTable(tableId);
-    if (tp == null) {
+    if (!mTableIds.contains(tableId)) {
+      Log.e(
+          TAG,
+          "table [" + tableId + "] could not be found. " + "returning.");
       return null;
     }
-    ColumnProperties columnProperties = tp.getColumnByElementKey(elementKey);
-    if (columnProperties == null) {
+    try {
+      String localizedDisplayName;
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId, elementKey);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+      return localizedDisplayName;
+    } catch ( IllegalArgumentException e ) {
       Log.e(TAG, "column with elementKey does not exist: " + elementKey);
       return null;
     }
-    String displayName = columnProperties.getLocalizedDisplayName();
-    return displayName;
   }
 
   /**
@@ -474,11 +492,17 @@ public class Control {
    * @return
    */
   public String getTableDisplayName(String tableId) {
-    TableProperties tp = TableProperties.getTablePropertiesForTable(
-        this.mActivity,
-        this.mAppName,
-        tableId);
-    return tp.getLocalizedDisplayName();
+    String localizedDisplayName;
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
+    return localizedDisplayName;
   }
   
   public boolean updateRow(
@@ -488,11 +512,13 @@ public class Control {
     return helperAddOrUpdateRow(tableId, stringifiedJSON, rowId, true);
   }
   
-  protected ContentValues getContentValuesFromMap(
-      TableProperties tableProperties,
+  protected ContentValues getContentValuesFromMap(Context context,
+      String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns,
       Map<String, String> elementKeyToValue) {
-    return WebViewUtil.getContentValuesFromMap(
-        tableProperties,
+    return WebViewUtil.getContentValuesFromMap(context, 
+        appName,
+        tableId,
+        orderedDefns,
         elementKeyToValue);
   }
   
@@ -539,14 +565,14 @@ public class Control {
       String stringifiedJSON,
       String rowId,
       boolean isUpdate) {
+    if (!mTableIds.contains(tableId)) {
+      Log.e(
+          TAG,
+          "table [" + tableId + "] could not be found. " + "returning.");
+      return false;
+    }
     if (rowId == null) {
       throw new IllegalArgumentException("row id cannot be null");
-    }
-    TableProperties tableProperties =
-        this.retrieveTablePropertiesForTable(tableId);
-    if (tableProperties == null) {
-      Log.e(TAG, "[addRow] cannot find table for id: " + tableId);
-      return false;
     }
      Map<String, String> elementKeyToValue;
      if (stringifiedJSON == null) {
@@ -555,51 +581,43 @@ public class Control {
      } else {
        elementKeyToValue = WebViewUtil.getMapFromJson(stringifiedJSON);
      }
-     ContentValues contentValues = getContentValuesFromMap(
-         tableProperties,
-         elementKeyToValue);
-     if (contentValues == null) {
-       // something went wrong parsing.
-       return false;
-     }
-     // If we've made it here, all appears to be well.
-     SQLiteDatabase writableDatabase = getWritableDatabase();
-     ODKDatabaseUtilsWrapper dbUtils = this.getODKDatabaseUtilsWrapper();
-     if (isUpdate) {
-       dbUtils.updateDataInExistingDBTableWithId(
-           writableDatabase,
-           tableId,
-           contentValues,
-           rowId);
-       
-     } else {
-       dbUtils.writeDataIntoExistingDBTableWithId(
-           writableDatabase,
-           tableId,
-           contentValues,
-           rowId);
+
+     SQLiteDatabase db = null;
+     try {
+       db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+
+       ArrayList<ColumnDefinition> orderedColumns = retrieveColumnDefinitions(db, tableId);
+       ContentValues contentValues = getContentValuesFromMap(
+           mActivity, mAppName, tableId, orderedColumns,
+           elementKeyToValue);
+       if (contentValues == null) {
+         // something went wrong parsing.
+         Log.e(TAG, "[addRow] cannot assemble assignment data for table: " + tableId);
+         return false;
+       }
+       // If we've made it here, all appears to be well.
+       if (isUpdate) {
+         ODKDatabaseUtils.get().updateDataInExistingDBTableWithId(
+             db,
+             tableId,
+             orderedColumns,
+             contentValues,
+             rowId);
+         
+       } else {
+         ODKDatabaseUtils.get().insertDataIntoExistingDBTableWithId(
+             db,
+             tableId,
+             orderedColumns,
+             contentValues,
+             rowId);
+       }
+     } finally {
+       if ( db != null ) {
+         db.close();
+       }
      }
      return true;
-  }
-
-  /**
-   * Very basic method to facilitate testing.
-   * @return
-   */
-  protected SQLiteDatabase getWritableDatabase() {
-    DataModelDatabaseHelper dmDbHelper =
-        DataModelDatabaseHelperFactory.getDbHelper(mActivity, mAppName);
-    SQLiteDatabase result = dmDbHelper.getWritableDatabase();
-    return result;
-  }
-
-  /**
-   * Very basic method to facilitate stubbing and injection of a mock object.
-   * @return
-   */
-  protected ODKDatabaseUtilsWrapper getODKDatabaseUtilsWrapper() {
-    ODKDatabaseUtilsWrapper result = new ODKDatabaseUtilsWrapper();
-    return result;
   }
 
   /**
@@ -639,12 +657,34 @@ public class Control {
    */
   public boolean columnExists(String tableId, String elementPath) {
     String elementKey = this.getElementKey(tableId, elementPath);
-    TableProperties tp = this.retrieveTablePropertiesForTable(tableId);
-    if (tp == null) {
+    if (!mTableIds.contains(tableId)) {
+      Log.e(
+          TAG,
+          "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
-    ColumnProperties columnProperties = tp.getColumnByElementKey(elementKey);
-    return columnProperties != null;
+    
+    ArrayList<ColumnDefinition> orderedDefns;
+    if ( this.mCachedOrderedDefns.containsKey(tableId) ) {
+      orderedDefns = this.mCachedOrderedDefns.get(tableId);
+    } else {
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        orderedDefns = retrieveColumnDefinitions(db, tableId);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+    }
+
+    try {
+      ColumnDefinition.find(orderedDefns, elementKey);
+      return true;
+    } catch ( IllegalArgumentException e ) {
+      return false;
+    }
   }
 
   /**
@@ -698,8 +738,7 @@ public class Control {
       String screenPath,
       String jsonMap) {
     // does this "to receive add" call make sense with survey? unclear.
-    TableProperties tp = this.retrieveTablePropertiesForTable(tableId);
-    if (tp == null) {
+    if (!mTableIds.contains(tableId)) {
       Log.e(
           TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
@@ -708,7 +747,7 @@ public class Control {
     SurveyFormParameters surveyFormParameters = null;
     if (formId == null) {
       surveyFormParameters = SurveyFormParameters
-          .constructSurveyFormParameters(tp);
+          .constructSurveyFormParameters(mActivity, mAppName, tableId);
       formId = surveyFormParameters.getFormId();
     } else {
       surveyFormParameters = new SurveyFormParameters(
@@ -730,7 +769,7 @@ public class Control {
     SurveyUtil.addRowWithSurvey(
         this.mActivity,
         this.mAppName,
-        tp,
+        tableId,
         surveyFormParameters,
         map);
     return true;
@@ -760,13 +799,28 @@ public class Control {
       String formVersion,
       String formRootElement,
       String jsonMap) {
-    // The first thing we need to do is get the correct TableProperties.
-    TableProperties tp = this.retrieveTablePropertiesForTable(tableId);
-    if (tp == null) {
-      Log.e(TAG, "table [" + tableId + "] cannot have a row added"
-          + " because it could not be found");
+    if (!mTableIds.contains(tableId)) {
+      Log.e(
+          TAG,
+          "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
+    
+    ArrayList<ColumnDefinition> orderedDefns;
+    if ( this.mCachedOrderedDefns.containsKey(tableId) ) {
+      orderedDefns = this.mCachedOrderedDefns.get(tableId);
+    } else {
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        orderedDefns = retrieveColumnDefinitions(db, tableId);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+    }
+    
     Map<String, String> map = null;
     if (jsonMap != null) {
       map = WebViewUtil.getMapFromJson(jsonMap);
@@ -776,7 +830,8 @@ public class Control {
       }
     }
     CollectFormParameters formParameters =
-        CollectFormParameters.constructCollectFormParameters(tp);
+        CollectFormParameters.constructCollectFormParameters(mActivity,
+            mAppName, tableId);
     if (formId != null) {
       formParameters.setFormId(formId);
       if (formVersion != null) {
@@ -786,9 +841,8 @@ public class Control {
         formParameters.setRootElement(formRootElement);
       }
     }
-    this.prepopulateRowAndLaunchCollect(
+    this.prepopulateRowAndLaunchCollect(tableId, orderedDefns,
         formParameters,
-        tp,
         map);
     return true;
   }
@@ -806,9 +860,9 @@ public class Control {
    *          searchString, if there is one. If this value is not null, it
    *          ignores the queryString and uses only the map.
    */
-  private void prepopulateRowAndLaunchCollect(
+  private void prepopulateRowAndLaunchCollect(String tableId,
+      ArrayList<ColumnDefinition> orderedDefns,
       CollectFormParameters params,
-      TableProperties tp,
       Map<String, String> elKeyToValueToPrepopulate) {
     Intent addRowIntent;
     if (elKeyToValueToPrepopulate == null) {
@@ -816,13 +870,16 @@ public class Control {
       addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
           this.mActivity,
           this.mAppName,
-          tp,
+          tableId,
+          orderedDefns,
           params);
     } else {
       // We've received a map to prepopulate with.
       addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
           this.mActivity,
-          tp,
+          this.mAppName,
+          tableId,
+          orderedDefns,
           params,
           elKeyToValueToPrepopulate);
     }
@@ -830,7 +887,7 @@ public class Control {
     CollectUtil.launchCollectToAddRow(
         this.mActivity,
         addRowIntent,
-        tp);
+        tableId);
   }
 
   /**
@@ -847,16 +904,16 @@ public class Control {
       String rowId,
       String formId,
       String screenPath) {
-    TableProperties tp = this.retrieveTablePropertiesForTable(tableId);
-    if (tp == null) {
-      Log.e(TAG, "table [" + tableId + "] cannot have a row edited with"
-          + " survey because it cannot be found");
+    if (!mTableIds.contains(tableId)) {
+      Log.e(
+          TAG,
+          "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
     SurveyFormParameters surveyFormParameters = null;
     if (formId == null) {
       surveyFormParameters =
-          SurveyFormParameters.constructSurveyFormParameters(tp);
+          SurveyFormParameters.constructSurveyFormParameters(mActivity, mAppName, tableId);
     } else {
       surveyFormParameters = new SurveyFormParameters(
           true,
@@ -866,8 +923,8 @@ public class Control {
     SurveyUtil.editRowWithSurvey(
         this.mActivity,
         this.mAppName,
+        tableId,
         rowId,
-        tp,
         surveyFormParameters);
     return true;
   }
@@ -892,144 +949,66 @@ public class Control {
       String formId,
       String formVersion,
       String formRootElement) {
-    TableProperties tp = this.retrieveTablePropertiesForTable(tableId);
-    if (tp == null) {
+    if (!mTableIds.contains(tableId)) {
       Log.e(
           TAG,
-          "[helperEditRowWithCollect] table [" +
-              tableId +
-              "] cannot have row edited, because it cannot be found");
+          "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
     CollectFormParameters formParameters = null;
+    
+    ArrayList<ColumnDefinition> orderedDefns;
+    if ( this.mCachedOrderedDefns.containsKey(tableId) ) {
+      orderedDefns = this.mCachedOrderedDefns.get(tableId);
+    } else {
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        orderedDefns = retrieveColumnDefinitions(db, tableId);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+    }
+
     if (formId == null) {
       // Then we want to construct the form parameters using default
       // values.
       formParameters = CollectFormParameters
-          .constructCollectFormParameters(tp);
+          .constructCollectFormParameters( this.mActivity,
+              this.mAppName,
+              tableId);
       formId = formParameters.getFormId();
       formVersion = formParameters.getFormVersion();
       formRootElement = formParameters.getRootElement();
     } else {
+      String localizedDisplayName;
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+
       formParameters = new CollectFormParameters(
           true,
           formId,
           formVersion,
           formRootElement,
-          tp.getLocalizedDisplayName());
+          localizedDisplayName);
     }
     CollectUtil.editRowWithCollect(
         this.mActivity,
         this.mAppName,
+        tableId,
+        orderedDefns,
         rowId,
-        tp,
         formParameters);
     return true;
-  }
-
-  /**
-   * Create an alert that will allow for a new table name. This might be to
-   * rename an existing table, if isNewTable false, or it could be a new
-   * table, if isNewTable is true.
-   * <p>
-   * This method is based on {@link TableManager.alertForNewTableName}. The
-   * parameters are the same for the sake of consistency.
-   * <p>
-   * As this method does not access the javascript, the caller is responsible
-   * for refreshing the displayed information.
-   *
-   * @param isNewTable
-   * @param tp
-   * @param givenTableName
-   */
-  public void alertForNewTableName(
-      final boolean isNewTable,
-      final TableProperties tp,
-      String givenTableName) {
-    Log.d(TAG, "alertForNewTableName called");
-    Log.d(TAG, "isNewTable: " + Boolean.toString(isNewTable));
-    Log.d(TAG, "tp: " + tp);
-    Log.d(TAG, "givenTableName: " + givenTableName);
-    AlertDialog newTableAlert;
-    AlertDialog.Builder alert = new AlertDialog.Builder(mActivity);
-    alert.setTitle(mActivity.getString(R.string.name_of_new_table));
-    // An edit text for getting user input.
-    final EditText input = new EditText(mActivity);
-    alert.setView(input);
-    if (givenTableName != null) {
-      input.setText(givenTableName);
-    }
-    // OK Action: create a new table.
-    alert.setPositiveButton(mActivity.getString(R.string.ok),
-        new DialogInterface.OnClickListener() {
-
-          @Override
-          public void onClick(DialogInterface dialog, int which) {
-            String newTableName = input.getText().toString().trim();
-            if (newTableName == null || newTableName.equals("")) {
-              Toast.makeText(
-                  mActivity,
-                  mActivity.getString(R.string.error_table_name_empty),
-                  Toast.LENGTH_LONG).show();
-            } else {
-              if (isNewTable) {
-                // TODO: prompt for this!
-                String tableId = NameUtil.createUniqueTableId(
-                    Control.this.mActivity,
-                    Control.this.mAppName,
-                    newTableName);
-                addTable(newTableName, tableId);
-              } else {
-                SQLiteDatabase db = tp.getWritableDatabase();
-                try {
-                  db.beginTransaction();
-                  tp.setDisplayName(db, newTableName);
-                  db.setTransactionSuccessful();
-                } catch ( Exception e ) {
-                  e.printStackTrace();
-                  Log.e(TAG, "Unable to change display name: " + e.toString());
-                  Toast.makeText(
-                      Control.this.mActivity,
-                      "Unable to change display name",
-                      Toast.LENGTH_LONG).show();
-                } finally {
-                  db.endTransaction();
-                  db.close();
-                }
-              }
-            }
-          }
-        });
-
-    alert.setNegativeButton(
-        R.string.cancel,
-        new DialogInterface.OnClickListener() {
-
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        // Cancel it, do nothing.
-      }
-    });
-    newTableAlert = alert.create();
-    newTableAlert.getWindow().setSoftInputMode(
-        WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-    newTableAlert.show();
-  }
-
-  private void addTable(String tableName, String tableId) {
-    // TODO: if this avenue to create a table remains, we need to also
-    // prompt them for a tableId name.
-    String dbTableName = NameUtil.createUniqueDbTableName(
-        this.mActivity,
-        this.mAppName,
-        tableName);
-    @SuppressWarnings("unused")
-    TableProperties tp = TableProperties.addTable(
-        this.mActivity,
-        this.mAppName,
-        dbTableName,
-        tableName,
-        tableId);
   }
 
   private TableData queryForTableData(
@@ -1040,23 +1019,29 @@ public class Control {
       String sqlHaving,
       String sqlOrderByElementKey,
       String sqlOrderByDirection) {
-    TableProperties tp = this.retrieveTablePropertiesForTable(tableId);
-    if (tp == null) {
+    if (!mTableIds.contains(tableId)) {
       Log.e(
           TAG,
-          "request for table with tableId [" + tableId + "] cannot be found.");
+          "table [" + tableId + "] could not be found. " + "returning.");
       return null;
     }
-    DbTable dbTable = DbTable.getDbTable(tp);
-    UserTable userTable = dbTable.rawSqlQuery(
-        sqlWhereClause,
-        sqlSelectionArgs,
-        sqlGroupBy,
-        sqlHaving,
-        sqlOrderByElementKey,
-        sqlOrderByDirection);
-    TableData tableData = new TableData(this.mActivity, userTable);
-    return tableData;
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+      ArrayList<ColumnDefinition> orderedDefns = retrieveColumnDefinitions(db, tableId);
+      UserTable userTable = ODKDatabaseUtils.get().rawSqlQuery(db, mAppName,
+          tableId, 
+          orderedDefns,
+          sqlWhereClause, sqlSelectionArgs,
+          sqlGroupBy, sqlHaving, 
+          sqlOrderByElementKey, sqlOrderByDirection);
+      TableData tableData = new TableData(userTable);
+      return tableData;
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
   }
 
   /**

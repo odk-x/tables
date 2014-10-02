@@ -1,10 +1,27 @@
+/*
+ * Copyright (C) 2012-2014 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.utils;
 
-import org.opendatakit.common.android.data.ColumnProperties;
-import org.opendatakit.common.android.data.KeyValueHelper;
-import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.utilities.KeyValueHelper;
+import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
+import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.content.Context;
@@ -22,20 +39,23 @@ public class PreferenceUtil {
   private static final String TAG = PreferenceUtil.class.getSimpleName();
     
   /**
-   * Save viewType to be the default view type for the table represented by
-   * tableProperties.
+   * Save viewType to be the default view type for the tableId
+   * 
    * @param context
-   * @param tableProperties
+   * @param appName
+   * @param tableId
    * @param viewType
    */
   public static void setDefaultViewType(
       Context context,
-      TableProperties tableProperties,
+      String appName,
+      String tableId,
       TableViewType viewType) {
-    SQLiteDatabase db = tableProperties.getWritableDatabase();
+    SQLiteDatabase db = null;
     try {
+      db = DatabaseFactory.get().getDatabase(context, appName);
       db.beginTransaction();
-      tableProperties.setDefaultViewType(db, viewType);
+      TableUtil.get().setDefaultViewType(db, tableId, viewType);
       db.setTransactionSuccessful();
     } catch ( Exception e ) {
       e.printStackTrace();
@@ -45,8 +65,10 @@ public class PreferenceUtil {
           "Unable to change default view type",
           Toast.LENGTH_LONG).show();
     } finally {
-      db.endTransaction();
-      db.close();
+      if ( db != null ) {
+        db.endTransaction();
+        db.close();
+      }
     }
   }
   
@@ -58,13 +80,22 @@ public class PreferenceUtil {
    * @return
    */
   public static int getColumnWidth(
-      TableProperties tableProperties,
+      Context context, String appName, String tableId,
       String elementKey) {
-    KeyValueStoreHelper kvsh =
-        tableProperties.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
-    KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
-    Integer result = aspectHelper.getInteger(
-        LocalKeyValueStoreConstants.Spreadsheet.KEY_COLUMN_WIDTH);
+    Integer result;
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(context, appName);
+      KeyValueStoreHelper kvsh =
+          new KeyValueStoreHelper(db, tableId, KeyValueStoreConstants.PARTITION_COLUMN);
+      KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
+      result = aspectHelper.getInteger(
+          LocalKeyValueStoreConstants.Spreadsheet.KEY_COLUMN_WIDTH);
+    } finally {
+      if ( db != null ) {
+        db.close();
+      }
+    }
     if (result == null) {
       result = SpreadsheetView.DEFAULT_COL_WIDTH;
     }
@@ -72,15 +103,28 @@ public class PreferenceUtil {
   }
   
   public static void setColumnWidth(
-      TableProperties tableProperties,
+      Context context,
+      String appName,
+      String tableId,
       String elementKey,
       int newColumnWith) {
-    KeyValueStoreHelper kvsh =
-        tableProperties.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
-    KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
-    aspectHelper.setInteger(
-        LocalKeyValueStoreConstants.Spreadsheet.KEY_COLUMN_WIDTH,
-        newColumnWith);
+    SQLiteDatabase db = null;
+    try {
+      db = DatabaseFactory.get().getDatabase(context, appName);
+      db.beginTransaction();
+      KeyValueStoreHelper kvsh =
+          new KeyValueStoreHelper(db, tableId, KeyValueStoreConstants.PARTITION_COLUMN);
+      KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
+      aspectHelper.setInteger(
+          LocalKeyValueStoreConstants.Spreadsheet.KEY_COLUMN_WIDTH,
+          newColumnWith);
+      db.setTransactionSuccessful();
+    } finally {
+      if ( db != null ) {
+        db.endTransaction();
+        db.close();
+      }
+    }
   }
 
 }

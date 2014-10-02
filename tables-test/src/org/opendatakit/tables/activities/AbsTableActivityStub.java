@@ -1,6 +1,5 @@
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.testutils.TestConstants;
 
@@ -19,21 +18,13 @@ public class AbsTableActivityStub extends AbsTableActivity {
   // be reset to these default values so that tests begin in a known state.
   public static final String DEFAULT_APP_NAME = 
       TestConstants.TABLES_DEFAULT_APP_NAME;
-  public static final TableProperties DEFAULT_TABLE_PROPERTIES = 
-      TestConstants.getTablePropertiesMock();
   public static final String DEFAULT_TABLE_ID = "testTableId";
   public static final ViewFragmentType DEFAULT_FRAGMENT_TYPE =
       ViewFragmentType.SPREADSHEET;
   
   public static String APP_NAME = DEFAULT_APP_NAME;
-  public static TableProperties TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
   public static String TABLE_ID = DEFAULT_TABLE_ID;
   public static ViewFragmentType FRAGMENT_TYPE = DEFAULT_FRAGMENT_TYPE;
-  
-  @Override
-  TableProperties retrieveTablePropertiesForId(String tableId) {
-    return TABLE_PROPERTIES;
-  }
   
   @Override
   String retrieveAppNameFromIntent() {
@@ -52,7 +43,6 @@ public class AbsTableActivityStub extends AbsTableActivity {
   public static void resetState() {
     APP_NAME = DEFAULT_APP_NAME;
     TABLE_ID = DEFAULT_TABLE_ID;
-    TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
   }
 
   public ViewFragmentType getCurrentFragmentType() {
