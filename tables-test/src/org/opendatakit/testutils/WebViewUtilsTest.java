@@ -73,7 +73,7 @@ public class WebViewUtilsTest {
     
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(elementKey,elementKey,columnType.toString(), "[]"));
-    ArrayList<ColumnDefinition> orderedDefns = ColumnDefinition.buildColumnDefinitions(columns);
+    ArrayList<ColumnDefinition> orderedDefns = ColumnDefinition.buildColumnDefinitions(tableId, columns);
     
     doReturn(columns).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(tableId));
     ODKDatabaseUtils.set(wrapperMock);
