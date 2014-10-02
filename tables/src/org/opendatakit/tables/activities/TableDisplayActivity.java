@@ -1,6 +1,5 @@
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
@@ -536,7 +535,7 @@ public class TableDisplayActivity extends AbsTableActivity
       db = DatabaseFactory.get().getDatabase(this, getAppName());
       UserTable result = ODKDatabaseUtils.get().rawSqlQuery(db, this.getAppName(),
           this.getTableId(), 
-          ColumnDefinition.getRetentionColumnNames(getColumnDefinitions()),
+          getColumnDefinitions(),
           sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
           sqlQueryStruct.groupBy, sqlQueryStruct.having, 
           sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);

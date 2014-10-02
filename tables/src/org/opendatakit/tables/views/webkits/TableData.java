@@ -15,16 +15,13 @@ import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ElementTypeManipulator;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
 
-import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -101,16 +98,7 @@ public class TableData {
   }
 
   private ArrayList<ColumnDefinition> getColumnDefinitions() {
-    SQLiteDatabase db = null;
-    try {
-      db = DatabaseFactory.get().getDatabase(
-          Tables.getInstance().getApplicationContext(), mTable.getAppName());
-      return TableUtil.get().getColumnDefinitions(db, mTable.getTableId());
-    } finally {
-      if ( db != null ) {
-        db.close();
-      }
-    }
+    return mTable.getColumnDefinitions();
   }
   
   // Returns the number of rows in the table being viewed.

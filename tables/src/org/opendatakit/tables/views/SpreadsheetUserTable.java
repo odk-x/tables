@@ -12,6 +12,7 @@ import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -27,14 +28,15 @@ public class SpreadsheetUserTable {
   @SuppressWarnings("unused")
   private static final String TAG = "SpreadsheetUserTable";
 
+  private final AbsTableDisplayFragment fragment;
+  private final UserTable table;
   private final String[] header;
   private final String[] spreadsheetIndexToElementKey;
   private final int[] spreadsheetIndexToUserTableIndexRemap;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
-  private final ArrayList<ColumnDefinition> orderedDefns;
-  private final UserTable table;
 
-  public SpreadsheetUserTable(UserTable table) {
+  public SpreadsheetUserTable(AbsTableDisplayFragment frag, UserTable table) {
+    this.fragment = frag;
     this.table = table;
     Context context = Tables.getInstance().getApplicationContext();
 
@@ -42,7 +44,6 @@ public class SpreadsheetUserTable {
     SQLiteDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(context, table.getAppName());
-      orderedDefns = TableUtil.get().getColumnDefinitions(db, table.getTableId());
       colOrder = TableUtil.get().getColumnOrder(db, table.getTableId());
     } finally {
       if ( db != null ) {
@@ -51,6 +52,7 @@ public class SpreadsheetUserTable {
     }
 
     if (colOrder.isEmpty()) {
+      ArrayList<ColumnDefinition> orderedDefns = fragment.getColumnDefinitions();
       for (ColumnDefinition cd : orderedDefns) {
         if ( cd.isUnitOfRetention() ) {
           colOrder.add(cd.getElementKey());
@@ -94,7 +96,7 @@ public class SpreadsheetUserTable {
   }
 
   public ArrayList<ColumnDefinition> getColumnDefinitions() {
-    return orderedDefns;
+    return fragment.getColumnDefinitions();
   }
 
   public ColorRuleGroup getColumnColorRuleGroup(String elementKey) {

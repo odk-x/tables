@@ -1,6 +1,5 @@
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
@@ -95,7 +94,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
       db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       UserTable result = ODKDatabaseUtils.get().getDataInExistingDBTableWithId(db, 
           getAppName(), getTableId(), 
-          ColumnDefinition.getRetentionColumnNames(getColumnDefinitions()), rowId);
+          getColumnDefinitions(), rowId);
       if (result.getNumberOfRows() > 1 ) {
         Log.e(TAG, "Single row table for row id " + rowId + " returned > 1 row");
       }

@@ -333,7 +333,7 @@ public class WebViewUtil {
 
       userTable = ODKDatabaseUtils.get().getDataInExistingDBTableWithId(db, 
           appName, tableId,
-          ColumnDefinition.getRetentionColumnNames(orderedDefns),
+          orderedDefns,
           rowId);
     } finally {
       if ( db != null ) {

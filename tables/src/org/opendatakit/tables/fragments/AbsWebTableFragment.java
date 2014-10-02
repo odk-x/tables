@@ -86,7 +86,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    */
   @Override
   public Control createControlObject() {
-    Control result = new Control((AbsBaseActivity) getActivity(), getAppName());
+    Control result = new Control((AbsBaseActivity) getActivity(), getAppName(), getTableId(), getColumnDefinitions());
     return result;
   }
 

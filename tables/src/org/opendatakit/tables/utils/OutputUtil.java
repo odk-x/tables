@@ -196,8 +196,7 @@ public class OutputUtil {
     
     UserTable userTable = null;
     userTable = ODKDatabaseUtils.get().rawSqlQuery(db, appName, tableId, 
-        ColumnDefinition.getRetentionColumnNames(orderedDefns),
-        null, null, null, null, null, null);
+        orderedDefns, null, null, null, null, null, null);
 
     // TODO: This is broken w.r.t. elementKey != elementPath
     // TODO: HACKED HACKED HACKED HACKED

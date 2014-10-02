@@ -29,7 +29,7 @@ public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
    * Get the tableId of the active table.
    * @return
    */
-  String getTableId() {
+  public String getTableId() {
     UserTable table = this.getUserTable();
     return table.getTableId();
   }
@@ -39,7 +39,7 @@ public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
    * 
    * @return
    */
-  ArrayList<ColumnDefinition> getColumnDefinitions() {
+  public ArrayList<ColumnDefinition> getColumnDefinitions() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     return activity.getColumnDefinitions();
   }
@@ -48,7 +48,7 @@ public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
    * Get the {@link UserTable} being held by the {@link TableDisplayActivity}.
    * @return
    */
-  UserTable getUserTable() {
+  public UserTable getUserTable() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     UserTable result = activity.getUserTable();
     return result;

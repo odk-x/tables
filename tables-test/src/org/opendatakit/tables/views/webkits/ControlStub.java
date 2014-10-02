@@ -14,8 +14,8 @@ public class ControlStub extends Control {
   public static ContentValues CONTENT_VALUES = null;
   public static String GENERATED_ROW_ID = null;
 
-  public ControlStub(AbsBaseActivity activity, String appName) {
-    super(activity, appName);
+  public ControlStub(AbsBaseActivity activity, String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns) {
+    super(activity, appName, tableId, orderedDefns);
   }
   
   public static void resetState() {

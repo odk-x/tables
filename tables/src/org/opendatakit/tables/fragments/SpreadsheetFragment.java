@@ -120,7 +120,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   @Override
   public View onCreateView(android.view.LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
-    spreadsheetTable = new SpreadsheetUserTable(this.getUserTable());
+    spreadsheetTable = new SpreadsheetUserTable(this, this.getUserTable());
     if (!spreadsheetTable.hasData()) {
       TextView textView = new TextView(getActivity());
       textView.setText(getString(R.string.no_data));

@@ -94,7 +94,7 @@ public class ControlTest {
           .get();
     Control control = new ControlStub(
         activityStub,
-        TestConstants.TABLES_DEFAULT_APP_NAME);
+        TestConstants.TABLES_DEFAULT_APP_NAME, null, null);
     this.activity = activityStub;
     this.control = control;
   }

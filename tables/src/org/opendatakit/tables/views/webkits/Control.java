@@ -45,6 +45,9 @@ public class Control {
 
   protected AbsBaseActivity mActivity;
   protected String mAppName;
+  protected String mDefaultTableId;
+  protected Map<String,ArrayList<ColumnDefinition>> mCachedOrderedDefns 
+    = new HashMap<String, ArrayList<ColumnDefinition>>();
   protected ArrayList<String> mTableIds;
 
   public Object getJavascriptInterfaceWithWeakReference() {
@@ -62,9 +65,13 @@ public class Control {
    * @param activity
    *          the activity that will be holding the view
    */
-  public Control(AbsBaseActivity activity, String appName) {
+  public Control(AbsBaseActivity activity, String appName, String defaultTableId, ArrayList<ColumnDefinition> defaultColumnDefinitions) {
     this.mActivity = activity;
     this.mAppName = appName;
+    this.mDefaultTableId = defaultTableId;
+    if ( defaultTableId != null ) {
+      this.mCachedOrderedDefns.put(defaultTableId, defaultColumnDefinitions);
+    }
 
     SQLiteDatabase db = null;
     try {
@@ -83,16 +90,16 @@ public class Control {
    * @param tableId
    * @return
    */
-  ArrayList<ColumnDefinition> retrieveColumnDefinitions(String tableId) {
-    SQLiteDatabase db = null;
-    try {
-      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
-      return TableUtil.get().getColumnDefinitions(db, tableId);
-    } finally {
-      if ( db != null ) {
-        db.close();
-      }
+  synchronized ArrayList<ColumnDefinition> retrieveColumnDefinitions(SQLiteDatabase db, String tableId) {
+
+    ArrayList<ColumnDefinition> answer = this.mCachedOrderedDefns.get(tableId);
+    if ( answer != null ) {
+      return answer;
     }
+    
+    answer = TableUtil.get().getColumnDefinitions(db, tableId);
+    this.mCachedOrderedDefns.put(tableId, answer);
+    return answer;
   }
   
   /**
@@ -579,7 +586,7 @@ public class Control {
      try {
        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
 
-       ArrayList<ColumnDefinition> orderedColumns = TableUtil.get().getColumnDefinitions(db, tableId);
+       ArrayList<ColumnDefinition> orderedColumns = retrieveColumnDefinitions(db, tableId);
        ContentValues contentValues = getContentValuesFromMap(
            mActivity, mAppName, tableId, orderedColumns,
            elementKeyToValue);
@@ -656,8 +663,24 @@ public class Control {
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
+    
+    ArrayList<ColumnDefinition> orderedDefns;
+    if ( this.mCachedOrderedDefns.containsKey(tableId) ) {
+      orderedDefns = this.mCachedOrderedDefns.get(tableId);
+    } else {
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        orderedDefns = retrieveColumnDefinitions(db, tableId);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+    }
+
     try {
-      ColumnDefinition.find(retrieveColumnDefinitions(tableId), elementKey);
+      ColumnDefinition.find(orderedDefns, elementKey);
       return true;
     } catch ( IllegalArgumentException e ) {
       return false;
@@ -783,7 +806,20 @@ public class Control {
       return false;
     }
     
-    ArrayList<ColumnDefinition> orderedDefns = retrieveColumnDefinitions(tableId);
+    ArrayList<ColumnDefinition> orderedDefns;
+    if ( this.mCachedOrderedDefns.containsKey(tableId) ) {
+      orderedDefns = this.mCachedOrderedDefns.get(tableId);
+    } else {
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        orderedDefns = retrieveColumnDefinitions(db, tableId);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+    }
     
     Map<String, String> map = null;
     if (jsonMap != null) {
@@ -920,6 +956,22 @@ public class Control {
       return false;
     }
     CollectFormParameters formParameters = null;
+    
+    ArrayList<ColumnDefinition> orderedDefns;
+    if ( this.mCachedOrderedDefns.containsKey(tableId) ) {
+      orderedDefns = this.mCachedOrderedDefns.get(tableId);
+    } else {
+      SQLiteDatabase db = null;
+      try {
+        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        orderedDefns = retrieveColumnDefinitions(db, tableId);
+      } finally {
+        if ( db != null ) {
+          db.close();
+        }
+      }
+    }
+
     if (formId == null) {
       // Then we want to construct the form parameters using default
       // values.
@@ -953,7 +1005,7 @@ public class Control {
         this.mActivity,
         this.mAppName,
         tableId,
-        this.retrieveColumnDefinitions(tableId),
+        orderedDefns,
         rowId,
         formParameters);
     return true;
@@ -976,9 +1028,10 @@ public class Control {
     SQLiteDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+      ArrayList<ColumnDefinition> orderedDefns = retrieveColumnDefinitions(db, tableId);
       UserTable userTable = ODKDatabaseUtils.get().rawSqlQuery(db, mAppName,
           tableId, 
-          ColumnDefinition.getRetentionColumnNames(retrieveColumnDefinitions(tableId)),
+          orderedDefns,
           sqlWhereClause, sqlSelectionArgs,
           sqlGroupBy, sqlHaving, 
           sqlOrderByElementKey, sqlOrderByDirection);
