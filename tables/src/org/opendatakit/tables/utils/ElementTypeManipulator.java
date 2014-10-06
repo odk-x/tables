@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 
 import android.content.Context;
 import android.widget.LinearLayout;
@@ -150,7 +150,7 @@ public class ElementTypeManipulator {
         }
 
      */
-    public InputView getInputView(Context context, DataUtil du, String value);
+    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value);
   }
   
   private HashMap<String, ITypeManipulatorFragment> renderers = new HashMap<String, ITypeManipulatorFragment>();
@@ -161,16 +161,14 @@ public class ElementTypeManipulator {
   
   public ITypeManipulatorFragment getSpecialRenderer(ElementType type) {
     ITypeManipulatorFragment r = renderers.get(type.getElementType());
-    if ( r == null && type.getDataType() != ElementDataType.string) {
-      r = renderers.get(type.getDataType().name());
-    }
     return r;
   }
   
   public ITypeManipulatorFragment getDefaultRenderer(ElementType type) {
     ITypeManipulatorFragment r = getSpecialRenderer(type);
     if ( r == null ) {
-      r = renderers.get(type.getDataType().name());
+      r = ElementTypeManipulatorFactory.getCustomManipulatorFragment(type);
+      renderers.put(type.getElementType(), r);
     }
     return r;
   }

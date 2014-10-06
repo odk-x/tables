@@ -208,7 +208,9 @@ public class OutputUtil {
     // we know how to access it out of the array representing each row.
     Map<String, Integer> elementKeyToIndex = new HashMap<String, Integer>();
     for (ColumnDefinition cd : orderedDefns) {
-      elementKeyToIndex.put(cd.getElementKey(), userTable.getColumnIndexOfElementKey(cd.getElementKey()));
+      if ( cd.isUnitOfRetention() ) {
+        elementKeyToIndex.put(cd.getElementKey(), userTable.getColumnIndexOfElementKey(cd.getElementKey()));
+      }
     }
     // We don't want to try and write more rows than we have.
     int numRowsToWrite = Math.min(numberOfRows, userTable.getNumberOfRows());

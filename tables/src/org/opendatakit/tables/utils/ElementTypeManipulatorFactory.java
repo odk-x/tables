@@ -18,7 +18,11 @@ package org.opendatakit.tables.utils;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+import org.opendatakit.common.android.data.ElementDataType;
+import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulator.InputView;
 import org.opendatakit.tables.utils.InputScreenUtil.DateInputView;
@@ -27,15 +31,27 @@ import org.opendatakit.tables.utils.InputScreenUtil.DateTimeInputView;
 import org.opendatakit.tables.utils.InputScreenUtil.GeneralInputView;
 import org.opendatakit.tables.utils.InputScreenUtil.TimeInputView;
 
-import android.content.Context;
-
 public class ElementTypeManipulatorFactory {
 
   private static class DateManipulator implements ITypeManipulatorFragment {
 
+    ElementType type;
+    
+    DateManipulator(ElementType type) {
+      this.type = type;
+    }
+
+    DateManipulator() {
+      this.type = null;
+    }
+    
     @Override
     public String getElementTypeDisplayLabel() {
-      return "Date";
+      if ( type != null ) {
+        return StringUtils.capitalize(type.getElementType());
+      } else {
+        return "Date";
+      }
     }
 
     @Override
@@ -69,16 +85,30 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public InputView getInputView(Context context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
       return new DateInputView(context, du, value);
     }
   }
 
   private static class DateTimeManipulator implements ITypeManipulatorFragment {
 
+    ElementType type;
+    
+    DateTimeManipulator(ElementType type) {
+      this.type = type;
+    }
+
+    DateTimeManipulator() {
+      this.type = null;
+    }
+    
     @Override
     public String getElementTypeDisplayLabel() {
-      return "Date and Time";
+      if ( type != null ) {
+        return StringUtils.capitalize(type.getElementType());
+      } else {
+        return "Date and Time";
+      }
     }
 
     @Override
@@ -112,7 +142,7 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public InputView getInputView(Context context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
       return new DateTimeInputView(context, du, value);
     }
   }
@@ -120,9 +150,23 @@ public class ElementTypeManipulatorFactory {
 
   private static class TimeManipulator implements ITypeManipulatorFragment {
 
+    ElementType type;
+    
+    TimeManipulator(ElementType type) {
+      this.type = type;
+    }
+
+    TimeManipulator() {
+      this.type = null;
+    }
+    
     @Override
     public String getElementTypeDisplayLabel() {
-      return "Time";
+      if ( type != null ) {
+        return StringUtils.capitalize(type.getElementType());
+      } else {
+        return "Time";
+      }
     }
 
     @Override
@@ -156,16 +200,30 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public InputView getInputView(Context context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
       return new TimeInputView(context, du, value);
     }
   }
 
   private static class DateRangeManipulator implements ITypeManipulatorFragment {
 
+    ElementType type;
+    
+    DateRangeManipulator(ElementType type) {
+      this.type = type;
+    }
+
+    DateRangeManipulator() {
+      this.type = null;
+    }
+    
     @Override
     public String getElementTypeDisplayLabel() {
-      return "Date Range";
+      if ( type != null ) {
+        return StringUtils.capitalize(type.getElementType());
+      } else {
+        return "Date Range";
+      }
     }
 
     @Override
@@ -199,16 +257,30 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public InputView getInputView(Context context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
       return new DateRangeInputView(context, du, value);
     }
   }
 
   private static class IntegerManipulator implements ITypeManipulatorFragment {
 
+    ElementType type;
+    
+    IntegerManipulator(ElementType type) {
+      this.type = type;
+    }
+
+    IntegerManipulator() {
+      this.type = null;
+    }
+    
     @Override
     public String getElementTypeDisplayLabel() {
-      return "Integer";
+      if ( type != null ) {
+        return StringUtils.capitalize(type.getElementType());
+      } else {
+        return "Integer";
+      }
     }
 
     @Override
@@ -245,16 +317,30 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public InputView getInputView(Context context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
       return new GeneralInputView(context, du, value);
     }
   }
 
   private static class NumberManipulator implements ITypeManipulatorFragment {
 
+    ElementType type;
+    
+    NumberManipulator(ElementType type) {
+      this.type = type;
+    }
+
+    NumberManipulator() {
+      this.type = null;
+    }
+    
     @Override
     public String getElementTypeDisplayLabel() {
-      return "Number";
+      if ( type != null ) {
+        return StringUtils.capitalize(type.getElementType());
+      } else {
+        return "Number";
+      }
     }
 
     @Override
@@ -291,16 +377,30 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public InputView getInputView(Context context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
       return new GeneralInputView(context, du, value);
     }
   }
 
   private static class BoolManipulator implements ITypeManipulatorFragment {
 
+    ElementType type;
+    
+    BoolManipulator(ElementType type) {
+      this.type = type;
+    }
+
+    BoolManipulator() {
+      this.type = null;
+    }
+    
     @Override
     public String getElementTypeDisplayLabel() {
-      return "Boolean";
+      if ( type != null ) {
+        return StringUtils.capitalize(type.getElementType());
+      } else {
+        return "Boolean";
+      }
     }
 
     @Override
@@ -358,16 +458,30 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public InputView getInputView(Context context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
       return new GeneralInputView(context, du, value);
     }
   }
 
   private static class StringManipulator implements ITypeManipulatorFragment {
 
+    ElementType type;
+    
+    StringManipulator(ElementType type) {
+      this.type = type;
+    }
+
+    StringManipulator() {
+      this.type = null;
+    }
+    
     @Override
     public String getElementTypeDisplayLabel() {
-      return "Text";
+      if ( type != null ) {
+        return StringUtils.capitalize(type.getElementType());
+      } else {
+        return "Text";
+      }
     }
 
     @Override
@@ -400,8 +514,54 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public InputView getInputView(Context context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
       return new GeneralInputView(context, du, value);
+    }
+  }
+
+  private static class ObjectManipulator implements ITypeManipulatorFragment {
+
+    ElementType type;
+    
+    ObjectManipulator(ElementType type) {
+      this.type = type;
+    }
+    
+    @Override
+    public String getElementTypeDisplayLabel() {
+      return StringUtils.capitalize(type.getElementType());
+    }
+
+    @Override
+    public String getCollectType() {
+      throw new UnsupportedOperationException("this should not be called");
+    }
+
+    @Override
+    public Class<?> getDatabaseType() {
+      throw new UnsupportedOperationException("this should not be called");
+    }
+
+    @Override
+    public String formatForCollect(DataUtil dataUtil, String databaseValue) {
+      throw new UnsupportedOperationException("this should not be called");
+    }
+
+    @Override
+    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
+        String inValue) {
+      throw new UnsupportedOperationException("this should not be called");
+    }
+
+    @Override
+    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<T> clazz) {
+      throw new UnsupportedOperationException("this should not be called");
+    }
+
+    @Override
+    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
+      throw new UnsupportedOperationException("this should not be called");
     }
   }
 
@@ -410,11 +570,12 @@ public class ElementTypeManipulatorFactory {
 //  public static final String VIDEOURI = "videoUri";
 //  public static final String MIMEURI = "mimeUri";
 
-  static ElementTypeManipulator manipulator = null;
+  static String gAppName = null;
+  static ElementTypeManipulator gManipulator = null;
   
-  public static final synchronized ElementTypeManipulator getInstance() {
-    if ( manipulator == null ) {
-      manipulator = new ElementTypeManipulator();
+  public static final synchronized ElementTypeManipulator getInstance(String appName) {
+    if ( gManipulator == null || (gAppName != null && !gAppName.equals(appName)) ) {
+      ElementTypeManipulator manipulator = new ElementTypeManipulator();
       manipulator.addTypeManipulatorFragment("date", new DateManipulator());
       manipulator.addTypeManipulatorFragment("dateTime", new DateTimeManipulator());
       manipulator.addTypeManipulatorFragment("time", new TimeManipulator());
@@ -423,9 +584,38 @@ public class ElementTypeManipulatorFactory {
       manipulator.addTypeManipulatorFragment("number", new NumberManipulator());
       manipulator.addTypeManipulatorFragment("bool", new BoolManipulator());
       manipulator.addTypeManipulatorFragment("string", new StringManipulator());
+      gAppName = appName;
+      gManipulator = new ElementTypeManipulator();
     }
 
-    return manipulator;
+    return gManipulator;
   }
-
+  
+  static final ITypeManipulatorFragment getCustomManipulatorFragment(ElementType type) {
+    if ( type.getDataType() == ElementDataType.array ) {
+      return new ObjectManipulator(type);
+    }
+    if ( type.getDataType() == ElementDataType.bool ) {
+      return new BoolManipulator(type);
+    }
+    if ( type.getDataType() == ElementDataType.configpath ) {
+      return new StringManipulator(type);
+    }
+    if ( type.getDataType() == ElementDataType.integer ) {
+      return new IntegerManipulator(type);
+    }
+    if ( type.getDataType() == ElementDataType.number ) {
+      return new NumberManipulator(type);
+    }
+    if ( type.getDataType() == ElementDataType.object ) {
+      return new ObjectManipulator(type);
+    }
+    if ( type.getDataType() == ElementDataType.rowpath ) {
+      return new StringManipulator(type);
+    }
+    if ( type.getDataType() == ElementDataType.string ) {
+      return new StringManipulator(type);
+    }
+    throw new IllegalStateException("unknown ElementDataType: " + type.getDataType().name());
+  }
 }

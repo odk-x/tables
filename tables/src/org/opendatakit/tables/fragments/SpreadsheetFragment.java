@@ -624,7 +624,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
               db.close();
             }
           }
-          String value = ParseUtil.validifyValue(dataUtil, choices,
+          String value = ParseUtil.validifyValue(getAppName(), dataUtil, choices,
               spreadsheetTable.getColumnByElementKey(CellEditDialog.this.cell.elementKey),
               cev.getValue());
           if (value == null) {
