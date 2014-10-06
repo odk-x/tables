@@ -1,6 +1,7 @@
 package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
+import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -23,6 +24,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.TableNameStruct;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
@@ -61,121 +63,44 @@ public class TableManagerFragmentTest {
   }
 
   public void setupFragmentWithNoItems() {
-    this.fragment = getSpy(new ArrayList<String>());
+    this.fragment = getSpy(new ArrayList<TableNameStruct>());
     doGlobalSetup();
   }
 
-  private List<String> getMockListWithTwoItems() {
+  private List<TableNameStruct> getMockListWithTwoItems() {
     
-    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
-    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
-    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
-    DatabaseFactory.set(factoryMock);
-        
-    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
+    TableNameStruct structOne = new TableNameStruct(
+        "first",
+        "first_name");
+    
+    TableNameStruct structTwo = new TableNameStruct(
+        "second",
+        "second_name");
+    
+    List<TableNameStruct> result = new ArrayList<TableNameStruct>();
+    
+    result.add(structOne);
+    result.add(structTwo);
 
-    ArrayList<String> tableIds = new ArrayList<String>();
-    tableIds.add(mockTableId1);
-    tableIds.add(mockTableId2);
-    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
-    
-    List<Column> columns1 = new ArrayList<Column>();
-    columns1.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
-        ElementDataType.string.name(), "[]"));
-    columns1.add(new Column(TestConstants.ElementKeys.INT_COLUMN, TestConstants.ElementKeys.INT_COLUMN,
-        ElementDataType.integer.name(), "[]"));
-    columns1.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
-        ElementDataType.number.name(), "[]"));
-
-    List<Column> columns2 = new ArrayList<Column>();
-    columns2.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
-        ElementDataType.string.name(), "[]"));
-    
-    doReturn(columns1).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(mockTableId1));
-    doReturn(columns2).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(mockTableId2));
-    ODKDatabaseUtils.set(wrapperMock);
-    
-    TableUtil util = mock(TableUtil.class);
-    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
-        eq(mockTableId1))).thenReturn(mockTableName1);
-    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
-        eq(mockTableId2))).thenReturn(mockTableName2);
-    
-    when(util.getDefaultViewType(any(SQLiteDatabase.class), 
-        eq(mockTableId1))).thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-    when(util.getDefaultViewType(any(SQLiteDatabase.class), 
-        eq(mockTableId2))).thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-    TableUtil.set(util);
-
-    List<String> listOfMocks = new ArrayList<String>();
-    listOfMocks.add(mockTableId1);
-    listOfMocks.add(mockTableId2);
-    return listOfMocks;
+    return result;
   }
-
-  private List<String> getMockListWithThreeItems() {
+  
+  private List<TableNameStruct> getMockListWithThreeItems() {
     
-    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
-    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
-    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
-    DatabaseFactory.set(factoryMock);
+    List<TableNameStruct> result = this.getMockListWithTwoItems();
     
-    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
-
-    ArrayList<String> tableIds = new ArrayList<String>();
-    tableIds.add(mockTableId1);
-    tableIds.add(mockTableId2);
-    tableIds.add(mockTableId3);
-    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
+    TableNameStruct structThree = new TableNameStruct(
+        "third",
+        "third_name");
     
-    List<Column> columns1 = new ArrayList<Column>();
-    columns1.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
-        ElementDataType.string.name(), "[]"));
-    columns1.add(new Column(TestConstants.ElementKeys.INT_COLUMN, TestConstants.ElementKeys.INT_COLUMN,
-        ElementDataType.integer.name(), "[]"));
-    columns1.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
-        ElementDataType.number.name(), "[]"));
-
-    List<Column> columns2 = new ArrayList<Column>();
-    columns2.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
-        ElementDataType.string.name(), "[]"));
+    result.add(structThree);
     
-    List<Column> columns3 = new ArrayList<Column>();
-    columns3.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
-        ElementDataType.number.name(), "[]"));
+    return result;
     
-    doReturn(columns1).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(mockTableId1));
-    doReturn(columns2).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(mockTableId2));
-    doReturn(columns3).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(mockTableId3));
-    ODKDatabaseUtils.set(wrapperMock);
-    
-    TableUtil util = mock(TableUtil.class);
-    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
-        eq(mockTableId1))).thenReturn(mockTableName1);
-    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
-        eq(mockTableId2))).thenReturn(mockTableName2);
-    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
-        eq(mockTableId3))).thenReturn(mockTableName3);
-
-    
-    when(util.getDefaultViewType(any(SQLiteDatabase.class), 
-        eq(mockTableId1))).thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-    when(util.getDefaultViewType(any(SQLiteDatabase.class), 
-        eq(mockTableId2))).thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-    when(util.getDefaultViewType(any(SQLiteDatabase.class), 
-        eq(mockTableId3))).thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-
-    TableUtil.set(util);
-
-    List<String> listOfMocks = new ArrayList<String>();
-    listOfMocks.add(mockTableId1);
-    listOfMocks.add(mockTableId2);
-    listOfMocks.add(mockTableId3);
-    return listOfMocks;
   }
 
   public void setupFragmentWithTwoItems() {
-    List<String> listOfMocks = this.getMockListWithTwoItems();
+    List<TableNameStruct> listOfMocks = this.getMockListWithTwoItems();
     this.fragment = getSpy(listOfMocks);
     doGlobalSetup();
   }
@@ -200,7 +125,7 @@ public class TableManagerFragmentTest {
    * @param toDisplay
    * @return
    */
-  private TableManagerFragmentStub getSpy(List<String> toDisplay) {
+  private TableManagerFragmentStub getSpy(List<TableNameStruct> toDisplay) {
     TableManagerFragmentStub stub = new TableManagerFragmentStub(toDisplay);
     return stub;
   }
@@ -295,8 +220,8 @@ public class TableManagerFragmentTest {
     org.fest.assertions.api.Assertions.assertThat(
         this.fragment.getListView().getAdapter().getCount())
         .isEqualTo(2);
-    List<String> threeItemList = this.getMockListWithThreeItems();
-    this.fragment.setTableIdList(threeItemList);
+    List<TableNameStruct> threeItemList = this.getMockListWithThreeItems();
+    this.fragment.setList(threeItemList);
     org.fest.assertions.api.Assertions.assertThat(
         this.fragment.getListAdapter().getCount())
         .isEqualTo(3);

@@ -5,6 +5,7 @@ import java.util.List;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.TableNameStruct;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -23,17 +24,20 @@ import android.widget.TextView;
  * @author sudar.sam@gmail.com
  *
  */
-public class TablePropertiesAdapter extends BaseAdapter
+public class TableNameStructAdapter extends BaseAdapter
     implements ListAdapter {
 
   private static final String TAG =
-      TablePropertiesAdapter.class.getSimpleName();
+      TableNameStructAdapter.class.getSimpleName();
 
   private Context mContext;
   private String mAppName;
-  private List<String> mTableIdList;
+  private List<TableNameStruct> mTableIdList;
 
-  public TablePropertiesAdapter(Context context, String appName, List<String> list) {
+  public TableNameStructAdapter(
+      Context context,
+      String appName,
+      List<TableNameStruct> list) {
     this.mContext = context;
     this.mAppName = appName;
     this.mTableIdList = list;
@@ -49,20 +53,10 @@ public class TablePropertiesAdapter extends BaseAdapter
         createView(parent) :
         (RelativeLayout) convertView;
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
-    String tableId = this.getList().get(position);
-
-    String localizedDisplayName;
-    SQLiteDatabase db = null;
-    try {
-      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
-      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
-    } finally {
-      if ( db != null ) {
-        db.close();
-      }
-    }
+    
+    TableNameStruct nameStruct = this.getList().get(position);
  
-    textView.setText(localizedDisplayName);
+    textView.setText(nameStruct.getLocalizedDisplayName());
     ImageView imageView = (ImageView) view.findViewById(R.id.row_item_icon);
     imageView.setOnClickListener(new View.OnClickListener() {
 
@@ -76,7 +70,7 @@ public class TablePropertiesAdapter extends BaseAdapter
     return view;
   }
 
-  List<String> getList() {
+  List<TableNameStruct> getList() {
     return this.mTableIdList;
   }
 

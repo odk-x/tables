@@ -2,12 +2,14 @@ package org.opendatakit.tables.fragments;
 
 import java.util.List;
 
+import org.opendatakit.tables.utils.TableNameStruct;
+
 public class TableManagerFragmentStub extends TableManagerFragment {
   
-  List<String> dummyList;
+  List<TableNameStruct> dummyList;
   int numberOfCallsToUpdatePropertiesList;
   
-  public TableManagerFragmentStub(List<String> toDisplay) {
+  public TableManagerFragmentStub(List<TableNameStruct> toDisplay) {
     this.dummyList = toDisplay;
     this.numberOfCallsToUpdatePropertiesList = 0;
   }
@@ -16,7 +18,7 @@ public class TableManagerFragmentStub extends TableManagerFragment {
   protected void updateTableIdList() {
     this.numberOfCallsToUpdatePropertiesList++;
     super.updateTableIdList();
-    super.setTableIdList(dummyList);
+    super.setList(dummyList);
   }
   
   /**
