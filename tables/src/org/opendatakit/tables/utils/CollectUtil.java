@@ -264,7 +264,7 @@ public class CollectUtil {
       writer.write(DEFAULT_ROOT_ELEMENT);
       writer.write(">");
       writer.write("</instance>");
-      ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
+      ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(appName);
       for (ColumnDefinition cd : orderedElements) {
         ColumnDefinition cdContainingElement = cd.getParent();
 
@@ -1335,7 +1335,7 @@ public class CollectUtil {
           }
         }
         String value = formValues.formValues.get(cd.getElementKey());
-        value = ParseUtil.validifyValue(du, choices, cd, formValues.formValues.get(cd.getElementKey()));
+        value = ParseUtil.validifyValue(appName, du, choices, cd, formValues.formValues.get(cd.getElementKey()));
 
         if (value != null) {
           values.put(cd.getElementKey(), value);

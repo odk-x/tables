@@ -121,7 +121,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   private void initializeColumnType() {
     EditTextPreference pref =
         this.findEditTextPreference(Constants.PreferenceKeys.Column.TYPE);
-    ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
+    ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(this.getAppName());
     ITypeManipulatorFragment r = m.getDefaultRenderer(this.retrieveColumnDefinition().getType());
     pref.setSummary(r.getElementTypeDisplayLabel());
   }

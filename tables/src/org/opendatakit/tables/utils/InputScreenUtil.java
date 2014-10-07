@@ -21,6 +21,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulator.InputView;
 
@@ -33,9 +34,9 @@ import android.widget.Spinner;
 
 public class InputScreenUtil {
 
-    private final Context context;
+    private final AbsBaseActivity context;
 
-    public InputScreenUtil(Context context) {
+    public InputScreenUtil(AbsBaseActivity context) {
         this.context = context;
 //        du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());;
     }
@@ -45,7 +46,7 @@ public class InputScreenUtil {
     }
 
     public InputView getInputView(ColumnDefinition cd, DataUtil du, String value) {
-      ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
+      ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(context.getAppName());
       ITypeManipulatorFragment r = m.getDefaultRenderer(cd.getType());
       return r.getInputView(context, du, value);
     }

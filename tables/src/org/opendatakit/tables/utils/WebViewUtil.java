@@ -146,7 +146,7 @@ public class WebViewUtil {
       }
       // we have to validate it. this validate function just returns null if
       // valid, rather than a boolean.
-      String nullMeansInvalid = ParseUtil.validifyValue(du, choices, colDefn, rawValue);
+      String nullMeansInvalid = ParseUtil.validifyValue(appName, du, choices, colDefn, rawValue);
       if (nullMeansInvalid == null) {
         // return false, indicating that the value was not acceptable.
         Log.e(
@@ -162,7 +162,7 @@ public class WebViewUtil {
 
       // This means all is well, and we can parse the value.
       ElementType columnType = colDefn.getType();
-      ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
+      ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(appName);
       org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment r = m.getDefaultRenderer(columnType);
       ElementDataType type = columnType.getDataType();
       

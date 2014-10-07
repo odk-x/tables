@@ -170,7 +170,7 @@ public class TableData {
    */
   private String getColumnTypeLabelForElementKey(String elementKey) {
     ColumnDefinition cd = ColumnDefinition.find(getColumnDefinitions(), elementKey);
-    ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
+    ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(this.mTable.getAppName());
     ITypeManipulatorFragment r = m.getDefaultRenderer(cd.getType());
     String label = r.getElementTypeDisplayLabel();
     return label;

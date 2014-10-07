@@ -24,13 +24,13 @@ import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragm
 
 public class ParseUtil {
 
-  public static String validifyValue(DataUtil du, ArrayList<Map<String,Object>> choices, ColumnDefinition cd, String input) {
+  public static String validifyValue(String appName, DataUtil du, ArrayList<Map<String,Object>> choices, ColumnDefinition cd, String input) {
       if ( input == null ) {
         // TODO: should we check for required values?
         // null values are always accepted (???)
         return input;
       }
-      ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance();
+      ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(appName);
       ITypeManipulatorFragment r = m.getDefaultRenderer(cd.getType());
 
       return r.verifyValidityAndNormalizeValue(du, choices, input);
