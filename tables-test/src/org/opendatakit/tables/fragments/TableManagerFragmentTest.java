@@ -1,25 +1,20 @@
 package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
-import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -27,7 +22,6 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableNameStruct;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
-import org.opendatakit.testutils.TestConstants;
 import org.opendatakit.testutils.TestContextMenu;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
@@ -55,11 +49,35 @@ public class TableManagerFragmentTest {
 
   private TableManagerFragmentStub fragment;
   private Activity parentActivity;
+  
+  @Before
+  public void before() {
+    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
+    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
+    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
+    DatabaseFactory.set(factoryMock);
+    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
+    List<String> tableIds = new ArrayList<String>();
+    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
+    ODKDatabaseUtils.set(wrapperMock);
+    
+    TestCaseUtils.setExternalStorageMounted();
+  }
 
   @After
   public void after() {
     AbsBaseActivityStub.resetState();
     TestCaseUtils.resetExternalStorageState();
+    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
+    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
+    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
+    DatabaseFactory.set(factoryMock);
+    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
+    List<String> tableIds = new ArrayList<String>();
+    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
+    ODKDatabaseUtils.set(wrapperMock);
+
+    TestCaseUtils.setExternalStorageMounted();
   }
 
   public void setupFragmentWithNoItems() {
