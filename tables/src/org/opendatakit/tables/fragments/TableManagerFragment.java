@@ -16,7 +16,8 @@ import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.views.components.TablePropertiesAdapter;
+import org.opendatakit.tables.utils.TableNameStruct;
+import org.opendatakit.tables.views.components.TableNameStructAdapter;
 
 import android.app.AlertDialog;
 import android.app.ListFragment;
@@ -41,9 +42,9 @@ public class TableManagerFragment extends ListFragment {
   private static final String TAG = TableManagerFragment.class.getSimpleName();
 
   /** All the tableIds that should be visible to the user. */
-  private List<String> mTableIdList;
+  private List<TableNameStruct> mTableNameStructs;
 
-  private TablePropertiesAdapter mTpAdapter;
+  private TableNameStructAdapter mTpAdapter;
 
   public TableManagerFragment() {
     // empty constructor required for fragments.
@@ -53,7 +54,7 @@ public class TableManagerFragment extends ListFragment {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.d(TAG, "[onCreate]");
-    this.mTableIdList = new ArrayList<String>();
+    this.mTableNameStructs = new ArrayList<TableNameStruct>();
     this.setHasOptionsMenu(true);
   }
 
@@ -139,19 +140,38 @@ public class TableManagerFragment extends ListFragment {
     AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
     SQLiteDatabase db = null;
     
-    List<String> tableIds;
+    List<TableNameStruct> tableNameStructs = new ArrayList<TableNameStruct>();
+    
     try {
-      db = DatabaseFactory.get().getDatabase(baseActivity, baseActivity.getAppName());
-      tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+      db = DatabaseFactory.get().getDatabase(
+          baseActivity,
+          baseActivity.getAppName());
+      
+      List<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+      
+      for (String tableId : tableIds) {
+        String localizedDisplayName = TableUtil.get().getLocalizedDisplayName(
+            db,
+            tableId);
+        
+        TableNameStruct tableNameStruct = new TableNameStruct(
+            tableId,
+            localizedDisplayName);
+        
+        tableNameStructs.add(tableNameStruct);        
+      }
+      
     } finally {
       if ( db != null ) {
         db.close();
       }
     }
-    Log.e(TAG, "got tableId list of size: " + tableIds.size());
-    this.setTableIdList(tableIds);
-    this.mTpAdapter = new TablePropertiesAdapter(baseActivity, baseActivity.getAppName(), 
-        this.getTableIdList());
+    Log.e(TAG, "got tableId list of size: " + tableNameStructs.size());
+    this.setList(tableNameStructs);
+    this.mTpAdapter = new TableNameStructAdapter(
+        baseActivity,
+        baseActivity.getAppName(), 
+        this.mTableNameStructs);
     this.setListAdapter(this.mTpAdapter);
     this.mTpAdapter.notifyDataSetChanged();
   }
@@ -166,7 +186,9 @@ public class TableManagerFragment extends ListFragment {
       AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
       Intent intent = baseActivity.createNewIntentWithAppName();
       // Set the tableId.
-      String tableId = (String) this.getListView().getItemAtPosition(position);
+      TableNameStruct nameStruct = (TableNameStruct)
+          this.getListView().getItemAtPosition(position);
+      String tableId = nameStruct.getTableId();
       intent.putExtra(
           Constants.IntentKeys.TABLE_ID,
           tableId);
@@ -197,8 +219,8 @@ public class TableManagerFragment extends ListFragment {
   public boolean onContextItemSelected(MenuItem item) {
     AdapterView.AdapterContextMenuInfo menuInfo =
         (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-    final String tableIdOfSelectedItem = 
-        this.getTableIdList().get(menuInfo.position);
+    TableNameStruct selectedStruct = this.getList().get(menuInfo.position);
+    final String tableIdOfSelectedItem = selectedStruct.getTableId();
     final AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
 
     String localizedDisplayName;
@@ -279,20 +301,20 @@ public class TableManagerFragment extends ListFragment {
    * Get the list currently displayed by the fragment.
    * @return
    */
-  List<String> getTableIdList() {
-    return this.mTableIdList;
+  List<TableNameStruct> getList() {
+    return this.mTableNameStructs;
   }
 
   /**
    * Update the contents of the list with the this new list.
    * @param list
    */
-  void setTableIdList(List<String> list) {
+  void setList(List<TableNameStruct> list) {
     // We can't change the reference, which is held by the adapter.
-    List<String> adapterList = this.getTableIdList();
-    adapterList.clear();
-    for (String tableId : list) {
-      adapterList.add(tableId);
+    List<TableNameStruct> nameStructList = this.getList();
+    nameStructList.clear();
+    for (TableNameStruct nameStruct : list) {
+      nameStructList.add(nameStruct);
     }
     if ( mTpAdapter != null ) {
       mTpAdapter.notifyDataSetChanged();
