@@ -111,7 +111,7 @@ public class OutputUtil {
         String localizedDisplayName;
         localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
         tableIdToDisplayName.put(tableId, localizedDisplayName);
-        Map<String, Object> controlTable = getMapForControlTable(db, tableId);
+        Map<String, Object> controlTable = getMapForControlTable(db, appName, tableId);
         tableIdToControlTable.put(tableId, controlTable);
       }
     } finally {
@@ -138,12 +138,13 @@ public class OutputUtil {
    * displayName, ...},
    *
    * }
-   *
-   * @param context
-   * @param tableProperties
+   * 
+   * @param db
+   * @param appName
+   * @param tableId
    * @return
    */
-  public static Map<String, Object> getMapForControlTable(SQLiteDatabase db, String tableId) {
+  public static Map<String, Object> getMapForControlTable(SQLiteDatabase db, String appName, String tableId) {
     Map<String, Object> controlTable = new HashMap<String, Object>();
     Map<String, String> pathToKey = new HashMap<String, String>();
     ArrayList<ColumnDefinition> orderedDefns;
@@ -152,7 +153,7 @@ public class OutputUtil {
     String defaultListFileName = null;
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
     
-    orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+    orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
     defaultDetailFileName = TableUtil.get().getDetailViewFilename(db, tableId);
     defaultListFileName = TableUtil.get().getListViewFilename(db, tableId);
     
@@ -192,7 +193,7 @@ public class OutputUtil {
   private static String getStringForDataObject(SQLiteDatabase db, String appName, String tableId,
       int numberOfRows) {
 
-    ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+    ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
     
     UserTable userTable = null;
     userTable = ODKDatabaseUtils.get().rawSqlQuery(db, appName, tableId, 

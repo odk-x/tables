@@ -97,7 +97,7 @@ public class Control {
       return answer;
     }
     
-    answer = TableUtil.get().getColumnDefinitions(db, tableId);
+    answer = TableUtil.get().getColumnDefinitions(db, mAppName, tableId);
     this.mCachedOrderedDefns.put(tableId, answer);
     return answer;
   }

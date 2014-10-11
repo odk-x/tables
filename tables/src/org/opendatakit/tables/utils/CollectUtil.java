@@ -1472,7 +1472,7 @@ public class CollectUtil {
     SQLiteDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(context, appName);
-      orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+      orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
       
       ContentValues values = CollectUtil.getMapForInsertion(context, appName, tableId, orderedDefns, formValues);
       values.put(DataTableColumns.ID, rowId);
@@ -1570,7 +1570,7 @@ public class CollectUtil {
     SQLiteDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(context, appName);
-      orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+      orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
       
       ContentValues values = CollectUtil.getMapForInsertion(context, appName, tableId, orderedDefns, formValues);
       values.put(DataTableColumns.ID, formValues.instanceID);

@@ -40,7 +40,7 @@ public class ExportTask
         try {
           String tableId = request.getTableId();
           db = DatabaseFactory.get().getDatabase(this.exportCSVActivity, appName);
-          ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+          ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
           // export goes to output/csv directory...
           return cu.exportSeparable(this, db, tableId, orderedDefns, request.getFileQualifier());
         } finally {

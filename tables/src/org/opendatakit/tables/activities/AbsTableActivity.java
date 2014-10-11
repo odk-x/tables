@@ -42,7 +42,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
     try {
       db = DatabaseFactory.get().getDatabase(
           Tables.getInstance().getApplicationContext(), getAppName());
-      mColumnDefinitions = TableUtil.get().getColumnDefinitions(db, getTableId());
+      mColumnDefinitions = TableUtil.get().getColumnDefinitions(db, getAppName(), getTableId());
     } finally {
       if ( db != null ) {
         db.close();

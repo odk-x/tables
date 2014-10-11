@@ -358,7 +358,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       db = null;
       try {
         db = DatabaseFactory.get().getDatabase(this, appName);
-        ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, tableId);
+        ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
         for (ColumnDefinition cd : orderedDefns) {
           if (cd.isUnitOfRetention()) {
             String localizedDisplayName;
