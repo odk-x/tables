@@ -223,7 +223,7 @@ public class ColorRuleListFragment extends ListFragment {
           // store.
           Log.d(TAG, "trying to delete rule at position: " + position);
           mColorRuleGroup.getColorRules().remove(position);
-          mColorRuleGroup.saveRuleList();
+          mColorRuleGroup.saveRuleList(ColorRuleListFragment.this.getActivity());
           mColorRuleAdapter.notifyDataSetChanged();
         }
       });
@@ -256,7 +256,7 @@ public class ColorRuleListFragment extends ListFragment {
       List<ColorRule> newList = new ArrayList<ColorRule>();
       newList.addAll(ColorRuleUtil.getDefaultSyncStateColorRules());
       this.mColorRuleGroup.replaceColorRuleList(newList);
-      this.mColorRuleGroup.saveRuleList();
+      this.mColorRuleGroup.saveRuleList(ColorRuleListFragment.this.getActivity());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     case COLUMN:
@@ -264,7 +264,7 @@ public class ColorRuleListFragment extends ListFragment {
       // We want to just wipe all the columns for both of these types.
       List<ColorRule> emptyList = new ArrayList<ColorRule>();
       this.mColorRuleGroup.replaceColorRuleList(emptyList);
-      this.mColorRuleGroup.saveRuleList();
+      this.mColorRuleGroup.saveRuleList(ColorRuleListFragment.this.getActivity());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     default:

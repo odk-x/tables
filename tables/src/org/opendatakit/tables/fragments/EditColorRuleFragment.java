@@ -393,7 +393,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     } else {
       this.mColorRuleGroup.getColorRules().set(mRulePosition, newRule);
     }
-    mColorRuleGroup.saveRuleList();
+    mColorRuleGroup.saveRuleList(getActivity());
     updateStateOfSaveButton();
   }
   

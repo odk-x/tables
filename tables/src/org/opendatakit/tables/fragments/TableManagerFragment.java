@@ -253,7 +253,7 @@ public class TableManagerFragment extends ListFragment {
           SQLiteDatabase db = null;
           try {
             db = DatabaseFactory.get().getDatabase(baseActivity, baseActivity.getAppName());
-            ODKDatabaseUtils.get().deleteTableAndData(db, baseActivity.getAppName(), tableIdOfSelectedItem);
+            ODKDatabaseUtils.get().deleteDBTableAndAllData(db, baseActivity.getAppName(), tableIdOfSelectedItem);
           } finally {
             if ( db != null ) {
               db.close();

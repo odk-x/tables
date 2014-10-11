@@ -752,7 +752,7 @@ public class CollectUtil {
     values.put(COLLECT_KEY_INSTANCE_FILE_PATH, instanceFilePath);
     values.put(COLLECT_KEY_JR_FORM_ID, params.getFormId());
     values.put(COLLECT_KEY_DISPLAY_NAME,
-        params.getRowDisplayName() + "_" + WebUtils.iso8601Date(new Date()));
+        params.getRowDisplayName() + "_" + WebUtils.get().iso8601Date(new Date()));
     // only add the version if it exists (ie not null)
     if (params.getFormVersion() != null) {
       values.put(COLLECT_KEY_JR_VERSION, params.getFormVersion());

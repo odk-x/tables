@@ -51,7 +51,6 @@ public class ColorRulesDialog extends Dialog {
 
   public static final String TAG = "DisplayPrefsDialog";
 
-  private Context c;
   private String colName;
   private ColorRuleGroup colorRuler;
   // SS: going to set this as null and ONLY refresh from the db once. Otherwise
@@ -68,7 +67,6 @@ public class ColorRulesDialog extends Dialog {
   ColorRulesDialog(Context c, ColorRuleGroup ruler, String colName,
       String displayName) {
     super(c);
-    this.c = c;
     this.colorRuler = ruler;
     this.colName = colName;
     // get rid of the leading underscore, as this will probably confuse the
@@ -113,9 +111,9 @@ public class ColorRulesDialog extends Dialog {
       numOriginalRules = colRules.size();
     }
     ruleInputFields = new ArrayList<EditText>();
-    final LinearLayout ll = new LinearLayout(c);
+    final LinearLayout ll = new LinearLayout(getContext());
     ll.setOrientation(LinearLayout.VERTICAL);
-    final TableLayout tl = new TableLayout(c);
+    final TableLayout tl = new TableLayout(getContext());
     LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -125,7 +123,7 @@ public class ColorRulesDialog extends Dialog {
       tl.addView(row);
     }
     ll.addView(tl);
-    Button addRuleButton = new Button(c);
+    Button addRuleButton = new Button(getContext());
     addRuleButton.setText(getContext().getString(R.string.add_rule));
     addRuleButton.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -141,7 +139,7 @@ public class ColorRulesDialog extends Dialog {
       }
     });
     ll.addView(addRuleButton);
-    Button closeButton = new Button(c);
+    Button closeButton = new Button(getContext());
     closeButton.setText(getContext().getString(R.string.ok));
     closeButton.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -178,9 +176,9 @@ public class ColorRulesDialog extends Dialog {
       // and now I think we need to add this rule to the list...
       colRules.add(rule);
     }
-    TableRow row = new TableRow(c);
+    TableRow row = new TableRow(getContext());
     // preparing delete button
-    TextView deleteButton = new TextView(c);
+    TextView deleteButton = new TextView(getContext());
     deleteButton.setText("X");
     deleteButton.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -210,7 +208,7 @@ public class ColorRulesDialog extends Dialog {
     });
     row.addView(deleteButton);
     // preparing the text field
-    EditText input = new EditText(c);
+    EditText input = new EditText(getContext());
     if (index != -1) {
       input.setText((rule.getOperator().getSymbol() + " "
           + rule.getVal()).trim());
@@ -241,7 +239,7 @@ public class ColorRulesDialog extends Dialog {
     ruleInputFields.add(input);
     row.addView(input);
     // preparing the foreground color picker button
-    Button foregroundPickButton = new Button(c);
+    Button foregroundPickButton = new Button(getContext());
     foregroundPickButton.setText("T");
     foregroundPickButton.setBackgroundColor(rule.getForeground());
     foregroundPickButton.setOnClickListener(new View.OnClickListener() {
@@ -256,14 +254,14 @@ public class ColorRulesDialog extends Dialog {
 	            refreshView();
 			}
         };
-        ColorPickerDialog cpd = new ColorPickerDialog(c, ccl,
-            "", rule.getForeground(), rule.getForeground(), c.getString(R.string.pick_foreground_color));
+        ColorPickerDialog cpd = new ColorPickerDialog(getContext(), ccl,
+            "", rule.getForeground(), rule.getForeground(), getContext().getString(R.string.pick_foreground_color));
         cpd.show();
       }
     });
     row.addView(foregroundPickButton);
     // preparing the background color picker button
-    Button backgroundPickButton = new Button(c);
+    Button backgroundPickButton = new Button(getContext());
     backgroundPickButton.setText("  ");
     backgroundPickButton.setBackgroundColor(rule.getBackground());
     backgroundPickButton.setOnClickListener(new View.OnClickListener() {
@@ -278,8 +276,8 @@ public class ColorRulesDialog extends Dialog {
 	            refreshView();
 			}
         };
-        ColorPickerDialog cpd = new ColorPickerDialog(c, ccl,
-            "", rule.getBackground(), rule.getBackground(), c.getString(R.string.pick_background_color));
+        ColorPickerDialog cpd = new ColorPickerDialog(getContext(), ccl,
+            "", rule.getBackground(), rule.getBackground(), getContext().getString(R.string.pick_background_color));
         cpd.show();
       }
     });
@@ -308,7 +306,7 @@ public class ColorRulesDialog extends Dialog {
       }
     }
     colorRuler.replaceColorRuleList(rulesToPersist);
-    colorRuler.saveRuleList();
+    colorRuler.saveRuleList(getContext());
   }
 
   /*
@@ -343,7 +341,7 @@ public class ColorRulesDialog extends Dialog {
       // dp.updateRule(rule);
     } catch (IllegalArgumentException e) {
       Log.e(TAG, "illegal rule type: " + input);
-      AlertDialog.Builder badRule = new AlertDialog.Builder(this.c);
+      AlertDialog.Builder badRule = new AlertDialog.Builder(getContext());
       badRule.setTitle(getContext().getString(R.string.unrecognized_rule));
       badRule.setMessage(getContext().getString(R.string.accepted_rule_ops));
       badRule.show();

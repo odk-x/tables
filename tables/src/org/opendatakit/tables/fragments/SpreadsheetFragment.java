@@ -299,7 +299,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     SQLiteDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      ODKDatabaseUtils.get().deleteDataInDBTableWithId(db, getAppName(), getTableId(), rowId);
+      ODKDatabaseUtils.get().deleteDataInExistingDBTableWithId(db, getAppName(), getTableId(), rowId);
     } finally {
       if ( db != null ) {
         db.close();
