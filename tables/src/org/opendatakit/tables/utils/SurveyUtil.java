@@ -24,6 +24,7 @@ import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.KeyValueHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 
 import android.app.Activity;
@@ -33,7 +34,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.util.Log;
 
 /**
  * The ODKSurvey analogue to {@link CollectUtil}. Various functions and
@@ -310,10 +310,10 @@ public class SurveyUtil {
         uriStr = stringBuilder.toString();
       }
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
       throw new IllegalArgumentException("error escaping URI parameters");
     }
-    Log.d(TAG, "Survey uriStr: " + uriStr);
+    WebLogger.getLogger(appName).d(TAG, "Survey uriStr: " + uriStr);
     return Uri.parse(uriStr);
   }
 

@@ -1,19 +1,19 @@
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.webkit.WebView;
 
 /**
  * The list view that is displayed in a map.
+ * 
  * @author Chris Gelon
  * @author sudar.sam@gmail.com
  *
  */
-public class MapListViewFragment extends ListViewFragment implements
-    IMapListViewCallbacks {
+public class MapListViewFragment extends ListViewFragment implements IMapListViewCallbacks {
 
   private static final String TAG = MapListViewFragment.class.getSimpleName();
 
@@ -31,10 +31,8 @@ public class MapListViewFragment extends ListViewFragment implements
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    this.mSelectedItemIndex =
-        this.retrieveSelectedItemIndexFromBundle(savedInstanceState);
-    Log.d(
-        TAG,
+    this.mSelectedItemIndex = this.retrieveSelectedItemIndexFromBundle(savedInstanceState);
+    WebLogger.getLogger(getAppName()).d(TAG,
         "[onCreate] retrieved selected index: " + this.mSelectedItemIndex);
   }
 
@@ -51,8 +49,7 @@ public class MapListViewFragment extends ListViewFragment implements
   }
 
   int retrieveSelectedItemIndexFromBundle(Bundle bundle) {
-    if (bundle != null &&
-        bundle.containsKey(INTENT_KEY_SELECTED_INDEX)) {
+    if (bundle != null && bundle.containsKey(INTENT_KEY_SELECTED_INDEX)) {
       return bundle.getInt(INTENT_KEY_SELECTED_INDEX);
     } else {
       return INVALID_INDEX;
@@ -69,7 +66,7 @@ public class MapListViewFragment extends ListViewFragment implements
    * Resets the webview (the list), and sets the visibility to visible.
    */
   void resetView() {
-    Log.d(TAG, "[resetView]");
+    WebLogger.getLogger(getAppName()).d(TAG, "[resetView]");
     if (this.getFileName() == null) {
       // don't need to do anything, as the view won't be getting updated.
       return;
@@ -82,7 +79,7 @@ public class MapListViewFragment extends ListViewFragment implements
   /**
    *
    * @return true if the user has selected a row that should be displayed as
-   * selected
+   *         selected
    */
   protected boolean itemIsSelected() {
     return this.mSelectedItemIndex != INVALID_INDEX;
@@ -91,7 +88,7 @@ public class MapListViewFragment extends ListViewFragment implements
   @Override
   public void onResume() {
     super.onResume();
-    Log.d(TAG, "[onResume]");
+    WebLogger.getLogger(getAppName()).d(TAG, "[onResume]");
   }
 
   /**
@@ -106,8 +103,8 @@ public class MapListViewFragment extends ListViewFragment implements
   }
 
   /**
-   * Informs the list view that no item is selected. Resets the state after
-   * a call to {@link #setIndexOfSelectedItem(int)}.
+   * Informs the list view that no item is selected. Resets the state after a
+   * call to {@link #setIndexOfSelectedItem(int)}.
    */
   @Override
   public void setNoItemSelected() {

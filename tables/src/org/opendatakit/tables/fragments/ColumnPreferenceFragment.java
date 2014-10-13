@@ -6,6 +6,7 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants;
@@ -19,7 +20,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
-import android.util.Log;
 
 public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
@@ -63,7 +63,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
           ColumnDefinition.find(orderedDefns, elementKey);
       return result;
     } catch ( IllegalArgumentException e ) {
-      Log.e(
+      WebLogger.getLogger(activity.getAppName()).e(
           TAG,
           "[retrieveColumnDefinition] did not find column for element key: " +
               elementKey);
@@ -133,6 +133,8 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   }
 
   private void initializeColumnWidth() {
+    TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
+    final String appName = activity.getAppName();
     final EditTextPreference pref =
         this.findEditTextPreference(Constants.PreferenceKeys.Column.WIDTH);
     int columnWidth = PreferenceUtil.getColumnWidth(getActivity(),
@@ -150,7 +152,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
         String newValueStr = (String) newValue;
         Integer newWidth = Integer.parseInt(newValueStr);
         if (newWidth > SpreadsheetView.MAX_COL_WIDTH) {
-          Log.e(TAG, "column width bigger than allowed, doing nothing");
+          WebLogger.getLogger(appName).e(TAG, "column width bigger than allowed, doing nothing");
           return false;
         }
         PreferenceUtil.setColumnWidth(

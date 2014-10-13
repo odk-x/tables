@@ -15,6 +15,7 @@ import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -38,7 +39,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -90,7 +90,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   public SpreadsheetFragment() {
     super();
     // for fragments
-    Log.d(TAG, "[SpreadsheetFragment] empty no arg constructor called");
+    WebLogger.getLogger(getAppName()).d(TAG,
+        "[SpreadsheetFragment] empty no arg constructor called");
   }
 
   @Override
@@ -101,19 +102,19 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Log.d(TAG, "[onCreate]");
+    WebLogger.getLogger(getAppName()).d(TAG, "[onCreate]");
   }
 
   @Override
   public void onResume() {
     super.onResume();
-    Log.d(TAG, "[onResume]");
+    WebLogger.getLogger(getAppName()).d(TAG, "[onResume]");
   }
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    Log.d(TAG, "[onActivityCreated]");
+    WebLogger.getLogger(getAppName()).d(TAG, "[onActivityCreated]");
 
   }
 
@@ -151,12 +152,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       TableUtil.get().setGroupByColumns(db, getTableId(), newGroupBys);
       db.setTransactionSuccessful();
     } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "Error while changing groupBy columns: " + e.toString());
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      WebLogger.getLogger(getAppName()).e(TAG,
+          "Error while changing groupBy columns: " + e.toString());
       Toast.makeText(this.getActivity(), getString(R.string.error_while_changing_group_by_columns),
           Toast.LENGTH_LONG).show();
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.endTransaction();
         db.close();
       }
@@ -174,12 +176,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       TableUtil.get().setGroupByColumns(db, getTableId(), newGroupBys);
       db.setTransactionSuccessful();
     } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "Error while changing groupBy columns: " + e.toString());
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      WebLogger.getLogger(getAppName()).e(TAG,
+          "Error while changing groupBy columns: " + e.toString());
       Toast.makeText(this.getActivity(), getString(R.string.error_while_changing_group_by_columns),
           Toast.LENGTH_LONG).show();
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.endTransaction();
         db.close();
       }
@@ -194,12 +197,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       TableUtil.get().setSortColumn(db, getTableId(), (cd == null) ? null : cd.getElementKey());
       db.setTransactionSuccessful();
     } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "Error while changing sort column: " + e.toString());
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      WebLogger.getLogger(getAppName()).e(TAG, "Error while changing sort column: " + e.toString());
       Toast.makeText(this.getActivity(), this.getString(R.string.error_while_changing_sort_column),
           Toast.LENGTH_LONG).show();
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.endTransaction();
         db.close();
       }
@@ -214,12 +217,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       TableUtil.get().setIndexColumn(db, getTableId(), (cd == null) ? null : cd.getElementKey());
       db.setTransactionSuccessful();
     } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "Error while changing index column: " + e.toString());
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      WebLogger.getLogger(getAppName())
+          .e(TAG, "Error while changing index column: " + e.toString());
       Toast.makeText(this.getActivity(),
           this.getString(R.string.error_while_changing_index_column), Toast.LENGTH_LONG).show();
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.endTransaction();
         db.close();
       }
@@ -264,7 +268,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
         }
         first = false;
         String value = cell.row.getRawDataOrMetadataByElementKey(groupByColumn);
-        if ( value == null ) {
+        if (value == null) {
           s.append(groupByColumn).append(" IS NULL");
         } else {
           s.append(groupByColumn).append("=?");
@@ -299,9 +303,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     SQLiteDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      ODKDatabaseUtils.get().deleteDataInExistingDBTableWithId(db, getAppName(), getTableId(), rowId);
+      ODKDatabaseUtils.get().deleteDataInExistingDBTableWithId(db, getAppName(), getTableId(),
+          rowId);
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.close();
       }
     }
@@ -311,7 +316,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   public boolean onContextItemSelected(MenuItem item) {
     SpreadsheetCell cell;
     AbsTableActivity activity = (AbsTableActivity) getActivity();
-    
+
     switch (item.getItemId()) {
     case MENU_ITEM_ID_HISTORY_IN:
       cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
@@ -338,12 +343,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       });
 
       // Cancel Action
-      alert.setNegativeButton(getString(R.string.cancel),
-          new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-              // Canceled.
-            }
-          });
+      alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int whichButton) {
+          // Canceled.
+        }
+      });
       // show the dialog
       confirmDeleteAlert = alert.create();
       confirmDeleteAlert.show();
@@ -352,8 +356,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
       // It is possible that a custom form has been defined for this table.
       // We will get the strings we need, and then set the parameter object.
-      ActivityUtil.editRow(activity, activity.getAppName(),
-          activity.getTableId(), activity.getColumnDefinitions(), cell.row);
+      ActivityUtil.editRow(activity, activity.getAppName(), activity.getTableId(),
+          activity.getColumnDefinitions(), cell.row);
       // launch ODK Collect
       return true;
     case MENU_ITEM_ID_OPEN_JOIN_TABLE:
@@ -366,11 +370,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
         db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
         joinColumns = ColumnUtil.get().getJoins(db, getTableId(), cd.getElementKey());
       } finally {
-        if ( db != null ) {
+        if (db != null) {
           db.close();
         }
       }
-      
+
       AlertDialog.Builder badJoinDialog;
       // TODO should check for valid table properties and
       // column properties here. or rather valid ids and keys.
@@ -379,16 +383,20 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
         badJoinDialog.setTitle("Bad Join");
         badJoinDialog.setMessage("A join column has not been " + "set in Column Properties.");
         badJoinDialog.create().show();
-        Log.e(TAG, "cp.getJoins was null but open join table " + "was requested for cp: "
-            + cd.getElementKey());
+        WebLogger.getLogger(getAppName()).e(
+            TAG,
+            "cp.getJoins was null but open join table " + "was requested for cp: "
+                + cd.getElementKey());
       } else if (joinColumns.size() != 1) {
         badJoinDialog = new AlertDialog.Builder(this.getActivity());
         badJoinDialog.setTitle("Bad Join");
         badJoinDialog.setMessage("Multiple join associations have been "
             + "set in Column Properties.");
         badJoinDialog.create().show();
-        Log.e(TAG, "cp.getJoins has multiple joins "
-            + "(missing code is needed to handle this) for cp: " + cd.getElementKey());
+        WebLogger.getLogger(getAppName()).e(
+            TAG,
+            "cp.getJoins has multiple joins " + "(missing code is needed to handle this) for cp: "
+                + cd.getElementKey());
       } else {
         JoinColumn joinColumn = joinColumns.get(0);
         if (joinColumn.getTableId().equals(JoinColumn.DEFAULT_NOT_SET_VALUE)
@@ -397,8 +405,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           badJoinDialog.setTitle("Bad Join");
           badJoinDialog.setMessage("Both a table and column " + "must be set.");
           badJoinDialog.create().show();
-          Log.e(TAG, "Bad elementKey or tableId in open join " + "table. tableId: "
-              + joinColumn.getTableId() + " elementKey: " + joinColumn.getElementKey());
+          WebLogger.getLogger(getAppName()).e(
+              TAG,
+              "Bad elementKey or tableId in open join " + "table. tableId: "
+                  + joinColumn.getTableId() + " elementKey: " + joinColumn.getElementKey());
         } else {
           String tableId = joinColumn.getTableId();
           String elementKey = joinColumn.getElementKey();
@@ -406,9 +416,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           db = null;
           try {
             db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-            joinedColTableDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId, elementKey);
+            joinedColTableDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId,
+                elementKey);
           } finally {
-            if ( db != null ) {
+            if (db != null) {
               db.close();
             }
           }
@@ -459,7 +470,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       ActivityUtil.launchTablePreferenceActivityToEditColumnColorRules(this.getActivity(),
           getAppName(), getTableId(), elementKey);
     default:
-      Log.e(TAG, "unrecognized menu item selected: " + item.getItemId());
+      WebLogger.getLogger(getAppName()).e(TAG,
+          "unrecognized menu item selected: " + item.getItemId());
       return super.onContextItemSelected(item);
     }
   }
@@ -483,15 +495,15 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     SQLiteDatabase db = null;
     try {
       db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(), 
+      localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(),
           cd.getElementKey());
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.close();
       }
     }
 
-   menu.setHeaderTitle(localizedDisplayName);
+    menu.setHeaderTitle(localizedDisplayName);
 
     MenuItem mi;
     Row row = spreadsheetTable.getRowAtIndex(cellInfo.rowId);
@@ -499,14 +511,18 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN, ContextMenu.NONE, "View Collection");
       mi.setIcon(R.drawable.view);
     }
-    String viewString = row.getDisplayTextOfData(this.getActivity(), cd.getType(), cellInfo.elementKey, true);
+    String viewString = row.getDisplayTextOfData(this.getActivity(), cd.getType(),
+        cellInfo.elementKey, true);
     // TODO: display value and use edit icon...
-    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE, getString(R.string.edit_cell, viewString));
+    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE,
+        getString(R.string.edit_cell, viewString));
     mi.setIcon(R.drawable.ic_action_edit);
 
-    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE, getString(R.string.delete_row));
+    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE,
+        getString(R.string.delete_row));
     mi.setIcon(R.drawable.ic_action_discard);
-    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE, getString(R.string.edit_row));
+    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE,
+        getString(R.string.edit_row));
     mi.setIcon(R.drawable.ic_action_edit);
 
     // check a join association with this column; add a join... option if
@@ -517,13 +533,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
       joinColumns = ColumnUtil.get().getJoins(db, getTableId(), cd.getElementKey());
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.close();
       }
     }
-    
+
     if (joinColumns != null && joinColumns.size() != 0) {
-      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_JOIN_TABLE, ContextMenu.NONE, getString(R.string.open_join_table));
+      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_JOIN_TABLE, ContextMenu.NONE,
+          getString(R.string.open_join_table));
       mi.setIcon(R.drawable.ic_action_search);
     }
   }
@@ -552,11 +569,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       indexColumn = TableUtil.get().getIndexColumn(db, getTableId());
       groupByColumns = TableUtil.get().getColumnOrder(db, getTableId());
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.close();
       }
     }
-    
+
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
     if (groupByColumns.contains(cd.getElementKey())) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
@@ -602,8 +619,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       this.cell = cell;
       this.dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
       ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
-      cev = CellValueView.getCellEditView(
-          getActivity(), getAppName(), getTableId(), cd, cell.value);
+      cev = CellValueView
+          .getCellEditView(getActivity(), getAppName(), getTableId(), cd, cell.value);
       this.buildView(getActivity());
     }
 
@@ -614,13 +631,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
         @Override
         public void onClick(View v) {
           SQLiteDatabase db = null;
-          ArrayList<Map<String,Object>> choices;
+          ArrayList<Map<String, Object>> choices;
           try {
             db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-            choices = (ArrayList<Map<String, Object>>) 
-                ColumnUtil.get().getDisplayChoicesList(db, getTableId(), cell.elementKey);
+            choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(db,
+                getTableId(), cell.elementKey);
           } finally {
-            if ( db != null ) {
+            if (db != null) {
               db.close();
             }
           }
@@ -631,21 +648,21 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
             // TODO: alert the user
             return;
           }
-          
-          
+
           ContentValues values = new ContentValues();
           values.put(CellEditDialog.this.cell.elementKey, value);
 
           db = null;
           try {
             db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-            ODKDatabaseUtils.get().updateDataInExistingDBTableWithId(db, getTableId(), getColumnDefinitions(), values, cell.row.getRowId());
+            ODKDatabaseUtils.get().updateDataInExistingDBTableWithId(db, getTableId(),
+                getColumnDefinitions(), values, cell.row.getRowId());
           } finally {
-            if ( db != null ) {
+            if (db != null) {
               db.close();
             }
           }
-          
+
           init();
           dismiss();
         }

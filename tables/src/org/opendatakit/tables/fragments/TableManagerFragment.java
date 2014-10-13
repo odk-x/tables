@@ -6,6 +6,7 @@ import java.util.List;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.DisplayPrefsActivity;
@@ -26,7 +27,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -53,58 +53,44 @@ public class TableManagerFragment extends ListFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Log.d(TAG, "[onCreate]");
+    WebLogger.getLogger(((AbsBaseActivity) getActivity()).getAppName()).d(TAG, "[onCreate]");
     this.mTableNameStructs = new ArrayList<TableNameStruct>();
     this.setHasOptionsMenu(true);
   }
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    Log.d(TAG, "[onOptionsItemSelected] selecting an item");
     AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
     String appName = baseActivity.getAppName();
+    WebLogger.getLogger(appName).d(TAG, "[onOptionsItemSelected] selecting an item");
     Bundle bundle = new Bundle();
     IntentUtil.addAppNameToBundle(bundle, appName);
     switch (item.getItemId()) {
     case R.id.menu_table_manager_preferences:
-      Intent preferenceIntent = new Intent(
-          baseActivity,
-          DisplayPrefsActivity.class);
+      Intent preferenceIntent = new Intent(baseActivity, DisplayPrefsActivity.class);
       preferenceIntent.putExtras(bundle);
-      this.startActivityForResult(
-          preferenceIntent,
-          Constants.RequestCodes.LAUNCH_DISPLAY_PREFS);
+      this.startActivityForResult(preferenceIntent, Constants.RequestCodes.LAUNCH_DISPLAY_PREFS);
       return true;
     case R.id.menu_table_manager_import:
-      Intent importIntent = new Intent(
-          baseActivity,
-          ImportCSVActivity.class);
+      Intent importIntent = new Intent(baseActivity, ImportCSVActivity.class);
       importIntent.putExtras(bundle);
-      this.startActivityForResult(
-          importIntent,
-          Constants.RequestCodes.LAUNCH_IMPORT);
+      this.startActivityForResult(importIntent, Constants.RequestCodes.LAUNCH_IMPORT);
       return true;
     case R.id.menu_table_manager_export:
-      Intent exportIntent = new Intent(
-          baseActivity,
-          ExportCSVActivity.class);
+      Intent exportIntent = new Intent(baseActivity, ExportCSVActivity.class);
       exportIntent.putExtras(bundle);
-      this.startActivityForResult(
-          exportIntent,
-          Constants.RequestCodes.LAUNCH_EXPORT);
+      this.startActivityForResult(exportIntent, Constants.RequestCodes.LAUNCH_EXPORT);
       return true;
     case R.id.menu_table_manager_sync:
-//      OdkSyncServiceProxy proxy = new OdkSyncServiceProxy(this.getActivity());
-//      proxy.synchronizeFromServer(appName);
+      // OdkSyncServiceProxy proxy = new
+      // OdkSyncServiceProxy(this.getActivity());
+      // proxy.synchronizeFromServer(appName);
       Intent syncIntent = new Intent();
-      syncIntent.setComponent(new ComponentName(
-          "org.opendatakit.sync",
+      syncIntent.setComponent(new ComponentName("org.opendatakit.sync",
           "org.opendatakit.sync.activities.SyncActivity"));
       syncIntent.setAction(Intent.ACTION_DEFAULT);
       syncIntent.putExtras(bundle);
-      this.startActivityForResult(
-          syncIntent,
-          Constants.RequestCodes.LAUNCH_SYNC);
+      this.startActivityForResult(syncIntent, Constants.RequestCodes.LAUNCH_SYNC);
       return true;
     default:
       return super.onOptionsItemSelected(item);
@@ -112,15 +98,9 @@ public class TableManagerFragment extends ListFragment {
   }
 
   @Override
-  public View onCreateView(
-      LayoutInflater inflater,
-      ViewGroup container,
-      Bundle savedInstanceState) {
-    Log.d(TAG, "[onCreateView]");
-    View view = inflater.inflate(
-        R.layout.fragment_table_list,
-        container,
-        false);
+  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    WebLogger.getLogger(((AbsBaseActivity) getActivity()).getAppName()).d(TAG, "[onCreateView]");
+    View view = inflater.inflate(R.layout.fragment_table_list, container, false);
     return view;
   }
 
@@ -131,46 +111,38 @@ public class TableManagerFragment extends ListFragment {
     this.updateTableIdList();
     this.registerForContextMenu(getListView());
   }
-  
+
   /**
-   * Refresh the list of tables that is being displayed by
-   * the fragment.
+   * Refresh the list of tables that is being displayed by the fragment.
    */
   protected void updateTableIdList() {
     AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
     SQLiteDatabase db = null;
-    
+
     List<TableNameStruct> tableNameStructs = new ArrayList<TableNameStruct>();
-    
+
     try {
-      db = DatabaseFactory.get().getDatabase(
-          baseActivity,
-          baseActivity.getAppName());
-      
+      db = DatabaseFactory.get().getDatabase(baseActivity, baseActivity.getAppName());
+
       List<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
-      
+
       for (String tableId : tableIds) {
-        String localizedDisplayName = TableUtil.get().getLocalizedDisplayName(
-            db,
-            tableId);
-        
-        TableNameStruct tableNameStruct = new TableNameStruct(
-            tableId,
-            localizedDisplayName);
-        
-        tableNameStructs.add(tableNameStruct);        
+        String localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+
+        TableNameStruct tableNameStruct = new TableNameStruct(tableId, localizedDisplayName);
+
+        tableNameStructs.add(tableNameStruct);
       }
-      
+
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.close();
       }
     }
-    Log.e(TAG, "got tableId list of size: " + tableNameStructs.size());
+    WebLogger.getLogger(baseActivity.getAppName()).e(TAG,
+        "got tableId list of size: " + tableNameStructs.size());
     this.setList(tableNameStructs);
-    this.mTpAdapter = new TableNameStructAdapter(
-        baseActivity,
-        baseActivity.getAppName(), 
+    this.mTpAdapter = new TableNameStructAdapter(baseActivity, baseActivity.getAppName(),
         this.mTableNameStructs);
     this.setListAdapter(this.mTpAdapter);
     this.mTpAdapter.notifyDataSetChanged();
@@ -180,21 +152,16 @@ public class TableManagerFragment extends ListFragment {
   public void onListItemClick(ListView l, View v, int position, long id) {
     // There are two cases here: if it is the preferences icon, or if it is
     // the main view.
+    AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
     if (v.getId() == R.id.row_item_icon) {
-      Log.e(TAG, "was the icon");
+      WebLogger.getLogger(baseActivity.getAppName()).e(TAG, "was the icon");
     } else {
-      AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
       Intent intent = baseActivity.createNewIntentWithAppName();
       // Set the tableId.
-      TableNameStruct nameStruct = (TableNameStruct)
-          this.getListView().getItemAtPosition(position);
+      TableNameStruct nameStruct = (TableNameStruct) this.getListView().getItemAtPosition(position);
       String tableId = nameStruct.getTableId();
-      intent.putExtra(
-          Constants.IntentKeys.TABLE_ID,
-          tableId);
-      ComponentName componentName = new ComponentName(
-          baseActivity,
-          TableDisplayActivity.class);
+      intent.putExtra(Constants.IntentKeys.TABLE_ID, tableId);
+      ComponentName componentName = new ComponentName(baseActivity, TableDisplayActivity.class);
       intent.setComponent(componentName);
       startActivityForResult(intent, Constants.RequestCodes.DISPLAY_VIEW);
     }
@@ -207,18 +174,15 @@ public class TableManagerFragment extends ListFragment {
   }
 
   @Override
-  public void onCreateContextMenu(
-      ContextMenu menu,
-      View v,
-      ContextMenu.ContextMenuInfo menuInfo) {
+  public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
     MenuInflater menuInflater = this.getActivity().getMenuInflater();
     menuInflater.inflate(R.menu.table_manager_context, menu);
   }
 
   @Override
   public boolean onContextItemSelected(MenuItem item) {
-    AdapterView.AdapterContextMenuInfo menuInfo =
-        (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+    AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo) item
+        .getMenuInfo();
     TableNameStruct selectedStruct = this.getList().get(menuInfo.position);
     final String tableIdOfSelectedItem = selectedStruct.getTableId();
     final AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
@@ -226,12 +190,10 @@ public class TableManagerFragment extends ListFragment {
     String localizedDisplayName;
     SQLiteDatabase db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(baseActivity,
-          baseActivity.getAppName());
-      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, 
-          tableIdOfSelectedItem);
+      db = DatabaseFactory.get().getDatabase(baseActivity, baseActivity.getAppName());
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableIdOfSelectedItem);
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.close();
       }
     }
@@ -242,20 +204,18 @@ public class TableManagerFragment extends ListFragment {
       // Prompt an alert box
       AlertDialog.Builder alert = new AlertDialog.Builder(this.getActivity());
       alert.setTitle(getString(R.string.confirm_remove_table)).setMessage(
-          getString(
-              R.string.are_you_sure_remove_table,
-              localizedDisplayName));
+          getString(R.string.are_you_sure_remove_table, localizedDisplayName));
       // OK Action => delete the table
-      alert.setPositiveButton(getString(R.string.yes),
-          new DialogInterface.OnClickListener() {
+      alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           // treat delete as a local removal -- not a server side deletion
           SQLiteDatabase db = null;
           try {
             db = DatabaseFactory.get().getDatabase(baseActivity, baseActivity.getAppName());
-            ODKDatabaseUtils.get().deleteDBTableAndAllData(db, baseActivity.getAppName(), tableIdOfSelectedItem);
+            ODKDatabaseUtils.get().deleteDBTableAndAllData(db, baseActivity.getAppName(),
+                tableIdOfSelectedItem);
           } finally {
-            if ( db != null ) {
+            if (db != null) {
               db.close();
             }
           }
@@ -265,8 +225,7 @@ public class TableManagerFragment extends ListFragment {
       });
 
       // Cancel Action
-      alert.setNegativeButton(getString(R.string.cancel),
-          new DialogInterface.OnClickListener() {
+      alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           // Canceled.
         }
@@ -276,29 +235,27 @@ public class TableManagerFragment extends ListFragment {
       confirmDeleteAlert.show();
       return true;
     case R.id.table_manager_edit_table_properties:
-      ActivityUtil.launchTableLevelPreferencesActivity(
-          baseActivity,
-          baseActivity.getAppName(),
-          tableIdOfSelectedItem,
-          TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
+      ActivityUtil.launchTableLevelPreferencesActivity(baseActivity, baseActivity.getAppName(),
+          tableIdOfSelectedItem, TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
       return true;
     }
     return false;
   }
-  
+
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     switch (requestCode) {
     case Constants.RequestCodes.LAUNCH_SYNC:
       this.updateTableIdList();
       break;
-    default: 
+    default:
       super.onActivityResult(requestCode, resultCode, data);
     }
   }
 
   /**
    * Get the list currently displayed by the fragment.
+   * 
    * @return
    */
   List<TableNameStruct> getList() {
@@ -307,6 +264,7 @@ public class TableManagerFragment extends ListFragment {
 
   /**
    * Update the contents of the list with the this new list.
+   * 
    * @param list
    */
   void setList(List<TableNameStruct> list) {
@@ -316,7 +274,7 @@ public class TableManagerFragment extends ListFragment {
     for (TableNameStruct nameStruct : list) {
       nameStructList.add(nameStruct);
     }
-    if ( mTpAdapter != null ) {
+    if (mTpAdapter != null) {
       mTpAdapter.notifyDataSetChanged();
     }
   }

@@ -17,12 +17,11 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ElementTypeManipulator;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
-
-import android.util.Log;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -60,9 +59,9 @@ public class TableData {
   private ColorRuleGroup mRowColorRuleGroup = null;
 
   public TableData(UserTable table) {
-    Log.d(TAG, "calling TableData constructor with UserTable");
     this.mTable = table;
     this.mSelectedMapMarkerIndex = INVALID_INDEX;
+    WebLogger.getLogger(mTable.getAppName()).d(TAG, "calling TableData constructor with UserTable");
     initMaps();
   }
 
@@ -100,7 +99,7 @@ public class TableData {
   private ArrayList<ColumnDefinition> getColumnDefinitions() {
     return mTable.getColumnDefinitions();
   }
-  
+
   // Returns the number of rows in the table being viewed.
   public int getCount() {
     return this.mTable.getNumberOfRows();
@@ -126,7 +125,8 @@ public class TableData {
   public String getColumnData(String elementPath, int requestedRows) {
     String elementKey = ColumnUtil.get().getElementKeyFromElementPath(elementPath);
     if (elementKey == null) {
-      Log.e(TAG, "column not found with element path: " + elementPath);
+      WebLogger.getLogger(mTable.getAppName()).e(TAG,
+          "column not found with element path: " + elementPath);
       return null;
     }
     ArrayList<String> rowValues = new ArrayList<String>();
@@ -187,8 +187,7 @@ public class TableData {
     ColorRuleGroup colRul = this.mElementKeyToColorRuleGroup.get(elementKey);
     if (colRul == null) {
       // If it's not already there, cache it for future use.
-      colRul = ColorRuleGroup.getColumnColorRuleGroup(
-          Tables.getInstance().getApplicationContext(),
+      colRul = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance().getApplicationContext(),
           mTable.getAppName(), mTable.getTableId(), elementKey);
       this.mElementKeyToColorRuleGroup.put(elementKey, colRul);
     }
@@ -207,9 +206,8 @@ public class TableData {
     int foregroundColor = -16777216;
 
     if (mStatusColumnColorRuleGroup == null) {
-      mStatusColumnColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(
-          Tables.getInstance().getApplicationContext(),
-          mTable.getAppName(), mTable.getTableId());
+      mStatusColumnColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance()
+          .getApplicationContext(), mTable.getAppName(), mTable.getTableId());
     }
 
     Row row = mTable.getRowAtIndex(correctedIndex);
@@ -226,9 +224,8 @@ public class TableData {
     int foregroundColor = -16777216;
 
     if (mRowColorRuleGroup == null) {
-      mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(
-          Tables.getInstance().getApplicationContext(),
-          mTable.getAppName(), mTable.getTableId());
+      mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance()
+          .getApplicationContext(), mTable.getAppName(), mTable.getTableId());
     }
 
     Row row = mTable.getRowAtIndex(correctedIndex);
@@ -247,67 +244,71 @@ public class TableData {
     int dataIndex = this.getIndexIntoDataTable(rowNum);
     Row row = mTable.getRowAtIndex(dataIndex);
     if (row == null) {
-      Log.e(TAG, "row " + rowNum + " does not exist! Returning null");
+      WebLogger.getLogger(mTable.getAppName()).e(TAG,
+          "row " + rowNum + " does not exist! Returning null");
       return null;
     }
 
     String elementKey = ColumnUtil.get().getElementKeyFromElementPath(elementPath);
     if (elementKey == null) {
-      Log.e(TAG, "column with elementPath: " + elementPath + " does not" + " exist.");
+      WebLogger.getLogger(mTable.getAppName()).e(TAG,
+          "column with elementPath: " + elementPath + " does not" + " exist.");
       return null;
     }
     ArrayList<ColumnDefinition> orderedDefns = getColumnDefinitions();
     ColumnDefinition cd = ColumnDefinition.find(orderedDefns, elementKey);
     ElementDataType type = cd.getType().getDataType();
-    if ( type == ElementDataType.array ) {
+    if (type == ElementDataType.array) {
       String result = row.getRawDataOrMetadataByElementKey(elementKey);
       return result;
     }
 
-    if ( cd.getChildren().isEmpty() ) {
+    if (cd.getChildren().isEmpty()) {
       String result = row.getRawDataOrMetadataByElementKey(elementKey);
       return result;
     }
 
     try {
-      Map<String,Object> resultSet = new HashMap<String,Object>();
+      Map<String, Object> resultSet = new HashMap<String, Object>();
       assembleNonNullParts(row, resultSet, cd.getChildren());
-      if ( resultSet.isEmpty() ) {
+      if (resultSet.isEmpty()) {
         return null;
       }
       String result = ODKFileUtils.mapper.writeValueAsString(resultSet);
       return result;
     } catch (JsonParseException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(mTable.getAppName()).printStackTrace(e);
       throw new IllegalStateException("unable to parse JSON expression");
     } catch (JsonMappingException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(mTable.getAppName()).printStackTrace(e);
       throw new IllegalStateException("unable to parse JSON expression");
     } catch (IOException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(mTable.getAppName()).printStackTrace(e);
       throw new IllegalStateException("unable to parse JSON expression");
     }
   }
 
-  private void assembleNonNullParts( Row row, Map<String, Object> resultSet, List<ColumnDefinition> colDefns ) throws JsonParseException, JsonMappingException, IOException {
-    for ( ColumnDefinition colDefn : colDefns ) {
+  private void assembleNonNullParts(Row row, Map<String, Object> resultSet,
+      List<ColumnDefinition> colDefns) throws JsonParseException, JsonMappingException, IOException {
+    for (ColumnDefinition colDefn : colDefns) {
       ElementType type = colDefn.getType();
       ElementDataType dataType = type.getDataType();
-      if ( dataType == ElementDataType.array ) {
+      if (dataType == ElementDataType.array) {
         String result = row.getRawDataOrMetadataByElementKey(colDefn.getElementKey());
-        resultSet.put(colDefn.getElementName(), ODKFileUtils.mapper.readValue(result, ArrayList.class));
+        resultSet.put(colDefn.getElementName(),
+            ODKFileUtils.mapper.readValue(result, ArrayList.class));
       } else {
         List<ColumnDefinition> children = colDefn.getChildren();
-        if ( children.isEmpty() ) {
+        if (children.isEmpty()) {
           Class<?> clazz = ColumnUtil.get().getDataType(dataType);
           Object value = row.getRawDataType(colDefn.getElementKey(), clazz);
-          if ( value != null ) {
+          if (value != null) {
             resultSet.put(colDefn.getElementName(), value);
           }
         } else {
-          Map<String, Object> subValues = new HashMap<String,Object>();
+          Map<String, Object> subValues = new HashMap<String, Object>();
           assembleNonNullParts(row, subValues, children);
-          if ( !subValues.isEmpty() ) {
+          if (!subValues.isEmpty()) {
             resultSet.put(colDefn.getElementName(), subValues);
           }
         }
@@ -316,10 +317,11 @@ public class TableData {
   }
 
   /**
-   * Calculate the index into the data table given the display index. The
-   * caller expects to iterate over the data rows in a particular order. This
-   * method maps the display index into a data index. This data index can then
-   * be requested to the backing data table.
+   * Calculate the index into the data table given the display index. The caller
+   * expects to iterate over the data rows in a particular order. This method
+   * maps the display index into a data index. This data index can then be
+   * requested to the backing data table.
+   * 
    * @param displayIndex
    * @return
    */
@@ -332,8 +334,8 @@ public class TableData {
     // row has been moved to the top of the list. The math is thus pretty neat.
     // Say that the selected index at the top is 5. The resultant values to be
     // returned are thus:
-    // displayIndex: 0  1  2  3  4  5  6  7  8
-    // returnValue : 5  0  1  2  3  4  6  7  8
+    // displayIndex: 0 1 2 3 4 5 6 7 8
+    // returnValue : 5 0 1 2 3 4 6 7 8
     int result;
     if (displayIndex == 0) {
       result = this.mSelectedMapMarkerIndex;
@@ -349,6 +351,7 @@ public class TableData {
   /**
    * Return true if the display index does not map directly to the data index.
    * For example, this returns true if a map marker has been selected.
+   * 
    * @return
    */
   boolean displayIndexMustBeCalculated() {
@@ -357,6 +360,7 @@ public class TableData {
 
   /**
    * Set the index of the map marker that has been selected.
+   * 
    * @param mapIndex
    */
   public void setSelectedMapIndex(int mapIndex) {

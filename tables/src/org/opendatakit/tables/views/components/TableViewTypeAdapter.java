@@ -2,9 +2,9 @@ package org.opendatakit.tables.views.components;
 
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.utilities.WebLogger;
 
 import android.content.Context;
-import android.util.Log;
 import android.widget.ArrayAdapter;
 
 /**
@@ -19,15 +19,18 @@ public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
   private PossibleTableViewTypes mPossibleViewTypes;
   private CharSequence[] mViewTypeValues;
   private Context mContext;
+  private final String mAppName;
 
   public TableViewTypeAdapter(
       Context context,
+      String appName,
       int resource,
       CharSequence[] entries,
       CharSequence[] entryValues,
       PossibleTableViewTypes viewTypes) {
     super(context, resource, entries);
     this.mContext = context;
+    this.mAppName = appName;
     this.mViewTypeValues = entryValues;
     this.mPossibleViewTypes = viewTypes;
   }
@@ -71,7 +74,7 @@ public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
       }
     } else {
       // Enable it.
-      Log.e(TAG, "unrecognized entryValue: " + currentItem);
+      WebLogger.getLogger(mAppName).e(TAG, "unrecognized entryValue: " + currentItem);
       return true;
     }
   }

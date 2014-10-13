@@ -1,5 +1,7 @@
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.WebViewUtil;
@@ -7,7 +9,6 @@ import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.app.Fragment;
-import android.util.Log;
 import android.webkit.WebView;
 
 /**
@@ -22,13 +23,13 @@ public class ListViewFragment extends AbsWebTableFragment {
   @Override
   public void onDestroy() {
     super.onDestroy();
-    Log.d(TAG, "[onDestroy]");
+    WebLogger.getLogger(getAppName()).d(TAG, "[onDestroy]");
   }
 
   @Override
   public WebView buildView() {
-    Log.d(TAG, "[buildView]");
-    WebView result = WebViewUtil.getODKCompliantWebView(getActivity());
+    WebLogger.getLogger(getAppName()).d(TAG, "[buildView]");
+    WebView result = WebViewUtil.getODKCompliantWebView((AbsBaseActivity) getActivity());
     Control control = this.createControlObject();
     result.addJavascriptInterface(
         control.getJavascriptInterfaceWithWeakReference(),

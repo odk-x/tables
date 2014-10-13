@@ -24,14 +24,16 @@ public class DefaultViewTypePreference extends ListPreference {
  //private TableProperties mTableProperties;
   private PossibleTableViewTypes mPossibleViewTypes;
   private Context mContext;
+  private final String mAppName;
   private CharSequence[] mEntryValues;
 
-  public DefaultViewTypePreference(Context context, AttributeSet attrs) {
+  public DefaultViewTypePreference(Context context, String appName, AttributeSet attrs) {
     super(context, attrs);
     this.mContext = context;
+    this.mAppName = appName;
   }
 
-  public void setFields(String appName, String tableId, ArrayList<ColumnDefinition> orderedDefns) {
+  public void setFields(String tableId, ArrayList<ColumnDefinition> orderedDefns) {
     
     TableViewType defaultViewType;
     this.mEntryValues = this.mContext.getResources().getTextArray(
@@ -39,7 +41,7 @@ public class DefaultViewTypePreference extends ListPreference {
     
     SQLiteDatabase db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mContext, appName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       
       this.mPossibleViewTypes = new PossibleTableViewTypes(db, 
               tableId, orderedDefns);
@@ -66,6 +68,7 @@ public class DefaultViewTypePreference extends ListPreference {
     // We want to enable/disable the correct list.
     ListAdapter adapter = new TableViewTypeAdapter(
         this.mContext,
+        this.mAppName,
         android.R.layout.select_dialog_singlechoice,
         this.getEntries(),
         this.getEntryValues(),

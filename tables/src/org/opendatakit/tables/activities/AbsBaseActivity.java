@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -15,7 +16,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -81,7 +81,7 @@ public abstract class AbsBaseActivity extends Activity {
   
   public void scanAllTables() {
     long now = System.currentTimeMillis();
-    Log.i(this.getClass().getSimpleName(), "scanAllTables -- searching for conflicts and checkpoints ");
+    WebLogger.getLogger(getAppName()).i(this.getClass().getSimpleName(), "scanAllTables -- searching for conflicts and checkpoints ");
     
     SQLiteDatabase db = null;
 
@@ -111,7 +111,7 @@ public abstract class AbsBaseActivity extends Activity {
     }
     
     long elapsed = System.currentTimeMillis() - now;
-    Log.i(this.getClass().getSimpleName(), "scanAllTables -- full table scan completed: " + Long.toString(elapsed) + " ms");
+    WebLogger.getLogger(getAppName()).i(this.getClass().getSimpleName(), "scanAllTables -- full table scan completed: " + Long.toString(elapsed) + " ms");
   }
   
   @Override

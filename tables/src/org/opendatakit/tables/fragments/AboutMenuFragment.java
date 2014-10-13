@@ -15,6 +15,7 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.listener.LicenseReaderListener;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
@@ -24,21 +25,27 @@ import android.app.FragmentManager;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.util.Linkify;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class AboutMenuFragment extends Fragment implements LicenseReaderListener{
-
-  public static final int ID = R.layout.about_menu_layout;
+public class AboutMenuFragment extends Fragment implements LicenseReaderListener {
   public static final String t = "AboutMenuFragment";
 
+  public static final int ID = R.layout.about_menu_layout;
+  /**
+   * Key for savedInstanceState
+   */
+  private static final String LICENSE_TEXT = "LICENSE_TEXT";
+
   private TextView mTextView;
-  private static String mLicenseText = null;
-  private static String LICENSE_TEXT = "LICENSE_TEXT";
+  
+  /**
+   * retained value...
+   */
+  private String mLicenseText = null;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -48,16 +55,16 @@ public class AboutMenuFragment extends Fragment implements LicenseReaderListener
     TextView versionBox = (TextView) aboutMenuView.findViewById(R.id.versionText);
     versionBox.setText(Tables.getInstance().getVersionedAppName());
 
-    mTextView = (TextView)aboutMenuView.findViewById(R.id.text1);
+    mTextView = (TextView) aboutMenuView.findViewById(R.id.text1);
     mTextView.setAutoLinkMask(Linkify.WEB_URLS);
     mTextView.setClickable(true);
 
     if (savedInstanceState != null && savedInstanceState.containsKey(LICENSE_TEXT)) {
-        mTextView.setText(Html.fromHtml(savedInstanceState.getString(LICENSE_TEXT)));
+      mLicenseText = savedInstanceState.getString(LICENSE_TEXT);
+      mTextView.setText(Html.fromHtml(mLicenseText));
     } else {
       readLicenseFile();
     }
-
 
     return aboutMenuView;
   }
@@ -70,7 +77,8 @@ public class AboutMenuFragment extends Fragment implements LicenseReaderListener
 
   @Override
   public void readLicenseComplete(String result) {
-    Log.i(t, "Read license complete");
+    AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
+    WebLogger.getLogger(baseActivity.getAppName()).i(t, "Read license complete");
     if (result != null) {
       // Read license file successfully
       Toast.makeText(getActivity(), R.string.read_license_success, Toast.LENGTH_SHORT).show();
@@ -78,7 +86,7 @@ public class AboutMenuFragment extends Fragment implements LicenseReaderListener
       mTextView.setText(Html.fromHtml(result));
     } else {
       // had some failures
-      Log.e(t, "Failed to read license file");
+      WebLogger.getLogger(baseActivity.getAppName()).e(t, "Failed to read license file");
       Toast.makeText(getActivity(), R.string.read_license_fail, Toast.LENGTH_LONG).show();
     }
   }
@@ -86,10 +94,10 @@ public class AboutMenuFragment extends Fragment implements LicenseReaderListener
   private void readLicenseFile() {
     FragmentManager mgr = getFragmentManager();
     BackgroundTaskFragment f = (BackgroundTaskFragment) mgr.findFragmentByTag("background");
-    
+
     AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
     String appName = baseActivity.getAppName();
- 
+
     f.readLicenseFile(appName, this);
   }
 

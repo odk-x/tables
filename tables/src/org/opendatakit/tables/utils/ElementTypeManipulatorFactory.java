@@ -22,6 +22,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.common.android.data.ElementDataType;
 import org.opendatakit.common.android.data.ElementType;
 import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.common.android.utilities.StaticStateManipulator;
+import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulator.InputView;
@@ -589,6 +591,15 @@ public class ElementTypeManipulatorFactory {
     }
 
     return gManipulator;
+  }
+  
+  static {
+    StaticStateManipulator.get().register(90, new IStaticFieldManipulator() {
+      @Override
+      public void reset() {
+        gAppName = null;
+        gManipulator = null;
+      }});
   }
   
   static final ITypeManipulatorFragment getCustomManipulatorFragment(ElementType type) {

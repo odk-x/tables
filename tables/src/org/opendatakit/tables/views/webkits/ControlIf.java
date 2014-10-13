@@ -17,8 +17,6 @@ package org.opendatakit.tables.views.webkits;
 
 import java.lang.ref.WeakReference;
 
-import android.util.Log;
-
 /**
  * This object is handed to all the javascript views as "control".
  * @author mitchellsundt@gmail.com
@@ -50,8 +48,6 @@ public class ControlIf {
 	public boolean openTable(String tableId,
 			String whereClause, String[] selectionArgs) {
 	  // TODO: convert to element keys
-	  Log.e(TAG, "TO-WC openTableWithSqlQuery(tableId, sqlWhereClause, " +
-	  		"sqlSelectionArgs");
 		return weakControl.get().helperOpenTable(
 		    tableId,
 		    whereClause,
@@ -254,7 +250,6 @@ public class ControlIf {
 	 */
 	// @JavascriptInterface
 	public boolean addRowWithCollectDefault(String tableId) {
-	  Log.e(TAG, "TO-WC addRowWithCollect");
 		return this.addRowWithCollect(tableId, null, null, 
 		    null, null);
 	}

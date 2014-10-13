@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.provider.TablesProviderAPI;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -29,7 +30,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
 
 public class Launcher extends Activity {
@@ -103,7 +103,7 @@ public class Launcher extends Activity {
         relativePathToFile = ODKFileUtils.asRelativePath(
             mAppName,
             defaultHomeScreen);
-        Log.d(TAG, "homescreen file exists and is set to be used.");
+        WebLogger.getLogger(mAppName).d(TAG, "homescreen file exists and is set to be used.");
       }
 
       Uri data = getIntent().getData();
@@ -120,7 +120,7 @@ public class Launcher extends Activity {
       i.putExtra(Constants.IntentKeys.FILE_NAME, relativePathToFile);
       startActivity(i);
     } else {
-      Log.d(TAG, "no homescreen file found, launching TableManager");
+      WebLogger.getLogger(mAppName).d(TAG, "no homescreen file found, launching TableManager");
       // First set the prefs to false. This is useful in the case where
       // someone has configured an app to use a home screen and then
       // deleted that file out from under it.

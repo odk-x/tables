@@ -5,12 +5,11 @@ import java.util.ArrayList;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.tables.application.Tables;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.utils.Constants;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.util.Log;
 
 /**
  * This class is the base for any Activity that will display information about
@@ -32,16 +31,15 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
     super.onCreate(savedInstanceState);
     mTableId = retrieveTableIdFromIntent();
     if (mTableId == null) {
-      Log.e(TAG, "[onCreate] table id was not present in Intent.");
+      WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] table id was not present in Intent.");
       throw new IllegalStateException(
           "A table id was not passed to a table activity");
     }
     
-    Log.e(TAG, "[onCreate] building mColumnDefinitions.");
+    WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] building mColumnDefinitions.");
     SQLiteDatabase db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(
-          Tables.getInstance().getApplicationContext(), getAppName());
+      db = DatabaseFactory.get().getDatabase(this, getAppName());
       mColumnDefinitions = TableUtil.get().getColumnDefinitions(db, getAppName(), getTableId());
     } finally {
       if ( db != null ) {

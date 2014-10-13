@@ -22,11 +22,11 @@ import org.opendatakit.common.android.utilities.KeyValueHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -58,8 +58,8 @@ public class PreferenceUtil {
       TableUtil.get().setDefaultViewType(db, tableId, viewType);
       db.setTransactionSuccessful();
     } catch ( Exception e ) {
-      e.printStackTrace();
-      Log.e(TAG, "Unable to change default view type: " + e.toString());
+      WebLogger.getLogger(appName).printStackTrace(e);
+      WebLogger.getLogger(appName).e(TAG, "Unable to change default view type: " + e.toString());
       Toast.makeText(
           context,
           "Unable to change default view type",

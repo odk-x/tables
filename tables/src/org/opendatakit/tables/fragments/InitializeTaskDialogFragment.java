@@ -1,7 +1,9 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.tasks.InitializeTask;
 
 import android.app.AlertDialog;
@@ -10,22 +12,20 @@ import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
 
 /**
  * This fragment presents a dialog with the import status.
+ * 
  * @author sudar.sam@gmail.com
  *
  */
 /*
  * My initial jumping-in point for Fragments and Tasks was this tutorial, on
- * which this implementation is based:
- * http://creeder.com/?&page=AsyncTask
+ * which this implementation is based: http://creeder.com/?&page=AsyncTask
  */
 public class InitializeTaskDialogFragment extends DialogFragment {
 
-  public static final String TAG_FRAGMENT =
-      InitializeTaskDialogFragment.class.getSimpleName();
+  public static final String TAG_FRAGMENT = InitializeTaskDialogFragment.class.getSimpleName();
 
   private InitializeTask mTask;
   private InitializeTask.Callbacks mCallbacks;
@@ -37,8 +37,8 @@ public class InitializeTaskDialogFragment extends DialogFragment {
   }
 
   /**
-   * Set the {@link InitializeTask} for which this fragment will be
-   * responsible.
+   * Set the {@link InitializeTask} for which this fragment will be responsible.
+   * 
    * @param task
    */
   public void setTask(InitializeTask task) {
@@ -48,6 +48,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
   /**
    * Set the callbacks that will be invoked on behalf of the
    * {@link InitializeTask}.
+   * 
    * @param callbacks
    */
   public void setCallbacks(InitializeTask.Callbacks callbacks) {
@@ -72,6 +73,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
 
   /**
    * Return the preferences from this objects calbacks.
+   * 
    * @return
    */
   public Preferences getPreferencesFromContext() {
@@ -103,6 +105,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
 
   /**
    * Called by the task to update the dialog's progress.
+   * 
    * @param progressString
    */
   public void updateProgress(String progressString) {
@@ -118,11 +121,12 @@ public class InitializeTaskDialogFragment extends DialogFragment {
 
   /**
    *
-   * @param message the message that should be displayed in an alert dialog to
-   * the user.
+   * @param message
+   *          the message that should be displayed in an alert dialog to the
+   *          user.
    */
   public void onTaskFinishedSuccessfully(String message) {
-    if ( ( message == null || message.length() == 0 ) && (mCallbacks != null) ) {
+    if ((message == null || message.length() == 0) && (mCallbacks != null)) {
       // do not require an OK if everything went well
       if (isResumed()) {
         dismiss();
@@ -137,23 +141,26 @@ public class InitializeTaskDialogFragment extends DialogFragment {
   /**
    * Should be called whenever the task is finished.
    */
-  private void onTaskFinished(boolean success,
-      boolean poorlyFormattedConfigFile, String successMessage) {
+  private void onTaskFinished(boolean success, boolean poorlyFormattedConfigFile,
+      String successMessage) {
+    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+    String appName = activity.getAppName();
     if (isResumed()) {
       dismiss();
     }
     mTask = null; // so we can dismiss ourselves in onResume if necessary
     if (mCallbacks == null) {
-      Log.e(TAG, "InitializeTask completed but callbacks in dialog fragment" +
-      		" were null! Not invoking.");
+      WebLogger.getLogger(appName)
+          .e(TAG,
+              "InitializeTask completed but callbacks in dialog fragment"
+                  + " were null! Not invoking.");
       return;
     }
 
     // Otherwise we create the alert dialog saying things went well.
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder.setCancelable(false);
-    builder.setNeutralButton(getString(R.string.ok),
-        new DialogInterface.OnClickListener() {
+    builder.setNeutralButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
 
       @Override
       public void onClick(DialogInterface dialog, int which) {
@@ -177,6 +184,5 @@ public class InitializeTaskDialogFragment extends DialogFragment {
     AlertDialog resultDialog = builder.create();
     resultDialog.show();
   }
-
 
 }

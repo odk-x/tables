@@ -30,6 +30,7 @@ import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -50,7 +51,6 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
-import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -155,8 +155,8 @@ public class TablePropertiesManager extends PreferenceActivity {
           localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
           db.setTransactionSuccessful();
         } catch (Exception e) {
-          e.printStackTrace();
-          Log.e(TAG, "Unable to change display name: " + e.toString());
+          WebLogger.getLogger(appName).printStackTrace(e);
+          WebLogger.getLogger(appName).e(TAG, "Unable to change display name: " + e.toString());
           Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
           init();
           return false;
@@ -252,8 +252,8 @@ public class TablePropertiesManager extends PreferenceActivity {
               TableViewType.valueOf((String) newValue));
           db.setTransactionSuccessful();
         } catch (Exception e) {
-          e.printStackTrace();
-          Log.e(TAG, "Unable to change default view type: " + e.toString());
+          WebLogger.getLogger(appName).printStackTrace(e);
+          WebLogger.getLogger(appName).e(TAG, "Unable to change default view type: " + e.toString());
           Toast.makeText(getParent(), "Unable to change default view type", Toast.LENGTH_LONG)
               .show();
         } finally {
@@ -463,7 +463,7 @@ public class TablePropertiesManager extends PreferenceActivity {
   }
 
   private void addGraphViewPreferences(PreferenceCategory prefCat) {
-    Log.d(TAG, "Graph view type was selected");
+    WebLogger.getLogger(appName).d(TAG, "Graph view type was selected");
     // TODO -- should we really do the graph manager here?
     Preference graphViewPrefs = new Preference(this);
     graphViewPrefs.setTitle(getString(R.string.graph_view_manager));
@@ -577,7 +577,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             intent.setData(Uri.parse("file://" + fullFile.getCanonicalPath()));
           } catch (IOException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            WebLogger.getLogger(appName).printStackTrace(e);
             Toast.makeText(TablePropertiesManager.this,
                 getString(R.string.file_not_found, fullFile.getAbsolutePath()), Toast.LENGTH_LONG)
                 .show();
@@ -586,7 +586,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         try {
           startActivityForResult(intent, mRequestCode);
         } catch (ActivityNotFoundException e) {
-          e.printStackTrace();
+          WebLogger.getLogger(appName).printStackTrace(e);
           Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found),
               Toast.LENGTH_LONG).show();
         }

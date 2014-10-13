@@ -32,11 +32,11 @@ import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -92,8 +92,8 @@ public class OutputUtil {
    * <p>
    * The object is as follows: <br>
    * { {@link #CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME}: {tableIdOne:
-   * displayName, ...}, {@link #CTRL_KEY_TABLE_INFO: tableIdOne:
-   * tableObjectOne, ...} }
+   * displayName, ...}, {@link #CTRL_KEY_TABLE_INFO: tableIdOne: tableObjectOne,
+   * ...}
    *
    * @return
    */
@@ -115,7 +115,7 @@ public class OutputUtil {
         tableIdToControlTable.put(tableId, controlTable);
       }
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.close();
       }
     }
@@ -144,7 +144,8 @@ public class OutputUtil {
    * @param tableId
    * @return
    */
-  public static Map<String, Object> getMapForControlTable(SQLiteDatabase db, String appName, String tableId) {
+  public static Map<String, Object> getMapForControlTable(SQLiteDatabase db, String appName,
+      String tableId) {
     Map<String, Object> controlTable = new HashMap<String, Object>();
     Map<String, String> pathToKey = new HashMap<String, String>();
     ArrayList<ColumnDefinition> orderedDefns;
@@ -152,18 +153,19 @@ public class OutputUtil {
     String defaultDetailFileName = null;
     String defaultListFileName = null;
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
-    
+
     orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
     defaultDetailFileName = TableUtil.get().getDetailViewFilename(db, tableId);
     defaultListFileName = TableUtil.get().getListViewFilename(db, tableId);
-    
+
     for (ColumnDefinition cd : orderedDefns) {
       String elementName = cd.getElementName();
-      if ( elementName != null ) {
+      if (elementName != null) {
         pathToKey.put(cd.getElementName(), cd.getElementKey());
 
         String localizedDisplayName;
-          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId, cd.getElementKey());
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId,
+            cd.getElementKey());
 
         keyToDisplayName.put(cd.getElementKey(), localizedDisplayName);
       }
@@ -193,11 +195,12 @@ public class OutputUtil {
   private static String getStringForDataObject(SQLiteDatabase db, String appName, String tableId,
       int numberOfRows) {
 
-    ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
-    
+    ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, appName,
+        tableId);
+
     UserTable userTable = null;
-    userTable = ODKDatabaseUtils.get().rawSqlQuery(db, appName, tableId, 
-        orderedDefns, null, null, null, null, null, null);
+    userTable = ODKDatabaseUtils.get().rawSqlQuery(db, appName, tableId, orderedDefns, null, null,
+        null, null, null, null);
 
     // TODO: This is broken w.r.t. elementKey != elementPath
     // TODO: HACKED HACKED HACKED HACKED
@@ -209,8 +212,9 @@ public class OutputUtil {
     // we know how to access it out of the array representing each row.
     Map<String, Integer> elementKeyToIndex = new HashMap<String, Integer>();
     for (ColumnDefinition cd : orderedDefns) {
-      if ( cd.isUnitOfRetention() ) {
-        elementKeyToIndex.put(cd.getElementKey(), userTable.getColumnIndexOfElementKey(cd.getElementKey()));
+      if (cd.isUnitOfRetention()) {
+        elementKeyToIndex.put(cd.getElementKey(),
+            userTable.getColumnIndexOfElementKey(cd.getElementKey()));
       }
     }
     // We don't want to try and write more rows than we have.
@@ -240,14 +244,15 @@ public class OutputUtil {
       // The tableData object returns a string, so we'll have to parse it back
       // into json.
       String strColumnData = tableData.getColumnDataForElementKey(elementKey, numRowsToWrite);
-      if ( strColumnData == null ) continue;
+      if (strColumnData == null)
+        continue;
       JsonArray columnData = (JsonArray) jsonParser.parse(strColumnData);
       // Now that it's json, we want to convert it to an array. Otherwise it
       // serializes to an object with a single key "elements". Oh gson.
       String[] columnDataArray = new String[columnData.size()];
       for (int i = 0; i < columnDataArray.length; i++) {
         JsonElement e = columnData.get(i);
-        if ( e == JsonNull.INSTANCE ) {
+        if (e == JsonNull.INSTANCE) {
           columnDataArray[i] = null;
         } else {
           columnDataArray[i] = e.getAsString();
@@ -265,7 +270,7 @@ public class OutputUtil {
     Map<String, Object> columnJsonMap = new HashMap<String, Object>();
     for (Map.Entry<String, JsonElement> entry : columnJson.entrySet()) {
       JsonElement e = entry.getValue();
-      if ( e == JsonNull.INSTANCE ) {
+      if (e == JsonNull.INSTANCE) {
         columnJsonMap.put(entry.getKey(), null);
       } else {
         columnJsonMap.put(entry.getKey(), e.getAsString());
@@ -299,16 +304,14 @@ public class OutputUtil {
     PrintWriter writer;
     try {
       writer = new PrintWriter(fileName, CharEncoding.UTF_8);
-      Log.d(TAG, "writing control to: " + fileName);
+      WebLogger.getLogger(appName).d(TAG, "writing control to: " + fileName);
       writer.print(controlString);
       writer.flush();
       writer.close();
     } catch (FileNotFoundException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
     }
   }
 
@@ -329,7 +332,7 @@ public class OutputUtil {
         writeDataObject(db, appName, tableId, numberOfRows);
       }
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.close();
       }
     }
@@ -358,22 +361,21 @@ public class OutputUtil {
   public static void writeDataObject(SQLiteDatabase db, String appName, String tableId,
       int numberOfRows) {
     String dataString = getStringForDataObject(db, appName, tableId, numberOfRows);
-    if ( dataString == null ) return;
+    if (dataString == null)
+      return;
     String fileName = ODKFileUtils.getTablesDebugObjectFolder(appName) + File.separator + tableId
         + DATA_FILE_SUFFIX;
     PrintWriter writer;
     try {
       writer = new PrintWriter(fileName, CharEncoding.UTF_8);
-      Log.d(TAG, "writing data object to: " + fileName);
+      WebLogger.getLogger(appName).d(TAG, "writing data object to: " + fileName);
       writer.print(dataString);
       writer.flush();
       writer.close();
     } catch (FileNotFoundException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      WebLogger.getLogger(appName).printStackTrace(e);
     }
   }
 

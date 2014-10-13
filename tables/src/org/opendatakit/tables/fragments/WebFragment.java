@@ -2,6 +2,7 @@ package org.opendatakit.tables.fragments;
 
 import java.lang.ref.WeakReference;
 
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -10,7 +11,6 @@ import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,7 +47,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Log.d(TAG, "[onCreate]");
+    WebLogger.getLogger(getAppName()).d(TAG, "[onCreate]");
     // Get the file name. Saved state gets precedence. Then arguments.
     String retrievedFileName = retrieveFileNameFromBundle(savedInstanceState);
     if (retrievedFileName == null) {
@@ -61,7 +61,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
       LayoutInflater inflater,
       ViewGroup container,
       Bundle savedInstanceState) {
-    Log.d(TAG, "[onCreateView] activity is: " + this.getActivity());
+    WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView] activity is: " + this.getActivity());
     WebView webView = this.buildView();
     return webView;
   }
@@ -75,8 +75,8 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
 
   @Override
   public WebView buildView() {
-    Log.d(TAG, "[buildView] activity is: " + this.getActivity());
-    WebView result = WebViewUtil.getODKCompliantWebView(getActivity());
+    WebLogger.getLogger(getAppName()).d(TAG, "[buildView] activity is: " + this.getActivity());
+    WebView result = WebViewUtil.getODKCompliantWebView((AbsBaseActivity) getActivity());
     Control control = this.createControlObject();
     result.addJavascriptInterface(
         control.getJavascriptInterfaceWithWeakReference(),

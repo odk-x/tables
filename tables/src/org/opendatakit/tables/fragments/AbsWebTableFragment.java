@@ -2,6 +2,7 @@ package org.opendatakit.tables.fragments;
 
 import java.lang.ref.WeakReference;
 
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -13,7 +14,6 @@ import org.opendatakit.tables.views.webkits.TableDataIf;
 
 import android.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -60,7 +60,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Log.d(TAG, "[onCreate]");
+    WebLogger.getLogger(getAppName()).d(TAG, "[onCreate]");
     // Get the file name if it was there.
     String retrievedFileName = retrieveFileNameFromBundle(savedInstanceState);
     if (retrievedFileName == null) {
@@ -75,7 +75,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
       LayoutInflater inflater,
       ViewGroup container,
       Bundle savedInstanceState) {
-    Log.d(TAG, "[onCreateView]");
+    WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView]");
     WebView webView = this.buildView();
     return webView;
   }
@@ -109,7 +109,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    */
   @Override
   public WebView buildView() {
-    WebView result = WebViewUtil.getODKCompliantWebView(getActivity());
+    WebView result = WebViewUtil.getODKCompliantWebView((AbsBaseActivity) getActivity());
     return result;
   }
 

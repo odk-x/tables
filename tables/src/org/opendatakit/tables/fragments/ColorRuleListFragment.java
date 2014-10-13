@@ -6,6 +6,7 @@ import java.util.List;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.utilities.ColorRuleUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -16,7 +17,6 @@ import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -190,6 +190,9 @@ public class ColorRuleListFragment extends ListFragment {
   
   @Override
   public boolean onContextItemSelected(MenuItem item) {
+    TableLevelPreferencesActivity activity =
+        this.retrieveTableLevelPreferencesActivity();
+    final String appName = activity.getAppName();
     AdapterContextMenuInfo menuInfo =
         (AdapterContextMenuInfo) item.getMenuInfo();
     final int position = menuInfo.position;
@@ -221,7 +224,7 @@ public class ColorRuleListFragment extends ListFragment {
         public void onClick(DialogInterface dialog, int which) {
           // We need to delete the entry. First delete it in the key value
           // store.
-          Log.d(TAG, "trying to delete rule at position: " + position);
+          WebLogger.getLogger(appName).d(TAG, "trying to delete rule at position: " + position);
           mColorRuleGroup.getColorRules().remove(position);
           mColorRuleGroup.saveRuleList(ColorRuleListFragment.this.getActivity());
           mColorRuleAdapter.notifyDataSetChanged();
@@ -249,6 +252,9 @@ public class ColorRuleListFragment extends ListFragment {
    * Wipe the current rules and revert to the defaults for the given type.
    */
   private void revertToDefaults() {
+    TableLevelPreferencesActivity activity =
+        this.retrieveTableLevelPreferencesActivity();
+    final String appName = activity.getAppName();
     ColorRuleGroup.Type colorRuleGroupType = this.retrieveColorRuleType();
     switch (colorRuleGroupType) {
     case STATUS_COLUMN:
@@ -268,7 +274,7 @@ public class ColorRuleListFragment extends ListFragment {
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     default:
-      Log.e(TAG, "unrecognized type of column rule in revert to default: " +
+      WebLogger.getLogger(appName).e(TAG, "unrecognized type of column rule in revert to default: " +
           colorRuleGroupType);
     }
   }

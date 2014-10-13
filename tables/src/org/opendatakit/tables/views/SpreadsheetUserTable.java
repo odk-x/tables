@@ -11,7 +11,6 @@ import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
 import android.content.Context;
@@ -38,7 +37,7 @@ public class SpreadsheetUserTable {
   public SpreadsheetUserTable(AbsTableDisplayFragment frag, UserTable table) {
     this.fragment = frag;
     this.table = table;
-    Context context = Tables.getInstance().getApplicationContext();
+    Context context = fragment.getActivity();
 
     ArrayList<String> colOrder;
     SQLiteDatabase db = null;
@@ -100,17 +99,17 @@ public class SpreadsheetUserTable {
   }
 
   public ColorRuleGroup getColumnColorRuleGroup(String elementKey) {
-    return ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance().getApplicationContext(),
+    return ColorRuleGroup.getColumnColorRuleGroup(fragment.getActivity(),
         getAppName(), getTableId(), elementKey);
   }
 
   public ColorRuleGroup getStatusColumnRuleGroup() {
-    return ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance().getApplicationContext(),
+    return ColorRuleGroup.getStatusColumnRuleGroup(fragment.getActivity(),
         getAppName(), getTableId());
   }
 
   public ColorRuleGroup getTableColorRuleGroup() {
-    return ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance().getApplicationContext(),
+    return ColorRuleGroup.getTableColorRuleGroup(fragment.getActivity(),
         getAppName(), getTableId());
   }
 
@@ -129,8 +128,7 @@ public class SpreadsheetUserTable {
     String indexColumn;
     SQLiteDatabase db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(
-          Tables.getInstance().getApplicationContext(), 
+      db = DatabaseFactory.get().getDatabase(fragment.getActivity(), 
           getAppName());
       indexColumn = TableUtil.get().getIndexColumn(db, getTableId());
     } finally {

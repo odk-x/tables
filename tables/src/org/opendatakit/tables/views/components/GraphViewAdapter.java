@@ -2,11 +2,11 @@ package org.opendatakit.tables.views.components;
 
 import java.util.List;
 
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.GraphViewStruct;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -35,9 +35,11 @@ public class GraphViewAdapter extends BaseAdapter implements ListAdapter {
   
   private List<GraphViewStruct> mGraphViews;
   private Context mContext;
+  private final String mAppName;
   
-  public GraphViewAdapter(Context context, List<GraphViewStruct> graphViews) {
+  public GraphViewAdapter(Context context, String appName, List<GraphViewStruct> graphViews) {
     this.mGraphViews = graphViews;
+    this.mAppName = appName;
   }
   
   List<GraphViewStruct> getGraphViews() {
@@ -133,7 +135,7 @@ public class GraphViewAdapter extends BaseAdapter implements ListAdapter {
    */
   private void setToDefault(GraphViewStruct graphView) {
     // TODO:
-    Log.e(TAG, "[setToDefault] unimplemented!");
+    WebLogger.getLogger(mAppName).e(TAG, "[setToDefault] unimplemented!");
   }
 
   @Override

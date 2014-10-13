@@ -7,6 +7,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 
@@ -14,7 +15,6 @@ import android.app.Activity;
 import android.app.ListFragment;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -47,7 +47,9 @@ public class ColumnListFragment extends ListFragment {
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    Log.d(TAG, "[onActivityCreated]");
+    TableLevelPreferencesActivity tableLevelPreferenceActivity = (TableLevelPreferencesActivity) this
+        .getActivity();
+    WebLogger.getLogger(tableLevelPreferenceActivity.getAppName()).d(TAG, "[onActivityCreated]");
     // All we need to do is get the columns to display.
     List<String> elementKeys = this.retrieveAllElementKeys();
     List<String> displayNames = this.retrieveAllDisplayNames();
@@ -59,10 +61,10 @@ public class ColumnListFragment extends ListFragment {
   }
 
   public void onListItemClick(ListView l, View v, int position, long id) {
-    TableLevelPreferencesActivity tableLevePreferenceActivity = (TableLevelPreferencesActivity) this
+    TableLevelPreferencesActivity tableLevelPreferenceActivity = (TableLevelPreferencesActivity) this
         .getActivity();
     String elementKey = this.mElementKeys.get(position);
-    tableLevePreferenceActivity.showColumnPreferenceFragment(elementKey);
+    tableLevelPreferenceActivity.showColumnPreferenceFragment(elementKey);
   }
 
   /**

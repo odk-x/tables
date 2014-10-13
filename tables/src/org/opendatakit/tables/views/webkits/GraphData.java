@@ -9,7 +9,6 @@ import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
-import org.opendatakit.tables.application.Tables;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -147,7 +146,7 @@ public class GraphData {
     List<KeyValueStoreEntry> graphViewEntries = new ArrayList<KeyValueStoreEntry>();
     SQLiteDatabase db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(Tables.getInstance().getApplicationContext(), mAppName);
+      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
       graphViewEntries = ODKDatabaseUtils.get().getDBTableMetadata(db, mTableId, 
           LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS, null, LocalKeyValueStoreConstants.Graph.KEY_GRAPH_TYPE);
     } finally {

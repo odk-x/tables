@@ -27,12 +27,12 @@ import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.KeyValueHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
 import org.opendatakit.tables.views.components.LockableScrollView;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -331,14 +331,14 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
       @Override
       public void onScrollStopped() {
-        // Log.i(TAG, "stopped in onStopped of indexScroll");
+        // WebLogger.getLogger(table.getAppName()).i(TAG, "stopped in onStopped of indexScroll");
       }
     });
     mainScroll.setOnScrollStoppedListener(new LockableScrollView.OnScrollStoppedListener() {
 
       @Override
       public void onScrollStopped() {
-        // Log.i(TAG, "stopped in onStopped of mainScroll");
+        // WebLogger.getLogger(table.getAppName()).i(TAG, "stopped in onStopped of mainScroll");
 
       }
     });
@@ -368,7 +368,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * @return a view including the header and body of the table
    */
   private View buildTable(String indexElementKey, boolean isIndexed) {
-    // Log.i(TAG, "entering buildTable. indexedCol: " + indexedCol +
+    // WebLogger.getLogger(table.getAppName()).i(TAG, 
+    //      "entering buildTable. indexedCol: " + indexedCol +
     // "isIndexed: " + isIndexed);
     List<String> elementKeysToDisplay = new ArrayList<String>();
     int[] colWidths;
@@ -516,7 +517,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       if (view instanceof TabularView) {
         cellId = ((TabularView) view).getCellInfo(x, y);
       } else {
-        Log.e(TAG, "Unexpected view type!");
+        WebLogger.getLogger(table.getAppName()).e(TAG, "Unexpected view type!");
       }
       long duration = event.getEventTime() - event.getDownTime();
       if (event.getAction() == MotionEvent.ACTION_UP && duration >= MIN_CLICK_DURATION) {

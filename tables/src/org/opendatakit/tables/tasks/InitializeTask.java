@@ -25,6 +25,7 @@ import org.opendatakit.common.android.utilities.CsvUtil;
 import org.opendatakit.common.android.utilities.CsvUtil.ImportListener;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
@@ -33,7 +34,6 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
-import android.util.Log;
 
 public class InitializeTask extends AsyncTask<Void, String, Boolean> implements ImportListener {
 
@@ -78,13 +78,14 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
   @Override
   protected synchronized Boolean doInBackground(Void... params) {
 
-    // Verify that the APK version of the frameworks files matches that of this APK
+    // Verify that the APK version of the frameworks files matches that of this
+    // APK
     mPendingSuccess = true;
 
     String message = null;
     ArrayList<String> result = new ArrayList<String>();
 
-    if (!ODKFileUtils.isConfiguredTablesApp(mAppName, Tables.getInstance().getVersionCodeString()) ) {
+    if (!ODKFileUtils.isConfiguredTablesApp(mAppName, Tables.getInstance().getVersionCodeString())) {
       publishProgress(mContext.getString(R.string.expansion_unzipping_begins), null);
 
       extractFromRawZip(R.raw.frameworkzip, true, result);
@@ -93,15 +94,18 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
       ODKFileUtils.assertConfiguredTablesApp(mAppName, Tables.getInstance().getVersionCodeString());
     }
 
-
-    ///////////////////////////////////////////
-    ///////////////////////////////////////////
-    ///////////////////////////////////////////
-    // Scan the tables directory, looking for tableIds with definition.csv files.
+    // /////////////////////////////////////////
+    // /////////////////////////////////////////
+    // /////////////////////////////////////////
+    // Scan the tables directory, looking for tableIds with definition.csv
+    // files.
     // If the tableId does not exist, try to create it using these files.
-    // If the tableId already exists, do nothing -- assume everything is up-to-date.
-    // This means we don't pick up properties.csv changes, but the definition.csv
-    // should never change. If properties.csv changes, we assume the process that
+    // If the tableId already exists, do nothing -- assume everything is
+    // up-to-date.
+    // This means we don't pick up properties.csv changes, but the
+    // definition.csv
+    // should never change. If properties.csv changes, we assume the process
+    // that
     // changed it will be triggering a reload of it through other means.
 
     CsvUtil util = new CsvUtil(mContext, mAppName);
@@ -111,8 +115,9 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
       @Override
       public boolean accept(File pathname) {
         return pathname.isDirectory();
-      }});
-    
+      }
+    });
+
     List<String> tableIds;
     ODKFileUtils.assertDirectoryStructure(mAppName);
     SQLiteDatabase db = null;
@@ -125,51 +130,51 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
       }
     }
 
-    for ( int i = 0 ; i < tableIdDirs.length ; ++i ) {
+    for (int i = 0; i < tableIdDirs.length; ++i) {
       File tableIdDir = tableIdDirs[i];
       String tableId = tableIdDir.getName();
-      if ( tableIds.contains(tableId) ) {
+      if (tableIds.contains(tableId)) {
         // assume it is up-to-date
         continue;
       }
 
       File definitionCsv = new File(ODKFileUtils.getTableDefinitionCsvFile(mAppName, tableId));
       File propertiesCsv = new File(ODKFileUtils.getTablePropertiesCsvFile(mAppName, tableId));
-      if ( definitionCsv.exists() && definitionCsv.isFile() &&
-          propertiesCsv.exists() && propertiesCsv.isFile() ) {
+      if (definitionCsv.exists() && definitionCsv.isFile() && propertiesCsv.exists()
+          && propertiesCsv.isFile()) {
 
         String formattedString = mContext.getString(R.string.scanning_for_table_definitions,
-                                                     tableId, (i+1), tableIdDirs.length);
+            tableId, (i + 1), tableIdDirs.length);
         String detail = mContext.getString(R.string.processing_file);
         publishProgress(formattedString, detail);
 
         try {
-        util.updateTablePropertiesFromCsv(this, tableId);
+          util.updateTablePropertiesFromCsv(this, tableId);
         } catch (IOException e) {
-          Log.e(TAG, "Unexpected error during update from csv");
+          WebLogger.getLogger(mAppName).e(TAG, "Unexpected error during update from csv");
         }
       }
     }
 
-    ///////////////////////////////////////////
-    ///////////////////////////////////////////
-    ///////////////////////////////////////////
+    // /////////////////////////////////////////
+    // /////////////////////////////////////////
+    // /////////////////////////////////////////
     // and now process tables.init file
     File init = new File(ODKFileUtils.getTablesInitializationFile(mAppName));
     File completedFile = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(mAppName));
-    if ( !init.exists() ) {
+    if (!init.exists()) {
       // no initialization file -- we are done!
       return true;
     }
     boolean processFile = false;
-    if ( !completedFile.exists() ) {
+    if (!completedFile.exists()) {
       processFile = true;
     } else {
       String initMd5 = ODKFileUtils.getMd5Hash(mAppName, init);
       String completedFileMd5 = ODKFileUtils.getMd5Hash(mAppName, completedFile);
       processFile = !initMd5.equals(completedFileMd5);
     }
-    if ( !processFile ) {
+    if (!processFile) {
       // we are done!
       return true;
     }
@@ -178,7 +183,7 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
     try {
       prop.load(new FileInputStream(init));
     } catch (IOException ex) {
-      ex.printStackTrace();
+      WebLogger.getLogger(mAppName).printStackTrace(ex);
       return false;
     }
 
@@ -190,7 +195,7 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
     try {
       FileUtils.copyFile(init, completedFile);
     } catch (IOException e) {
-      e.printStackTrace();
+      WebLogger.getLogger(mAppName).printStackTrace(e);
       // ignore this.
     }
 
@@ -216,13 +221,13 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
           this.mKeyToFileMap.put(key, filename);
           if (!file.exists()) {
             mFileNotFoundSet.add(key);
-            Log.i(TAG, "putting in file not found map true: " + key);
+            WebLogger.getLogger(mAppName).i(TAG, "putting in file not found map true: " + key);
             continue;
           }
 
           // update dialog message with current filename
-          publishProgress(mContext.getString(R.string.importing_file_without_detail,
-              curFileCount, fileCount, filename), detail);
+          publishProgress(mContext.getString(R.string.importing_file_without_detail, curFileCount,
+              fileCount, filename), detail);
           ImportRequest request = null;
 
           // If the import file is in the assets/csv directory
@@ -278,7 +283,7 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
     return true;
   }
 
-  private void  extractFromRawZip(int resourceId, boolean overwrite, ArrayList<String> result) {
+  private void extractFromRawZip(int resourceId, boolean overwrite, ArrayList<String> result) {
     String message = null;
     AssetFileDescriptor fd = null;
     try {
@@ -322,8 +327,8 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
             }
             ++nFiles;
             File tempFile = new File(ODKFileUtils.getAppFolder(mAppName), entry.getName());
-            String formattedString = mContext.getString(R.string.expansion_unzipping_without_detail,
-                entry.getName(), nFiles, totalFiles);
+            String formattedString = mContext.getString(
+                R.string.expansion_unzipping_without_detail, entry.getName(), nFiles, totalFiles);
             String detail;
             if (entry.isDirectory()) {
               detail = mContext.getString(R.string.expansion_create_dir_detail);
@@ -338,8 +343,9 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
               while ((bread = zipInputStream.read(buffer)) != -1) {
                 bytesProcessed += bread;
                 long curThousands = (bytesProcessed / 1000L);
-                if ( curThousands != lastBytesProcessedThousands ) {
-                  detail = mContext.getString(R.string.expansion_unzipping_detail, bytesProcessed, size);
+                if (curThousands != lastBytesProcessedThousands) {
+                  detail = mContext.getString(R.string.expansion_unzipping_detail, bytesProcessed,
+                      size);
                   publishProgress(formattedString, detail);
                   lastBytesProcessedThousands = curThousands;
                 }
@@ -348,28 +354,31 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
               out.flush();
               out.close();
 
-              detail = mContext.getString(R.string.expansion_unzipping_detail, bytesProcessed, size);
+              detail = mContext
+                  .getString(R.string.expansion_unzipping_detail, bytesProcessed, size);
               publishProgress(formattedString, detail);
             }
-            Log.i(TAG, "Extracted ZipEntry: " + entry.getName());
+            WebLogger.getLogger(mAppName).i(TAG, "Extracted ZipEntry: " + entry.getName());
 
             message = mContext.getString(R.string.success);
             result.add(entry.getName() + " " + message);
           }
 
-          ODKFileUtils.assertConfiguredTablesApp(mAppName, Tables.getInstance().getVersionCodeString());
+          ODKFileUtils.assertConfiguredTablesApp(mAppName, 
+              Tables.getInstance().getVersionCodeString());
 
-          String completionString = mContext.getString(R.string.expansion_unzipping_complete, totalFiles);
+          String completionString = mContext.getString(R.string.expansion_unzipping_complete,
+              totalFiles);
           publishProgress(completionString, null);
         } catch (IOException e) {
-          e.printStackTrace();
+          WebLogger.getLogger(mAppName).printStackTrace(e);
           mPendingSuccess = false;
           if (e.getCause() != null) {
             message = e.getCause().getMessage();
           } else {
             message = e.getMessage();
           }
-          if ( entry != null ) {
+          if (entry != null) {
             result.add(entry.getName() + " " + message);
           } else {
             result.add("Error accessing zipfile resource " + message);
@@ -381,30 +390,30 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
               rawInputStream = null;
               fd = null;
             } catch (IOException e) {
-              e.printStackTrace();
-              Log.e(TAG, "Closing of ZipFile failed: " + e.toString());
+              WebLogger.getLogger(mAppName).printStackTrace(e);
+              WebLogger.getLogger(mAppName).e(TAG, "Closing of ZipFile failed: " + e.toString());
             }
           }
-          if ( rawInputStream != null) {
+          if (rawInputStream != null) {
             try {
               rawInputStream.close();
               fd = null;
             } catch (IOException e) {
-              e.printStackTrace();
-              Log.e(TAG, "Closing of ZipFile failed: " + e.toString());
+              WebLogger.getLogger(mAppName).printStackTrace(e);
+              WebLogger.getLogger(mAppName).e(TAG, "Closing of ZipFile failed: " + e.toString());
             }
           }
-          if ( fd != null) {
+          if (fd != null) {
             try {
               fd.close();
             } catch (IOException e) {
-              e.printStackTrace();
-              Log.e(TAG, "Closing of ZipFile failed: " + e.toString());
+              WebLogger.getLogger(mAppName).printStackTrace(e);
+              WebLogger.getLogger(mAppName).e(TAG, "Closing of ZipFile failed: " + e.toString());
             }
           }
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        WebLogger.getLogger(mAppName).printStackTrace(e);
         mPendingSuccess = false;
         if (e.getCause() != null) {
           message = e.getCause().getMessage();
@@ -413,20 +422,20 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
         }
         result.add("Error accessing zipfile resource " + message);
       } finally {
-        if ( rawInputStream != null) {
+        if (rawInputStream != null) {
           try {
             rawInputStream.close();
           } catch (IOException e) {
-            e.printStackTrace();
+            WebLogger.getLogger(mAppName).printStackTrace(e);
           }
         }
       }
     } finally {
-      if ( fd != null ) {
+      if (fd != null) {
         try {
           fd.close();
         } catch (IOException e) {
-          e.printStackTrace();
+          WebLogger.getLogger(mAppName).printStackTrace(e);
         }
       } else {
         result.add("Error accessing zipfile resource.");
@@ -443,9 +452,10 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
     this.displayDetail = values[1];
 
     if (mDialogFragment != null) {
-      mDialogFragment.updateProgress(displayOverall + (( displayDetail != null ) ? "\n(" + displayDetail + ")" : ""));
+      mDialogFragment.updateProgress(displayOverall
+          + ((displayDetail != null) ? "\n(" + displayDetail + ")" : ""));
     } else {
-      Log.e(TAG, "dialog fragment is null! Not updating progress.");
+      WebLogger.getLogger(mAppName).e(TAG, "dialog fragment is null! Not updating progress.");
     }
   }
 
@@ -465,7 +475,8 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
   protected void onPostExecute(Boolean result) {
     // refresh TableManager to show newly imported tables
     if (this.mDialogFragment == null) {
-      Log.e(TAG, "dialog fragment is null! Task can't report back. " + "Returning.");
+      WebLogger.getLogger(mAppName).e(TAG,
+          "dialog fragment is null! Task can't report back. " + "Returning.");
       return;
     }
     // From this point forward we'll assume that the dialog fragment is not
@@ -477,10 +488,10 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
       // Build summary message
       StringBuffer msg = new StringBuffer();
       for (String key : mKeyToFileMap.keySet()) {
-        Log.e(TAG, "key: " + key);
+        WebLogger.getLogger(mAppName).e(TAG, "key: " + key);
         if (importStatus.get(key)) {
           String nameOfFile = mKeyToFileMap.get(key);
-          Log.e(TAG, "import status from map: " + importStatus.get(key));
+          WebLogger.getLogger(mAppName).e(TAG, "import status from map: " + importStatus.get(key));
           msg.append(mContext.getString(R.string.imported_successfully, nameOfFile));
         } else {
           // maybe there was an existing table already, maybe there were
@@ -488,11 +499,11 @@ public class InitializeTask extends AsyncTask<Void, String, Boolean> implements 
           if (mFileNotFoundSet.contains(key)) {
             // We'll first retrieve the file to which this key was pointing.
             String nameOfFile = mKeyToFileMap.get(key);
-            Log.e(TAG, "file wasn't found: " + key);
+            WebLogger.getLogger(mAppName).e(TAG, "file wasn't found: " + key);
             msg.append(mContext.getString(R.string.file_not_found, nameOfFile));
           } else {
             // a general error.
-            Log.e(TAG, "table already exists map was false");
+            WebLogger.getLogger(mAppName).e(TAG, "table already exists map was false");
             msg.append(mContext.getString(R.string.imported_with_errors, key));
           }
         }
