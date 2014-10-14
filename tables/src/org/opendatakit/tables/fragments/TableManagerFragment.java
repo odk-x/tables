@@ -61,14 +61,10 @@ public class TableManagerFragment extends ListFragment {
 
   private TableNameStructAdapter mTpAdapter;
 
-  public TableManagerFragment() {
-    // empty constructor required for fragments.
-  }
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    WebLogger.getLogger(((AbsBaseActivity) getActivity()).getAppName()).d(TAG, "[onCreate]");
+    // AppName may not be available...
     this.mTableNameStructs = new ArrayList<TableNameStruct>();
     this.setHasOptionsMenu(true);
   }

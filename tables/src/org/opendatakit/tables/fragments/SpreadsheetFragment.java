@@ -60,7 +60,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -96,41 +95,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
   private CellInfo mLastDataCellMenued;
   private CellInfo mLastHeaderCellMenued;
-  /**
-   * From Controller.
-   */
-  private View mOverlay;
-  private RelativeLayout.LayoutParams mOverlayLayoutParams;
-
-  public SpreadsheetFragment() {
-    super();
-    // for fragments
-    WebLogger.getLogger(getAppName()).d(TAG,
-        "[SpreadsheetFragment] empty no arg constructor called");
-  }
 
   @Override
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.SPREADSHEET;
-  }
-
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    WebLogger.getLogger(getAppName()).d(TAG, "[onCreate]");
-  }
-
-  @Override
-  public void onResume() {
-    super.onResume();
-    WebLogger.getLogger(getAppName()).d(TAG, "[onResume]");
-  }
-
-  @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-    WebLogger.getLogger(getAppName()).d(TAG, "[onActivityCreated]");
-
   }
 
   @Override
@@ -295,7 +263,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     }
     Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
     Bundle extras = new Bundle();
-    IntentUtil.addSQLKeysToBundle(extras, sqlWhereClause, sqlSelectionArgs, null, null,
+    IntentUtil.addSQLKeysToBundle(extras, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
         sqlOrderByElementKey, sqlOrderByDirection);
     IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
     IntentUtil.addAppNameToBundle(extras, this.getAppName());

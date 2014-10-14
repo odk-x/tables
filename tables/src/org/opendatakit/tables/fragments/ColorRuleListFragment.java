@@ -58,10 +58,6 @@ public class ColorRuleListFragment extends ListFragment {
   ColorRuleGroup mColorRuleGroup;
   ColorRuleAdapter mColorRuleAdapter;
   
-  public ColorRuleListFragment() {
-    // required for fragments.
-  }
-  
   /**
    * Retrieve a new instance of {@list ColorRuleListFragment} with the
    * appropriate values set in its arguments.

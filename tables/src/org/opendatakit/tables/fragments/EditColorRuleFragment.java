@@ -73,10 +73,6 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   /** A value signifying the fragment is being used to add a new rule. */
   public static final int INVALID_RULE_POSITION = -1;
 
-  public EditColorRuleFragment() {
-    // Required by fragments.
-  }
-
   /**
    * 
    * @param colorRuleGroupType

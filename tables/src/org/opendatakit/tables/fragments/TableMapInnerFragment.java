@@ -132,19 +132,44 @@ public class TableMapInnerFragment extends MapFragment {
    */
   private int mCurrentIndex;
 
-  @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onActivityCreated]");
-  }
-
   int retrieveSavedIndexFromBundle(Bundle bundle) {
     if (bundle != null && bundle.containsKey(SAVE_KEY_INDEX)) {
       return bundle.getInt(SAVE_KEY_INDEX);
     } else {
       return INVALID_INDEX;
     }
+  }
+
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // AppName may not yet be available...
+    this.mCurrentIndex = this.retrieveSavedIndexFromBundle(savedInstanceState);
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onSaveInstanceState]");
+    int markerIndexToSave = INVALID_INDEX;
+    if (mCurrentMarker != null) {
+      markerIndexToSave = mMarkerIds.get(mCurrentMarker);
+    }
+    WebLogger.getLogger(activity.getAppName()).d(TAG,
+        "[onSaveInstanceState] saving markder index: " + markerIndexToSave);
+    outState.putInt(SAVE_KEY_INDEX, markerIndexToSave);
+    CameraPosition pos = getMap().getCameraPosition();
+    outState.putFloat(SAVE_ZOOM, pos.zoom);
+    outState.putDouble(SAVE_TARGET_LAT, pos.target.latitude);
+    outState.putDouble(SAVE_TARGET_LONG, pos.target.longitude);
+  }
+
+  @Override
+  public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onActivityCreated]");
   }
 
   @Override
@@ -172,16 +197,6 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onCreate]");
-    this.mCurrentIndex = this.retrieveSavedIndexFromBundle(savedInstanceState);
-    WebLogger.getLogger(activity.getAppName()).d(TAG,
-        "[onCreate] retrieved index is: " + mCurrentIndex);
-  }
-
-  @Override
   public void onDetach() {
     super.onDetach();
     AbsBaseActivity activity = (AbsBaseActivity) getActivity();
@@ -200,24 +215,6 @@ public class TableMapInnerFragment extends MapFragment {
     super.onStop();
     AbsBaseActivity activity = (AbsBaseActivity) getActivity();
     WebLogger.getLogger(activity.getAppName()).d(TAG, "[onStop]");
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onSaveInstanceState]");
-    int markerIndexToSave = INVALID_INDEX;
-    if (mCurrentMarker != null) {
-      markerIndexToSave = mMarkerIds.get(mCurrentMarker);
-    }
-    WebLogger.getLogger(activity.getAppName()).d(TAG,
-        "[onSaveInstanceState] saving markder index: " + markerIndexToSave);
-    outState.putInt(SAVE_KEY_INDEX, markerIndexToSave);
-    CameraPosition pos = getMap().getCameraPosition();
-    outState.putFloat(SAVE_ZOOM, pos.zoom);
-    outState.putDouble(SAVE_TARGET_LAT, pos.target.latitude);
-    outState.putDouble(SAVE_TARGET_LONG, pos.target.longitude);
   }
 
   /** Re-initializes the map, including the markers. */

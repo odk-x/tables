@@ -34,12 +34,6 @@ import android.webkit.WebView;
 public class ListViewFragment extends AbsWebTableFragment {
   
   private static final String TAG = ListViewFragment.class.getSimpleName();
-  
-  @Override
-  public void onDestroy() {
-    super.onDestroy();
-    WebLogger.getLogger(getAppName()).d(TAG, "[onDestroy]");
-  }
 
   @Override
   public WebView buildView() {

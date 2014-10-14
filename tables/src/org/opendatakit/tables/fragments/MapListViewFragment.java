@@ -43,12 +43,25 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   protected int mSelectedItemIndex;
   protected static final int INVALID_INDEX = -1;
 
+  int retrieveSelectedItemIndexFromBundle(Bundle bundle) {
+    if (bundle != null && bundle.containsKey(INTENT_KEY_SELECTED_INDEX)) {
+      return bundle.getInt(INTENT_KEY_SELECTED_INDEX);
+    } else {
+      return INVALID_INDEX;
+    }
+  }
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    // AppName may not be available...
     this.mSelectedItemIndex = this.retrieveSelectedItemIndexFromBundle(savedInstanceState);
-    WebLogger.getLogger(getAppName()).d(TAG,
-        "[onCreate] retrieved selected index: " + this.mSelectedItemIndex);
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt(INTENT_KEY_SELECTED_INDEX, this.mSelectedItemIndex);
   }
 
   @Override
@@ -61,20 +74,6 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
       result.setNoItemSelected();
     }
     return result;
-  }
-
-  int retrieveSelectedItemIndexFromBundle(Bundle bundle) {
-    if (bundle != null && bundle.containsKey(INTENT_KEY_SELECTED_INDEX)) {
-      return bundle.getInt(INTENT_KEY_SELECTED_INDEX);
-    } else {
-      return INVALID_INDEX;
-    }
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    outState.putInt(INTENT_KEY_SELECTED_INDEX, this.mSelectedItemIndex);
   }
 
   /**

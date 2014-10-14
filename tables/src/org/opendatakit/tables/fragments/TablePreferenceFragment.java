@@ -59,14 +59,11 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
 
   private static final String TAG = TablePreferenceFragment.class.getSimpleName();
 
-  public TablePreferenceFragment() {
-    // required by fragments.
-  }
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    // Let's load it from the resource.
+    // AppName may not be available...
+    // Let's load preferences from the resource.
     this.addPreferencesFromResource(R.xml.table_preference);
   }
 
@@ -91,21 +88,25 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     WebLogger.getLogger(getAppName()).d(TAG, "[onActivityResult]");
     switch (requestCode) {
     case Constants.RequestCodes.CHOOSE_LIST_FILE:
-      fullPath = getFullPathFromIntent(data);
-      relativePath = getRelativePathOfFile(fullPath);
-      this.setListViewFileName(relativePath);
+      if ( data != null ) {
+        fullPath = getFullPathFromIntent(data);
+        relativePath = getRelativePathOfFile(fullPath);
+        this.setListViewFileName(relativePath);
+      }
       break;
     case Constants.RequestCodes.CHOOSE_DETAIL_FILE:
-      fullPath = getFullPathFromIntent(data);
-      relativePath = getRelativePathOfFile(fullPath);
-      this.setDetailViewFileName(relativePath);
+      if ( data != null ) {
+        fullPath = getFullPathFromIntent(data);
+        relativePath = getRelativePathOfFile(fullPath);
+        this.setDetailViewFileName(relativePath);
+      }
       break;
     case Constants.RequestCodes.CHOOSE_MAP_FILE:
-      fullPath = getFullPathFromIntent(data);
-      relativePath = getRelativePathOfFile(fullPath);
-      WebLogger.getLogger(getAppName()).d(TAG,
-          "[onActivityResult] map view relative path is: " + relativePath);
-      this.setMapListViewFileName(relativePath);
+      if ( data != null ) {
+        fullPath = getFullPathFromIntent(data);
+        relativePath = getRelativePathOfFile(fullPath);
+        this.setMapListViewFileName(relativePath);
+      }
       break;
     default:
       super.onActivityResult(requestCode, resultCode, data);

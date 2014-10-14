@@ -47,10 +47,6 @@ public class InitializeTaskDialogFragment extends DialogFragment {
 
   private static final String TAG = InitializeTaskDialogFragment.class.getSimpleName();
 
-  public InitializeTaskDialogFragment() {
-    // explicit empty constructor for fragments.
-  }
-
   /**
    * Set the {@link InitializeTask} for which this fragment will be responsible.
    * 

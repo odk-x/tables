@@ -58,17 +58,30 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
     String fileName = IntentUtil.retrieveFileNameFromBundle(bundle);
     return fileName;
   }
-  
+
+  @Override
+  public void putFileNameInBundle(Bundle bundle) {
+    if (this.getFileName() != null) {
+      bundle.putString(Constants.IntentKeys.FILE_NAME, this.getFileName());
+    }
+  }
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    WebLogger.getLogger(getAppName()).d(TAG, "[onCreate]");
+    // AppName may not be available...
     // Get the file name. Saved state gets precedence. Then arguments.
     String retrievedFileName = retrieveFileNameFromBundle(savedInstanceState);
     if (retrievedFileName == null) {
       retrievedFileName = this.retrieveFileNameFromBundle(this.getArguments());
     }
     this.mFileName = retrievedFileName;
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    putFileNameInBundle(outState);
   }
   
   @Override
@@ -79,13 +92,6 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
     WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView] activity is: " + this.getActivity());
     WebView webView = this.buildView();
     return webView;
-  }
-
-  @Override
-  public void putFileNameInBundle(Bundle bundle) {
-    if (this.getFileName() != null) {
-      bundle.putString(Constants.IntentKeys.FILE_NAME, this.getFileName());
-    }
   }
 
   @Override

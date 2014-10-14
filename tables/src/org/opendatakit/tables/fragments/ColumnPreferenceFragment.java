@@ -41,10 +41,6 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   private static final String TAG =
       ColumnPreferenceFragment.class.getSimpleName();
 
-  public ColumnPreferenceFragment() {
-    // required for fragments.
-  }
-
   public void onAttach(android.app.Activity activity) {
     super.onAttach(activity);
     if (!(activity instanceof TableLevelPreferencesActivity)) {

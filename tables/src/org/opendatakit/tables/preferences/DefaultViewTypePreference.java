@@ -24,6 +24,7 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.views.components.TableViewTypeAdapter;
 
 import android.app.AlertDialog.Builder;
@@ -42,10 +43,11 @@ public class DefaultViewTypePreference extends ListPreference {
   private final String mAppName;
   private CharSequence[] mEntryValues;
 
-  public DefaultViewTypePreference(Context context, String appName, AttributeSet attrs) {
+  public DefaultViewTypePreference(Context context, AttributeSet attrs) {
     super(context, attrs);
+    AbsTableActivity activity = (AbsTableActivity) context; 
     this.mContext = context;
-    this.mAppName = appName;
+    this.mAppName = activity.getAppName();
   }
 
   public void setFields(String tableId, ArrayList<ColumnDefinition> orderedDefns) {

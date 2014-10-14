@@ -44,11 +44,9 @@ public class GraphViewFragment extends AbsWebTableFragment {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    // AppName may not be available
     super.onCreate(savedInstanceState);
     String graphName = this.getArguments().getString(Constants.IntentKeys.GRAPH_NAME);
-    if (graphName == null) {
-      WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] graphName was null!");
-    }
     this.mGraphName = graphName;
   }
 
@@ -58,6 +56,9 @@ public class GraphViewFragment extends AbsWebTableFragment {
    * @return
    */
   String getGraphName() {
+    if (mGraphName == null) {
+      WebLogger.getLogger(getAppName()).e(TAG, "[getGraphName] graphName was null!");
+    }
     return this.mGraphName;
   }
 

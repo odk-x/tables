@@ -73,9 +73,16 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   }
 
   @Override
+  public void putFileNameInBundle(Bundle bundle) {
+    if (this.getFileName() != null) {
+      bundle.putString(Constants.IntentKeys.FILE_NAME, this.getFileName());
+    }
+  }
+
+  @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    WebLogger.getLogger(getAppName()).d(TAG, "[onCreate]");
+    // AppName is unknown since Activity is likely null
     // Get the file name if it was there.
     String retrievedFileName = retrieveFileNameFromBundle(savedInstanceState);
     if (retrievedFileName == null) {
@@ -83,6 +90,12 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
       retrievedFileName = this.retrieveFileNameFromBundle(this.getArguments());
     }
     this.mFileName = retrievedFileName;
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    this.putFileNameInBundle(outState);
   }
 
   @Override
@@ -111,13 +124,6 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    */
   protected abstract TableData createDataObject();
 
-  @Override
-  public void putFileNameInBundle(Bundle bundle) {
-    if (this.getFileName() != null) {
-      bundle.putString(Constants.IntentKeys.FILE_NAME, this.getFileName());
-    }
-  }
-
   /**
    * Build the {@link CustomView} that will be displayed by the fragment.
    * @return
@@ -134,12 +140,6 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   @Override
   public String getFileName() {
     return this.mFileName;
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    this.putFileNameInBundle(outState);
   }
 
 }

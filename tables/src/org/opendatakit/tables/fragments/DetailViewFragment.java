@@ -51,12 +51,30 @@ public class DetailViewFragment extends AbsWebTableFragment {
    */
   private UserTable mSingleRowTable;
 
+  /**
+   * Retrieve the row id from the bundle.
+   * 
+   * @param bundle
+   *          the row id, or null if not present.
+   * @return
+   */
+  String retrieveRowIdFromBundle(Bundle bundle) {
+    String rowId = IntentUtil.retrieveRowIdFromBundle(bundle);
+    return rowId;
+  }
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     String retrievedRowId = this.retrieveRowIdFromBundle(this.getArguments());
     this.mRowId = retrievedRowId;
     this.setHasOptionsMenu(true);
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putString(Constants.IntentKeys.ROW_ID, this.getRowId());
   }
 
   @Override
@@ -132,24 +150,6 @@ public class DetailViewFragment extends AbsWebTableFragment {
    */
   public String getRowId() {
     return this.mRowId;
-  }
-
-  /**
-   * Retrieve the row id from the bundle.
-   * 
-   * @param bundle
-   *          the row id, or null if not present.
-   * @return
-   */
-  String retrieveRowIdFromBundle(Bundle bundle) {
-    String rowId = IntentUtil.retrieveRowIdFromBundle(bundle);
-    return rowId;
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    outState.putString(Constants.IntentKeys.ROW_ID, this.getRowId());
   }
 
   @Override
