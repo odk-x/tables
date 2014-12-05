@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ElementType;
+import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 
