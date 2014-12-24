@@ -30,6 +30,7 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -544,6 +545,33 @@ public class Control {
     String baseUri = getBaseContentUri();
     String result = baseUri + relativePath;
     return result;
+  }
+  
+  /**
+   * @see {@link ControlIf#getRowFileAsUrl(String, String, String)}
+   * @param tableId
+   * @param rowId
+   * @param rowPath
+   * @return
+   */
+  public String getRowFileAsUrl(String tableId, String rowId, String rowPath) {
+    String baseUri = getBaseContentUri();
+    String folderPath = ODKFileUtils.getInstanceFolder(mAppName, tableId, rowId);
+    String prefix = ODKFileUtils.asRelativePath(mAppName, new File(folderPath));
+    prefix = prefix + "/";
+    
+    if ( rowPath.startsWith("/")) {
+      rowPath = rowPath.substring(1);
+    }
+    
+    if ( rowPath.startsWith(prefix) ) {
+      // legacy construction
+      WebLogger.getLogger(mAppName).e(TAG,
+          "table [" + tableId + "] contains old-style rowpath constructs!");
+      return baseUri + rowPath;
+    } else {
+      return baseUri + prefix + rowPath;
+    }
   }
 
   /**

@@ -24,8 +24,6 @@ import java.lang.ref.WeakReference;
  *
  */
 public class ControlIf {
-  
-  private static final String TAG = ControlIf.class.getSimpleName();
 
 	private WeakReference<Control> weakControl;
 
@@ -453,6 +451,19 @@ public class ControlIf {
 	 */
 	public String getFileAsUrl(String relativePath) {
 	  return weakControl.get().getFileAsUrl(relativePath);
+	}
+	
+	/**
+	 * Convert the rowpath value for a media attachment (e.g., uriFragment)
+	 * field into a url by which it can be accessed. 
+	 * 
+	 * @param tableId
+	 * @param rowId
+	 * @param rowPath
+	 * @return
+	 */
+	public String getRowFileAsUrl(String tableId, String rowId, String rowPath) {
+	  return weakControl.get().getRowFileAsUrl(tableId, rowId, rowPath);
 	}
 	
 	/**
