@@ -14,7 +14,6 @@
 
 package org.opendatakit.tables.application;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,44 +25,17 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.util.Log;
-import fi.iki.elonen.SimpleWebServer;
 
 public class Tables extends Application {
 
   public static final String t = "Tables";
 
   private Set<String> appNameHasBeenInitialized = new HashSet<String>();
-  private SimpleWebServer server = null;
-  private volatile Thread webServer = null;
 
   private static Tables singleton = null;
 
   public static Tables getInstance() {
     return singleton;
-  }
-
-  private synchronized void startServer() {
-    if (server == null || !server.isAlive()) {
-      stopServer();
-      SimpleWebServer testing = new SimpleWebServer();
-      try {
-        testing.start();
-        server = testing;
-      } catch (IOException e) {
-        Log.d("Tables.Thread.WebServer", "Exception: " + e.toString());
-      }
-    }
-  }
-
-  private synchronized void stopServer() {
-    if (server != null) {
-      try {
-        server.stop();
-      } catch (Exception e) {
-        // ignore...
-      }
-      server = null;
-    }
   }
 
   public boolean shouldRunInitializationTask(String appName) {
@@ -119,27 +91,6 @@ public class Tables extends Application {
     singleton = this;
 
     super.onCreate();
-
-    webServer = new Thread(null, new Runnable() {
-      @Override
-      public void run() {
-        Thread mySelf = Thread.currentThread();
-        int retryCount = 0;
-        for (;webServer == mySelf;) {
-          startServer();
-          try {
-            retryCount++;
-            Thread.sleep(1000);
-            if ( retryCount % 60 == 0 ) {
-              Log.d(t,"Tables.Thread.WebServer -- waking to confirm webserver is working");
-            }
-          } catch (InterruptedException e) {
-            e.printStackTrace();
-          }
-        }
-        stopServer();
-      }}, "WebServer");
-    webServer.start();
   }
 
 
@@ -151,15 +102,6 @@ public class Tables extends Application {
 
   @Override
   public void onTerminate() {
-    Thread tmpThread = webServer;
-    webServer = null;
-    tmpThread.interrupt();
-    try {
-      // give it time to drain...
-      Thread.sleep(200);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
     super.onTerminate();
     Log.i(t, "onTerminate");
   }

@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.opendatakit.tables"
-    android:versionCode="124"
-    android:versionName="2.0" >
+    android:versionCode="125"
+    android:versionName="2.0"
+    android:sharedUserId="org.opendatakit"
+    android:sharedUserLabel="@string/app_userLabel" >
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -17,7 +19,12 @@
     <uses-permission android:name="android.permission.READ_SYNC_STATS" />
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
-
+    
+    <permission
+          android:name="org.opendatakit.webkitserver.RUN_WEBSERVER"
+          android:protectionLevel="signature" />
+    <uses-permission android:name="org.opendatakit.webkitserver.RUN_WEBSERVER" />
+	
     <permission
           android:name="org.opendatakit.tables.permission.MAPS_RECEIVE"
           android:protectionLevel="signature" />
@@ -44,8 +51,8 @@
         android:label="@string/app_name"
         android:theme="@style/InvertTables"
         android:allowBackup="false"
-        android:installLocation="auto"
         android:largeHeap="true"
+        android:installLocation="auto"
         android:hardwareAccelerated="true"	>
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
