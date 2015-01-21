@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.provider.TablesProviderAPI;
 import org.opendatakit.tables.utils.Constants;
@@ -37,6 +38,14 @@ public class Launcher extends Activity {
   private static final String TAG = Launcher.class.getName();
 
   private String mAppName;
+  /**
+   * The URI segment to a file that may be specified by callers. This is
+   * essentially a file name (e.g. assets/index.html), but it represents a URI
+   * on a scheme and host that will be opened by a server. As such it can
+   * include a hash and query parameters (e.g. assets/index.html#foo?bar=baz).
+   * In this case the full URL would be something like
+   * http://localhost:8635/assets/index.html#foo?bar=baz.
+   */
   private String mFileName;
 
   protected void retrieveValuesFromIntent() {
@@ -84,7 +93,11 @@ public class Launcher extends Activity {
       
       String relativePathToFile = null;
       if (this.customFileSpecified()) {
-        File customFile = ODKFileUtils.asAppFile(mAppName, mFileName);
+        String fileNameWithoutParameters =
+            UrlUtils.getFileNameFromUriSegment(this.mFileName);
+        File customFile = ODKFileUtils.asAppFile(
+            mAppName,
+            fileNameWithoutParameters);
         if (!customFile.exists()) {
           Toast.makeText(
               this,
@@ -97,6 +110,13 @@ public class Launcher extends Activity {
         relativePathToFile = ODKFileUtils.asRelativePath(
             mAppName,
             customFile);
+        // And now we need to add any potential query parameters that were
+        // originally passed in.
+        String hashAndParameters =
+            UrlUtils.getParametersFromSegment(this.mFileName);
+        // Safe to append directly, as if there no parameters will return an
+        // empty string.
+        relativePathToFile = relativePathToFile + hashAndParameters;
       } else {
         File defaultHomeScreen =
             new File(ODKFileUtils.getTablesHomeScreenFile(this.mAppName));
