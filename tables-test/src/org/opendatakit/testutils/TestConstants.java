@@ -127,6 +127,8 @@ public class TestConstants {
 
   public static UserTable getUserTableMock() {
     UserTable mock = mock(UserTable.class);
+    doReturn(DEFAULT_TABLE_ID).when(mock).getTableId();
+    doReturn(TABLES_DEFAULT_APP_NAME).when(mock).getAppName();
     return mock;
   }
 

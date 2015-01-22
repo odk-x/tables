@@ -132,6 +132,10 @@ public class TableDisplayActivityTest {
         mock(TableMapInnerFragment.class);
     TableDisplayActivityStub.MAP_LIST_VIEW_FRAGMENT =
         mock(MapListViewFragment.class);
+    
+    // This activity expects a UserTable with app and table id.
+    TableDisplayActivityStub.USER_TABLE = TestConstants.getUserTableMock();
+    
     this.activity = Robolectric.buildActivity(TableDisplayActivityStub.class)
         .withIntent(intent)
         .create()
