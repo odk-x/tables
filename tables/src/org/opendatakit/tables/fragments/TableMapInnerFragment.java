@@ -185,6 +185,7 @@ public class TableMapInnerFragment extends MapFragment {
               new LatLng(savedInstanceState.getDouble(SAVE_TARGET_LAT), savedInstanceState
                   .getDouble(SAVE_TARGET_LONG)), savedInstanceState.getFloat(SAVE_ZOOM)));
     }
+    this.getMap().setMyLocationEnabled(true);
     getMap().setOnMapLongClickListener(getOnMapLongClickListener());
     getMap().setOnMapClickListener(getOnMapClickListener());
   }
