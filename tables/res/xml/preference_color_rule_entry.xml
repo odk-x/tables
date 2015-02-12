@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+	<ListPreference
+	    android:key="pref_color_rule_element_key"
+	    android:persistent="false"
+	    android:title="@string/element_key" />
+    <ListPreference
+        android:key="pref_color_rule_comp_type"
+        android:persistent="false"
+        android:title="@string/comparison_type" />
+    <EditTextPreference
+        android:key="pref_color_rule_value"
+        android:title="@string/value"
+        android:persistent="false" />
+    <org.opendatakit.tables.preferences.EditColorPreference
+        android:key="pref_color_rule_text_color"
+        android:persistent="false"
+        android:title="@string/text_color" />
+    <org.opendatakit.tables.preferences.EditColorPreference
+        android:key="pref_color_rule_background_color"
+        android:persistent="false"
+        android:title="@string/background_color" />
+    <Preference
+        android:key="pref_color_rule_save"
+        android:persistent="false"
+        android:title="@string/save" />
+    
+        
+    
+
+</PreferenceScreen>

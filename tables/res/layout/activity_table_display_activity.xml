@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    
+    <FrameLayout
+        android:id="@+id/activity_table_display_activity_one_pane_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+    
+    <FrameLayout
+        android:id="@+id/activity_table_display_activity_map_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    
+    	<include layout="@layout/map_fragment" />
+    
+    </FrameLayout>
+
+</LinearLayout>
