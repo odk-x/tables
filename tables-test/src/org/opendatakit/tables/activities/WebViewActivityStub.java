@@ -2,7 +2,7 @@ package org.opendatakit.tables.activities;
 
 import org.opendatakit.testutils.TestConstants;
 
-public class WebViewActivityStub extends WebViewActivity {
+public class WebViewActivityStub extends MainActivity {
   
   public static final String DEFAULT_APP_NAME =
       TestConstants.TABLES_DEFAULT_APP_NAME;

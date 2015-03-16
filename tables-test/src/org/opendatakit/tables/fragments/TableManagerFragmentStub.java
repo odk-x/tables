@@ -18,7 +18,7 @@ public class TableManagerFragmentStub extends TableManagerFragment {
   protected void updateTableIdList() {
     this.numberOfCallsToUpdatePropertiesList++;
     super.updateTableIdList();
-    super.setList(dummyList);
+//    super.setList(dummyList);
   }
   
   /**

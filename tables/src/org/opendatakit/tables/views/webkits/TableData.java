@@ -28,15 +28,20 @@ import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ElementTypeManipulator;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
+
+import android.content.Context;
+import android.os.RemoteException;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -55,6 +60,7 @@ public class TableData {
     return new TableDataIf(this);
   }
 
+  private final Context mContext;
   private final UserTable mTable;
 
   /**
@@ -73,13 +79,22 @@ public class TableData {
   private ColorRuleGroup mStatusColumnColorRuleGroup = null;
   private ColorRuleGroup mRowColorRuleGroup = null;
 
-  public TableData(UserTable table) {
+  public TableData(Context context, UserTable table) {
+    this.mContext = context;
     this.mTable = table;
     this.mSelectedMapMarkerIndex = INVALID_INDEX;
     WebLogger.getLogger(mTable.getAppName()).d(TAG, "calling TableData constructor with UserTable");
     initMaps();
   }
 
+  public String getAppName() {
+    return mTable.getAppName();
+  }
+  
+  public Context getContext() {
+    return mContext;
+  }
+  
   public boolean isGroupedBy() {
     return mTable.isGroupedBy();
   }
@@ -111,7 +126,7 @@ public class TableData {
   private void initMaps() {
   }
 
-  private ArrayList<ColumnDefinition> getColumnDefinitions() {
+  private OrderedColumns getColumnDefinitions() {
     return mTable.getColumnDefinitions();
   }
 
@@ -168,8 +183,8 @@ public class TableData {
    */
   public String getColumns() {
     Map<String, String> colInfo = new HashMap<String, String>();
-    ArrayList<ColumnDefinition> orderedDefn = getColumnDefinitions();
-    for (ColumnDefinition cd : orderedDefn) {
+    OrderedColumns orderedDefn = getColumnDefinitions();
+    for (ColumnDefinition cd : orderedDefn.getColumnDefinitions()) {
       String label = getColumnTypeLabelForElementKey(cd.getElementKey());
       colInfo.put(cd.getElementKey(), label);
     }
@@ -184,14 +199,14 @@ public class TableData {
    * @return
    */
   private String getColumnTypeLabelForElementKey(String elementKey) {
-    ColumnDefinition cd = ColumnDefinition.find(getColumnDefinitions(), elementKey);
+    ColumnDefinition cd = getColumnDefinitions().find(elementKey);
     ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(this.mTable.getAppName());
     ITypeManipulatorFragment r = m.getDefaultRenderer(cd.getType());
     String label = r.getElementTypeDisplayLabel();
     return label;
   }
 
-  public String getColumnForegroundColor(int rowNumber, String elementPath) {
+  public String getColumnForegroundColor(int rowNumber, String elementPath) throws RemoteException {
     int correctedIndex = getIndexIntoDataTable(rowNumber);
     int foregroundColor = -16777216;
 
@@ -202,8 +217,17 @@ public class TableData {
     ColorRuleGroup colRul = this.mElementKeyToColorRuleGroup.get(elementKey);
     if (colRul == null) {
       // If it's not already there, cache it for future use.
-      colRul = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance().getApplicationContext(),
-          mTable.getAppName(), mTable.getTableId(), elementKey);
+      OdkDbHandle db = null;
+      try {
+        db = Tables.getInstance().getDatabase().openDatabase(mTable.getAppName(), false);
+        String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
+        colRul = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(),
+            mTable.getAppName(), db, mTable.getTableId(), elementKey, adminColumns);
+      } finally {
+        if ( db != null ) {
+          Tables.getInstance().getDatabase().closeDatabase(mTable.getAppName(), db);
+        }
+      }
       this.mElementKeyToColorRuleGroup.put(elementKey, colRul);
     }
 
@@ -216,13 +240,22 @@ public class TableData {
     return String.format("#%06X", (0xFFFFFF & foregroundColor));
   }
 
-  public String getStatusForegroundColor(int rowNumber) {
+  public String getStatusForegroundColor(int rowNumber) throws RemoteException {
     int correctedIndex = getIndexIntoDataTable(rowNumber);
     int foregroundColor = -16777216;
 
     if (mStatusColumnColorRuleGroup == null) {
-      mStatusColumnColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance()
-          .getApplicationContext(), mTable.getAppName(), mTable.getTableId());
+      OdkDbHandle db = null;
+      try {
+        db = Tables.getInstance().getDatabase().openDatabase(mTable.getAppName(), false);
+        String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
+        mStatusColumnColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(),
+          mTable.getAppName(), db, mTable.getTableId(), adminColumns);
+      } finally {
+        if ( db != null ) {
+          Tables.getInstance().getDatabase().closeDatabase(mTable.getAppName(), db);
+        }
+      }
     }
 
     Row row = mTable.getRowAtIndex(correctedIndex);
@@ -234,13 +267,22 @@ public class TableData {
     return String.format("#%06X", (0xFFFFFF & foregroundColor));
   }
 
-  public String getRowForegroundColor(int rowNumber) {
+  public String getRowForegroundColor(int rowNumber) throws RemoteException {
     int correctedIndex = getIndexIntoDataTable(rowNumber);
     int foregroundColor = -16777216;
 
     if (mRowColorRuleGroup == null) {
-      mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance()
-          .getApplicationContext(), mTable.getAppName(), mTable.getTableId());
+      OdkDbHandle db = null;
+      try {
+        db = Tables.getInstance().getDatabase().openDatabase(mTable.getAppName(), false);
+        String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
+        mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(),
+            mTable.getAppName(), db, mTable.getTableId(), adminColumns);
+      } finally {
+        if ( db != null ) {
+          Tables.getInstance().getDatabase().closeDatabase(mTable.getAppName(), db);
+        }
+      }
     }
 
     Row row = mTable.getRowAtIndex(correctedIndex);
@@ -270,8 +312,8 @@ public class TableData {
           "column with elementPath: " + elementPath + " does not" + " exist.");
       return null;
     }
-    ArrayList<ColumnDefinition> orderedDefns = getColumnDefinitions();
-    ColumnDefinition cd = ColumnDefinition.find(orderedDefns, elementKey);
+    OrderedColumns orderedDefns = getColumnDefinitions();
+    ColumnDefinition cd = orderedDefns.find(elementKey);
     ElementDataType type = cd.getType().getDataType();
     if (type == ElementDataType.array) {
       String result = row.getRawDataOrMetadataByElementKey(elementKey);

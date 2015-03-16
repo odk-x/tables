@@ -17,21 +17,24 @@ package org.opendatakit.tables.activities;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -43,14 +46,12 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-
 /**
  * This class is responsible for exporting a table to CSV from the phone.
  * <p>
- * There appear to me to be two possible reasons for doing this. The first is
- * to o present the
- * data to a user or admin so that they can view it and use it in a
- * spreadsheet application.
+ * There appear to me to be two possible reasons for doing this. The first is to
+ * o present the data to a user or admin so that they can view it and use it in
+ * a spreadsheet application.
  * <p>
  * The second is to create a CSV that Tables can import to create the table as
  * it existed on the phone at the time of the export.
@@ -70,120 +71,149 @@ import android.widget.TextView;
  */
 public class ExportCSVActivity extends AbstractImportExportActivity {
 
-	/** view IDs (for use in testing) */
-	public static final int TABLESPIN_ID = 1;
-	public static final int FILENAMEVAL_ID = 2;
-	public static final int EXPORTBUTTON_ID = 3;
+  /** view IDs (for use in testing) */
+  public static final int TABLESPIN_ID = 1;
+  public static final int FILENAMEVAL_ID = 2;
+  public static final int EXPORTBUTTON_ID = 3;
 
-	private String appName;
-	/* the list of table names */
-	private String[] tableNames;
-	/* the list of table Ids */
-	private String[] tableIds;
-	/* the table name spinner */
-	private Spinner tableSpin;
-	/* the text field for getting the filename */
-	private EditText filenameValField;
+  private String appName;
+  /* the list of table names */
+  private String[] tableNames;
+  /* the list of table Ids */
+  private String[] tableIds;
+  /* the table name spinner */
+  private Spinner tableSpin;
+  /* the text field for getting the filename */
+  private EditText filenameValField;
 
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
-		if ( appName == null ) {
-		  appName = TableFileUtils.getDefaultAppName();
-		}
-		setContentView(getView());
-	}
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
+    if (appName == null) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
+    setContentView(getView());
+  }
+  
+  @Override
+  public String getAppName() {
+    return appName;
+  }
 
-	/**
-	 * @return the view
-	 */
-	private View getView() {
-		LinearLayout v = new LinearLayout(this);
-		v.setOrientation(LinearLayout.VERTICAL);
-		// selecting table
-		TextView est = new TextView(this);
-		est.setText(getString(R.string.export_csv));
-		v.addView(est);
-		// adding the table spinner
-		tableSpin = new Spinner(this);
-		tableSpin.setId(TABLESPIN_ID);
-      SQLiteDatabase db = null;
+  /**
+   * @return the view
+   */
+  private View getView() {
+    LinearLayout v = new LinearLayout(this);
+    v.setOrientation(LinearLayout.VERTICAL);
+    // selecting table
+    TextView est = new TextView(this);
+    est.setText(getString(R.string.export_csv));
+    v.addView(est);
+    // adding the table spinner
+    tableSpin = new Spinner(this);
+    tableSpin.setId(TABLESPIN_ID);
+    v.addView(tableSpin);
+    // Horizontal divider
+    View ruler1 = new View(this);
+    ruler1.setBackgroundColor(getResources().getColor(R.color.black));
+    v.addView(ruler1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
+    // adding the filename field
+    TextView fnLabel = new TextView(this);
+    fnLabel.setText(getString(R.string.export_file_qualifier));
+    v.addView(fnLabel);
+    filenameValField = new EditText(this);
+    filenameValField.setId(FILENAMEVAL_ID);
+    v.addView(filenameValField);
+    // Horizontal divider
+    View ruler3 = new View(this);
+    ruler3.setBackgroundColor(getResources().getColor(R.color.black));
+    v.addView(ruler3, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
+    // adding the export button
+    Button button = new Button(this);
+    button.setId(EXPORTBUTTON_ID);
+    button.setText(getString(R.string.export_button));
+    button.setOnClickListener(new ButtonListener());
+    v.addView(button);
+    // wrapping in a scroll view
+    ScrollView scroll = new ScrollView(this);
+    scroll.addView(v);
+    return scroll;
+  }
+
+  /**
+   * Attempts to export a table.
+   */
+  private void exportSubmission() {
+    File file = ODKFileUtils.asAppFile(appName, filenameValField.getText().toString().trim());
+    String tableId = tableIds[tableSpin.getSelectedItemPosition()];
+    ExportTask task = new ExportTask(this, appName);
+    showDialog(EXPORT_IN_PROGRESS_DIALOG);
+    task.execute(new ExportRequest(appName, tableId, filenameValField.getText().toString().trim()));
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if (resultCode == RESULT_CANCELED) {
+      return;
+    }
+    Uri fileUri = data.getData();
+    File filepath = new File(fileUri.getPath());
+    String relativePath = ODKFileUtils.asRelativePath(appName, filepath);
+    filenameValField.setText(relativePath);
+  }
+
+  private class ButtonListener implements OnClickListener {
+    @Override
+    public void onClick(View v) {
+      exportSubmission();
+    }
+  }
+
+  @Override
+  public void onPostResume() {
+    super.onPostResume();
+    Tables.getInstance().establishDatabaseConnectionListener(this);
+  }
+  
+  @Override
+  public void databaseAvailable() {
+    if ( Tables.getInstance().getDatabase() != null ) {
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(this, appName);
-        ArrayList<String> rawTableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+        List<String> rawTableIds = Collections.emptyList();
         ArrayList<String> localizedNames = new ArrayList<String>();
-        for (String tableId : rawTableIds ) {
-		    String localizedDisplayName;
-		    localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
-		    localizedNames.add(localizedDisplayName);
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        rawTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
+        for (String tableId : rawTableIds) {
+          String localizedDisplayName;
+          localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+          localizedNames.add(localizedDisplayName);
         }
         tableIds = rawTableIds.toArray(new String[rawTableIds.size()]);
         tableNames = localizedNames.toArray(new String[localizedNames.size()]);
+      } catch (RemoteException e) {
+        WebLogger.getLogger(appName).printStackTrace(e);
       } finally {
-        if ( db != null ) {
-          db.close();
+        if (db != null) {
+          try {
+            Tables.getInstance().getDatabase().closeDatabase(appName, db);
+            db = null;
+          } catch (RemoteException e) {
+            WebLogger.getLogger(appName).printStackTrace(e);
+          }
         }
       }
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_spinner_item, tableNames);
-		adapter.setDropDownViewResource(
-				android.R.layout.simple_spinner_dropdown_item);
-		tableSpin.setAdapter(adapter);
-		tableSpin.setSelection(0);
-		v.addView(tableSpin);
-		// Horizontal divider
-		View ruler1 = new View(this); ruler1.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
-		// adding the filename field
-		TextView fnLabel = new TextView(this);
-		fnLabel.setText(getString(R.string.export_file_qualifier));
-		v.addView(fnLabel);
-		filenameValField = new EditText(this);
-		filenameValField.setId(FILENAMEVAL_ID);
-		v.addView(filenameValField);
-		// Horizontal divider
-		View ruler3 = new View(this); ruler3.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler3, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
-		// adding the export button
-		Button button = new Button(this);
-		button.setId(EXPORTBUTTON_ID);
-		button.setText(getString(R.string.export_button));
-		button.setOnClickListener(new ButtonListener());
-		v.addView(button);
-		// wrapping in a scroll view
-		ScrollView scroll = new ScrollView(this);
-		scroll.addView(v);
-		return scroll;
-	}
-
-	/**
-	 * Attempts to export a table.
-	 */
-	private void exportSubmission() {
-        File file = ODKFileUtils.asAppFile(
-            appName,
-            filenameValField.getText().toString().trim()
-        );
-        String tableId = tableIds[tableSpin.getSelectedItemPosition()];
-        ExportTask task = new ExportTask(this, appName);
-        showDialog(EXPORT_IN_PROGRESS_DIALOG);
-        task.execute(new ExportRequest(appName, tableId, filenameValField.getText().toString().trim()));
-	}
-
-	@Override
-    protected void onActivityResult(int requestCode, int resultCode,
-            Intent data) {
-        if(resultCode == RESULT_CANCELED) {return;}
-        Uri fileUri = data.getData();
-        File filepath = new File(fileUri.getPath());
-        String relativePath = ODKFileUtils.asRelativePath(appName, filepath);
-        filenameValField.setText(relativePath);
+      ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+          android.R.layout.simple_spinner_item, tableNames);
+      adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+      tableSpin.setAdapter(adapter);
+      tableSpin.setSelection(0);
     }
+  }
 
-	private class ButtonListener implements OnClickListener {
-		@Override
-		public void onClick(View v) {
-			exportSubmission();
-		}
-	}
+  @Override
+  public void databaseUnavailable() {
+  }
+
 }

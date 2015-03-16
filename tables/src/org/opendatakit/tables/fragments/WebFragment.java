@@ -18,7 +18,9 @@ package org.opendatakit.tables.fragments;
 import java.lang.ref.WeakReference;
 
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
@@ -26,10 +28,12 @@ import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
 
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.TextView;
 
 /**
  * Displays an HTML file that is not associated with a particular table.
@@ -43,6 +47,8 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
   
   private static final String TAG = WebFragment.class.getSimpleName();
   
+  private static final int ID = R.layout.web_view_container;
+  
   /** The name of the file this fragment is displaying. */
   protected String mFileName;
   
@@ -55,6 +61,9 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
 
   @Override
   public String retrieveFileNameFromBundle(Bundle bundle) {
+    if ( bundle == null ) {
+      return null;
+    }
     String fileName = IntentUtil.retrieveFileNameFromBundle(bundle);
     return fileName;
   }
@@ -65,7 +74,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
       bundle.putString(Constants.IntentKeys.FILE_NAME, this.getFileName());
     }
   }
-
+  
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -90,31 +99,27 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
       ViewGroup container,
       Bundle savedInstanceState) {
     WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView] activity is: " + this.getActivity());
-    WebView webView = this.buildView();
-    return webView;
-  }
+    
+    View v = inflater.inflate(
+        R.layout.web_view_container,
+        container,
+        false);
 
-  @Override
-  public WebView buildView() {
-    WebLogger.getLogger(getAppName()).d(TAG, "[buildView] activity is: " + this.getActivity());
-    WebView result = WebViewUtil.getODKCompliantWebView((AbsBaseActivity) getActivity());
-    Control control = this.createControlObject();
-    result.addJavascriptInterface(
-        control.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.CONTROL);
-    WebViewUtil.displayFileInWebView(
-        getActivity(),
-        ((AbsBaseActivity) getActivity()).getAppName(),
-        result,
-        this.getFileName());
-    // save the strong reference
-    this.mControlReference = control;
-    return result;
+    WebView webView = (WebView) v.findViewById(R.id.webkit);
+    
+    WebView result = WebViewUtil.getODKCompliantWebView((AbsBaseActivity) getActivity(), webView);
+    return v;
   }
 
   @Override
   public String getFileName() {
     return this.mFileName;
+  }
+  
+  @Override
+  public void setFileName(String relativeFileName) {
+    this.mFileName = relativeFileName;
+    databaseAvailable();
   }
 
   /**
@@ -122,8 +127,61 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
    */
   @Override
   public Control createControlObject() {
-    Control result = new Control((AbsBaseActivity) this.getActivity(), this.getAppName(), null, null);
-    return result;
+    try {
+      Control result = new Control((AbsBaseActivity) this.getActivity(), null, null);
+      return result;
+    } catch (RemoteException e) {
+      WebLogger.getLogger(getAppName()).e(TAG, "Unable to access database");
+      return null;
+    }
+  }
+
+  @Override
+  public void setWebKitVisibility() {
+    if ( getView() == null ) {
+      return;
+    }
+    
+    WebView webView = (WebView) getView().findViewById(R.id.webkit);
+    TextView noDatabase = (TextView) getView().findViewById(android.R.id.empty);
+    
+    if ( Tables.getInstance().getDatabase() != null ) {
+      webView.setVisibility(View.VISIBLE);
+      noDatabase.setVisibility(View.GONE);
+    } else {
+      webView.setVisibility(View.GONE);
+      noDatabase.setVisibility(View.VISIBLE);
+    }
+  }
+  
+  @Override
+  public void databaseAvailable() {
+
+    if ( Tables.getInstance().getDatabase() != null && getView() != null && getFileName() != null ) {
+
+      Control control = this.createControlObject();
+      if ( control == null ) {
+        return;
+      }
+      
+      WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
+      webView.addJavascriptInterface(
+          control.getJavascriptInterfaceWithWeakReference(),
+          Constants.JavaScriptHandles.CONTROL);
+      setWebKitVisibility();
+      // save the strong reference
+      this.mControlReference = control;
+      WebViewUtil.displayFileInWebView(
+          getActivity(),
+          ((AbsBaseActivity) getActivity()).getAppName(),
+          webView,
+          this.getFileName());
+    }
+  }
+
+  @Override
+  public void databaseUnavailable() {
+    setWebKitVisibility();
   }
   
 }

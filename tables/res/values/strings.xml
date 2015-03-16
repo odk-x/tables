@@ -406,4 +406,17 @@
 
 	<string name="open_join_table">Open Join Table</string>
 	<string name="edit_column_color_rules">Edit Column Color Rules</string>
+	
+	<string name="error_accessing_database">Error Accessing Database</string>
+	<string name="success">Success!</string>
+	
+	<string name="initialization_complete">Initialization completed successfully</string>
+	<string name="initialization_failed">Initialization failures occurred</string>
+	<string name="initializing">Initializing &#8230;</string>
+	
+	<string name="configuring_app">Configuring %1$s</string>
+	<string name="sync_not_found">ODK Sync is not installed</string>
+	
+	<string name="no_table_data">No Data Tables</string>
+	<string name="database_unavailable">Database Unavailable</string>
 </resources>

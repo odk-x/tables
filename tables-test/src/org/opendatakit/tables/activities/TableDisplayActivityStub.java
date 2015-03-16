@@ -68,7 +68,7 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   }
   
   @Override
-  UserTable retrieveUserTable() {
+  public UserTable getUserTable() {
     return USER_TABLE;
   }
   

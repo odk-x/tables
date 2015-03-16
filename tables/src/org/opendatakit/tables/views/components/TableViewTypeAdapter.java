@@ -15,9 +15,9 @@
  */
 package org.opendatakit.tables.views.components;
 
-import org.opendatakit.common.android.data.PossibleTableViewTypes;
-import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.tables.data.PossibleTableViewTypes;
+import org.opendatakit.tables.data.TableViewType;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;
@@ -33,7 +33,6 @@ public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
   
   private PossibleTableViewTypes mPossibleViewTypes;
   private CharSequence[] mViewTypeValues;
-  private Context mContext;
   private final String mAppName;
 
   public TableViewTypeAdapter(
@@ -44,7 +43,6 @@ public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
       CharSequence[] entryValues,
       PossibleTableViewTypes viewTypes) {
     super(context, resource, entries);
-    this.mContext = context;
     this.mAppName = appName;
     this.mViewTypeValues = entryValues;
     this.mPossibleViewTypes = viewTypes;

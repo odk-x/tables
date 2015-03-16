@@ -4,7 +4,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,19 +13,23 @@ import java.util.Set;
 
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.PossibleTableViewTypes;
-import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.data.PossibleTableViewTypes;
+import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.utils.SQLQueryStruct;
+import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
 import org.opendatakit.tables.views.webkits.TableData;
 import org.opendatakit.tables.views.webkits.TableDataIf;
 
-import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 import android.webkit.WebView;
 
 /**
@@ -81,28 +84,19 @@ public class TestConstants {
   public static final String TABLES_DEFAULT_APP_NAME = "tables";
 
   public static final String DEFAULT_TABLE_ID = "testTableId";
-
-  /**
-   * Return an unimplemented mock of {@link TableProperties}.
-   */
-  public static void setSingleTableSchemeMock() {
-    ODKDatabaseUtils dbUtilMock = mock(ODKDatabaseUtils.class);
-    
-    ArrayList<String> tableIds = new ArrayList<String>();
-    tableIds.add("aTable");
-    when(dbUtilMock.getAllTableIds(any(SQLiteDatabase.class))).thenReturn(tableIds);
-    ArrayList<Column> columns = new ArrayList<Column>();
-    when(dbUtilMock.getUserDefinedColumns(any(SQLiteDatabase.class), eq("aTable"))).thenReturn(columns);
-    ODKDatabaseUtils.set(dbUtilMock);
-    
-    TableUtil util = mock(TableUtil.class);
-    when(util.getLocalizedDisplayName(any(SQLiteDatabase.class), 
-        eq("aTable"))).thenReturn("aTable");
-    when(util.getDefaultViewType(any(SQLiteDatabase.class), 
-        eq("aTable"))).thenReturn(TableViewType.SPREADSHEET);
-    TableUtil.set(util);
-  }
   
+  public static final String DEFAULT_EMPTY_TABLE_ID = "emptyTable";
+  
+  public static final String DEFAULT_EMPTY_GEOTABLE_ID = "emptyGeoTable";
+  
+  public static final String ROWID_1 = "uuid:1111";
+
+  public static final String ROWID_2 = "uuid:2222";
+  
+  public static final String ROWID_3 = "uuid:3333";
+  
+  public static final String ROWID_4 = "uuid:4444";
+
   /**
    * Get a mock {@link ColumnDefinition} object. Returns the element key and
    * column types given. As more mockable parameters are needed, they should be

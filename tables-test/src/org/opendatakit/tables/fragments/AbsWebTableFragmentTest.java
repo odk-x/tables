@@ -6,6 +6,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
@@ -15,6 +18,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 
 import android.app.Activity;
+import android.app.FragmentManager;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.WebView;
@@ -22,14 +26,16 @@ import android.webkit.WebView;
 @RunWith(RobolectricTestRunner.class)
 public class AbsWebTableFragmentTest {
   
-  AbsWebTableFragmentStub fragment;
-  Activity activity;
+  DetailViewFragment fragment;
+  TableDisplayActivity activity;
   
   @Before
   public void before() {
-    TestCaseUtils.setThreeTableDataset();
-    ShadowLog.stream = System.out;
+    CommonApplication.setMocked();
     TestCaseUtils.setExternalStorageMounted();
+    
+    TestCaseUtils.setThreeTableDataset(true);
+    ShadowLog.stream = System.out;
     TableDisplayActivityStub.BUILD_MENU_FRAGMENT = false;
   }
   
@@ -40,25 +46,22 @@ public class AbsWebTableFragmentTest {
   }
   
   private void setupFragmentWithDefaultFileName() {
-    AbsWebTableFragmentStub stub = new AbsWebTableFragmentStub();
-    this.doGlobalSetup(stub);
+    setupFragmentWithFileName(TestConstants.DEFAULT_FILE_NAME);
   }
   
   private void setupFragmentWithFileName(String fileName) {
-    AbsWebTableFragmentStub stub = new AbsWebTableFragmentStub();
-    Bundle bundle = new Bundle();
-    bundle.putString(Constants.IntentKeys.FILE_NAME, fileName);
-    stub.setArguments(bundle);
-    this.doGlobalSetup(stub);
+    this.doGlobalSetup(fileName);
   }
   
-  private void doGlobalSetup(AbsWebTableFragmentStub stub) {
-    this.fragment = stub;
-    ODKFragmentTestUtil.startFragmentForActivity(
-        TableDisplayActivityStub.class,
-        stub,
-        null);
-    this.activity = this.fragment.getActivity();
+  private void doGlobalSetup(String fileName) {
+    this.activity = ODKFragmentTestUtil.startDetailWebFragmentForTableDisplayActivity(
+        TestConstants.DEFAULT_TABLE_ID,
+        fileName,
+        TestConstants.ROWID_1
+        );
+    FragmentManager mgr = activity.getFragmentManager();
+    String fragTag = TableDisplayActivity.getFragmentTag(ViewFragmentType.DETAIL);
+    this.fragment = (DetailViewFragment) mgr.findFragmentByTag(fragTag);
   }
   
   @Test
@@ -75,13 +78,4 @@ public class AbsWebTableFragmentTest {
         .isEqualTo(target);
   }
   
-  @Test
-  public void setsTheViewReturnedByBuildCustomView() {
-    WebView mockWebView = TestConstants.getWebViewMock();
-    AbsWebTableFragmentStub.WEB_VIEW = mockWebView;
-    this.setupFragmentWithFileName("testFileName");
-    View fragmentView = this.fragment.getView();
-    assertThat(fragmentView).isSameAs(mockWebView);
-  }
-
 }

@@ -16,36 +16,42 @@
 package org.opendatakit.tables.activities;
 
 import java.io.File;
+import java.io.IOException;
 
-import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.activities.BasePreferenceActivity;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.logic.TablesToolProperties;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.OutputUtil;
+import org.opendatakit.tables.utils.TableUtil;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.widget.Toast;
 
-public class DisplayPrefsActivity extends PreferenceActivity {
+public class DisplayPrefsActivity extends BasePreferenceActivity {
 
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   private static final int ABOUT_ACTIVITY_CODE = 1;
   
   private String appName;
   private String tableId;
-  private Preferences prefs;
 
   /** Alerts to confirm the output of the debug objects. */
   private AlertDialog mOutputDebugObjectsDialog;
@@ -58,7 +64,6 @@ public class DisplayPrefsActivity extends PreferenceActivity {
     if (appName == null) {
       throw new IllegalStateException("App name not passed to activitity.");
     }
-    prefs = new Preferences(this, appName);
     // check if this activity was called from Controller, in which case it
     // would have an extra string "tableId" bundled in
     tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
@@ -67,8 +72,18 @@ public class DisplayPrefsActivity extends PreferenceActivity {
       generalPreferences();
     } else {
       // was called from controller so it is table specific
-      customPreferences();
+      try {
+        customPreferences();
+      } catch (RemoteException e) {
+        WebLogger.getLogger(appName).printStackTrace(e);
+        Toast.makeText(DisplayPrefsActivity.this, "Unable to access database", Toast.LENGTH_LONG).show();
+      }
     }
+  }
+  
+  @Override
+  public String getAppName() {
+    return appName;
   }
 
   @Override
@@ -80,6 +95,8 @@ public class DisplayPrefsActivity extends PreferenceActivity {
 
   // set default font size for all tables
   private void generalPreferences() {
+    PropertiesSingleton props = TablesToolProperties.get(this, appName);
+
     PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
 
     PreferenceCategory genCat = new PreferenceCategory(this);
@@ -107,7 +124,8 @@ public class DisplayPrefsActivity extends PreferenceActivity {
      * The homescreen preference.
      *********************************/
     CheckBoxPreference useHomescreenPref = new CheckBoxPreference(this);
-    useHomescreenPref.setChecked(prefs.getUseHomeScreen());
+    Boolean useHomeScreenSetting = props.getBooleanProperty(TablesToolProperties.KEY_USE_HOME_SCREEN);
+    useHomescreenPref.setChecked(useHomeScreenSetting == null ? false : useHomeScreenSetting);
     File homeScreen = new File(ODKFileUtils.getTablesHomeScreenFile(appName));
     if (homeScreen.exists()) {
       useHomescreenPref.setTitle(R.string.use_index_html);
@@ -120,7 +138,9 @@ public class DisplayPrefsActivity extends PreferenceActivity {
 
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
-        prefs.setUseHomeScreen((Boolean) newValue);
+        PropertiesSingleton props = TablesToolProperties.get(DisplayPrefsActivity.this, appName);
+        Boolean v = (Boolean) newValue;
+        props.setBooleanProperty(TablesToolProperties.KEY_USE_HOME_SCREEN, v == null ? false : v);
         return true;
       }
     });
@@ -136,10 +156,21 @@ public class DisplayPrefsActivity extends PreferenceActivity {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         // So now we have to write the data and control objects.
-        OutputUtil.writeControlObject(
-            DisplayPrefsActivity.this,DisplayPrefsActivity.this.appName);
-        OutputUtil.writeAllDataObjects(
-            DisplayPrefsActivity.this,DisplayPrefsActivity.this.appName);
+        try {
+          OutputUtil.writeControlObject(
+              DisplayPrefsActivity.this,DisplayPrefsActivity.this.appName);
+          OutputUtil.writeAllDataObjects(
+              DisplayPrefsActivity.this,DisplayPrefsActivity.this.appName);
+        } catch (JsonProcessingException e) {
+          WebLogger.getLogger(appName).printStackTrace(e);
+          Toast.makeText(DisplayPrefsActivity.this, "Failure during JSON parsing", Toast.LENGTH_LONG).show();
+        } catch (RemoteException e) {
+          WebLogger.getLogger(appName).printStackTrace(e);
+          Toast.makeText(DisplayPrefsActivity.this, "Unable to access database", Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+          WebLogger.getLogger(appName).printStackTrace(e);
+          Toast.makeText(DisplayPrefsActivity.this, "Failure while writing files", Toast.LENGTH_LONG).show();
+        }
       }
     });
     mOutputDebugObjectsDialog = builder.create();
@@ -161,39 +192,21 @@ public class DisplayPrefsActivity extends PreferenceActivity {
     });
     developerCategory.addPreference(writeDebugObjectsPref);
 
-    // And the about screen
-    PreferenceCategory aboutCategory = new PreferenceCategory(this);
-    root.addPreference(aboutCategory);
-    aboutCategory.setTitle(R.string.about);
-    
-    Preference aboutPref = new Preference(this);
-    aboutPref.setTitle(R.string.about);
-    aboutPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-      
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        Intent i = new Intent(DisplayPrefsActivity.this, AboutWrapperActivity.class);
-        i.putExtra(Constants.IntentKeys.APP_NAME, appName);        startActivityForResult(i, ABOUT_ACTIVITY_CODE);
-        return true;
-      }
-    });
-    aboutCategory.addPreference(aboutPref);
-    
     setPreferenceScreen(root);
   }
 
   // set a custom font size for this table that overrides the general font size
-  private void customPreferences() {
+  private void customPreferences() throws RemoteException {
     PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
 
     String localizedDisplayName;
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(this, appName);
-      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
 

@@ -16,17 +16,17 @@
 package org.opendatakit.tables.utils;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.KeyValueHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
-import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 import android.widget.Toast;
 
 /**
@@ -51,12 +51,13 @@ public class PreferenceUtil {
       String appName,
       String tableId,
       TableViewType viewType) {
-    SQLiteDatabase db = null;
+
+    boolean successful = false;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
-      db.beginTransaction();
-      TableUtil.get().setDefaultViewType(db, tableId, viewType);
-      db.setTransactionSuccessful();
+      db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+      TableUtil.get().setDefaultViewType(appName, db, tableId, viewType);
+      successful = true;
     } catch ( Exception e ) {
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG, "Unable to change default view type: " + e.toString());
@@ -66,8 +67,13 @@ public class PreferenceUtil {
           Toast.LENGTH_LONG).show();
     } finally {
       if ( db != null ) {
-        db.endTransaction();
-        db.close();
+        try {
+          Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
+        } catch (RemoteException e) {
+          e.printStackTrace();
+          WebLogger.getLogger(appName).printStackTrace(e);
+          WebLogger.getLogger(appName).e(TAG, "Unable to close database");
+        }
       }
     }
   }
@@ -78,22 +84,24 @@ public class PreferenceUtil {
    * @param tableProperties
    * @param elementKey
    * @return
+   * @throws RemoteException 
    */
   public static int getColumnWidth(
       Context context, String appName, String tableId,
-      String elementKey) {
+      String elementKey) throws RemoteException {
     Integer result;
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
       KeyValueStoreHelper kvsh =
-          new KeyValueStoreHelper(db, tableId, KeyValueStoreConstants.PARTITION_COLUMN);
+          new KeyValueStoreHelper(Tables.getInstance(), appName, db,
+              tableId, KeyValueStoreConstants.PARTITION_COLUMN);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
       result = aspectHelper.getInteger(
           LocalKeyValueStoreConstants.Spreadsheet.KEY_COLUMN_WIDTH);
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
     if (result == null) {
@@ -108,21 +116,34 @@ public class PreferenceUtil {
       String tableId,
       String elementKey,
       int newColumnWith) {
-    SQLiteDatabase db = null;
+    boolean successful = false;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
-      db.beginTransaction();
+      db = Tables.getInstance().getDatabase().openDatabase(appName, true);
       KeyValueStoreHelper kvsh =
-          new KeyValueStoreHelper(db, tableId, KeyValueStoreConstants.PARTITION_COLUMN);
+          new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
+              tableId, KeyValueStoreConstants.PARTITION_COLUMN);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
       aspectHelper.setInteger(
           LocalKeyValueStoreConstants.Spreadsheet.KEY_COLUMN_WIDTH,
           newColumnWith);
-      db.setTransactionSuccessful();
+      successful = true;
+    } catch ( Exception e ) {
+      WebLogger.getLogger(appName).printStackTrace(e);
+      WebLogger.getLogger(appName).e(TAG, "Unable to change column width: " + e.toString());
+      Toast.makeText(
+          context,
+          "Unable to change column width",
+          Toast.LENGTH_LONG).show();
     } finally {
       if ( db != null ) {
-        db.endTransaction();
-        db.close();
+        try {
+          Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
+        } catch (RemoteException e) {
+          e.printStackTrace();
+          WebLogger.getLogger(appName).printStackTrace(e);
+          WebLogger.getLogger(appName).e(TAG, "Unable to close database");
+        }
       }
     }
   }

@@ -17,6 +17,7 @@ package org.opendatakit.tables.utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -26,22 +27,23 @@ import java.util.TimeZone;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.DataUtil;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
+import android.os.RemoteException;
 import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
@@ -117,11 +119,12 @@ public class WebViewUtil {
    * @param rawValue
    * @param contentValues
    * @return false if the data was invalid for the given type
+   * @throws RemoteException 
    */
   public static boolean addValueToContentValues(Context context, String appName, String tableId,
       DataUtil du,
       // TableProperties tp,
-      ColumnDefinition colDefn, String rawValue, ContentValues contentValues) {
+      ColumnDefinition colDefn, String rawValue, ContentValues contentValues) throws RemoteException {
     // the value we're going to key things against in the database.
     String contentValuesKey = colDefn.getElementKey();
     if (rawValue == null) {
@@ -132,14 +135,14 @@ public class WebViewUtil {
     } else {
       // we have to validate it -- get the choices list, if any
       ArrayList<Map<String, Object>> choices;
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(context, appName);
-        choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(db,
-            tableId, colDefn.getElementKey());
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
+            Tables.getInstance(), appName, db, tableId, colDefn.getElementKey());
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
       // we have to validate it. this validate function just returns null if
@@ -186,10 +189,10 @@ public class WebViewUtil {
    * @param tableProperties
    * @param elementKeyToValue
    * @return
+   * @throws RemoteException 
    */
   public static ContentValues getContentValuesFromMap(Context context, String appName,
-      String tableId, ArrayList<ColumnDefinition> orderedDefns,
-      Map<String, String> elementKeyToValue) {
+      String tableId, OrderedColumns orderedDefns, Map<String, String> elementKeyToValue) throws RemoteException {
     // Note that we're not currently
     // going to handle complex types or those that map to a json value. We
     // could, but we'd probably have to have a known entity do the conversions
@@ -205,7 +208,7 @@ public class WebViewUtil {
       String elementKey = entry.getKey();
       String rawValue = entry.getValue();
       // Get the column so we know what type we need to handle.
-      ColumnDefinition columnDefn = ColumnDefinition.find(orderedDefns, elementKey);
+      ColumnDefinition columnDefn = orderedDefns.find(elementKey);
       if (columnDefn == null) {
         // uh oh, no column for the given id. problem on the part of the caller
         WebLogger.getLogger(appName).e(TAG,
@@ -231,15 +234,14 @@ public class WebViewUtil {
    * @return
    */
   @SuppressLint({ "NewApi", "SetJavaScriptEnabled" })
-  public static WebView getODKCompliantWebView(AbsBaseActivity context) {
+  public static WebView getODKCompliantWebView(AbsBaseActivity context, WebView webView) {
     final String appName = context.getAppName();
-    WebView result = new WebView(context);
     final String webViewTag = "ODKCompliantWebView";
     if (Build.VERSION.SDK_INT >= 19) {
       WebView.setWebContentsDebuggingEnabled(true);
     }
-    result.getSettings().setJavaScriptEnabled(true);
-    result.setWebViewClient(new WebViewClient() {
+    webView.getSettings().setJavaScriptEnabled(true);
+    webView.setWebViewClient(new WebViewClient() {
 
       @Override
       public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
@@ -250,7 +252,7 @@ public class WebViewUtil {
                 + "; failingUrl: " + failingUrl);
       }
     });
-    result.setWebChromeClient(new WebChromeClient() {
+    webView.setWebChromeClient(new WebChromeClient() {
 
       @Override
       public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
@@ -262,7 +264,7 @@ public class WebViewUtil {
       }
 
     });
-    return result;
+    return webView;
   }
 
   /**
@@ -294,19 +296,25 @@ public class WebViewUtil {
    * @param tableProperties
    * @param rowId
    * @return
+   * @throws RemoteException 
    */
   public static Map<String, String> getMapOfElementKeyToValue(Context context, String appName,
-      String tableId, ArrayList<ColumnDefinition> orderedDefns, String rowId) {
-    SQLiteDatabase db = null;
+      String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
+    String[] adminColumns = null;
     UserTable userTable = null;
-    try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
 
-      userTable = ODKDatabaseUtils.get().getDataInExistingDBTableWithId(db, appName, tableId,
-          orderedDefns, rowId);
-    } finally {
-      if (db != null) {
-        db.close();
+    {
+      OdkDbHandle db = null;
+      try {
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+
+        adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
+        userTable = Tables.getInstance().getDatabase()
+            .getDataInExistingDBTableWithId(appName, db, tableId, orderedDefns, rowId);
+      } finally {
+        if (db != null) {
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
+        }
       }
     }
     if (userTable.getNumberOfRows() > 1) {
@@ -318,8 +326,8 @@ public class WebViewUtil {
     }
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
     Row requestedRow = userTable.getRowAtIndex(0);
-    List<String> userDefinedElementKeys = ColumnDefinition.getRetentionColumnNames(orderedDefns);
-    List<String> adminElementKeys = ODKDatabaseUtils.get().getAdminColumns();
+    List<String> userDefinedElementKeys = orderedDefns.getRetentionColumnNames();
+    List<String> adminElementKeys = Arrays.asList(adminColumns);
     List<String> allElementKeys = new ArrayList<String>();
     allElementKeys.addAll(userDefinedElementKeys);
     allElementKeys.addAll(adminElementKeys);

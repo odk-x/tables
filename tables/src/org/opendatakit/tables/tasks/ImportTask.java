@@ -16,13 +16,18 @@
 package org.opendatakit.tables.tasks;
 
 import org.opendatakit.common.android.utilities.CsvUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.CsvUtil.ImportListener;
 import org.opendatakit.tables.activities.ImportCSVActivity;
+import org.opendatakit.tables.application.Tables;
 
 import android.os.AsyncTask;
+import android.os.RemoteException;
 
 public class ImportTask
 extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
+
+  private static final String TAG = "ImportTask";
 
 	private final ImportCSVActivity importCSVActivity;
 	private final String appName;
@@ -35,17 +40,21 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 		this.appName = appName;
 	}
 
-	private static final String TAG = "ImportTask";
-
 	public boolean caughtDuplicateTableException = false;
 	public boolean problemImportingKVSEntries = false;
 
 	@Override
 	protected Boolean doInBackground(ImportRequest... importRequests) {
 		ImportRequest request = importRequests[0];
-		CsvUtil cu = new CsvUtil(this.importCSVActivity, appName);
-		  return cu.importSeparable(this, request.getTableId(),
-		       request.getFileQualifier(), request.getCreateTable());
+		CsvUtil cu = new CsvUtil(Tables.getInstance(), appName);
+		  try {
+        return cu.importSeparable(this, request.getTableId(),
+             request.getFileQualifier(), request.getCreateTable());
+      } catch (RemoteException e) {
+        WebLogger.getLogger(appName).printStackTrace(e);
+        WebLogger.getLogger(appName).e(TAG, "Unable to access database");
+        return false;
+      }
 	}
 
 	  @Override

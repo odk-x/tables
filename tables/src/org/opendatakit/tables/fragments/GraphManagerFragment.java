@@ -18,20 +18,20 @@ package org.opendatakit.tables.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.data.KeyValueStoreEntry;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.KeyValueStoreEntry;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.GraphViewStruct;
 import org.opendatakit.tables.views.components.GraphViewAdapter;
 
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +39,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * Displays the graphs currently saved in the activity.
@@ -59,54 +60,30 @@ public class GraphManagerFragment extends AbsTableDisplayFragment {
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    // Set up the adapter.
-    ListView listView = (ListView) this.getView().findViewById(android.R.id.list);
-    final GraphViewAdapter adapter = new GraphViewAdapter(getActivity(), getAppName(), this.retrieveGraphViews());
-    listView.setAdapter(adapter);
-    listView.setOnItemClickListener(new OnItemClickListener() {
-
-      @Override
-      public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-        // TODO: show the graph display fragment.
-        WebLogger.getLogger(getAppName()).d(TAG, "[onItemClick] selected a graph view");
-        String graphName = retrieveGraphViews().get(position).graphName;
-        activity.showGraphViewFragment(graphName);
-      }
-
-    });
-    // Show or hide the empty as appropriate.
-    TextView emptyView = (TextView) this.getView().findViewById(android.R.id.empty);
-    if (adapter.getCount() == 0) {
-      listView.setVisibility(View.GONE);
-      emptyView.setVisibility(View.VISIBLE);
-    } else {
-      listView.setVisibility(View.VISIBLE);
-      emptyView.setVisibility(View.GONE);
-    }
   }
 
-  List<GraphViewStruct> retrieveGraphViews() {
+  List<GraphViewStruct> retrieveGraphViews() throws RemoteException {
     // A graph is currently makred as default if its name is in this aspect
     // marked as the name.
     String tableId = getTableId();
     String currentDefaultGraphName = null;
     List<KeyValueStoreEntry> graphViewEntries = new ArrayList<KeyValueStoreEntry>();
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
 
-      KeyValueStoreHelper kvshForGraphWritLarge = new KeyValueStoreHelper(db, tableId,
+      KeyValueStoreHelper kvshForGraphWritLarge = new KeyValueStoreHelper(Tables.getInstance(), getAppName(),
+          db, tableId,
           LocalKeyValueStoreConstants.Graph.PARTITION);
       currentDefaultGraphName = kvshForGraphWritLarge
           .getString(LocalKeyValueStoreConstants.Graph.KEY_GRAPH_VIEW_NAME);
 
-      graphViewEntries = ODKDatabaseUtils.get().getDBTableMetadata(db, tableId,
+      graphViewEntries = Tables.getInstance().getDatabase().getDBTableMetadata(getAppName(), db, tableId,
           LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS, null,
           LocalKeyValueStoreConstants.Graph.KEY_GRAPH_TYPE);
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
 
@@ -116,7 +93,63 @@ public class GraphManagerFragment extends AbsTableDisplayFragment {
     }
     return result;
   }
+  
+  @Override
+  public void databaseAvailable() {
+    View v = this.getView();
+    if ( v == null ) return;
+    if ( Tables.getInstance().getDatabase() != null ) {
+      // Set up the adapter.
+      ListView listView = (ListView) v.findViewById(android.R.id.list);
+      // Show or hide the empty as appropriate.
+      TextView emptyView = (TextView) v.findViewById(android.R.id.empty);
+      final GraphViewAdapter adapter;
 
+      try {
+        adapter = new GraphViewAdapter(getActivity(), getAppName(), 
+            this.retrieveGraphViews());
+      } catch (RemoteException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        listView.setVisibility(View.GONE);
+        emptyView.setVisibility(View.VISIBLE);
+        Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
+        return;
+      }
+      listView.setAdapter(adapter);
+      listView.setOnItemClickListener(new OnItemClickListener() {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+          TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+          // TODO: show the graph display fragment.
+          WebLogger.getLogger(getAppName()).d(TAG, "[onItemClick] selected a graph view");
+          String graphName = adapter.getGraphViews().get(position).graphName;
+          activity.showGraphViewFragment(graphName);
+        }
+
+      });
+      if (adapter.getCount() == 0) {
+        listView.setVisibility(View.GONE);
+        emptyView.setVisibility(View.VISIBLE);
+      } else {
+        listView.setVisibility(View.VISIBLE);
+        emptyView.setVisibility(View.GONE);
+      }
+    } else {
+      // Set up the adapter.
+      ListView listView = (ListView) v.findViewById(android.R.id.list);
+      // Show or hide the empty as appropriate.
+      TextView emptyView = (TextView) v.findViewById(android.R.id.empty);
+      listView.setVisibility(View.GONE);
+      emptyView.setVisibility(View.VISIBLE);
+    }
+  }
+  
+  @Override
+  public void databaseUnavailable() {
+    
+  }
+  
   @Override
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.GRAPH_MANAGER;

@@ -45,19 +45,19 @@ import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.DataUtil;
-import org.opendatakit.common.android.utilities.GeoColumnUtil;
 import org.opendatakit.common.android.utilities.KeyValueHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.RowPathColumnUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebUtils;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.application.Tables;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
@@ -68,8 +68,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.RemoteException;
 import android.provider.BaseColumns;
 
 /**
@@ -196,27 +196,27 @@ public class CollectUtil {
    * @param formId
    *          the id of the form
    * @return true if the file was successfully written
+   * @throws RemoteException 
    */
   private static boolean buildBlankForm(Context context, String appName, String tableId,
-      ArrayList<ColumnDefinition> orderedDefns, File file, String formId) {
+      OrderedColumns orderedDefns, File file, String formId) throws RemoteException {
 
     OutputStreamWriter writer = null;
     try {
-      List<ColumnDefinition> geopointList = GeoColumnUtil.get().getGeopointColumnDefinitions(
-          orderedDefns);
+      List<ColumnDefinition> geopointList = orderedDefns.getGeopointColumnDefinitions();
       List<ColumnDefinition> uriList = RowPathColumnUtil.get()
           .getUriColumnDefinitions(orderedDefns);
 
-      ArrayList<ColumnDefinition> orderedElements = orderedDefns;
+      OrderedColumns orderedElements = orderedDefns;
 
       String localizedDisplayName;
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(context, appName);
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
 
@@ -239,7 +239,7 @@ public class CollectUtil {
       writer.write("id=\"");
       writer.write(StringEscapeUtils.escapeXml(formId));
       writer.write("\">");
-      for (ColumnDefinition cd : orderedElements) {
+      for (ColumnDefinition cd : orderedElements.getColumnDefinitions()) {
         ColumnDefinition cdContainingElement = cd.getParent();
 
         if (cdContainingElement != null) {
@@ -265,7 +265,7 @@ public class CollectUtil {
       writer.write(">");
       writer.write("</instance>");
       ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(appName);
-      for (ColumnDefinition cd : orderedElements) {
+      for (ColumnDefinition cd : orderedElements.getColumnDefinitions()) {
         ColumnDefinition cdContainingElement = cd.getParent();
 
         if (cdContainingElement != null) {
@@ -301,7 +301,7 @@ public class CollectUtil {
 
       writer.write("<itext>");
       writer.write("<translation lang=\"eng\">");
-      for (ColumnDefinition cd : orderedElements) {
+      for (ColumnDefinition cd : orderedElements.getColumnDefinitions()) {
         ColumnDefinition cdContainingElement = cd.getParent();
 
         if (cdContainingElement != null) {
@@ -318,12 +318,12 @@ public class CollectUtil {
 
         db = null;
         try {
-          db = DatabaseFactory.get().getDatabase(context, appName);
-          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId,
+          db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId,
               cd.getElementKey());
         } finally {
           if (db != null) {
-            db.close();
+            Tables.getInstance().getDatabase().closeDatabase(appName, db);
           }
         }
 
@@ -344,7 +344,7 @@ public class CollectUtil {
       writer.write("</model>");
       writer.write("</h:head>");
       writer.write("<h:body>");
-      for (ColumnDefinition cd : orderedElements) {
+      for (ColumnDefinition cd : orderedElements.getColumnDefinitions()) {
         ColumnDefinition cdContainingElement = cd.getParent();
 
         if (cdContainingElement != null) {
@@ -470,7 +470,7 @@ public class CollectUtil {
    * @return true if the write succeeded
    */
   private static boolean writeRowDataToBeEdited(Context context, String appName, String tableId,
-      ArrayList<ColumnDefinition> orderedDefns, Map<String, String> values,
+      OrderedColumns orderedDefns, Map<String, String> values,
       CollectFormParameters params, String rowId) {
     /*
      * This is currently implemented thinking that all you need to have is:
@@ -486,8 +486,7 @@ public class CollectUtil {
      * form will simply ignore those for which it does not have matching entry
      * fields.
      */
-    List<ColumnDefinition> geopointList = GeoColumnUtil.get().getGeopointColumnDefinitions(
-        orderedDefns);
+    List<ColumnDefinition> geopointList = orderedDefns.getGeopointColumnDefinitions();
     List<ColumnDefinition> uriList = RowPathColumnUtil.get().getUriColumnDefinitions(orderedDefns);
 
     OutputStreamWriter writer = null;
@@ -499,7 +498,7 @@ public class CollectUtil {
       writer.write(" id=\"");
       writer.write(StringEscapeUtils.escapeXml(params.getFormId()));
       writer.write("\">");
-      for (ColumnDefinition cd : orderedDefns) {
+      for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
         ColumnDefinition cdContainingElement = cd.getParent();
 
         if (cdContainingElement != null) {
@@ -780,7 +779,7 @@ public class CollectUtil {
             int collectInstanceKey; // this is the primary key of the form in
             // Collect's
             // database.
-            collectInstanceKey = ODKDatabaseUtils.get().getIndexAsType(c, Integer.class,
+            collectInstanceKey = ODKCursorUtils.getIndexAsType(c, Integer.class,
                 c.getColumnIndexOrThrow(BaseColumns._ID));
             uriOfForm = (Uri.parse(CONTENT_INSTANCE_URI + "/" + collectInstanceKey));
             c.close();
@@ -890,7 +889,7 @@ public class CollectUtil {
         int collectFormKey; // this is the primary key of the form in
         // Collect's
         // database.
-        collectFormKey = ODKDatabaseUtils.get().getIndexAsType(c, Integer.class,
+        collectFormKey = ODKCursorUtils.getIndexAsType(c, Integer.class,
             c.getColumnIndexOrThrow(BaseColumns._ID));
         resultUri = (Uri.parse(CollectUtil.CONTENT_FORM_URI + "/" + collectFormKey));
       }
@@ -913,9 +912,10 @@ public class CollectUtil {
    * @param params
    * @param tp
    * @return true if every method returned successfully
+   * @throws RemoteException 
    */
   private static boolean deleteWriteAndInsertFormIntoCollect(Context context, String appName,
-      String tableId, ArrayList<ColumnDefinition> orderedDefns, CollectFormParameters params) {
+      String tableId, OrderedColumns orderedDefns, CollectFormParameters params) throws RemoteException {
     if (params.isCustom()) {
       WebLogger.getLogger(appName).e(
           TAG,
@@ -935,13 +935,13 @@ public class CollectUtil {
     }
 
     String localizedDisplayName;
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
-      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
 
@@ -968,10 +968,11 @@ public class CollectUtil {
    * @param orderedDefns
    * @param collectFormParameters
    * @param prepopulatedValues
+   * @throws RemoteException 
    */
   public static void addRowWithCollect(Activity activity, String appName, String tableId,
-      ArrayList<ColumnDefinition> orderedDefns, CollectFormParameters collectFormParameters,
-      Map<String, String> prepopulatedValues) {
+      OrderedColumns orderedDefns, CollectFormParameters collectFormParameters,
+      Map<String, String> prepopulatedValues) throws RemoteException {
     Intent addRowIntent = getIntentForOdkCollectAddRow(activity, appName, tableId, orderedDefns,
         collectFormParameters, prepopulatedValues);
     if (addRowIntent == null) {
@@ -992,10 +993,11 @@ public class CollectUtil {
    * @param orderedDefns
    * @param rowId
    * @param collectFormParameters
+   * @throws RemoteException 
    */
   public static void editRowWithCollect(Activity activity, String appName, String tableId,
-      ArrayList<ColumnDefinition> orderedDefns, String rowId,
-      CollectFormParameters collectFormParameters) {
+      OrderedColumns orderedDefns, String rowId,
+      CollectFormParameters collectFormParameters) throws RemoteException {
     Map<String, String> elementKeyToValue = WebViewUtil.getMapOfElementKeyToValue(activity,
         appName, tableId, orderedDefns, rowId);
     Intent editRowIntent = getIntentForOdkCollectEditRow(activity, appName, tableId, orderedDefns,
@@ -1059,11 +1061,12 @@ public class CollectUtil {
    * @param formRootElement
    * @param rowId
    * @return
+   * @throws RemoteException 
    */
   public static Intent getIntentForOdkCollectEditRow(Context context, String appName,
-      String tableId, ArrayList<ColumnDefinition> orderedDefns,
+      String tableId, OrderedColumns orderedDefns,
       Map<String, String> elementKeyToValue, String formId, String formVersion,
-      String formRootElement, String rowId) {
+      String formRootElement, String rowId) throws RemoteException {
 
     CollectFormParameters formParameters = CollectFormParameters.constructCollectFormParameters(
         context, appName, tableId);
@@ -1096,10 +1099,11 @@ public class CollectUtil {
    * @param elementKeyToValue
    * @param params
    * @return
+   * @throws RemoteException 
    */
   private static Intent getIntentForOdkCollectEditRow(Context context, String appName,
-      String tableId, ArrayList<ColumnDefinition> orderedDefns,
-      Map<String, String> elementKeyToValue, CollectFormParameters params, String rowId) {
+      String tableId, OrderedColumns orderedDefns,
+      Map<String, String> elementKeyToValue, CollectFormParameters params, String rowId) throws RemoteException {
     // Check if there is a custom form. If there is not, we want to delete
     // the old form and write the new form.
     if (!params.isCustom()) {
@@ -1194,19 +1198,19 @@ public class CollectUtil {
    * TODO: add support for select-multiple
    *
    * @return
+   * @throws RemoteException 
    */
   public static ContentValues getMapForInsertion(Context context, String appName, String tableId,
-      ArrayList<ColumnDefinition> orderedDefns, FormValues formValues) {
+      OrderedColumns orderedDefns, FormValues formValues) throws RemoteException {
 
     DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
 
     ContentValues values = new ContentValues();
 
-    List<ColumnDefinition> geopointList = GeoColumnUtil.get().getGeopointColumnDefinitions(
-        orderedDefns);
+    List<ColumnDefinition> geopointList = orderedDefns.getGeopointColumnDefinitions();
     List<ColumnDefinition> uriList = RowPathColumnUtil.get().getUriColumnDefinitions(orderedDefns);
 
-    for (ColumnDefinition cd : orderedDefns) {
+    for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
       ColumnDefinition cdContainingElement = cd.getParent();
 
       if (cdContainingElement != null) {
@@ -1330,14 +1334,15 @@ public class CollectUtil {
       } else if (cd.isUnitOfRetention()) {
 
         ArrayList<Map<String, Object>> choices;
-        SQLiteDatabase db = null;
+        OdkDbHandle db = null;
         try {
-          db = DatabaseFactory.get().getDatabase(context, appName);
-          choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(db,
+          db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+          choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
+              Tables.getInstance(), appName, db,
               tableId, cd.getElementKey());
         } finally {
           if (db != null) {
-            db.close();
+            Tables.getInstance().getDatabase().closeDatabase(appName, db);
           }
         }
         String value = formValues.formValues.get(cd.getElementKey());
@@ -1376,7 +1381,7 @@ public class CollectUtil {
         return false;
       }
       c.moveToFirst();
-      String status = ODKDatabaseUtils.get().getIndexAsString(c,
+      String status = ODKCursorUtils.getIndexAsString(c,
           c.getColumnIndexOrThrow(COLLECT_KEY_STATUS));
       // potential status values are incomplete, complete, submitted,
       // submission_failed
@@ -1426,9 +1431,9 @@ public class CollectUtil {
       }
       c.moveToFirst();
       FormValues fv = new FormValues();
-      fv.timestamp = ODKDatabaseUtils.get().getIndexAsType(c, Long.class,
+      fv.timestamp = ODKCursorUtils.getIndexAsType(c, Long.class,
           c.getColumnIndexOrThrow(COLLECT_KEY_LAST_STATUS_CHANGE_DATE));
-      String instancepath = ODKDatabaseUtils.get().getIndexAsString(c,
+      String instancepath = ODKCursorUtils.getIndexAsString(c,
           c.getColumnIndexOrThrow("instanceFilePath"));
       File instanceFile = new File(instancepath);
       parseXML(appName, fv, instanceFile);
@@ -1458,7 +1463,7 @@ public class CollectUtil {
   }
 
   private static boolean updateRowFromOdkCollectInstance(Context context, String appName,
-      String tableId, int instanceId) {
+      String tableId, int instanceId) throws RemoteException {
     // First we need to check to make sure the row id is in the shared
     // preferences. If it's not, something has gone wrong.
     // TODO: This should be migrated to use metadata/instanceID in the
@@ -1477,11 +1482,11 @@ public class CollectUtil {
       return false;
     }
 
-    ArrayList<ColumnDefinition> orderedDefns;
-    SQLiteDatabase db = null;
+    OrderedColumns orderedDefns;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
-      orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);
 
       ContentValues values = CollectUtil.getMapForInsertion(context, appName, tableId,
           orderedDefns, formValues);
@@ -1493,11 +1498,12 @@ public class CollectUtil {
           TableConstants.nanoSecondsFromMillis(formValues.timestamp));
       values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
 
-      ODKDatabaseUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedDefns, values,
+      Tables.getInstance().getDatabase().updateDataInExistingDBTableWithId(appName, db,
+          tableId, orderedDefns, values,
           rowId);
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
     // If we made it here and there were no errors, then clear the row id
@@ -1521,9 +1527,10 @@ public class CollectUtil {
    * @param returnCode
    * @param data
    * @return
+   * @throws RemoteException 
    */
   public static boolean handleOdkCollectEditReturn(Context context, String appName, String tableId,
-      int returnCode, Intent data) {
+      int returnCode, Intent data) throws RemoteException {
     if (returnCode != Activity.RESULT_OK) {
       WebLogger.getLogger(appName).i(TAG, "return code wasn't OK not inserting " + "edited data.");
       return false;
@@ -1553,9 +1560,10 @@ public class CollectUtil {
    * @param returnCode
    * @param data
    * @return
+   * @throws RemoteException 
    */
   public static boolean handleOdkCollectAddReturn(Context context, String appName, String tableId,
-      int returnCode, Intent data) {
+      int returnCode, Intent data) throws RemoteException {
     if (returnCode != Activity.RESULT_OK) {
       WebLogger.getLogger(appName).i(TAG, "return code wasn't OK --not adding row");
       return false;
@@ -1573,17 +1581,17 @@ public class CollectUtil {
   }
 
   private static boolean addRowFromOdkCollectInstance(Context context, String appName,
-      String tableId, int instanceId) {
+      String tableId, int instanceId) throws RemoteException {
     FormValues formValues = CollectUtil.getOdkCollectFormValuesFromInstanceId(context, appName,
         instanceId);
     if (formValues == null) {
       return false;
     }
-    ArrayList<ColumnDefinition> orderedDefns;
-    SQLiteDatabase db = null;
+    OrderedColumns orderedDefns;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
-      orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);
 
       ContentValues values = CollectUtil.getMapForInsertion(context, appName, tableId,
           orderedDefns, formValues);
@@ -1595,18 +1603,19 @@ public class CollectUtil {
           TableConstants.nanoSecondsFromMillis(formValues.timestamp));
       values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
 
-      ODKDatabaseUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedDefns, values,
+      Tables.getInstance().getDatabase().insertDataIntoExistingDBTableWithId(appName, db,
+          tableId, orderedDefns, values,
           formValues.instanceID);
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
     return true;
   }
 
   public static Intent getIntentForOdkCollectAddRowByQuery(Context context, String appName,
-      String tableId, ArrayList<ColumnDefinition> orderedDefns, CollectFormParameters params) {
+      String tableId, OrderedColumns orderedDefns, CollectFormParameters params) throws RemoteException {
     Intent intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(context, appName, tableId,
         orderedDefns, params, null);
     return intentAddRow;
@@ -1621,10 +1630,11 @@ public class CollectUtil {
    * @param elementKeyToValue
    *          values with which you want to prepopulate the add row form.
    * @return
+   * @throws RemoteException 
    */
   public static Intent getIntentForOdkCollectAddRow(Context context, String appName,
-      String tableId, ArrayList<ColumnDefinition> orderedDefns, CollectFormParameters params,
-      Map<String, String> elementKeyToValue) {
+      String tableId, OrderedColumns orderedDefns, CollectFormParameters params,
+      Map<String, String> elementKeyToValue) throws RemoteException {
     /*
      * So, there are several things to check here. The first thing we want to do
      * is see if a custom form has been defined for this table. If there is not,
@@ -1795,15 +1805,15 @@ public class CollectUtil {
     }
 
     public static CollectFormParameters constructDefaultCollectFormParameters(Context context,
-        String appName, String tableId) {
+        String appName, String tableId) throws RemoteException {
       String localizedDisplayName;
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(context, appName);
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
 
@@ -1825,18 +1835,19 @@ public class CollectUtil {
      * @param appName
      * @param tableId
      * @return
+     * @throws RemoteException 
      */
     public static CollectFormParameters constructCollectFormParameters(Context context,
-        String appName, String tableId) {
+        String appName, String tableId) throws RemoteException {
       String formId;
       String formVersion = null;
       String rootElement = null;
       String localizedDisplayName;
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(context, appName);
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
-        KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, CollectUtil.KVS_PARTITION);
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+        KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, tableId, CollectUtil.KVS_PARTITION);
         KeyValueHelper aspectHelper = kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);
         formId = aspectHelper.getString(CollectUtil.KEY_FORM_ID);
         if (formId != null) {
@@ -1845,7 +1856,7 @@ public class CollectUtil {
         }
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
 
@@ -1860,8 +1871,8 @@ public class CollectUtil {
       return new CollectFormParameters(true, formId, formVersion, rootElement, localizedDisplayName);
     }
 
-    public void persist(SQLiteDatabase db, String tableId) {
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, CollectUtil.KVS_PARTITION);
+    public void persist(String appName, OdkDbHandle db, String tableId) throws RemoteException {
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, tableId, CollectUtil.KVS_PARTITION);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);
       if (this.isCustom()) {
         aspectHelper.setString(CollectUtil.KEY_FORM_ID, this.mFormId);

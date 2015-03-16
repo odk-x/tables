@@ -21,19 +21,20 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.KeyValueHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
 
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.RemoteException;
 
 /**
  * The ODKSurvey analogue to {@link CollectUtil}. Various functions and
@@ -485,20 +486,21 @@ public class SurveyUtil {
      *
      * @param tp
      * @return
+     * @throws RemoteException 
      */
     public static SurveyFormParameters constructSurveyFormParameters(
-        Context context, String appName, String tableId) {
+        Context context, String appName, String tableId) throws RemoteException {
       String formId;
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(context, appName);
-        KeyValueStoreHelper kvsh = new KeyValueStoreHelper(
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName,
             db, tableId, SurveyUtil.KVS_PARTITION);
         KeyValueHelper aspectHelper = kvsh.getAspectHelper(SurveyUtil.KVS_ASPECT);
         formId = aspectHelper.getString(SurveyUtil.KEY_FORM_ID);
       } finally {
         if ( db != null ) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
       if (formId == null) {
@@ -508,8 +510,9 @@ public class SurveyUtil {
       return new SurveyFormParameters(true, formId, null);
     }
 
-    public void persist(SQLiteDatabase db, String tableId) {
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, SurveyUtil.KVS_PARTITION);
+    public void persist(String appName, OdkDbHandle db, String tableId) throws RemoteException {
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
+          tableId, SurveyUtil.KVS_PARTITION);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(SurveyUtil.KVS_ASPECT);
       if (this.isUserDefined()) {
         aspectHelper.setString(SurveyUtil.KEY_FORM_ID, this.mFormId);

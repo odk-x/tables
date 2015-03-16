@@ -13,14 +13,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 
 /**
  * Basic test for the {@link AbsTableActivity}. Note that it is NOT an
@@ -33,20 +35,29 @@ public class AbsTableActivityTest {
   
   @Before
   public void before() {
-    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
-    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
-    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
-    DatabaseFactory.set(factoryMock);
-    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
-    String tableId = AbsTableActivityStub.DEFAULT_TABLE_ID;
-    List<String> tableIds = new ArrayList<String>();
-    tableIds.add(tableId);
-    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
-    List<Column> columns = new ArrayList<Column>();
-    doReturn(columns).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(AbsTableActivityStub.DEFAULT_TABLE_ID));
-    ODKDatabaseUtils.set(wrapperMock);
-    
+    CommonApplication.setMocked();
     TestCaseUtils.setExternalStorageMounted();
+
+    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+
+    try {
+      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
+      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
+      doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
+  
+      String tableId = AbsTableActivityStub.DEFAULT_TABLE_ID;
+      List<String> tableIds = new ArrayList<String>();
+      tableIds.add(tableId);
+      OrderedColumns orderedColumns = new OrderedColumns( AbsTableActivityStub.DEFAULT_APP_NAME, AbsTableActivityStub.DEFAULT_TABLE_ID, new ArrayList<Column>());
+
+      doReturn(tableIds).when(stubIf).getAllTableIds( eq(AbsTableActivityStub.DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      doReturn(orderedColumns).when(stubIf).getUserDefinedColumns( eq(AbsTableActivityStub.DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(AbsTableActivityStub.DEFAULT_TABLE_ID));
+    } catch ( RemoteException e ) {
+      // ignore?
+    }
+    
+    Tables.setMockDatabase(stubIf);
   }
   
   @After

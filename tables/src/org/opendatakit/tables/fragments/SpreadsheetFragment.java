@@ -25,22 +25,22 @@ import java.util.TimeZone;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.DataUtil;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.ParseUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
+import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.CellInfo;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.SpreadsheetUserTable;
@@ -52,8 +52,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -104,36 +104,56 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   @Override
   public View onCreateView(android.view.LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
-    spreadsheetTable = new SpreadsheetUserTable(this, this.getUserTable());
-    if (!spreadsheetTable.hasData()) {
+    try {
+      spreadsheetTable = new SpreadsheetUserTable(this);
+      if (!spreadsheetTable.hasData()) {
+        TextView textView = new TextView(getActivity());
+        textView.setText(getString(R.string.no_data));
+        return textView;
+      } else {
+        return this.buildSpreadsheetView();
+      }
+    } catch (RemoteException e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      WebLogger.getLogger(getAppName()).e(TAG,
+          "Error while constructing spreadsheet view: " + e.toString());
       TextView textView = new TextView(getActivity());
-      textView.setText(getString(R.string.no_data));
+      textView.setText(getString(R.string.error_accessing_database));
       return textView;
-    } else {
-      return this.buildSpreadsheetView();
     }
+  }
+  
+  @Override
+  public void databaseAvailable() {
+    if ( Tables.getInstance().getDatabase() != null && getView() != null ) {
+    }
+  }
+
+  @Override
+  public void databaseUnavailable() {
   }
 
   /**
    * Build a {@link SpreadsheetView} view to display.
    *
    * @return
+   * @throws RemoteException 
    */
-  SpreadsheetView buildSpreadsheetView() {
-    return new SpreadsheetView(this.getActivity(), SpreadsheetFragment.this, spreadsheetTable);
+  SpreadsheetView buildSpreadsheetView() throws RemoteException {
+    return new SpreadsheetView((TableDisplayActivity) this.getActivity(), this, spreadsheetTable);
   }
 
-  private void addGroupByColumn(ColumnDefinition cd) {
+  private void addGroupByColumn(ColumnDefinition cd) throws RemoteException {
 
     ArrayList<String> newGroupBys;
-    SQLiteDatabase db = null;
+    boolean successful = false;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      db.beginTransaction();
-      newGroupBys = TableUtil.get().getColumnOrder(db, getTableId());
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+      newGroupBys = TableUtil.get().getColumnOrder(getAppName(), db, getTableId());
       newGroupBys.add(cd.getElementKey());
-      TableUtil.get().setGroupByColumns(db, getTableId(), newGroupBys);
-      db.setTransactionSuccessful();
+      TableUtil.get().setGroupByColumns(getAppName(), db, getTableId(), newGroupBys);
+      successful = true;
     } catch (Exception e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       WebLogger.getLogger(getAppName()).e(TAG,
@@ -142,22 +162,21 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           Toast.LENGTH_LONG).show();
     } finally {
       if (db != null) {
-        db.endTransaction();
-        db.close();
+        Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
       }
     }
   }
 
-  void removeGroupByColumn(ColumnDefinition cd) {
+  void removeGroupByColumn(ColumnDefinition cd) throws RemoteException {
     ArrayList<String> newGroupBys;
-    SQLiteDatabase db = null;
+    boolean successful = false;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      db.beginTransaction();
-      newGroupBys = TableUtil.get().getColumnOrder(db, getTableId());
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+      newGroupBys = TableUtil.get().getColumnOrder(getAppName(), db, getTableId());
       newGroupBys.remove(cd.getElementKey());
-      TableUtil.get().setGroupByColumns(db, getTableId(), newGroupBys);
-      db.setTransactionSuccessful();
+      TableUtil.get().setGroupByColumns(getAppName(), db, getTableId(), newGroupBys);
+      successful = true;
     } catch (Exception e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       WebLogger.getLogger(getAppName()).e(TAG,
@@ -166,19 +185,18 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           Toast.LENGTH_LONG).show();
     } finally {
       if (db != null) {
-        db.endTransaction();
-        db.close();
+        Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
       }
     }
   }
 
-  void setColumnAsSort(ColumnDefinition cd) {
-    SQLiteDatabase db = null;
+  void setColumnAsSort(ColumnDefinition cd) throws RemoteException {
+    boolean successful = false;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      db.beginTransaction();
-      TableUtil.get().setSortColumn(db, getTableId(), (cd == null) ? null : cd.getElementKey());
-      db.setTransactionSuccessful();
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+      TableUtil.get().setSortColumn(getAppName(), db, getTableId(), (cd == null) ? null : cd.getElementKey());
+      successful = true;
     } catch (Exception e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       WebLogger.getLogger(getAppName()).e(TAG, "Error while changing sort column: " + e.toString());
@@ -186,19 +204,18 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           Toast.LENGTH_LONG).show();
     } finally {
       if (db != null) {
-        db.endTransaction();
-        db.close();
+        Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
       }
     }
   }
 
-  void setColumnAsIndexedCol(ColumnDefinition cd) {
-    SQLiteDatabase db = null;
+  void setColumnAsIndexedCol(ColumnDefinition cd) throws RemoteException {
+    boolean successful = false;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      db.beginTransaction();
-      TableUtil.get().setIndexColumn(db, getTableId(), (cd == null) ? null : cd.getElementKey());
-      db.setTransactionSuccessful();
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+      TableUtil.get().setIndexColumn(getAppName(), db, getTableId(), (cd == null) ? null : cd.getElementKey());
+      successful = true;
     } catch (Exception e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       WebLogger.getLogger(getAppName())
@@ -207,8 +224,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           this.getString(R.string.error_while_changing_index_column), Toast.LENGTH_LONG).show();
     } finally {
       if (db != null) {
-        db.endTransaction();
-        db.close();
+        Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
       }
     }
   }
@@ -276,21 +292,23 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     dialog.show();
   }
 
-  private void init() {
+  private void init() throws RemoteException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     activity.refreshDataTable();
     activity.refreshDisplayFragment();
   }
 
-  private void deleteRow(String rowId) {
-    SQLiteDatabase db = null;
+  private void deleteRow(String rowId) throws RemoteException {
+    boolean successful = false;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      ODKDatabaseUtils.get().deleteDataInExistingDBTableWithId(db, getAppName(), getTableId(),
-          rowId);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+      Tables.getInstance().getDatabase().deleteDataInExistingDBTableWithId(getAppName(), db,
+          getTableId(), rowId);
+      successful = true;
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
       }
     }
   }
@@ -320,8 +338,15 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       // OK Action => delete the row
       alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
-          deleteRow(rowId);
-          init();
+          AbsTableActivity activity = (AbsTableActivity) getActivity();
+          try {
+            deleteRow(rowId);
+            init();
+          } catch (RemoteException e) {
+            WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+            WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+            Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+          }
         }
       });
 
@@ -339,8 +364,15 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
       // It is possible that a custom form has been defined for this table.
       // We will get the strings we need, and then set the parameter object.
-      ActivityUtil.editRow(activity, activity.getAppName(), activity.getTableId(),
-          activity.getColumnDefinitions(), cell.row);
+      try {
+        ActivityUtil.editRow(activity, activity.getAppName(), activity.getTableId(),
+            activity.getColumnDefinitions(), cell.row);
+      } catch (RemoteException e) {
+        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+        return true;
+      }
       // launch ODK Collect
       return true;
     case MENU_ITEM_ID_OPEN_JOIN_TABLE:
@@ -348,13 +380,24 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
       // Get the JoinColumn.
       ArrayList<JoinColumn> joinColumns;
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-        joinColumns = ColumnUtil.get().getJoins(db, getTableId(), cd.getElementKey());
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+        joinColumns = ColumnUtil.get().getJoins(Tables.getInstance(), getAppName(), db, getTableId(), cd.getElementKey());
+      } catch (RemoteException e) {
+        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+        return true;
       } finally {
         if (db != null) {
-          db.close();
+          try {
+            Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+          } catch (RemoteException e) {
+            WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+            WebLogger.getLogger(activity.getAppName()).e(TAG, "Error closing database");
+            Toast.makeText(activity, "Error closing database", Toast.LENGTH_LONG).show();
+          }
         }
       }
 
@@ -398,12 +441,23 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           String joinedColTableDisplayName;
           db = null;
           try {
-            db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-            joinedColTableDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId,
+            db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+            joinedColTableDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(), 
+                db, tableId,
                 elementKey);
+          } catch (RemoteException e) {
+            WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+            WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+            Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
           } finally {
             if (db != null) {
-              db.close();
+              try {
+                Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+              } catch (RemoteException e) {
+                WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+                WebLogger.getLogger(activity.getAppName()).e(TAG, "Error closing database");
+                Toast.makeText(activity, "Error closing database", Toast.LENGTH_LONG).show();
+              }
             }
           }
 
@@ -422,31 +476,67 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       }
       return true;
     case MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY:
-      addGroupByColumn(spreadsheetTable
-          .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
-      init();
+      try {
+        addGroupByColumn(spreadsheetTable
+            .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
+        init();
+      } catch (RemoteException e) {
+        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+      }
       return true;
     case MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY:
-      removeGroupByColumn(spreadsheetTable
-          .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
-      init();
+      try {
+        removeGroupByColumn(spreadsheetTable
+            .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
+        init();
+      } catch (RemoteException e) {
+        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+      }
       return true;
     case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-      setColumnAsSort(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
-      init();
+      try {
+        setColumnAsSort(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
+        init();
+      } catch (RemoteException e) {
+        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+      }
       return true;
     case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
-      setColumnAsSort(null);
-      init();
+      try {
+        setColumnAsSort(null);
+        init();
+      } catch (RemoteException e) {
+        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+      }
       return true;
     case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-      setColumnAsIndexedCol(spreadsheetTable
-          .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
-      init();
+      try {
+        setColumnAsIndexedCol(spreadsheetTable
+            .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
+        init();
+      } catch (RemoteException e) {
+        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+      }
       return true;
     case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
-      setColumnAsIndexedCol(null);
-      init();
+      try {
+        setColumnAsIndexedCol(null);
+        init();
+      } catch (RemoteException e) {
+        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+      }
       return true;
     case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
       String elementKey = this.mLastHeaderCellMenued.elementKey;
@@ -471,18 +561,19 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   }
 
   @Override
-  public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo) {
+  public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo) throws RemoteException {
     this.mLastDataCellMenued = cellInfo;
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
     String localizedDisplayName;
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(),
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
+          db, getTableId(),
           cd.getElementKey());
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
 
@@ -513,11 +604,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     ArrayList<JoinColumn> joinColumns;
     db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      joinColumns = ColumnUtil.get().getJoins(db, getTableId(), cd.getElementKey());
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      joinColumns = ColumnUtil.get().getJoins(Tables.getInstance(), getAppName(), 
+          db, getTableId(), cd.getElementKey());
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
 
@@ -539,21 +631,21 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   }
 
   @Override
-  public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo) {
+  public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo) throws RemoteException {
     this.mLastHeaderCellMenued = cellInfo;
 
     String sortColumn;
     String indexColumn;
     ArrayList<String> groupByColumns;
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      sortColumn = TableUtil.get().getSortColumn(db, getTableId());
-      indexColumn = TableUtil.get().getIndexColumn(db, getTableId());
-      groupByColumns = TableUtil.get().getColumnOrder(db, getTableId());
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      sortColumn = TableUtil.get().getSortColumn(getAppName(), db, getTableId());
+      indexColumn = TableUtil.get().getIndexColumn(getAppName(), db, getTableId());
+      groupByColumns = TableUtil.get().getColumnOrder(getAppName(), db, getTableId());
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
 
@@ -602,8 +694,17 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       this.cell = cell;
       this.dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
       ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
-      cev = CellValueView
-          .getCellEditView(getActivity(), getAppName(), getTableId(), cd, cell.value);
+      CellValueView.CellEditView cevTemp = null;
+      try {
+        cevTemp = CellValueView
+            .getCellEditView(Tables.getInstance(), getActivity(), getAppName(), getTableId(), cd, cell.value);
+      } catch (RemoteException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        WebLogger.getLogger(getAppName()).e(TAG,  "Unable to access database");
+        return;
+      } finally {
+        cev = cevTemp;
+      }
       this.buildView(getActivity());
     }
 
@@ -613,40 +714,43 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       setButton.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-          SQLiteDatabase db = null;
+          boolean successful = false;
+          OdkDbHandle db = null;
           ArrayList<Map<String, Object>> choices;
           try {
-            db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-            choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(db,
-                getTableId(), cell.elementKey);
-          } finally {
-            if (db != null) {
-              db.close();
+            try {
+              db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+              choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
+                  Tables.getInstance(), getAppName(), db,
+                  getTableId(), cell.elementKey);
+  
+              String value = ParseUtil.validifyValue(getAppName(), dataUtil, choices,
+                  spreadsheetTable.getColumnByElementKey(CellEditDialog.this.cell.elementKey),
+                  cev.getValue());
+              if (value == null) {
+                // TODO: alert the user
+                return;
+              }
+    
+              ContentValues values = new ContentValues();
+              values.put(CellEditDialog.this.cell.elementKey, value);
+    
+              Tables.getInstance().getDatabase().updateDataInExistingDBTableWithId(getAppName(), db,
+                  getTableId(),
+                  getColumnDefinitions(), values, cell.row.getRowId());
+              successful = true;
+            } finally {
+              if (db != null) {
+                Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
+              }
             }
+  
+            init();
+          } catch (RemoteException e) {
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
+            WebLogger.getLogger(getAppName()).e(TAG, "Error while accessing database");
+            Toast.makeText(CellEditDialog.this.getContext(), "Error while accessing database", Toast.LENGTH_LONG).show();
           }
-          String value = ParseUtil.validifyValue(getAppName(), dataUtil, choices,
-              spreadsheetTable.getColumnByElementKey(CellEditDialog.this.cell.elementKey),
-              cev.getValue());
-          if (value == null) {
-            // TODO: alert the user
-            return;
-          }
-
-          ContentValues values = new ContentValues();
-          values.put(CellEditDialog.this.cell.elementKey, value);
-
-          db = null;
-          try {
-            db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-            ODKDatabaseUtils.get().updateDataInExistingDBTableWithId(db, getTableId(),
-                getColumnDefinitions(), values, cell.row.getRowId());
-          } finally {
-            if (db != null) {
-              db.close();
-            }
-          }
-
-          init();
           dismiss();
         }
       });

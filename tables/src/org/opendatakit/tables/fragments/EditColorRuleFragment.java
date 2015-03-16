@@ -20,21 +20,25 @@ import java.util.ArrayList;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.preferences.EditColorPreference;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.TableUtil;
+import org.opendatakit.tables.utils.TableUtil.TableColumns;
 import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;
 
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
+import android.widget.Toast;
 
 /**
  * 
@@ -142,29 +146,48 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   @Override
   public void onResume() {
     super.onResume();
-    this.initializeStateRequiringContext();
-    this.initializeAllPreferences();
+    OdkDbHandle db = null;
+    try {
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      this.initializeStateRequiringContext(db);
+      this.initializeAllPreferences(db);
+    } catch (RemoteException e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
+    } finally {
+      if ( db != null ) {
+        try {
+          Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+        } catch (RemoteException e) {
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
+          Toast.makeText(getActivity(), "Error releasing database", Toast.LENGTH_LONG).show();
+        }
+      }
+    }
   }
 
   /**
    * Set up the objects that require a context.
+   * @throws RemoteException 
    */
-  private void initializeStateRequiringContext() {
+  private void initializeStateRequiringContext(OdkDbHandle db) throws RemoteException {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
 
     // 1) First fill in the color rule group and list.
+    TableColumns tc = TableUtil.get().getTableColumns(getAppName(), db, getTableId());
+    
     switch (this.mColorRuleGroupType) {
     case COLUMN:
-      this.mColorRuleGroup = ColorRuleGroup.getColumnColorRuleGroup(getActivity(), getAppName(),
-          getTableId(), this.mElementKey);
+      this.mColorRuleGroup = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(), getAppName(),
+          db, getTableId(), this.mElementKey, tc.adminColumns);
       break;
     case TABLE:
-      this.mColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(getActivity(), getAppName(),
-          getTableId());
+      this.mColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), getAppName(),
+          db, getTableId(), tc.adminColumns);
       break;
     case STATUS_COLUMN:
-      this.mColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(getActivity(), getAppName(),
-          getTableId());
+      this.mColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), getAppName(),
+          db, getTableId(), tc.adminColumns);
       break;
     default:
       throw new IllegalArgumentException("unrecognized color rule group type: "
@@ -190,39 +213,29 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     // 3) then fill in the static things backing the dialogs.
     this.mOperatorHumanFriendlyValues = ColorRule.RuleType.getValues();
     this.mOperatorEntryValues = ColorRule.RuleType.getValues();
-    ArrayList<ColumnDefinition> orderedDefns = activity.getColumnDefinitions();
 
     ArrayList<String> displayNames = new ArrayList<String>();
     ArrayList<String> elementKeys = new ArrayList<String>();
 
-    SQLiteDatabase db = null;
-    try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      for (ColumnDefinition cd : orderedDefns) {
-        if (cd.isUnitOfRetention()) {
+    for ( ColumnDefinition cd : tc.orderedDefns.getColumnDefinitions()) {
+      if (cd.isUnitOfRetention()) {
 
-          String localizedDisplayName;
-          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(),
-              cd.getElementKey());
-          displayNames.add(localizedDisplayName);
-          elementKeys.add(cd.getElementKey());
-        }
-      }
-      mColumnDisplayNames = displayNames.toArray(new String[displayNames.size()]);
-      mColumnElementKeys = elementKeys.toArray(new String[elementKeys.size()]);
-
-    } finally {
-      if (db != null) {
-        db.close();
+        String localizedDisplayName;
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(
+            Tables.getInstance(), getAppName(), db, getTableId(),
+            cd.getElementKey());
+        displayNames.add(localizedDisplayName);
+        elementKeys.add(cd.getElementKey());
       }
     }
-
+    mColumnDisplayNames = displayNames.toArray(new String[displayNames.size()]);
+    mColumnElementKeys = elementKeys.toArray(new String[elementKeys.size()]);
   }
 
-  private void initializeAllPreferences() {
+  private void initializeAllPreferences(OdkDbHandle db) throws RemoteException {
     // We have several things to do here. First we'll initialize all the
     // individual preferences.
-    this.initializeColumns();
+    this.initializeColumns(db);
     this.initializeComparisonType();
     this.initializeRuleValue();
     this.initializeTextColor();
@@ -241,7 +254,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     return this.mRulePosition == INVALID_RULE_POSITION;
   }
 
-  private void initializeColumns() {
+  private void initializeColumns(OdkDbHandle db) throws RemoteException {
     final ListPreference pref = this
         .findListPreference(Constants.PreferenceKeys.ColorRule.ELEMENT_KEY);
     // And now we have to consider that we don't display this at all.
@@ -253,16 +266,9 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     pref.setEntryValues(mColumnElementKeys);
     if (!isUnpersistedNewRule()) {
       String localizedDisplayName;
-      SQLiteDatabase db = null;
-      try {
-        db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(),
-            this.mColorRuleGroup.getColorRules().get(mRulePosition).getColumnElementKey());
-      } finally {
-        if (db != null) {
-          db.close();
-        }
-      }
+      localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
+          db, getTableId(),
+          this.mColorRuleGroup.getColorRules().get(mRulePosition).getColumnElementKey());
       pref.setSummary(localizedDisplayName);
       pref.setValueIndex(pref.findIndexOfValue(mElementKey));
     }
@@ -273,16 +279,26 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
         WebLogger.getLogger(getAppName()).d(TAG,
             "onPreferenceChance callback invoked for value: " + newValue);
         mElementKey = (String) newValue;
-        String localizedDisplayName;
-        SQLiteDatabase db = null;
+        String localizedDisplayName = null;
+        OdkDbHandle db = null;
         try {
-          db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, getTableId(),
+          db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
+              db, getTableId(),
               mElementKey);
+        } catch (RemoteException e) {
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
         } finally {
           if (db != null) {
-            db.close();
+            try {
+              Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+            } catch (RemoteException e) {
+              WebLogger.getLogger(getAppName()).printStackTrace(e);
+            }
           }
+        }
+        if ( localizedDisplayName == null ) {
+          return false;
         }
         pref.setSummary(localizedDisplayName);
         pref.setValueIndex(pref.findIndexOfValue(mElementKey));
@@ -360,14 +376,20 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
       @Override
       public boolean onPreferenceClick(Preference preference) {
         if (preferencesDefineValidRule()) {
-          saveRule();
+          try {
+            saveRule();
+            return true;
+          } catch (RemoteException e) {
+            e.printStackTrace();
+            return false;
+          }
         }
         return false;
       }
     });
   }
 
-  private void saveRule() {
+  private void saveRule() throws RemoteException {
     ColorRule newRule = constructColorRuleFromState();
     if (this.isUnpersistedNewRule()) {
       this.mColorRuleGroup.getColorRules().add(newRule);
@@ -377,7 +399,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     } else {
       this.mColorRuleGroup.getColorRules().set(mRulePosition, newRule);
     }
-    mColorRuleGroup.saveRuleList(getActivity());
+    mColorRuleGroup.saveRuleList(Tables.getInstance());
     updateStateOfSaveButton();
   }
 

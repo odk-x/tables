@@ -2,19 +2,27 @@ package org.opendatakit.tables.fragments;
 
 import static org.robolectric.Robolectric.shadowOf;
 
+import java.io.File;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.tables.activities.TableDisplayActivityStub;
+import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
+import org.opendatakit.testutils.TestConstants;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 import org.robolectric.shadows.ShadowWebView;
 
 import android.app.Activity;
+import android.app.FragmentManager;
+import android.view.View;
 import android.webkit.WebView;
 
 /**
@@ -25,28 +33,30 @@ import android.webkit.WebView;
 @RunWith(RobolectricTestRunner.class)
 public class ListViewFragmentTest {
   
-  ListViewFragmentStub fragment;
+  ListViewFragment fragment;
   Activity activity;
   
   @After
   public void after() {
     TestCaseUtils.resetExternalStorageState();
-    ListViewFragmentStub.resetState();
   }
   
   @Before
   public void before() {
-    TestCaseUtils.setThreeTableDataset();
+    CommonApplication.setMocked();
     TestCaseUtils.setExternalStorageMounted();
+    
+    TestCaseUtils.setThreeTableDataset(true);
     ShadowLog.stream = System.out;
-    TableDisplayActivityStub.BUILD_MENU_FRAGMENT = false;
-    ListViewFragmentStub stub = new ListViewFragmentStub();
-    ODKFragmentTestUtil.startFragmentForActivity(
-        TableDisplayActivityStub.class,
-        stub,
-        null);
-    this.fragment = stub;
-    this.activity = this.fragment.getActivity();
+    String tableIdFile = ODKFileUtils.getTablesFolder(TestConstants.TABLES_DEFAULT_APP_NAME, TestConstants.DEFAULT_TABLE_ID) +
+        File.separator + "testlisting.html";
+    File tableHtmlFile = new File(tableIdFile);
+    TestCaseUtils.assertFile(tableHtmlFile,"<html><head></head><body><p>This is a test file</p></body></html>"); 
+        
+    activity = ODKFragmentTestUtil.startListWebFragmentForTableDisplayActivity(
+        TestConstants.DEFAULT_TABLE_ID, ODKFileUtils.asRelativePath(TestConstants.TABLES_DEFAULT_APP_NAME, tableHtmlFile));
+    FragmentManager mgr = activity.getFragmentManager();
+    fragment = (ListViewFragment) mgr.findFragmentByTag(ViewFragmentType.LIST.name());
   }
   
   @Test
@@ -68,7 +78,8 @@ public class ListViewFragmentTest {
   }
   
   private ShadowWebView getShadowWebViewFromFragment() {
-    WebView webView = (WebView) this.fragment.getView();
+    View v = this.fragment.getView();
+    WebView webView = (WebView) v.findViewById(R.id.webkit);
     ShadowWebView result = shadowOf(webView);
     return result;
   }

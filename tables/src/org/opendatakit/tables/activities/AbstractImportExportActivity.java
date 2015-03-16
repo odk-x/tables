@@ -15,10 +15,10 @@
  */
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -36,7 +36,7 @@ import android.widget.Toast;
  * @author sudar.sam@gmail.com
  * @author unknown
  */
-public abstract class AbstractImportExportActivity extends Activity {
+public abstract class AbstractImportExportActivity extends BaseActivity {
 
 	/** dialog IDs */
 	public static final int CSVEXPORT_SUCCESS_DIALOG = 1;

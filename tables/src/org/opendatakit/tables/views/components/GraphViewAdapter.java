@@ -57,7 +57,7 @@ public class GraphViewAdapter extends BaseAdapter implements ListAdapter {
     this.mAppName = appName;
   }
   
-  List<GraphViewStruct> getGraphViews() {
+  public List<GraphViewStruct> getGraphViews() {
     return this.mGraphViews;
   }
 

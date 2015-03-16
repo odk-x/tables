@@ -18,7 +18,9 @@ package org.opendatakit.tables.fragments;
 import java.lang.ref.WeakReference;
 
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
@@ -29,10 +31,12 @@ import org.opendatakit.tables.views.webkits.TableDataIf;
 
 import android.app.Fragment;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.TextView;
 
 /**
  * Base class for {@link Fragment}s that display information about a table
@@ -50,18 +54,18 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    * must be saved to prevent garbage collection of the {@link WeakReference}
    * in {@link ControlIf}.
    */
-  protected Control mControlReference;
+  Control mControlReference;
   /**
    * The {@link TableData} object that was used to generate the
    * {@link TableDataIf} that was passed to the {@link WebView}. This reference
    * must be saved to prevent garbage collection of the {@link WeakReference}
    * in {@link TableDataIf}.
    */
-  protected TableData mTableDataReference;
+  TableData mTableDataReference;
 
   /** The file name this fragment is displaying. */
-  protected String mFileName;
-
+  String mFileName;
+  
   /**
    * Retrieve the file name that should be displayed.
    * @return the file name, or null if one has not been set.
@@ -104,34 +108,51 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
       ViewGroup container,
       Bundle savedInstanceState) {
     WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView]");
-    WebView webView = this.buildView();
-    return webView;
+    
+    ViewGroup v = (ViewGroup) inflater.inflate(
+        R.layout.web_view_container,
+        container,
+        false);
+
+    WebView webView = (WebView) v.findViewById(R.id.webkit);
+    
+    WebView result = WebViewUtil.getODKCompliantWebView((AbsBaseActivity) getActivity(), webView);
+    return v;
   }
-
-
+  
   /**
+   * @throws RemoteException 
    * @see IWebFragment#createControlObject()
    */
   @Override
-  public Control createControlObject() {
-    Control result = new Control((AbsBaseActivity) getActivity(), getAppName(), getTableId(), getColumnDefinitions());
+  public Control createControlObject() throws RemoteException {
+    Control result = new Control((AbsBaseActivity) getActivity(), getTableId(), getColumnDefinitions());
     return result;
   }
 
   /**
    * Create a {@link TableData} object that can be added toe the webview.
    * @return
+   * @throws RemoteException 
    */
-  protected abstract TableData createDataObject();
+  protected abstract TableData createDataObject() throws RemoteException;
 
-  /**
-   * Build the {@link CustomView} that will be displayed by the fragment.
-   * @return
-   */
   @Override
-  public WebView buildView() {
-    WebView result = WebViewUtil.getODKCompliantWebView((AbsBaseActivity) getActivity());
-    return result;
+  public void setWebKitVisibility() {
+    if ( getView() == null ) {
+      return;
+    }
+    
+    WebView webView = (WebView) getView().findViewById(R.id.webkit);
+    TextView noDatabase = (TextView) getView().findViewById(android.R.id.empty);
+    
+    if ( Tables.getInstance().getDatabase() != null ) {
+      webView.setVisibility(View.VISIBLE);
+      noDatabase.setVisibility(View.GONE);
+    } else {
+      webView.setVisibility(View.GONE);
+      noDatabase.setVisibility(View.VISIBLE);
+    }
   }
 
   /**
@@ -142,4 +163,9 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     return this.mFileName;
   }
 
+  @Override
+  public void setFileName(String relativeFileName) {
+    this.mFileName = relativeFileName;
+    databaseAvailable();
+  }
 }

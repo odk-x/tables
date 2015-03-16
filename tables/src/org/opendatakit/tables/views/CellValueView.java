@@ -18,12 +18,13 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.database.service.OdkDbHandle;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -31,13 +32,13 @@ import android.widget.Spinner;
 
 public class CellValueView {
 
-  public static CellEditView getCellEditView(Context context, String appName, String tableId, ColumnDefinition cd, String value) {
+  public static CellEditView getCellEditView(CommonApplication app, Context context, String appName, String tableId, ColumnDefinition cd, String value) throws RemoteException {
 
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
+      db = app.getDatabase().openDatabase(appName, false);
       ArrayList<Map<String,Object>> displayChoices = (ArrayList<Map<String, Object>>) 
-          ColumnUtil.get().getDisplayChoicesList(db, tableId, cd.getElementKey());
+          ColumnUtil.get().getDisplayChoicesList(app, appName, db, tableId, cd.getElementKey());
       if (displayChoices != null) {
         return new MultipleChoiceEditView(context, cd, displayChoices, value);
       } else {
@@ -45,7 +46,7 @@ public class CellValueView {
       }
     } finally {
       if ( db != null ) {
-        db.close();
+        app.getDatabase().closeDatabase(appName, db);
       }
     }
   }

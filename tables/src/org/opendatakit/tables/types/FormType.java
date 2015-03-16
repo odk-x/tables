@@ -15,14 +15,15 @@
  */
 package org.opendatakit.tables.types;
 
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.KeyValueHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 
 /**
  * Definition of the form data type.
@@ -31,6 +32,7 @@ import android.database.sqlite.SQLiteDatabase;
  *
  */
 public class FormType {
+  private static final String TAG = "FormType";
 
   public static final String KVS_PARTITION = "FormType";
   public static final String KVS_ASPECT = "default";
@@ -47,17 +49,18 @@ public class FormType {
   private CollectFormParameters mCollectParams;
   private SurveyFormParameters mSurveyParams;
 
-  public static FormType constructFormType(Context context, String appName, String tableId) {
+  public static FormType constructFormType(Context context, String appName, String tableId) throws RemoteException {
     String formType;
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, tableId, FormType.KVS_PARTITION);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db,
+          tableId, FormType.KVS_PARTITION);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
       formType = aspectHelper.getString(FormType.KEY_FORM_TYPE);
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
     if (formType == null) {
@@ -78,34 +81,33 @@ public class FormType {
     }
   }
 
-  public void persist(Context context, String appName, String tableId) {
-    SQLiteDatabase db = null;
+  public void persist(Context context, String appName, String tableId) throws RemoteException {
+    boolean successful = false;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
-      db.beginTransaction();
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db,
+      db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db,
           tableId, FormType.KVS_PARTITION);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
       aspectHelper.setString(KEY_FORM_TYPE, type.name());
 
-      this.mCollectParams.persist(db, tableId);
-      this.mSurveyParams.persist(db, tableId);
-      db.setTransactionSuccessful();
+      this.mCollectParams.persist(appName, db, tableId);
+      this.mSurveyParams.persist(appName, db, tableId);
+      successful = true;
     } finally {
       if ( db != null ) {
-        db.endTransaction();
-        db.close();
+        Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
       }
     }
   }
 
-  public FormType(Context context, String appName, String tableId, CollectFormParameters params) {
+  public FormType(Context context, String appName, String tableId, CollectFormParameters params) throws RemoteException {
     this.type = Type.COLLECT;
     this.mCollectParams = params;
     this.mSurveyParams = SurveyFormParameters.constructSurveyFormParameters(context, appName, tableId);
   }
 
-  public FormType(Context context, String appName, String tableId, SurveyFormParameters params) {
+  public FormType(Context context, String appName, String tableId, SurveyFormParameters params) throws RemoteException {
     this.type = Type.SURVEY;
     this.mSurveyParams = params;
     this.mCollectParams = CollectFormParameters.constructCollectFormParameters(

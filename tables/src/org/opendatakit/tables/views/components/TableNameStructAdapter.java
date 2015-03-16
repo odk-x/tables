@@ -19,12 +19,14 @@ import java.util.List;
 
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.TableNameStruct;
 
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
@@ -37,28 +39,28 @@ import android.widget.TextView;
  * @author sudar.sam@gmail.com
  *
  */
-public class TableNameStructAdapter extends BaseAdapter implements ListAdapter {
+public class TableNameStructAdapter extends ArrayAdapter<TableNameStruct> {
 
   private static final String TAG = TableNameStructAdapter.class.getSimpleName();
-
-  private Context mContext;
+  
   private String mAppName;
-  private List<TableNameStruct> mTableIdList;
 
-  public TableNameStructAdapter(Context context, String appName, List<TableNameStruct> list) {
-    this.mContext = context;
-    this.mAppName = appName;
-    this.mTableIdList = list;
+  public TableNameStructAdapter(AbsBaseActivity context, List<TableNameStruct> values) {
+    super(context, R.layout.row_item_with_preference);
+    this.mAppName = context.getAppName();
+    this.clear();
+    this.addAll(values);
   }
 
   @Override
   public View getView(int position, android.view.View convertView, android.view.ViewGroup parent) {
-    WebLogger.getLogger(mAppName).e(TAG, "getView called");
-    final RelativeLayout view = convertView == null ? createView(parent)
-        : (RelativeLayout) convertView;
+    if ( convertView == null ) {
+      convertView = LayoutInflater.from(getContext()).inflate(R.layout.row_item_with_preference, parent, false);
+    }
+    final RelativeLayout view = (RelativeLayout) convertView;
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
 
-    TableNameStruct nameStruct = this.getList().get(position);
+    TableNameStruct nameStruct = getItem(position);
 
     textView.setText(nameStruct.getLocalizedDisplayName());
     ImageView imageView = (ImageView) view.findViewById(R.id.row_item_icon);
@@ -72,33 +74,6 @@ public class TableNameStructAdapter extends BaseAdapter implements ListAdapter {
       }
     });
     return view;
-  }
-
-  List<TableNameStruct> getList() {
-    return this.mTableIdList;
-  }
-
-  private RelativeLayout createView(ViewGroup parent) {
-    LayoutInflater layoutInflater = (LayoutInflater) parent.getContext().getSystemService(
-        Context.LAYOUT_INFLATER_SERVICE);
-    return (RelativeLayout) layoutInflater
-        .inflate(R.layout.row_item_with_preference, parent, false);
-  }
-
-  @Override
-  public int getCount() {
-    WebLogger.getLogger(mAppName).e(TAG, "getCount returns: " + this.getList().size());
-    return this.getList().size();
-  }
-
-  @Override
-  public Object getItem(int position) {
-    return this.getList().get(position);
-  }
-
-  @Override
-  public long getItemId(int position) {
-    return 0;
   }
 
 }

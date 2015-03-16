@@ -15,22 +15,25 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.activities.BaseActivity;
+import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.TableHealthInfo;
+import org.opendatakit.database.service.TableHealthStatus;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
-import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.RemoteException;
 import android.widget.Toast;
 
 /**
@@ -40,7 +43,7 @@ import android.widget.Toast;
  * @author sudar.sam@gmail.com
  *
  */
-public abstract class AbsBaseActivity extends Activity {
+public abstract class AbsBaseActivity extends BaseActivity {
 
   protected String mAppName;
   protected String mActionTableId = null;
@@ -98,30 +101,45 @@ public abstract class AbsBaseActivity extends Activity {
     long now = System.currentTimeMillis();
     WebLogger.getLogger(getAppName()).i(this.getClass().getSimpleName(), "scanAllTables -- searching for conflicts and checkpoints ");
     
-    SQLiteDatabase db = null;
+    CommonApplication app = (CommonApplication) getApplication();
+    OdkDbHandle db = null;
 
+    if ( app.getDatabase() == null ) {
+      return;
+    }
+    
     try {
-      db = DatabaseFactory.get().getDatabase(this, getAppName());
-      ArrayList<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+      db = app.getDatabase().openDatabase(mAppName, false);
+      List<TableHealthInfo> tableHealthList = app.getDatabase().getTableHealthStatuses(mAppName, db);
       
       Bundle checkpointTables = new Bundle();
       Bundle conflictTables = new Bundle();
       
-      for ( String tableId : tableIds ) {
-        int health = ODKDatabaseUtils.get().getTableHealth(db, tableId);
+      for ( TableHealthInfo tableHealth : tableHealthList ) {
+        String tableId = tableHealth.getTableId();
+        TableHealthStatus status = tableHealth.getHealthStatus();
         
-        if ( (health & ODKDatabaseUtils.TABLE_HEALTH_HAS_CHECKPOINTS) != 0) {
+        if ( status == TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS ||
+             status == TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS ) {
             checkpointTables.putString(tableId, tableId);
         }
-        if ( (health & ODKDatabaseUtils.TABLE_HEALTH_HAS_CONFLICTS) != 0) {
+        if ( status == TableHealthStatus.TABLE_HEALTH_HAS_CONFLICTS ||
+             status == TableHealthStatus.TABLE_HEALTH_HAS_CHECKPOINTS_AND_CONFLICTS ) {
             conflictTables.putString(tableId, tableId);
         }
       }
       mCheckpointTables = checkpointTables;
       mConflictTables = conflictTables;
+    } catch (RemoteException e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
     } finally {
       if ( db != null ) {
-        db.close();
+        try {
+          app.getDatabase().closeDatabase(mAppName, db);
+        } catch (RemoteException e) {
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
+          WebLogger.getLogger(getAppName()).e(this.getClass().getSimpleName(),"Unable to close database");
+        }
       }
     }
     
@@ -159,8 +177,18 @@ public abstract class AbsBaseActivity extends Activity {
       try {
         this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
       } catch ( ActivityNotFoundException e ) {
-        Toast.makeText(this, getString(R.string.activity_not_found, 
-            Constants.ExternalIntentStrings.SYNC_CHECKPOINT_ACTIVITY_COMPONENT_NAME), Toast.LENGTH_LONG).show();
+        WebLogger.getLogger(mAppName).e(this.getClass().getSimpleName(), "onPostResume: Unable to access ODK Sync");
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+          public void run() {
+            AbsBaseActivity.this.runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                Toast.makeText(AbsBaseActivity.this, getString(R.string.activity_not_found, 
+                    Constants.ExternalIntentStrings.SYNC_CHECKPOINT_ACTIVITY_COMPONENT_NAME), Toast.LENGTH_LONG).show();
+              }});
+          }
+        }, 100);
       }
     }
     if ( (mConflictTables != null) && !mConflictTables.isEmpty() ) {
@@ -181,8 +209,18 @@ public abstract class AbsBaseActivity extends Activity {
       try {
         this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
       } catch ( ActivityNotFoundException e ) {
-        Toast.makeText(this, getString(R.string.activity_not_found, 
-            Constants.ExternalIntentStrings.SYNC_CONFLICT_ACTIVITY_COMPONENT_NAME), Toast.LENGTH_LONG).show();
+        WebLogger.getLogger(mAppName).e(this.getClass().getSimpleName(), "onPostResume: Unable to access ODK Sync");
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+          public void run() {
+            AbsBaseActivity.this.runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                Toast.makeText(AbsBaseActivity.this, getString(R.string.activity_not_found, 
+                    Constants.ExternalIntentStrings.SYNC_CHECKPOINT_ACTIVITY_COMPONENT_NAME), Toast.LENGTH_LONG).show();
+              }});
+          }
+        }, 100);
       }
     }
 

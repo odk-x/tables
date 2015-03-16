@@ -23,22 +23,27 @@ import java.util.Map;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.logic.CommonToolProperties;
+import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.KeyValueHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.logic.TablesToolProperties;
 import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
 import org.opendatakit.tables.views.components.LockableScrollView;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 /**
  * A view similar to a spreadsheet. Builds TabularViews for the header and body
@@ -79,9 +84,13 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   private final Controller controller;
   private final SpreadsheetUserTable table;
   private final int fontSize;
-
+  private final int completeColWidths[];
+  
   private final Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup;
 
+  private final ColorRuleGroup mStatusColumnRuleGroup;
+  private final ColorRuleGroup mTableColorRuleGroup;
+  
   // Keeping this for now in case someone else needs to work with the code
   // and relied on this variable.
   private LockableScrollView dataStatusScroll;
@@ -102,7 +111,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
   private CellInfo lastHighlightedCellId;
 
-  public SpreadsheetView(Context context, Controller controller, SpreadsheetUserTable table) {
+  public SpreadsheetView(Context context, Controller controller, SpreadsheetUserTable table) throws RemoteException {
     super(context);
     this.context = context;
     this.controller = controller;
@@ -119,24 +128,35 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // We have to initialize the items that will be shared across the
     // TabularView objects.
     this.mElementKeyToColorRuleGroup = new HashMap<String, ColorRuleGroup>();
-    for (ColumnDefinition cd : table.getColumnDefinitions()) {
-      mElementKeyToColorRuleGroup.put(cd.getElementKey(),
-          table.getColumnColorRuleGroup(cd.getElementKey()));
-    }
 
     // if a custom font size is defined in the KeyValueStore, use that
     // if not, use the general font size defined in preferences
-    SQLiteDatabase db = null;
+    String appName = table.getAppName();
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, table.getAppName());
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, table.getTableId(), "SpreadsheetView");
-      if (kvsh.getInteger("fontSize") == null)
-        fontSize = (new Preferences(context, table.getAppName())).getFontSize();
-      else
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
+      for (ColumnDefinition cd : table.getColumnDefinitions().getColumnDefinitions()) {
+        mElementKeyToColorRuleGroup.put(cd.getElementKey(),
+            table.getColumnColorRuleGroup(db, cd.getElementKey(), adminColumns));
+      }
+      mStatusColumnRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(),
+          appName, db, table.getTableId(), adminColumns);
+      mTableColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(),
+          appName, db, table.getTableId(), adminColumns);
+      completeColWidths = getColumnWidths(db);
+
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, table.getTableId(), "SpreadsheetView");
+      if (kvsh.getInteger("fontSize") == null) {
+        PropertiesSingleton props = TablesToolProperties.get(context, table.getAppName());
+        Integer fs = props.getIntegerProperty(CommonToolProperties.KEY_FONT_SIZE);
+        fontSize = fs == null ? CommonToolProperties.DEFAULT_FONT_SIZE : fs.intValue();
+      } else {
         fontSize = kvsh.getInteger("fontSize");
+      }
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
 
@@ -373,7 +393,6 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // "isIndexed: " + isIndexed);
     List<String> elementKeysToDisplay = new ArrayList<String>();
     int[] colWidths;
-    int[] completeColWidths = getColumnWidths();
     TabularView dataTable;
     TabularView headerTable;
     if (isIndexed) {
@@ -382,9 +401,9 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       colWidths = new int[1];
       colWidths[0] = completeColWidths[table.getColumnIndexOfElementKey(indexElementKey)];
       dataTable = TabularView.getIndexDataTable(context, this, table, elementKeysToDisplay,
-          colWidths, fontSize, this.mElementKeyToColorRuleGroup);
+          colWidths, fontSize, this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
       headerTable = TabularView.getIndexHeaderTable(context, this, table, elementKeysToDisplay,
-          colWidths, fontSize, this.mElementKeyToColorRuleGroup);
+          colWidths, fontSize, this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
     } else {
       int width = (indexElementKey == null || indexElementKey.length() == 0) ? table.getWidth() : table.getWidth() - 1;
       colWidths = new int[width];
@@ -399,9 +418,9 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
         addIndex++;
       }
       dataTable = TabularView.getMainDataTable(context, this, table, elementKeysToDisplay,
-          colWidths, fontSize, this.mElementKeyToColorRuleGroup);
+          colWidths, fontSize, this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
       headerTable = TabularView.getMainHeaderTable(context, this, table, elementKeysToDisplay,
-          colWidths, fontSize, this.mElementKeyToColorRuleGroup);
+          colWidths, fontSize, this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
     }
 
     LockableScrollView dataScroll;
@@ -436,7 +455,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     dataStatusScroll = new LockableScrollView(context);
     TabularView dataTable = TabularView.getStatusDataTable(context, this, table, colWidths,
-        fontSize, this.mElementKeyToColorRuleGroup);
+        fontSize, this.mElementKeyToColorRuleGroup, mStatusColumnRuleGroup);
     dataTable.setVerticalFadingEdgeEnabled(true);
     dataTable.setVerticalScrollBarEnabled(false);
     dataStatusScroll.addView(dataTable, new ViewGroup.LayoutParams(dataTable.getTableWidth(),
@@ -444,7 +463,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     dataStatusScroll.setVerticalFadingEdgeEnabled(true);
     dataStatusScroll.setHorizontalFadingEdgeEnabled(true);
     TabularView headerTable = TabularView.getStatusHeaderTable(context, this, table, colWidths,
-        fontSize, this.mElementKeyToColorRuleGroup);
+        fontSize, this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
     LinearLayout wrapper = new LinearLayout(context);
     wrapper.setOrientation(LinearLayout.VERTICAL);
     wrapper.addView(headerTable, headerTable.getTableWidth(), headerTable.getTableHeight());
@@ -486,17 +505,41 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
   @Override
   public void onCreateMainDataContextMenu(ContextMenu menu) {
-    controller.prepDataCellOccm(menu, lastHighlightedCellId);
+    try {
+      controller.prepDataCellOccm(menu, lastHighlightedCellId);
+    } catch (RemoteException e) {
+      String appName = SpreadsheetView.this.table.getAppName();
+      WebLogger.getLogger(appName).printStackTrace(e);
+      WebLogger.getLogger(appName).e(TAG,
+          "Error accessing database: " + e.toString());
+      Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
+    }
   }
 
   @Override
   public void onCreateIndexDataContextMenu(ContextMenu menu) {
-    controller.prepDataCellOccm(menu, lastHighlightedCellId);
+    try {
+      controller.prepDataCellOccm(menu, lastHighlightedCellId);
+    } catch (RemoteException e) {
+      String appName = SpreadsheetView.this.table.getAppName();
+      WebLogger.getLogger(appName).printStackTrace(e);
+      WebLogger.getLogger(appName).e(TAG,
+          "Error accessing database: " + e.toString());
+      Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
+    }
   }
 
   @Override
   public void onCreateHeaderContextMenu(ContextMenu menu) {
-    controller.prepHeaderCellOccm(menu, lastHighlightedCellId);
+    try {
+      controller.prepHeaderCellOccm(menu, lastHighlightedCellId);
+    } catch (RemoteException e) {
+      String appName = SpreadsheetView.this.table.getAppName();
+      WebLogger.getLogger(appName).printStackTrace(e);
+      WebLogger.getLogger(appName).e(TAG,
+          "Error accessing database: " + e.toString());
+      Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
+    }
   }
 
   private abstract class CellTouchListener implements View.OnTouchListener {
@@ -554,13 +597,13 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     public void headerCellClicked(CellInfo cellId);
 
-    public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId);
+    public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws RemoteException;
 
     public void openHeaderContextMenu(View view);
 
     public void dataCellClicked(CellInfo cellId);
 
-    public void prepDataCellOccm(ContextMenu menu, CellInfo cellId);
+    public void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws RemoteException;
 
     public void openDataContextMenu(View view);
   }
@@ -573,34 +616,27 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * consider if you need to be accessing column widths.
    *
    * @return
+   * @throws RemoteException 
    */
-  public int[] getColumnWidths() {
+  public int[] getColumnWidths(OdkDbHandle db) throws RemoteException {
     // So what we want to do is go through and get the column widths for each
     // column. A problem here is that there is no caching, and if you have a
     // lot of columns you're really working the gut of the database.
     int numberOfDisplayColumns = table.getNumberOfDisplayColumns();
     int[] columnWidths = new int[numberOfDisplayColumns];
-    SQLiteDatabase db = null;
-    try {
-      db = DatabaseFactory.get().getDatabase(getContext(), table.getAppName());
-      KeyValueStoreHelper columnKVSH = 
-          new KeyValueStoreHelper(db, table.getTableId(), KeyValueStoreConstants.PARTITION_COLUMN);
+    String appName = table.getAppName();
+    KeyValueStoreHelper columnKVSH = 
+        new KeyValueStoreHelper(Tables.getInstance(), appName, db, table.getTableId(), KeyValueStoreConstants.PARTITION_COLUMN);
 
-      for (int i = 0; i < numberOfDisplayColumns; i++) {
-        ColumnDefinition cd = table.getColumnByIndex(i);
-        String elementKey = cd.getElementKey();
-        KeyValueHelper aspectHelper = columnKVSH.getAspectHelper(elementKey);
-        Integer value = aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);
-        if (value == null) {
-          columnWidths[i] = DEFAULT_COL_WIDTH;
-        } else {
-          columnWidths[i] = value;
-        }
-      }
-      
-    } finally {
-      if ( db != null ) { 
-        db.close();
+    for (int i = 0; i < numberOfDisplayColumns; i++) {
+      ColumnDefinition cd = table.getColumnByIndex(i);
+      String elementKey = cd.getElementKey();
+      KeyValueHelper aspectHelper = columnKVSH.getAspectHelper(elementKey);
+      Integer value = aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);
+      if (value == null) {
+        columnWidths[i] = DEFAULT_COL_WIDTH;
+      } else {
+        columnWidths[i] = value;
       }
     }
     return columnWidths;

@@ -16,6 +16,7 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.os.Bundle;
@@ -85,7 +86,7 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
       // don't need to do anything, as the view won't be getting updated.
       return;
     }
-    WebView currentView = (WebView) this.getView();
+    WebView currentView = (WebView) this.getView().findViewById(R.id.webkit);
     // Just reload the page.
     currentView.reload();
   }

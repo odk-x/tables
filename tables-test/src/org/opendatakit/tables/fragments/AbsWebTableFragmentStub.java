@@ -28,11 +28,6 @@ public class AbsWebTableFragmentStub extends AbsWebTableFragment {
     FRAGMENT_TYPE = DEFAULT_FRAGMENT_TYPE;
     TABLE_DATA = DEFAULT_TABLE_DATA;
   }
-  
-  @Override
-  public WebView buildView() {
-    return WEB_VIEW;
-  }
 
   @Override
   public ViewFragmentType getFragmentType() {
@@ -43,6 +38,18 @@ public class AbsWebTableFragmentStub extends AbsWebTableFragment {
   protected TableData createDataObject() {
     // TODO Auto-generated method stub
     return null;
+  }
+
+  @Override
+  public void databaseAvailable() {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void databaseUnavailable() {
+    // TODO Auto-generated method stub
+    
   }
 
 }

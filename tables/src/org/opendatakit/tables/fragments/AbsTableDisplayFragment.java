@@ -15,9 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.util.ArrayList;
-
-import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 
@@ -45,16 +43,25 @@ public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
    * @return
    */
   public String getTableId() {
-    UserTable table = this.getUserTable();
-    return table.getTableId();
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+    return activity.getTableId();
   }
   
+  /**
+   * Get the AppName under which we are operating.
+   * 
+   * @return appName
+   */
+  public String getAppName() {
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+    return activity.getAppName(); 
+  }
   /**
    * Get the description of the table.
    * 
    * @return
    */
-  public ArrayList<ColumnDefinition> getColumnDefinitions() {
+  public OrderedColumns getColumnDefinitions() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     return activity.getColumnDefinitions();
   }

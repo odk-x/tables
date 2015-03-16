@@ -15,21 +15,21 @@
  */
 package org.opendatakit.tables.preferences;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.PossibleTableViewTypes;
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.data.PossibleTableViewTypes;
+import org.opendatakit.tables.data.TableViewType;
+import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.components.TableViewTypeAdapter;
 
 import android.app.AlertDialog.Builder;
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 import android.preference.ListPreference;
 import android.util.AttributeSet;
 import android.widget.ListAdapter;
@@ -50,23 +50,23 @@ public class DefaultViewTypePreference extends ListPreference {
     this.mAppName = activity.getAppName();
   }
 
-  public void setFields(String tableId, ArrayList<ColumnDefinition> orderedDefns) {
+  public void setFields(String tableId, OrderedColumns orderedDefns) throws RemoteException {
     
     TableViewType defaultViewType;
     this.mEntryValues = this.mContext.getResources().getTextArray(
       R.array.table_view_types_values);
     
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
+      db = Tables.getInstance().getDatabase().openDatabase(mAppName, true);
       
-      this.mPossibleViewTypes = new PossibleTableViewTypes(db, 
+      this.mPossibleViewTypes = new PossibleTableViewTypes(mAppName, db, 
               tableId, orderedDefns);
       // Let's set the currently selected one.
-      defaultViewType = TableUtil.get().getDefaultViewType(db, tableId);
+      defaultViewType = TableUtil.get().getDefaultViewType(mAppName, db, tableId);
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(mAppName, db);
       }
     }
 

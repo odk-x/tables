@@ -12,12 +12,21 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.AbsBaseActivityStub;
+import org.opendatakit.tables.activities.AbsTableActivityStub;
+import org.opendatakit.tables.fragments.AbsBaseFragmentStub;
 import org.opendatakit.tables.utils.TableNameStruct;
+import org.opendatakit.testutils.ODKFragmentTestUtil;
+import org.opendatakit.testutils.TestCaseUtils;
+import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowDrawable;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,7 +50,9 @@ public class TableNameStructAdapterTest {
 //    DatabaseFactory.set(factoryMock);
     
 //    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
-    
+    CommonApplication.setMocked();
+    TestCaseUtils.setExternalStorageMounted();
+
     TableNameStruct structOne = new TableNameStruct(
         "first",
         "first_name");
@@ -54,75 +65,12 @@ public class TableNameStructAdapterTest {
     
     this.mTableNameStructs.add(structOne);
     this.mTableNameStructs.add(structTwo);
-    
-//    List<String> tableIds = new ArrayList<String>();
-//    String tableId1 = "alpha";
-//    String tableId2 = "beta";
-//    tableIds.add(tableId1);
-//    tableIds.add(tableId2);
-//    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
-//    
-//    String elementKey = "anyElementKey";
-//    
-//    List<Column> columns1 = new ArrayList<Column>();
-//    columns1.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
-//        ElementDataType.string.name(), "[]"));
-//    columns1.add(new Column(TestConstants.ElementKeys.INT_COLUMN, TestConstants.ElementKeys.INT_COLUMN,
-//        ElementDataType.integer.name(), "[]"));
-//    columns1.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
-//        ElementDataType.number.name(), "[]"));
-//
-//    List<Column> columns2 = new ArrayList<Column>();
-//    columns2.add(new Column(
-//        TestConstants.ElementKeys.STRING_COLUMN,
-//        TestConstants.ElementKeys.STRING_COLUMN,
-//        ElementDataType.string.name(),
-//        "[]"));
-//    columns2.add(new Column(
-//        TestConstants.ElementKeys.GEOPOINT_COLUMN,
-//        TestConstants.ElementKeys.GEOPOINT_COLUMN,
-//        ElementDataType.string.name(),
-//        "[\"" +
-//            TestConstants.ElementKeys.LATITUDE_COLUMN + "\",\"" +
-//            TestConstants.ElementKeys.LONGITUDE_COLUMN + "\",\"" +
-//            TestConstants.ElementKeys.ALTITUDE_COLUMN + "\",\"" + 
-//            TestConstants.ElementKeys.ACCURACY_COLUMN + "\"]"));
-//    columns2.add(new Column(
-//        TestConstants.ElementKeys.LATITUDE_COLUMN,
-//        "latitude",
-//        ElementDataType.number.name(),
-//        "[]"));
-//    columns2.add(new Column(
-//        TestConstants.ElementKeys.LONGITUDE_COLUMN,
-//        "longitude",
-//        ElementDataType.number.name(),
-//        "[]"));
-//    columns2.add(new Column(TestConstants.ElementKeys.ALTITUDE_COLUMN, "altitude",
-//        ElementDataType.number.name(), "[]"));
-//    columns2.add(new Column(TestConstants.ElementKeys.ACCURACY_COLUMN, "accuracy",
-//        ElementDataType.number.name(), "[]"));
-//    
-//    doReturn(columns1).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(tableId1));
-//    doReturn(columns2).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(tableId2));
-//    ODKDatabaseUtils.set(wrapperMock);
-//    
-//    TableUtil util = mock(TableUtil.class);
-//    when(util.getLocalizedDisplayName(
-//        any(SQLiteDatabase.class),
-//        eq(tableId1)))
-//      .thenReturn(tableId1+"_name");
-//    when(util.getLocalizedDisplayName(
-//        any(SQLiteDatabase.class),
-//        eq(tableId2)))
-//      .thenReturn(tableId2+"_name");
-//    TableUtil.set(util);
 
-//    List<String> listOfMocks = new ArrayList<String>();
-//    listOfMocks.add(tableId1);
-//    listOfMocks.add(tableId2);
-    this.mAdapter = new TableNameStructAdapter(
-        null,
-        "tables",
+    AbsBaseActivity activity = ODKFragmentTestUtil.startActivityAttachFragment(
+        AbsBaseActivityStub.class,
+        null, null, null);
+    
+    this.mAdapter = new TableNameStructAdapter(activity,
         this.mTableNameStructs);
   }
 

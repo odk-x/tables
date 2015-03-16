@@ -15,16 +15,14 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.ArrayList;
-
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.utils.Constants;
 
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.RemoteException;
 
 /**
  * This class is the base for any Activity that will display information about
@@ -39,7 +37,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
       AbsTableActivity.class.getSimpleName();
   
   private String mTableId;
-  private ArrayList<ColumnDefinition> mColumnDefinitions;
+  private OrderedColumns mColumnDefinitions;
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -49,18 +47,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] table id was not present in Intent.");
       throw new IllegalStateException(
           "A table id was not passed to a table activity");
-    }
-    
-    WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] building mColumnDefinitions.");
-    SQLiteDatabase db = null;
-    try {
-      db = DatabaseFactory.get().getDatabase(this, getAppName());
-      mColumnDefinitions = TableUtil.get().getColumnDefinitions(db, getAppName(), getTableId());
-    } finally {
-      if ( db != null ) {
-        db.close();
-      }
-    }
+    }  
   }
   
   /**
@@ -75,7 +62,30 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
     return this.mTableId;
   }
   
-  public ArrayList<ColumnDefinition> getColumnDefinitions() {
+  public synchronized OrderedColumns getColumnDefinitions() {
+    if ( this.mColumnDefinitions == null ) {
+      WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] building mColumnDefinitions.");
+      CommonApplication app = (CommonApplication) getApplication();
+      OdkDbHandle db = null;
+      try {
+        db = app.getDatabase().openDatabase(getAppName(), false);
+        mColumnDefinitions = app.getDatabase().getUserDefinedColumns(getAppName(), db, getTableId());
+      } catch (RemoteException e) {
+        WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to access database.");
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        throw new IllegalStateException("unable to access database");
+      } finally {
+        if ( db != null ) {
+          try {
+            app.getDatabase().closeDatabase(getAppName(), db);
+          } catch (RemoteException e) {
+            WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to close database.");
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
+            throw new IllegalStateException("unable to close database");
+          }
+        }
+      }
+    }
     return this.mColumnDefinitions;
   }
 }

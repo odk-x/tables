@@ -16,11 +16,12 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
@@ -28,9 +29,10 @@ import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.app.Fragment;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.webkit.WebView;
+import android.widget.Toast;
 
 /**
  * {@link Fragment} for displaying a detail view.
@@ -41,7 +43,7 @@ import android.webkit.WebView;
 public class DetailViewFragment extends AbsWebTableFragment {
 
   private static final String TAG = DetailViewFragment.class.getSimpleName();
-
+  
   /**
    * The row id of the row that is being displayed in this table.
    */
@@ -68,7 +70,6 @@ public class DetailViewFragment extends AbsWebTableFragment {
     super.onCreate(savedInstanceState);
     String retrievedRowId = this.retrieveRowIdFromBundle(this.getArguments());
     this.mRowId = retrievedRowId;
-    this.setHasOptionsMenu(true);
   }
 
   @Override
@@ -76,28 +77,37 @@ public class DetailViewFragment extends AbsWebTableFragment {
     super.onSaveInstanceState(outState);
     outState.putString(Constants.IntentKeys.ROW_ID, this.getRowId());
   }
-
+  
   @Override
-  public WebView buildView() {
-    // First we need to construct the single row table.
-    this.initializeTable();
-    WebView result = WebViewUtil.getODKCompliantWebView((AbsBaseActivity) getActivity());
-    Control control = this.createControlObject();
-    result.addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.CONTROL);
-    TableData tableData = this.createDataObject();
-    result.addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.DATA);
-    WebViewUtil.displayFileInWebView(getActivity(), getAppName(), result, getFileName());
-    // Now save the references.
-    this.mControlReference = control;
-    this.mTableDataReference = tableData;
-    return result;
+  public void databaseAvailable() {
+    if ( Tables.getInstance().getDatabase() != null && getView() != null ) {
+      try {
+        AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+        WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
+        this.mSingleRowTable = this.retrieveSingleRowTable();
+        Control control = this.createControlObject();
+        webView.addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(),
+            Constants.JavaScriptHandles.CONTROL);
+        TableData tableData = this.createDataObject();
+        webView.addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(),
+            Constants.JavaScriptHandles.DATA);
+        setWebKitVisibility();
+        // Now save the references.
+        this.mControlReference = control;
+        this.mTableDataReference = tableData;
+        WebViewUtil.displayFileInWebView(activity, getAppName(), webView, getFileName());
+      } catch (RemoteException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        Toast.makeText(getActivity(), 
+            getActivity().getString(R.string.abort_error_accessing_database), 
+            Toast.LENGTH_LONG).show();
+      }
+    }
   }
-
-  private void initializeTable() {
-    UserTable retrievedTable = this.retrieveSingleRowTable();
-    this.mSingleRowTable = retrievedTable;
+  
+  @Override
+  public void databaseUnavailable() {
+    setWebKitVisibility();
   }
 
   /**
@@ -114,17 +124,18 @@ public class DetailViewFragment extends AbsWebTableFragment {
    * Retrieve the single row table to display in this view.
    * 
    * @return
+   * @throws RemoteException 
    */
-  UserTable retrieveSingleRowTable() {
+  UserTable retrieveSingleRowTable() throws RemoteException {
     if (this.mRowId == null) {
       WebLogger.getLogger(getAppName()).e(TAG,
           "asking to retrieve single row table for null row id");
     }
     String rowId = getRowId();
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      UserTable result = ODKDatabaseUtils.get().getDataInExistingDBTableWithId(db, getAppName(),
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      UserTable result = Tables.getInstance().getDatabase().getDataInExistingDBTableWithId(getAppName(), db,
           getTableId(), getColumnDefinitions(), rowId);
       if (result.getNumberOfRows() > 1) {
         WebLogger.getLogger(getAppName()).e(TAG,
@@ -133,7 +144,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
       return result;
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
   }
@@ -153,9 +164,9 @@ public class DetailViewFragment extends AbsWebTableFragment {
   }
 
   @Override
-  protected TableData createDataObject() {
-    UserTable singleRowTable = this.retrieveSingleRowTable();
-    TableData result = new TableData(singleRowTable);
+  protected TableData createDataObject() throws RemoteException {
+    UserTable singleRowTable = this.getSingleRowTable();
+    TableData result = new TableData(getActivity(), singleRowTable);
     return result;
   }
 

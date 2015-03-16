@@ -17,33 +17,32 @@ package org.opendatakit.tables.utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 /**
  * Methods for dealing with things necessary for debugging in chrome. This
@@ -96,33 +95,34 @@ public class OutputUtil {
    * ...}
    *
    * @return
+   * @throws JsonProcessingException 
+   * @throws RemoteException 
    */
-  private static String getStringForControlObject(Context context, String appName) {
+  private static String getStringForControlObject(Context context, String appName) throws JsonProcessingException, RemoteException {
     Map<String, Object> controlMap = new HashMap<String, Object>();
     Map<String, String> tableIdToDisplayName = new HashMap<String, String>();
     Map<String, Map<String, Object>> tableIdToControlTable = new HashMap<String, Map<String, Object>>();
 
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
-      ArrayList<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      List<String> tableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
       for (String tableId : tableIds) {
 
         String localizedDisplayName;
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
         tableIdToDisplayName.put(tableId, localizedDisplayName);
-        Map<String, Object> controlTable = getMapForControlTable(db, appName, tableId);
+        Map<String, Object> controlTable = getMapForControlTable(appName, db, tableId);
         tableIdToControlTable.put(tableId, controlTable);
       }
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
-    Gson gson = new Gson();
     controlMap.put(CTRL_KEY_TABLE_ID_TO_DISPLAY_NAME, tableIdToDisplayName);
     controlMap.put(CTRL_KEY_TABLE_INFO, tableIdToControlTable);
-    String result = gson.toJson(controlMap);
+    String result = ODKFileUtils.mapper.writeValueAsString(controlMap);
     return result;
   }
 
@@ -143,28 +143,30 @@ public class OutputUtil {
    * @param appName
    * @param tableId
    * @return
+   * @throws RemoteException 
    */
-  public static Map<String, Object> getMapForControlTable(SQLiteDatabase db, String appName,
-      String tableId) {
+  public static Map<String, Object> getMapForControlTable(String appName, OdkDbHandle db,
+      String tableId) throws RemoteException {
     Map<String, Object> controlTable = new HashMap<String, Object>();
     Map<String, String> pathToKey = new HashMap<String, String>();
-    ArrayList<ColumnDefinition> orderedDefns;
+    OrderedColumns orderedDefns;
 
     String defaultDetailFileName = null;
     String defaultListFileName = null;
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
 
-    orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
-    defaultDetailFileName = TableUtil.get().getDetailViewFilename(db, tableId);
-    defaultListFileName = TableUtil.get().getListViewFilename(db, tableId);
+    orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);
+    defaultDetailFileName = TableUtil.get().getDetailViewFilename(appName, db, tableId);
+    defaultListFileName = TableUtil.get().getListViewFilename(appName, db, tableId);
 
-    for (ColumnDefinition cd : orderedDefns) {
+    for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
       String elementName = cd.getElementName();
       if (elementName != null) {
         pathToKey.put(cd.getElementName(), cd.getElementKey());
 
         String localizedDisplayName;
-        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId,
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName,
+            db, tableId,
             cd.getElementKey());
 
         keyToDisplayName.put(cd.getElementKey(), localizedDisplayName);
@@ -191,27 +193,33 @@ public class OutputUtil {
    * @param appName
    * @param tableId
    * @return
+   * @throws RemoteException 
+   * @throws IOException 
+   * @throws JsonMappingException 
+   * @throws JsonParseException 
    */
-  private static String getStringForDataObject(SQLiteDatabase db, String appName, String tableId,
-      int numberOfRows) {
+  private static String getStringForDataObject(Context context, String appName, OdkDbHandle db, String tableId,
+      int numberOfRows) throws RemoteException, JsonParseException, JsonMappingException, IOException {
 
-    ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, appName,
+    OrderedColumns orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db,
         tableId);
 
     UserTable userTable = null;
-    userTable = ODKDatabaseUtils.get().rawSqlQuery(db, appName, tableId, orderedDefns, null, null,
-        null, null, null, null);
+    String[] emptyArray = {};
+    userTable = Tables.getInstance().getDatabase().rawSqlQuery(appName, db,
+        tableId, orderedDefns, null, emptyArray,
+        emptyArray, null, null, null);
 
     // TODO: This is broken w.r.t. elementKey != elementPath
     // TODO: HACKED HACKED HACKED HACKED
     // Because the code is so freaked up we don't have an easy way to get the
     // information out of the UserTable without going through the TableData
     // object. So we need to create a dummy CustomTableView to get it to work.
-    TableData tableData = new TableData(userTable);
+    TableData tableData = new TableData(context, userTable);
     // We need to also store the element key to the index of the data so that
     // we know how to access it out of the array representing each row.
     Map<String, Integer> elementKeyToIndex = new HashMap<String, Integer>();
-    for (ColumnDefinition cd : orderedDefns) {
+    for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
       if (cd.isUnitOfRetention()) {
         elementKeyToIndex.put(cd.getElementKey(),
             userTable.getColumnIndexOfElementKey(cd.getElementKey()));
@@ -238,7 +246,6 @@ public class OutputUtil {
       partialData[i] = rowOut;
     }
     // And now construct the object storing the columns data.
-    JsonParser jsonParser = new JsonParser();
     Map<String, Object> elementKeyToColumnData = new HashMap<String, Object>();
     for (String elementKey : columnKeys) {
       // The tableData object returns a string, so we'll have to parse it back
@@ -246,36 +253,15 @@ public class OutputUtil {
       String strColumnData = tableData.getColumnDataForElementKey(elementKey, numRowsToWrite);
       if (strColumnData == null)
         continue;
-      JsonArray columnData = (JsonArray) jsonParser.parse(strColumnData);
-      // Now that it's json, we want to convert it to an array. Otherwise it
-      // serializes to an object with a single key "elements". Oh gson.
-      String[] columnDataArray = new String[columnData.size()];
-      for (int i = 0; i < columnDataArray.length; i++) {
-        JsonElement e = columnData.get(i);
-        if (e == JsonNull.INSTANCE) {
-          columnDataArray[i] = null;
-        } else {
-          columnDataArray[i] = e.getAsString();
-        }
-      }
-      elementKeyToColumnData.put(elementKey, columnDataArray);
+      ArrayList<Object> columnData = ODKFileUtils.mapper.readValue(strColumnData, ArrayList.class);
+      elementKeyToColumnData.put(elementKey, columnData);
     }
-    Gson gson = new Gson();
     // We need to parse some of the String objects returned by TableData into
     // json so that they're output as objects rather than strings.
     String columnString = tableData.getColumns();
-    JsonObject columnJson = (JsonObject) jsonParser.parse(columnString);
+    Map<String, Object> columnJsonMap = ODKFileUtils.mapper.readValue(columnString, HashMap.class);
     // Here, as with JsonArray, we need to convert this to a map or else we'll
     // serialize as the object to a "members" key.
-    Map<String, Object> columnJsonMap = new HashMap<String, Object>();
-    for (Map.Entry<String, JsonElement> entry : columnJson.entrySet()) {
-      JsonElement e = entry.getValue();
-      if (e == JsonNull.INSTANCE) {
-        columnJsonMap.put(entry.getKey(), null);
-      } else {
-        columnJsonMap.put(entry.getKey(), e.getAsString());
-      }
-    }
     Map<String, Object> outputObject = new HashMap<String, Object>();
     outputObject.put(DATA_KEY_IS_GROUPED_BY, tableData.isGroupedBy());
     // We don't want the real count, as that could interfere with for loops in
@@ -287,7 +273,7 @@ public class OutputUtil {
     outputObject.put(DATA_KEY_COLUMN_DATA, elementKeyToColumnData);
     outputObject.put(DATA_KEY_DATA, partialData);
     outputObject.put(DATA_KEY_ROW_IDS, rowIds);
-    String outputString = gson.toJson(outputObject);
+    String outputString = ODKFileUtils.mapper.writeValueAsString(outputObject);
     return outputString;
   }
 
@@ -296,8 +282,10 @@ public class OutputUtil {
    *
    * @param context
    * @param appName
+   * @throws RemoteException 
+   * @throws JsonProcessingException 
    */
-  public static void writeControlObject(Context context, String appName) {
+  public static void writeControlObject(Context context, String appName) throws JsonProcessingException, RemoteException {
     String controlString = getStringForControlObject(context, appName);
     String fileName = ODKFileUtils.getTablesDebugObjectFolder(appName) + File.separator
         + CONTROL_FILE_NAME;
@@ -321,19 +309,23 @@ public class OutputUtil {
    * @param context
    * @param appName
    * @param numberOfRows
+   * @throws RemoteException 
+   * @throws IOException 
+   * @throws JsonMappingException 
+   * @throws JsonParseException 
    */
-  public static void writeAllDataObjects(Context context, String appName, int numberOfRows) {
+  public static void writeAllDataObjects(Context context, String appName, int numberOfRows) throws RemoteException, JsonParseException, JsonMappingException, IOException {
 
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, appName);
-      ArrayList<String> tableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      List<String> tableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
       for (String tableId : tableIds) {
-        writeDataObject(db, appName, tableId, numberOfRows);
+        writeDataObject(context, appName, db, tableId, numberOfRows);
       }
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
   }
@@ -345,8 +337,12 @@ public class OutputUtil {
    *
    * @param context
    * @param appName
+   * @throws RemoteException 
+   * @throws IOException 
+   * @throws JsonMappingException 
+   * @throws JsonParseException 
    */
-  public static void writeAllDataObjects(Context context, String appName) {
+  public static void writeAllDataObjects(Context context, String appName) throws RemoteException, JsonParseException, JsonMappingException, IOException {
     writeAllDataObjects(context, appName, NUM_ROWS_IN_DATA_OBJECT);
   }
 
@@ -357,10 +353,14 @@ public class OutputUtil {
    * @param db
    * @param tableId
    * @param numberOfRows
+   * @throws IOException 
+   * @throws RemoteException 
+   * @throws JsonMappingException 
+   * @throws JsonParseException 
    */
-  public static void writeDataObject(SQLiteDatabase db, String appName, String tableId,
-      int numberOfRows) {
-    String dataString = getStringForDataObject(db, appName, tableId, numberOfRows);
+  public static void writeDataObject(Context context, String appName, OdkDbHandle db, String tableId,
+      int numberOfRows) throws JsonParseException, JsonMappingException, RemoteException, IOException {
+    String dataString = getStringForDataObject(context, appName, db, tableId, numberOfRows);
     if (dataString == null)
       return;
     String fileName = ODKFileUtils.getTablesDebugObjectFolder(appName) + File.separator + tableId

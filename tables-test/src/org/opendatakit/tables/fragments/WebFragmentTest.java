@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
@@ -27,8 +28,10 @@ public class WebFragmentTest {
   
   @Before
   public void before() {
-    TestCaseUtils.setThreeTableDataset();
+    CommonApplication.setMocked();
     TestCaseUtils.setExternalStorageMounted();
+    
+    TestCaseUtils.setThreeTableDataset(true);
     ShadowLog.stream = System.out;
   }
   
@@ -48,11 +51,10 @@ public class WebFragmentTest {
   
   private void doGlobalSetup(WebFragmentStub stub) {
     this.fragment = stub;
-    ODKFragmentTestUtil.startFragmentForActivity(
+    this.activity = ODKFragmentTestUtil.startActivityAttachFragment(
         AbsBaseActivityStub.class,
         stub,
-        null);
-    this.activity = this.fragment.getActivity();    
+        null, null);
   }
   
   @Test
@@ -67,15 +69,6 @@ public class WebFragmentTest {
     this.setupFragmentWithFileName(target);
     org.fest.assertions.api.Assertions.assertThat(this.fragment.getFileName())
         .isEqualTo(target);
-  }
-  
-  @Test
-  public void setsTheViewReturnedByBuildView() {
-    WebView mockWebView = TestConstants.getWebViewMock();
-    WebFragmentStub.WEB_VIEW = mockWebView;
-    this.setupFragmentWithFileName("testFileName");
-    View fragmentView = this.fragment.getView();
-    assertThat(fragmentView).isSameAs(mockWebView);
   }
 
 }

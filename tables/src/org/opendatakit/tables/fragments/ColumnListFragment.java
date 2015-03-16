@@ -19,17 +19,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.utils.TableUtil;
+import org.opendatakit.tables.utils.TableUtil.TableColumns;
 
 import android.app.Activity;
 import android.app.ListFragment;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -66,10 +68,12 @@ public class ColumnListFragment extends ListFragment {
         .getActivity();
     WebLogger.getLogger(tableLevelPreferenceActivity.getAppName()).d(TAG, "[onActivityCreated]");
     // All we need to do is get the columns to display.
-    List<String> elementKeys = this.retrieveAllElementKeys();
-    List<String> displayNames = this.retrieveAllDisplayNames();
-    this.mElementKeys = elementKeys;
-    this.mDisplayNames = displayNames;
+    try {
+      setElementKeysAndDisplayNames();
+    } catch (RemoteException e) {
+      WebLogger.getLogger(tableLevelPreferenceActivity.getAppName()).printStackTrace(e);
+      return;
+    }
     ArrayAdapter<String> adapter = new ArrayAdapter<String>(this.getActivity(),
         android.R.layout.simple_list_item_1, this.mDisplayNames);
     this.setListAdapter(adapter);
@@ -86,54 +90,40 @@ public class ColumnListFragment extends ListFragment {
    * Retrieve all the element keys for the columns in the table.
    * 
    * @return
+   * @throws RemoteException 
    */
-  ArrayList<String> retrieveAllElementKeys() {
+  private void setElementKeysAndDisplayNames() throws RemoteException {
+    
     AbsTableActivity activity = retrieveTableActivity();
-
-    ArrayList<String> colOrder;
-    SQLiteDatabase db = null;
+    String appName = activity.getAppName();
+    OrderedColumns orderedDefns = activity.getColumnDefinitions();
+    TableColumns tc = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(activity, activity.getAppName());
-      colOrder = TableUtil.get().getColumnOrder(db, activity.getTableId());
-    } finally {
-      if ( db != null ) {
-        db.close();
-      }
-    }
-    if (colOrder.isEmpty()) {
-      ArrayList<ColumnDefinition> orderedDefns = activity.getColumnDefinitions();
-      for ( ColumnDefinition cd : orderedDefns ) {
-        if ( cd.isUnitOfRetention() ) {
-          colOrder.add(cd.getElementKey());
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      tc = TableUtil.get().getTableColumns(appName, db, activity.getTableId());
+
+      ArrayList<String> colOrder;
+      colOrder = TableUtil.get().getColumnOrder(appName, db, activity.getTableId());
+      if (colOrder.isEmpty()) {
+        for ( ColumnDefinition cd : orderedDefns.getColumnDefinitions() ) {
+          if ( cd.isUnitOfRetention() ) {
+            colOrder.add(cd.getElementKey());
+          }
         }
       }
-    }
-    return colOrder;
-  }
-
-  /**
-   * Get all the display names of the columns.
-   * 
-   * @return
-   */
-  List<String> retrieveAllDisplayNames() {
-    AbsTableActivity activity = retrieveTableActivity();
-    List<String> result = new ArrayList<String>();
-    List<String> elementKeys = this.retrieveAllElementKeys();
-    SQLiteDatabase db = null;
-    try {
-      db = DatabaseFactory.get().getDatabase(activity, activity.getAppName());
-      for (String elementKey : elementKeys) {
-        String localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db,
-            activity.getTableId(), elementKey);
-        result.add(localizedDisplayName);
+      this.mElementKeys = colOrder;
+      List<String> displayNames = new ArrayList<String>();
+      for (String elementKey : mElementKeys) {
+        String localizedDisplayName = tc.localizedDisplayNames.get(elementKey);
+        displayNames.add(localizedDisplayName);
       }
+      this.mDisplayNames = displayNames;
     } finally {
-      if (db != null) {
-        db.close();
+      if ( db != null ) {
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
-    return result;
   }
 
   /**

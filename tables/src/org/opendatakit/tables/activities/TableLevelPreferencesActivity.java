@@ -1,6 +1,7 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.ColorRuleListFragment;
 import org.opendatakit.tables.fragments.ColumnListFragment;
 import org.opendatakit.tables.fragments.ColumnPreferenceFragment;
@@ -73,6 +74,22 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
           "Unrecognized fragment type: " +
               this.mCurrentFragmentType);
     }
+  }
+  
+  @Override
+  public void onPostResume() {
+    super.onPostResume();
+    Tables.getInstance().establishDatabaseConnectionListener(this);
+  }
+  
+  @Override
+  public void databaseAvailable() {
+    
+  }
+  
+  @Override
+  public void databaseUnavailable() {
+    
   }
   
   public void showTablePreferenceFragment() {

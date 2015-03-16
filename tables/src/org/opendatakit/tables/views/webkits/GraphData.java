@@ -18,23 +18,23 @@ package org.opendatakit.tables.views.webkits;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.data.KeyValueStoreEntry;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.database.service.KeyValueStoreEntry;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
 
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.app.Activity;
+import android.os.RemoteException;
 
 public class GraphData {
 
   private static final String TAG = "GraphData";
 
   // These are the partition and aspect helpers for setting info in the KVS.
-  private final Context mContext;
-  private final String mAppName;
+  private final AbsBaseActivity mAbsBaseActivity;
   private final String mTableId;
   private final String graphString;
   private boolean isModified;
@@ -53,17 +53,24 @@ public class GraphData {
     return new GraphDataIf(this);
   }
 
-  public GraphData(Context context, String appName, String tableId, String graphString) {
+  public GraphData(AbsBaseActivity absBaseActivity, String tableId, String graphString) {
     isModified = false;
     this.graphString = graphString;
-    this.mContext = context;
-    this.mAppName = appName;
+    this.mAbsBaseActivity = absBaseActivity;
     this.mTableId = tableId;
     
 // TODO
 //    if (potentialGraphName != null) {
 //      this.aspectHelper = saveGraphToName(potentialGraphName);
 //    }
+  }
+  
+  public String getAppName() {
+    return mAbsBaseActivity.getAppName();
+  }
+  
+  public Activity getActivity() {
+    return mAbsBaseActivity;
   }
 
   public boolean isModified() {
@@ -72,11 +79,12 @@ public class GraphData {
   }
 
   // determine if the graph is mutable or only for viewing
-  public boolean isModifiable() {
-    SQLiteDatabase db = null;
+  public boolean isModifiable() throws RemoteException {
+    String appName = mAbsBaseActivity.getAppName();
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
       String result = aspectHelper.getString(MODIFIABLE);
@@ -87,24 +95,27 @@ public class GraphData {
       }
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
   }
 
-  public void setPermissions(String graphName, boolean isImmutable) {
-    SQLiteDatabase db = null;
+  public void setPermissions(String graphName, boolean isImmutable) throws RemoteException {
+    String appName = mAbsBaseActivity.getAppName();
+    OdkDbHandle db = null;
+    boolean successful = false;
     try {
-      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
+      db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphName);
       if (isImmutable) {
         aspectHelper.setString(MODIFIABLE, "immutable");
       }
+      successful = true;
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
       }
     }
   }
@@ -112,14 +123,16 @@ public class GraphData {
   // If the graph is DEFAULT_GRAPH then the aspectHelper field is replaced
   // with the new name
   // and the DEFAULT_GRAPH aspect and contents are deleted
-  private void saveGraphToName(String graphName) {
+  private void saveGraphToName(String graphName) throws RemoteException {
     if (graphName == null) {
       return;
     }
-    SQLiteDatabase db = null;
+    String appName = mAbsBaseActivity.getAppName();
+    OdkDbHandle db = null;
+    boolean successful = false;
     try {
-      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
+      db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
       AspectHelper newAspectHelper = kvsh.getAspectHelper(graphName);
@@ -150,23 +163,25 @@ public class GraphData {
       } else {
         newAspectHelper.setString(GRAPH_TYPE, "unset type");
       }
+      successful = true;
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
       }
     }
   }
 
-  public boolean hasGraph(String graph) {
+  public boolean hasGraph(String graph) throws RemoteException {
     List<KeyValueStoreEntry> graphViewEntries = new ArrayList<KeyValueStoreEntry>();
-    SQLiteDatabase db = null;
+    String appName = mAbsBaseActivity.getAppName();
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
-      graphViewEntries = ODKDatabaseUtils.get().getDBTableMetadata(db, mTableId, 
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      graphViewEntries = Tables.getInstance().getDatabase().getDBTableMetadata( appName, db, mTableId, 
           LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS, null, LocalKeyValueStoreConstants.Graph.KEY_GRAPH_TYPE);
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
     
@@ -178,11 +193,12 @@ public class GraphData {
     return false;
   }
 
-  public String getGraphType() {
-    SQLiteDatabase db = null;
+  public String getGraphType() throws RemoteException {
+    String appName = mAbsBaseActivity.getAppName();
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
       String graphType = aspectHelper.getString(
@@ -194,48 +210,50 @@ public class GraphData {
       }
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
   }
 
-  public String getBoxOperation() {
+  public String getBoxOperation() throws RemoteException {
     return loadSelection(BOX_OPTION);
   }
 
-  public String getBoxSource() {
+  public String getBoxSource() throws RemoteException {
     return loadSelection(BOX_SOURCE);
   }
 
-  public String getBoxValues() {
+  public String getBoxValues() throws RemoteException {
     return loadSelection(BOX_VALUES);
   }
 
-  public String getBoxIterations() {
+  public String getBoxIterations() throws RemoteException {
     return loadSelection(ITER_COUNTER);
   }
 
-  public String getGraphXAxis() {
+  public String getGraphXAxis() throws RemoteException {
     return loadSelection(X_AXIS);
   }
 
-  public String getGraphYAxis() {
+  public String getGraphYAxis() throws RemoteException {
     return loadSelection(Y_AXIS);
   }
 
-  public String getGraphRAxis() {
+  public String getGraphRAxis() throws RemoteException {
     return loadSelection(R_AXIS);
   }
 
-  public String getGraphOp() {
+  public String getGraphOp() throws RemoteException {
     return loadSelection(AGREG);
   }
 
-  public void saveSelection(String aspect, String value) {
-    SQLiteDatabase db = null;
+  public void saveSelection(String aspect, String value) throws RemoteException {
+    String appName = mAbsBaseActivity.getAppName();
+    OdkDbHandle db = null;
+    boolean successful = false;
     try {
-      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
+      db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
       String oldValue = aspectHelper.getString(aspect);
@@ -243,18 +261,20 @@ public class GraphData {
         isModified = true;
       }
       aspectHelper.setString(aspect, value);
+      successful = true;
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
       }
     }
   }
 
-  private String loadSelection(String value) {
-    SQLiteDatabase db = null;
+  private String loadSelection(String value) throws RemoteException {
+    String appName = mAbsBaseActivity.getAppName();
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
       String result = aspectHelper.getString(value);
@@ -265,22 +285,23 @@ public class GraphData {
       }
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
   }
 
-  public void deleteDefaultGraph() {
-    SQLiteDatabase db = null;
+  public void deleteDefaultGraph() throws RemoteException {
+    String appName = mAbsBaseActivity.getAppName();
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mContext, mAppName);
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(db, 
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
           mTableId, LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
       AspectHelper aspectHelper = kvsh.getAspectHelper(graphString);
       aspectHelper.deleteAllEntriesInThisAspect();
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
   }

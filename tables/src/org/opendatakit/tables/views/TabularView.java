@@ -138,14 +138,15 @@ class TabularView extends View {
    * @param fontSize
    * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
+   * @param rowColorRuleGroup
    * @return
    */
   public static TabularView getMainDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
-      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
+      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
     return new TabularView(context, controller, table, elementKeysToDisplay,
         DEFAULT_FOREGROUND_COLOR, DEFAULT_DATA_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR,
-        columnWidths, TableLayoutType.MAIN_DATA, fontSize, elementKeyToColorRuleGroup);
+        columnWidths, TableLayoutType.MAIN_DATA, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
   }
 
   /**
@@ -163,14 +164,15 @@ class TabularView extends View {
    * @param fontSize
    * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
+   * @param rowColorRuleGroup
    * @return
    */
   public static TabularView getMainHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
-      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
+      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
     return new TabularView(context, controller, table, elementKeysToDisplay,
         DEFAULT_FOREGROUND_COLOR, DEFAULT_HEADER_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR,
-        columnWidths, TableLayoutType.MAIN_HEADER, fontSize, elementKeyToColorRuleGroup);
+        columnWidths, TableLayoutType.MAIN_HEADER, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
   }
 
   /**
@@ -188,14 +190,15 @@ class TabularView extends View {
    * @param fontSize
    * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
+   * @param rowColorRuleGroup
    * @return
    */
   public static TabularView getIndexDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
-      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
+      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
     return new TabularView(context, controller, table, elementKeysToDisplay,
         DEFAULT_FOREGROUND_COLOR, DEFAULT_DATA_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR,
-        columnWidths, TableLayoutType.INDEX_DATA, fontSize, elementKeyToColorRuleGroup);
+        columnWidths, TableLayoutType.INDEX_DATA, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
   }
 
   /**
@@ -213,14 +216,15 @@ class TabularView extends View {
    * @param fontSize
    * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
+   * @param rowColorRuleGroup
    * @return
    */
   public static TabularView getIndexHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
-      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
+      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
     return new TabularView(context, controller, table, elementKeysToDisplay,
         DEFAULT_FOREGROUND_COLOR, DEFAULT_HEADER_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR,
-        columnWidths, TableLayoutType.INDEX_HEADER, fontSize, elementKeyToColorRuleGroup);
+        columnWidths, TableLayoutType.INDEX_HEADER, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
   }
 
   /**
@@ -237,18 +241,19 @@ class TabularView extends View {
    * @param fontSize
    * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
+   * @param rowColorRuleGroup
    * @return
    */
   public static TabularView getStatusDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, int[] columnWidths, int fontSize,
-      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
+      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
     List<String> dummyElementKeys = new ArrayList<String>();
     // We need to make this a size one so that the status table knows there's
     // something to display.
     dummyElementKeys.add("data");
     return new TabularView(context, controller, table, dummyElementKeys, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_DATA_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR, columnWidths, TableLayoutType.STATUS_DATA,
-        fontSize, elementKeyToColorRuleGroup);
+        fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
   }
 
   /**
@@ -265,18 +270,19 @@ class TabularView extends View {
    * @param fontSize
    * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
+   * @param rowColorRuleGroup
    * @return
    */
   public static TabularView getStatusHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, int[] columnWidths, int fontSize,
-      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
+      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
     List<String> dummyElementKeys = new ArrayList<String>();
     // We need to make this a size one so that the status table knows there's
     // something to display.
     dummyElementKeys.add("header");
     return new TabularView(context, controller, table, dummyElementKeys, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_HEADER_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR, columnWidths,
-        TableLayoutType.STATUS_HEADER, fontSize, elementKeyToColorRuleGroup);
+        TableLayoutType.STATUS_HEADER, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
   }
 
   /**
@@ -318,7 +324,7 @@ class TabularView extends View {
   private TabularView(Context context, Controller controller, SpreadsheetUserTable table,
       List<String> elementKeys, int defaultForegroundColor, int defaultBackgroundColor,
       int borderColor, int[] columnWidths, TableLayoutType type, int fontSize,
-      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
+      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
     super(context);
     this.controller = controller;
     this.mTable = table;
@@ -339,11 +345,7 @@ class TabularView extends View {
       this.mNumberOfRows = this.mTable.getNumberOfRows();
     }
     this.mColumnColorRules = elementKeyToColorRuleGroup;
-    if (this.type != TableLayoutType.STATUS_DATA) {
-      this.mRowColorRuleGroup = mTable.getTableColorRuleGroup();
-    } else {
-      this.mRowColorRuleGroup = mTable.getStatusColumnRuleGroup();
-    }
+    this.mRowColorRuleGroup = rowColorRuleGroup;
     rowHeight = fontSize + ROW_HEIGHT_PADDING;
     highlightedCellInfo = null;
     textPaint = new Paint();
@@ -666,8 +668,7 @@ class TabularView extends View {
             foregroundColor = rowGuide.getForeground();
             backgroundColor = rowGuide.getBackground();
           }
-          ColorGuide columnGuide = mColumnColorRules.get(this.mElementKeys.get(j)).getColorGuide(
-              this.mTable.getColumnDefinitions(), theRow);
+          ColorGuide columnGuide = mColumnColorRules.get(this.mElementKeys.get(j)).getColorGuide(this.mTable.getColumnDefinitions(), theRow);
           // Override the role rule if a column rule matched.
           if (columnGuide != null) {
             foregroundColor = columnGuide.getForeground();

@@ -1,5 +1,6 @@
 package org.opendatakit.tables.fragments;
 
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 
@@ -7,21 +8,26 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
+import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.views.webkits.TableData;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
+import org.opendatakit.testutils.TestConstants;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 
 import android.app.Activity;
+import android.app.FragmentManager;
 
 @RunWith(RobolectricTestRunner.class)
 public class MapListViewFragmentTest {
 
-  MapListViewFragmentStub fragment;
   Activity activity;
-
+  MapListViewFragment fragment;
+  
   @After
   public void after() {
     TestCaseUtils.resetExternalStorageState();
@@ -30,17 +36,15 @@ public class MapListViewFragmentTest {
 
   @Before
   public void setupWithDefaults() {
-    TestCaseUtils.setThreeTableDataset();
-    ShadowLog.stream = System.out;
+    CommonApplication.setMocked();
     TestCaseUtils.setExternalStorageMounted();
-    TableDisplayActivityStub.BUILD_MENU_FRAGMENT = false;
-    MapListViewFragmentStub stub = new MapListViewFragmentStub();
-    ODKFragmentTestUtil.startFragmentForActivity(
-        TableDisplayActivityStub.class,
-        stub,
-        null);
-    this.fragment = stub;
-    this.activity = this.fragment.getActivity();
+    
+    TestCaseUtils.setThreeTableDataset(true);
+    ShadowLog.stream = System.out;
+    activity = ODKFragmentTestUtil.startFragmentForTableDisplayActivity(
+        ViewFragmentType.MAP, TestConstants.DEFAULT_TABLE_ID);
+    FragmentManager mgr = activity.getFragmentManager();
+    fragment = (MapListViewFragment) mgr.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
   }
 
   @Test
@@ -72,7 +76,8 @@ public class MapListViewFragmentTest {
   @Test
   public void settingIndexCallsToTableData() {
     int selectedIndex = 5;
-    TableData tableDataMock = MapListViewFragmentStub.TABLE_DATA;
+    TableData tableDataMock = spy(this.fragment.mTableDataReference);
+    this.fragment.mTableDataReference = tableDataMock;
     verify(tableDataMock, times(0)).setSelectedMapIndex(selectedIndex);
     this.fragment.setIndexOfSelectedItem(selectedIndex);
     verify(tableDataMock, times(1)).setSelectedMapIndex(selectedIndex);
@@ -80,7 +85,8 @@ public class MapListViewFragmentTest {
   
   @Test
   public void settingNoIndexSelectedCallsToTableData() {
-    TableData tableDataMock = MapListViewFragmentStub.TABLE_DATA;
+    TableData tableDataMock = spy(this.fragment.mTableDataReference);
+    this.fragment.mTableDataReference = tableDataMock;
     verify(tableDataMock, times(0)).setNoItemSelected();
     this.fragment.setNoItemSelected();
     verify(tableDataMock, times(1)).setNoItemSelected();

@@ -15,14 +15,13 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.PossibleTableViewTypes;
-import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.data.PossibleTableViewTypes;
+import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.fragments.DetailViewFragment;
 import org.opendatakit.tables.fragments.GraphManagerFragment;
 import org.opendatakit.tables.fragments.GraphViewFragment;
@@ -36,14 +35,16 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
+import org.opendatakit.tables.utils.TableUtil;
 
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -60,7 +61,7 @@ import android.widget.Toast;
 public class TableDisplayActivity extends AbsTableActivity implements TableMapInnerFragmentListener {
 
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
-  private static final String INTENT_KEY_CURRENT_FRAGMENT = "saveInstanceCurrentFragment";
+  public static final String INTENT_KEY_CURRENT_FRAGMENT = "saveInstanceCurrentFragment";
 
   /**
    * The fragment types this activity could be displaying.
@@ -71,31 +72,175 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
   public enum ViewFragmentType {
     SPREADSHEET, LIST, MAP, GRAPH_MANAGER, GRAPH_VIEW, DETAIL;
   }
-
-  /**
-   * The {@link UserTable} that is being displayed in this activity.
-   */
-  private UserTable mUserTable;
   /**
    * The type of fragment that is currently being displayed.
    */
   private ViewFragmentType mCurrentFragmentType;
-
+  
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    // see if we saved the state
-    this.initializeBackingTable();
     this.mCurrentFragmentType = this.retrieveFragmentTypeToDisplay(savedInstanceState);
     this.setContentView(R.layout.activity_table_display_activity);
   }
 
   @Override
+  public void onPostResume() {
+    super.onPostResume();
+    Tables.getInstance().establishDatabaseConnectionListener(this);
+  }
+
+  private boolean reloadCachedValues = false;
+  
+  /** Cached data from database */
+  private PossibleTableViewTypes mPossibleTableViewTypes;
+
+  /**
+   * The {@link UserTable} that is being displayed in this activity.
+   */
+  private UserTable mUserTable;
+
+  @Override
+  public void databaseAvailable() {
+    if ( Tables.getInstance().getDatabase() != null ) {
+      // see if we saved the state
+      OdkDbHandle db = null;
+      try {
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+        if (mCurrentFragmentType == null) {
+          // if we don't have a view set, use the default from the database
+          TableViewType type;
+            type = TableUtil.get().getDefaultViewType(getAppName(), db, getTableId());
+          mCurrentFragmentType = this.getViewFragmentTypeFromViewType(type);
+          if (mCurrentFragmentType == null) {
+            // and if that isn't set, use spreadsheet
+            WebLogger.getLogger(getAppName()).i(TAG,
+                "[retrieveFragmentTypeToDisplay] no view type found, " + "defaulting to spreadsheet");
+            mCurrentFragmentType = ViewFragmentType.SPREADSHEET;
+          }
+        }
+        if ( reloadCachedValues || mPossibleTableViewTypes == null ) {
+          this.mPossibleTableViewTypes = this.getPossibleTableViewTypes(db);
+        }
+        if ( reloadCachedValues || mUserTable == null ) {
+          this.initializeBackingTable();
+        }
+        reloadCachedValues = false;
+      } catch (RemoteException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        WebLogger.getLogger(getAppName()).e(TAG,
+            "[databaseAvailable] unable to access database");
+        Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+      } finally {
+        if (db != null) {
+          try {
+            Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+          } catch (RemoteException e) {
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
+            WebLogger.getLogger(getAppName()).e(TAG,
+                "[databaseAvailable] unable to access database");
+            Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+          }
+        }
+      }
+      this.initializeDisplayFragment();
+      Handler handler = new Handler() {};
+      handler.postDelayed(new Runnable() {
+
+        @Override
+        public void run() {
+          notifyCurrentFragment(true);
+        }}, 100);
+    }
+  }
+
+  @Override
+  public void databaseUnavailable() {
+    notifyCurrentFragment(false);
+  }
+  
+  private void notifyCurrentFragment(boolean databaseAvailable) {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    
+    switch ( mCurrentFragmentType ) {
+    case SPREADSHEET:
+      SpreadsheetFragment spreadsheetFragment = (SpreadsheetFragment) fragmentManager
+        .findFragmentByTag(mCurrentFragmentType.name());
+      if ( spreadsheetFragment != null ) {
+        if ( databaseAvailable ) {
+          spreadsheetFragment.databaseAvailable();
+        } else {
+          spreadsheetFragment.databaseUnavailable();
+        }
+      }
+      break;
+    case LIST:
+      ListViewFragment listViewFragment = (ListViewFragment) fragmentManager
+      .findFragmentByTag(mCurrentFragmentType.name());
+      if ( listViewFragment != null ) {
+        if ( databaseAvailable ) {
+          listViewFragment.databaseAvailable();
+        } else {
+          listViewFragment.databaseUnavailable();
+        }
+      }
+      break;
+    case MAP:
+      MapListViewFragment mapListViewFragment = (MapListViewFragment) fragmentManager
+        .findFragmentByTag(mCurrentFragmentType.name());
+      if ( mapListViewFragment != null ) {
+        if ( databaseAvailable ) {
+          mapListViewFragment.databaseAvailable();
+        } else {
+          mapListViewFragment.databaseUnavailable();
+        }
+      }
+      break;
+    case GRAPH_MANAGER:
+      GraphManagerFragment graphManagerFragment = (GraphManagerFragment) fragmentManager
+      .findFragmentByTag(mCurrentFragmentType.name());
+      if ( graphManagerFragment != null ) {
+        if ( databaseAvailable ) {
+          graphManagerFragment.databaseAvailable();
+        } else {
+          graphManagerFragment.databaseUnavailable();
+        }
+      }
+      break;
+    case GRAPH_VIEW:
+      GraphViewFragment graphViewFragment = (GraphViewFragment) fragmentManager
+      .findFragmentByTag(mCurrentFragmentType.name());
+      if ( graphViewFragment != null ) {
+        if ( databaseAvailable ) {
+          graphViewFragment.databaseAvailable();
+        } else {
+          graphViewFragment.databaseUnavailable();
+        }
+      }
+      break;
+    case DETAIL:
+      DetailViewFragment detailViewFragment = (DetailViewFragment) fragmentManager
+      .findFragmentByTag(mCurrentFragmentType.name());
+      if ( detailViewFragment != null ) {
+        if ( databaseAvailable ) {
+          detailViewFragment.databaseAvailable();
+        } else {
+          detailViewFragment.databaseUnavailable();
+        }
+      }
+      break;
+    }
+
+  }
+  
+  public static String getFragmentTag(ViewFragmentType fragmentType) {
+    return fragmentType.name();
+  }
+  
+  @Override
   protected void onRestoreInstanceState(Bundle savedInstanceState) {
     super.onRestoreInstanceState(savedInstanceState);
     this.mCurrentFragmentType = this.retrieveFragmentTypeToDisplay(savedInstanceState);
-    WebLogger.getLogger(getAppName()).i(TAG,
-        "[onRestoreInstanceState] current fragment type: " + this.mCurrentFragmentType);
   }
 
   @Override
@@ -123,7 +268,12 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
   protected void onResume() {
     super.onResume();
     WebLogger.getLogger(getAppName()).i(TAG, "[onResume]");
-    this.initializeDisplayFragment();
+  }
+  
+  private PossibleTableViewTypes getPossibleTableViewTypes(OdkDbHandle db) throws RemoteException {
+    PossibleTableViewTypes viewTypes = null;
+    viewTypes = new PossibleTableViewTypes(getAppName(), db, getTableId(), getColumnDefinitions());
+    return viewTypes;
   }
 
   @Override
@@ -137,17 +287,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     case GRAPH_MANAGER:
     case MAP:
       menuInflater.inflate(R.menu.top_level_table_menu, menu);
-      SQLiteDatabase db = null;
-      PossibleTableViewTypes viewTypes = null;
-      try {
-        db = DatabaseFactory.get().getDatabase(this, getAppName());
-        viewTypes = new PossibleTableViewTypes(db, getTableId(), getColumnDefinitions());
-      } finally {
-        if (db != null) {
-          db.close();
-        }
-      }
-      this.enableAndDisableViewTypes(viewTypes, menu);
+      this.enableAndDisableViewTypes(mPossibleTableViewTypes, menu);
       this.selectCorrectViewType(menu);
       break;
     case DETAIL:
@@ -167,18 +307,33 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       this.showSpreadsheetFragment();
       return true;
     case R.id.top_level_table_menu_view_list_view:
-      this.showListFragment();
+      try {
+        this.showListFragment();
+      } catch (RemoteException e1) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e1);
+        Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+      }
       return true;
     case R.id.top_level_table_menu_view_graph_view:
       this.showGraphFragment();
       return true;
     case R.id.top_level_table_menu_view_map_view:
-      this.showMapFragment();
+      try {
+        this.showMapFragment();
+      } catch (RemoteException e1) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e1);
+        Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+      }
       return true;
     case R.id.top_level_table_menu_add:
       WebLogger.getLogger(getAppName()).d(TAG, "[onOptionsItemSelected] add selected");
-      ActivityUtil.addRow(this, this.getAppName(), this.getTableId(), this.getColumnDefinitions(),
-          null);
+      try {
+        ActivityUtil.addRow(this, this.getAppName(), this.getTableId(), this.getColumnDefinitions(),
+            null);
+      } catch (RemoteException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+      }
       return true;
     case R.id.top_level_table_menu_table_properties:
       ActivityUtil.launchTableLevelPreferencesActivity(this, this.getAppName(), this.getTableId(),
@@ -192,6 +347,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
             "[onOptionsItemSelected] trying to edit row, but detail view " + " fragment null");
         Toast.makeText(this, getString(R.string.cannot_edit_row_please_try_again),
             Toast.LENGTH_LONG).show();
+        return true;
       }
       String rowId = detailViewFragment.getRowId();
       if (rowId == null) {
@@ -199,9 +355,15 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
             "[onOptionsItemSelected trying to edit row, but row id is null");
         Toast.makeText(this, getString(R.string.cannot_edit_row_please_try_again),
             Toast.LENGTH_LONG).show();
+        return true;
       }
-      ActivityUtil.editRow(this, this.getAppName(), this.getTableId(), this.getColumnDefinitions(),
+      try {
+        ActivityUtil.editRow(this, this.getAppName(), this.getTableId(), this.getColumnDefinitions(),
           rowId);
+      } catch (RemoteException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+      }
       return true;
     default:
       return super.onOptionsItemSelected(item);
@@ -210,61 +372,65 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    switch (requestCode) {
-    case Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
-    case Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER:
-      // these are no-ops on return, as the onResume() method will deal with
-      // any fall-out from them.
-      this.refreshDataTable();
-      this.refreshDisplayFragment();
-      break;
-    // For now, we will just refresh the table if something could have changed.
-    case Constants.RequestCodes.ADD_ROW_COLLECT:
-      if (resultCode == Activity.RESULT_OK) {
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "[onActivityResult] result ok, refreshing backing table");
-        CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), getTableId(),
-            resultCode, data);
-
+    try {
+      switch (requestCode) {
+      case Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
+      case Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER:
+        // these are no-ops on return, as the onResume() method will deal with
+        // any fall-out from them.
         this.refreshDataTable();
-        // We also want to cause the fragments to redraw themselves, as their
-        // data may have changed.
         this.refreshDisplayFragment();
-      } else {
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "[onActivityResult] result canceled, not refreshing backing " + "table");
-      }
-      break;
-    case Constants.RequestCodes.EDIT_ROW_COLLECT:
-      if (resultCode == Activity.RESULT_OK) {
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "[onActivityResult] result ok, refreshing backing table");
-        CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), getTableId(),
-            resultCode, data);
-
+        break;
+      // For now, we will just refresh the table if something could have changed.
+      case Constants.RequestCodes.ADD_ROW_COLLECT:
+        if (resultCode == Activity.RESULT_OK) {
+          WebLogger.getLogger(getAppName()).d(TAG,
+              "[onActivityResult] result ok, refreshing backing table");
+          CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), getTableId(),
+              resultCode, data);
+  
+          this.refreshDataTable();
+          // We also want to cause the fragments to redraw themselves, as their
+          // data may have changed.
+          this.refreshDisplayFragment();
+        } else {
+          WebLogger.getLogger(getAppName()).d(TAG,
+              "[onActivityResult] result canceled, not refreshing backing " + "table");
+        }
+        break;
+      case Constants.RequestCodes.EDIT_ROW_COLLECT:
+        if (resultCode == Activity.RESULT_OK) {
+          WebLogger.getLogger(getAppName()).d(TAG,
+              "[onActivityResult] result ok, refreshing backing table");
+          CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), getTableId(),
+              resultCode, data);
+  
+          this.refreshDataTable();
+          // We also want to cause the fragments to redraw themselves, as their
+          // data may have changed.
+          this.refreshDisplayFragment();
+        } else {
+          WebLogger.getLogger(getAppName()).d(TAG,
+              "[onActivityResult] result canceled, not refreshing backing " + "table");
+        }
+        break;
+      case Constants.RequestCodes.ADD_ROW_SURVEY:
+      case Constants.RequestCodes.EDIT_ROW_SURVEY:
+        if (resultCode == Activity.RESULT_OK) {
+          WebLogger.getLogger(getAppName()).d(TAG,
+              "[onActivityResult] result ok, refreshing backing table");
+        } else {
+          WebLogger.getLogger(getAppName()).d(TAG,
+              "[onActivityResult] result canceled, refreshing backing table");
+        }
+        // verify that the data table doesn't contain checkpoints...
+        // always refresh, as survey may have done something
         this.refreshDataTable();
-        // We also want to cause the fragments to redraw themselves, as their
-        // data may have changed.
         this.refreshDisplayFragment();
-      } else {
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "[onActivityResult] result canceled, not refreshing backing " + "table");
+        break;
       }
-      break;
-    case Constants.RequestCodes.ADD_ROW_SURVEY:
-    case Constants.RequestCodes.EDIT_ROW_SURVEY:
-      if (resultCode == Activity.RESULT_OK) {
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "[onActivityResult] result ok, refreshing backing table");
-      } else {
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "[onActivityResult] result canceled, refreshing backing table");
-      }
-      // verify that the data table doesn't contain checkpoints...
-      // always refresh, as survey may have done something
-      this.refreshDataTable();
-      this.refreshDisplayFragment();
-      break;
+    } catch ( RemoteException e ) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
     super.onActivityResult(requestCode, resultCode, data);
   }
@@ -283,10 +449,10 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     MenuItem listItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_list_view);
     MenuItem mapItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_map_view);
     MenuItem graphItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_graph_view);
-    spreadsheetItem.setEnabled(possibleViews.spreadsheetViewIsPossible());
-    listItem.setEnabled(possibleViews.listViewIsPossible());
-    mapItem.setEnabled(possibleViews.mapViewIsPossible());
-    graphItem.setEnabled(possibleViews.graphViewIsPossible());
+    spreadsheetItem.setEnabled((possibleViews != null) && possibleViews.spreadsheetViewIsPossible());
+    listItem.setEnabled((possibleViews != null) && possibleViews.listViewIsPossible());
+    mapItem.setEnabled((possibleViews != null) && possibleViews.mapViewIsPossible());
+    graphItem.setEnabled((possibleViews != null) && possibleViews.graphViewIsPossible());
   }
 
   /**
@@ -347,43 +513,49 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
    * present in Intent.
    */
   private void helperInitializeDisplayFragment(boolean createNew) {
-    switch (this.mCurrentFragmentType) {
-    case SPREADSHEET:
-      this.showSpreadsheetFragment(createNew);
-      break;
-    case DETAIL:
-      this.showDetailFragment(createNew);
-      break;
-    case GRAPH_MANAGER:
-      this.showGraphFragment(createNew);
-      break;
-    case LIST:
-      this.showListFragment(createNew);
-      break;
-    case MAP:
-      this.showMapFragment(createNew);
-      break;
-    case GRAPH_VIEW:
-      String graphName = this.getIntent().getStringExtra(Constants.IntentKeys.GRAPH_NAME);
-      if (graphName == null) {
+    try {
+      switch (this.mCurrentFragmentType) {
+      case SPREADSHEET:
+        this.showSpreadsheetFragment(createNew);
+        break;
+      case DETAIL:
+        this.showDetailFragment(createNew);
+        break;
+      case GRAPH_MANAGER:
+        this.showGraphFragment(createNew);
+        break;
+      case LIST:
+        this.showListFragment(createNew);
+        break;
+      case MAP:
+        this.showMapFragment(createNew);
+        break;
+      case GRAPH_VIEW:
+        String graphName = this.getIntent().getStringExtra(Constants.IntentKeys.GRAPH_NAME);
+        if (graphName == null) {
+          WebLogger.getLogger(getAppName()).e(TAG,
+              "[initializeDisplayFragment] graph name not present in bundle");
+        }
+        this.showGraphViewFragment(graphName, createNew);
+        break;
+      default:
         WebLogger.getLogger(getAppName()).e(TAG,
-            "[initializeDisplayFragment] graph name not present in bundle");
+            "ViewFragmentType not recognized: " + this.mCurrentFragmentType);
+        break;
       }
-      this.showGraphViewFragment(graphName, createNew);
-      break;
-    default:
-      WebLogger.getLogger(getAppName()).e(TAG,
-          "ViewFragmentType not recognized: " + this.mCurrentFragmentType);
-      break;
+    } catch (RemoteException e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
     }
   }
 
   /**
    * Set the current type of fragment that is being displayed.
+   * Called when mocking interface.
    * 
    * @param currentType
    */
-  protected void setCurrentFragmentType(ViewFragmentType currentType) {
+  public void setCurrentFragmentType(ViewFragmentType currentType) {
     this.mCurrentFragmentType = currentType;
     this.invalidateOptionsMenu();
   }
@@ -430,26 +602,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
         "[retrieveFragmentTypeToDisplay] didn't find fragment type " + "in saved instance state");
     // 2) then check the intent
     ViewFragmentType result = retrieveViewFragmentTypeFromIntent();
-    if (result == null) {
-      // 3) then use the default
-      TableViewType type;
-      SQLiteDatabase db = null;
-      try {
-        db = DatabaseFactory.get().getDatabase(this, getAppName());
-        type = TableUtil.get().getDefaultViewType(db, getTableId());
-      } finally {
-        if (db != null) {
-          db.close();
-        }
-      }
-      result = this.getViewFragmentTypeFromViewType(type);
-    }
-    if (result == null) {
-      // 4) last case, do spreadsheet
-      WebLogger.getLogger(getAppName()).i(TAG,
-          "[retrieveFragmentTypeToDisplay] no view type found, " + "defaulting to spreadsheet");
-      result = ViewFragmentType.SPREADSHEET;
-    }
     return result;
   }
 
@@ -477,26 +629,28 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
   }
 
   /**
-   * Initialize {@link TableDisplayActivity#mUserTable}.
-   */
-  private void initializeBackingTable() {
-    UserTable userTable = this.retrieveUserTable();
-    this.mUserTable = userTable;
-  }
-
-  /**
    * Get the {@link UserTable} that is being held by this activity.
    * 
    * @return
    */
   public UserTable getUserTable() {
+    if ( mUserTable == null ) {
+      try {
+        initializeBackingTable();
+      } catch (RemoteException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+        return null;
+      }
+    }
     return this.mUserTable;
   }
 
   /**
    * Refresh the data being displayed.
+   * @throws RemoteException 
    */
-  public void refreshDataTable() {
+  public void refreshDataTable() throws RemoteException {
     this.initializeBackingTable();
   }
 
@@ -504,20 +658,23 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
    * Get the {@link UserTable} from the database that should be displayed.
    * 
    * @return
+   * @throws RemoteException 
    */
-  UserTable retrieveUserTable() {
+  void initializeBackingTable() throws RemoteException {
     SQLQueryStruct sqlQueryStruct = this.retrieveSQLQueryStatStructFromIntent();
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
+    String[] emptyArray = {};
     try {
-      db = DatabaseFactory.get().getDatabase(this, getAppName());
-      UserTable result = ODKDatabaseUtils.get().rawSqlQuery(db, this.getAppName(),
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      UserTable result = Tables.getInstance().getDatabase().rawSqlQuery(this.getAppName(), db,
           this.getTableId(), getColumnDefinitions(), sqlQueryStruct.whereClause,
-          sqlQueryStruct.selectionArgs, sqlQueryStruct.groupBy, sqlQueryStruct.having,
-          sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
-      return result;
+          (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs, 
+          (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy, 
+          sqlQueryStruct.having, sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
+      mUserTable = result;
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
   }
@@ -554,7 +711,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     this.hideAllOtherViewFragments(ViewFragmentType.SPREADSHEET, fragmentTransaction);
     // Try to retrieve one already there.
     SpreadsheetFragment spreadsheetFragment = (SpreadsheetFragment) fragmentManager
-        .findFragmentByTag(Constants.FragmentTags.SPREADSHEET);
+        .findFragmentByTag(ViewFragmentType.SPREADSHEET.name());
     if (spreadsheetFragment == null) {
       WebLogger.getLogger(getAppName()).d(TAG,
           "[showSpreadsheetFragment] no existing spreadshseet " + "fragment found");
@@ -573,7 +730,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       }
       spreadsheetFragment = this.createSpreadsheetFragment();
       fragmentTransaction.add(R.id.activity_table_display_activity_one_pane_content,
-          spreadsheetFragment, Constants.FragmentTags.SPREADSHEET);
+          spreadsheetFragment, ViewFragmentType.SPREADSHEET.name());
     } else {
       fragmentTransaction.show(spreadsheetFragment);
     }
@@ -592,15 +749,15 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       FragmentTransaction fragmentTransaction) {
     FragmentManager fragmentManager = this.getFragmentManager();
     // First acquire all the possible fragments.
-    Fragment spreadsheet = fragmentManager.findFragmentByTag(Constants.FragmentTags.SPREADSHEET);
-    Fragment list = fragmentManager.findFragmentByTag(Constants.FragmentTags.LIST);
-    Fragment graphManager = fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_MANAGER);
+    Fragment spreadsheet = fragmentManager.findFragmentByTag(ViewFragmentType.SPREADSHEET.name());
+    Fragment list = fragmentManager.findFragmentByTag(ViewFragmentType.LIST.name());
+    Fragment graphManager = fragmentManager.findFragmentByTag(ViewFragmentType.GRAPH_MANAGER.name());
     Fragment mapList = fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
     Fragment mapInner = fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_INNER_MAP);
     Fragment detailFragment = fragmentManager
-        .findFragmentByTag(Constants.FragmentTags.DETAIL_FRAGMENT);
+        .findFragmentByTag(ViewFragmentType.DETAIL.name());
     Fragment graphViewFragment = fragmentManager
-        .findFragmentByTag(Constants.FragmentTags.GRAPH_VIEW);
+        .findFragmentByTag(ViewFragmentType.GRAPH_VIEW.name());
     if (fragmentToKeepVisible != ViewFragmentType.SPREADSHEET && spreadsheet != null) {
       fragmentTransaction.hide(spreadsheet);
     }
@@ -636,23 +793,23 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     return result;
   }
 
-  public void showMapFragment() {
+  public void showMapFragment() throws RemoteException {
     this.showMapFragment(false);
   }
 
-  public void showMapFragment(boolean createNew) {
+  public void showMapFragment(boolean createNew) throws RemoteException {
     this.setCurrentFragmentType(ViewFragmentType.MAP);
     this.updateChildViewVisibility(ViewFragmentType.MAP);
     // Set the list view file name.
     String fileName = IntentUtil.retrieveFileNameFromBundle(this.getIntent().getExtras());
     if (fileName == null) {
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(this, getAppName());
-        fileName = TableUtil.get().getMapListViewFilename(db, getTableId());
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+        fileName = TableUtil.get().getMapListViewFilename(getAppName(), db, getTableId());
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
         }
       }
     }
@@ -727,24 +884,24 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     return result;
   }
 
-  public void showListFragment() {
+  public void showListFragment() throws RemoteException {
     this.showListFragment(false);
   }
 
-  public void showListFragment(boolean createNew) {
+  public void showListFragment(boolean createNew) throws RemoteException {
     this.setCurrentFragmentType(ViewFragmentType.LIST);
     this.updateChildViewVisibility(ViewFragmentType.LIST);
     // Try to use a passed file name. If one doesn't exist, try to use the
     // default.
     String fileName = IntentUtil.retrieveFileNameFromBundle(this.getIntent().getExtras());
     if (fileName == null) {
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(this, getAppName());
-        fileName = TableUtil.get().getListViewFilename(db, getTableId());
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+        fileName = TableUtil.get().getListViewFilename(getAppName(), db, getTableId());
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
         }
       }
     }
@@ -752,7 +909,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
     this.hideAllOtherViewFragments(ViewFragmentType.LIST, fragmentTransaction);
     ListViewFragment listViewFragment = (ListViewFragment) fragmentManager
-        .findFragmentByTag(Constants.FragmentTags.LIST);
+        .findFragmentByTag(ViewFragmentType.LIST.name());
     if (listViewFragment == null || createNew) {
       if (listViewFragment == null) {
         WebLogger.getLogger(getAppName()).d(TAG,
@@ -764,7 +921,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       }
       listViewFragment = this.createListViewFragment(fileName);
       fragmentTransaction.add(R.id.activity_table_display_activity_one_pane_content,
-          listViewFragment, Constants.FragmentTags.LIST);
+          listViewFragment, ViewFragmentType.LIST.name());
     } else {
       WebLogger.getLogger(getAppName()).d(TAG, "[showListFragment] existing list fragment found");
       fragmentTransaction.show(listViewFragment);
@@ -798,7 +955,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     this.hideAllOtherViewFragments(ViewFragmentType.GRAPH_MANAGER, fragmentTransaction);
     // Try to retrieve the fragment if it already exists.
     GraphManagerFragment graphManagerFragment = (GraphManagerFragment) fragmentManager
-        .findFragmentByTag(Constants.FragmentTags.GRAPH_MANAGER);
+        .findFragmentByTag(ViewFragmentType.GRAPH_MANAGER.name());
     if (graphManagerFragment == null || createNew) {
       if (graphManagerFragment == null) {
         WebLogger.getLogger(getAppName()).d(TAG,
@@ -809,7 +966,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       }
       graphManagerFragment = this.createGraphManagerFragment();
       fragmentTransaction.add(R.id.activity_table_display_activity_one_pane_content,
-          graphManagerFragment, Constants.FragmentTags.GRAPH_MANAGER);
+          graphManagerFragment, ViewFragmentType.GRAPH_MANAGER.name());
     } else {
       WebLogger.getLogger(getAppName()).d(TAG, "[showGraphFragment] existing graph fragment found");
       fragmentTransaction.show(graphManagerFragment);
@@ -840,7 +997,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
     this.hideAllOtherViewFragments(ViewFragmentType.GRAPH_VIEW, fragmentTransaction);
     GraphViewFragment graphViewFragment = (GraphViewFragment) fragmentManager
-        .findFragmentByTag(Constants.FragmentTags.GRAPH_VIEW);
+        .findFragmentByTag(ViewFragmentType.GRAPH_VIEW.name());
     if (graphViewFragment == null || createNew) {
       if (graphViewFragment != null) {
         WebLogger.getLogger(getAppName()).d(TAG,
@@ -859,7 +1016,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       graphViewFragment.getArguments().putAll(arguments);
     }
     fragmentTransaction.add(R.id.activity_table_display_activity_one_pane_content,
-        graphViewFragment, Constants.FragmentTags.GRAPH_VIEW);
+        graphViewFragment, ViewFragmentType.GRAPH_VIEW.name());
     fragmentTransaction.commit();
   }
 
@@ -877,11 +1034,11 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     return result;
   }
 
-  public void showDetailFragment() {
+  public void showDetailFragment() throws RemoteException {
     this.showDetailFragment(false);
   }
 
-  public void showDetailFragment(boolean createNew) {
+  public void showDetailFragment(boolean createNew) throws RemoteException {
     this.setCurrentFragmentType(ViewFragmentType.DETAIL);
     this.updateChildViewVisibility(ViewFragmentType.DETAIL);
     FragmentManager fragmentManager = this.getFragmentManager();
@@ -891,20 +1048,20 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     // Try and use the default.
     if (fileName == null) {
       WebLogger.getLogger(getAppName()).d(TAG, "[showDetailFragment] fileName not found in Intent");
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(this, getAppName());
-        fileName = TableUtil.get().getDetailViewFilename(db, getTableId());
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+        fileName = TableUtil.get().getDetailViewFilename(getAppName(), db, getTableId());
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
         }
       }
     }
     String rowId = IntentUtil.retrieveRowIdFromBundle(this.getIntent().getExtras());
     // Try to retrieve one that already exists.
     DetailViewFragment detailViewFragment = (DetailViewFragment) fragmentManager
-        .findFragmentByTag(Constants.FragmentTags.DETAIL_FRAGMENT);
+        .findFragmentByTag(ViewFragmentType.DETAIL.name());
     if (detailViewFragment == null || createNew) {
       if (detailViewFragment != null) {
         WebLogger.getLogger(getAppName()).d(TAG,
@@ -917,7 +1074,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       detailViewFragment = this.createDetailViewFragment(fileName, rowId);
 
       fragmentTransaction.add(R.id.activity_table_display_activity_one_pane_content,
-          detailViewFragment, Constants.FragmentTags.DETAIL_FRAGMENT);
+          detailViewFragment, ViewFragmentType.DETAIL.name());
     } else {
       WebLogger.getLogger(getAppName()).d(TAG,
           "[showDetailViewFragment] existing detail view fragment found");
@@ -984,7 +1141,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
   DetailViewFragment findDetailViewFragment() {
     FragmentManager fragmentManager = this.getFragmentManager();
     DetailViewFragment result = (DetailViewFragment) fragmentManager
-        .findFragmentByTag(Constants.FragmentTags.DETAIL_FRAGMENT);
+        .findFragmentByTag(ViewFragmentType.DETAIL.name());
     return result;
   }
 

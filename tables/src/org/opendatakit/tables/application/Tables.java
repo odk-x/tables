@@ -14,76 +14,18 @@
 
 package org.opendatakit.tables.application;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.R;
 
-import android.app.Application;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.res.Configuration;
-import android.util.Log;
-
-public class Tables extends Application {
+public class Tables extends CommonApplication {
 
   public static final String t = "Tables";
-
-  private Set<String> appNameHasBeenInitialized = new HashSet<String>();
 
   private static Tables singleton = null;
 
   public static Tables getInstance() {
     return singleton;
-  }
-
-  public boolean shouldRunInitializationTask(String appName) {
-    return !appNameHasBeenInitialized.contains(appName);
-  }
-
-  public void clearRunInitializationTask(String appName) {
-    appNameHasBeenInitialized.add(appName);
-  }
-
-  public String getVersionCodeString() {
-    try {
-      PackageInfo pinfo;
-      pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-      int versionNumber = pinfo.versionCode;
-      return Integer.toString(versionNumber);
-    } catch (NameNotFoundException e) {
-      e.printStackTrace();
-      return "";
-    }
-  }
-
-  public String getVersionedAppName() {
-    String versionDetail = "";
-    try {
-      PackageInfo pinfo;
-      pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-      int versionNumber = pinfo.versionCode;
-      String versionName = pinfo.versionName;
-      versionDetail = " " + versionName + " (rev " + versionNumber + ")";
-    } catch (NameNotFoundException e) {
-      e.printStackTrace();
-    }
-    return getString(R.string.app_name) + versionDetail;
-  }
-
-  /**
-   * Creates required directories on the SDCard (or other external storage)
-   *
-   * @return true if there are tables present
-   * @throws RuntimeException
-   *           if there is no SDCard or the directory exists as a non directory
-   */
-  public static void createODKDirs(String appName) throws RuntimeException {
-
-    ODKFileUtils.verifyExternalStorageAvailability();
-
-    ODKFileUtils.assertDirectoryStructure(appName);
   }
 
   @Override
@@ -93,17 +35,28 @@ public class Tables extends Application {
     super.onCreate();
   }
 
-
   @Override
-  public void onConfigurationChanged(Configuration newConfig) {
-    super.onConfigurationChanged(newConfig);
-    Log.i(t, "onConfigurationChanged");
+  public int getAppNameResourceId() {
+    return R.string.app_name;
   }
 
   @Override
-  public void onTerminate() {
-    super.onTerminate();
-    Log.i(t, "onTerminate");
+  public int getAssetZipResourceId() {
+    return R.raw.assetszip;
   }
 
+  @Override
+  public int getFrameworkZipResourceId() {
+    return R.raw.frameworkzip;
+  }
+
+  @Override
+  public int getWebKitResourceId() {
+    return -1;
+  }
+
+  public String getVersionedAppName() {
+    String versionDetail = this.getVersionDetail();
+    return getString(R.string.app_name) + versionDetail;
+  }
 }

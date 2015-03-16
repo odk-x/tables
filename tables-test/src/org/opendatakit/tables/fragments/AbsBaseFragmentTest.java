@@ -2,6 +2,7 @@ package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -12,16 +13,20 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
+import org.opendatakit.testutils.TestConstants;
 import org.robolectric.RobolectricTestRunner;
 
 import android.app.Activity;
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.os.RemoteException;
 
 /**
  * 
@@ -31,28 +36,12 @@ import android.database.sqlite.SQLiteDatabase;
 @RunWith(RobolectricTestRunner.class)
 public class AbsBaseFragmentTest {
   
-  AbsBaseFragmentStub fragment;
-  Activity activity;
-  
   @Before
   public void setup() {
-    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
-    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
-    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
-    DatabaseFactory.set(factoryMock);
-    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
-    List<String> tableIds = new ArrayList<String>();
-    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
-    ODKDatabaseUtils.set(wrapperMock);
-
+    CommonApplication.setMocked();
     TestCaseUtils.setExternalStorageMounted();
-    AbsBaseFragmentStub stub = new AbsBaseFragmentStub();
-    ODKFragmentTestUtil.startFragmentForActivity(
-        AbsBaseActivityStub.class,
-        stub,
-        null);
-    this.fragment = stub;
-    this.activity = this.fragment.getActivity();
+
+    TestCaseUtils.setThreeTableDataset(true);
   }
   
   @After
@@ -63,31 +52,41 @@ public class AbsBaseFragmentTest {
   
   @Test
   public void fragmentInitializesNonNull() {
-    assertThat(this.fragment).isNotNull();
+    AbsBaseFragmentStub stub = new AbsBaseFragmentStub();
+    Activity activity = ODKFragmentTestUtil.startActivityAttachFragment(
+        AbsBaseActivityStub.class,
+        stub, null,
+        TestConstants.DEFAULT_FRAGMENT_TAG);
+    FragmentManager mgr = activity.getFragmentManager();
+    Fragment fragment = mgr.findFragmentByTag(TestConstants.DEFAULT_FRAGMENT_TAG);
+    assertThat(fragment).isNotNull();
   }
   
   @Test(expected=IllegalStateException.class)
   public void activityOtherThanAbsBaseActivityThrowsIllegalState() {
     AbsBaseFragmentStub stub = new AbsBaseFragmentStub();
-    ODKFragmentTestUtil.startFragmentForActivity(
+    Activity activity = ODKFragmentTestUtil.startActivityAttachFragment(
         Activity.class,
-        stub,
-        null);
+        stub, null,
+        TestConstants.DEFAULT_FRAGMENT_TAG);
+    FragmentManager mgr = activity.getFragmentManager();
+    Fragment fragment = mgr.findFragmentByTag(TestConstants.DEFAULT_FRAGMENT_TAG);
   }
   
   @Test
   public void fragmentGetsAppNameFromParentActivity() {
-    String targetAppName = "myFancyAppName";
-    AbsBaseActivityStub.APP_NAME = targetAppName;
     AbsBaseFragmentStub stub = new AbsBaseFragmentStub();
-    ODKFragmentTestUtil.startFragmentForActivity(
+    Activity activity = ODKFragmentTestUtil.startActivityAttachFragment(
         AbsBaseActivityStub.class,
-        stub,
-        null);
+        stub, null,
+        TestConstants.DEFAULT_FRAGMENT_TAG);
+    FragmentManager mgr = activity.getFragmentManager();
+    Fragment fragment = mgr.findFragmentByTag(TestConstants.DEFAULT_FRAGMENT_TAG);
+    
     String retrievedAppName = stub.getAppName();
     org.fest.assertions.api.Assertions.assertThat(retrievedAppName)
         .isNotNull()
-        .isEqualTo(targetAppName);
+        .isEqualTo(TestConstants.TABLES_DEFAULT_APP_NAME);
   }
 
 }

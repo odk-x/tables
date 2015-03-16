@@ -16,28 +16,27 @@
 package org.opendatakit.tables.views.webkits;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
-import org.opendatakit.tables.activities.WebViewActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants;
@@ -45,25 +44,25 @@ import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
+import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.RemoteException;
 
 public class Control {
 
   private static final String TAG = Control.class.getSimpleName();
 
   protected AbsBaseActivity mActivity;
-  protected String mAppName;
   protected String mDefaultTableId;
-  protected Map<String, ArrayList<ColumnDefinition>> mCachedOrderedDefns = new HashMap<String, ArrayList<ColumnDefinition>>();
-  protected ArrayList<String> mTableIds;
+  protected Map<String, OrderedColumns> mCachedOrderedDefns = new HashMap<String, OrderedColumns>();
+  protected List<String> mTableIds;
 
   public Object getJavascriptInterfaceWithWeakReference() {
     return new ControlIf(this);
@@ -79,23 +78,24 @@ public class Control {
    *
    * @param activity
    *          the activity that will be holding the view
+   * @throws RemoteException 
    */
-  public Control(AbsBaseActivity activity, String appName, String defaultTableId,
-      ArrayList<ColumnDefinition> defaultColumnDefinitions) {
+  public Control(AbsBaseActivity activity, String defaultTableId,
+      OrderedColumns defaultColumnDefinitions) throws RemoteException {
     this.mActivity = activity;
-    this.mAppName = appName;
     this.mDefaultTableId = defaultTableId;
     if (defaultTableId != null) {
       this.mCachedOrderedDefns.put(defaultTableId, defaultColumnDefinitions);
     }
 
-    SQLiteDatabase db = null;
+    String appName = mActivity.getAppName();
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
-      this.mTableIds = ODKDatabaseUtils.get().getAllTableIds(db);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      this.mTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
   }
@@ -105,16 +105,18 @@ public class Control {
    * 
    * @param tableId
    * @return
+   * @throws RemoteException 
    */
-  synchronized ArrayList<ColumnDefinition> retrieveColumnDefinitions(SQLiteDatabase db,
-      String tableId) {
+  synchronized OrderedColumns retrieveColumnDefinitions(OdkDbHandle db,
+      String tableId) throws RemoteException {
 
-    ArrayList<ColumnDefinition> answer = this.mCachedOrderedDefns.get(tableId);
+    OrderedColumns answer = this.mCachedOrderedDefns.get(tableId);
     if (answer != null) {
       return answer;
     }
 
-    answer = TableUtil.get().getColumnDefinitions(db, mAppName, tableId);
+    String appName = mActivity.getAppName();
+    answer = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);
     this.mCachedOrderedDefns.put(tableId, answer);
     return answer;
   }
@@ -279,7 +281,8 @@ public class Control {
   public boolean helperOpenTableToMapView(String tableId, String relativePath,
       String sqlWhereClause, String[] sqlSelectionArgs, String[] sqlGroupBy, String sqlHaving,
       String sqlOrderByElementKey, String sqlOrderByDirection) {
-    WebLogger.getLogger(mAppName).e(TAG, "NOTE THAT THE SPECIFIC MAP VIEW FILE IS NOT SUPPORTED");
+    String appName = mActivity.getAppName();
+    WebLogger.getLogger(appName).e(TAG, "NOTE THAT THE SPECIFIC MAP VIEW FILE IS NOT SUPPORTED");
     return this.helperLaunchView(tableId, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
         sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.MAP, relativePath);
   }
@@ -338,9 +341,10 @@ public class Control {
    *          as returned by {@link getDbNameForTable}.
    * @param selectionArgs
    * @return
+   * @throws RemoteException 
    */
   public TableData query(String tableId, String whereClause, String[] selectionArgs,
-      String[] groupBy, String having, String orderByElementKey, String orderByDirection) {
+      String[] groupBy, String having, String orderByElementKey, String orderByDirection) throws RemoteException {
     TableData tableData = queryForTableData(tableId, whereClause, selectionArgs, groupBy, having,
         orderByElementKey, orderByDirection);
     /**
@@ -374,28 +378,30 @@ public class Control {
    * @param tableId
    * @param elementPath
    * @return
+   * @throws RemoteException 
    */
-  public String getColumnDisplayName(String tableId, String elementPath) {
+  public String getColumnDisplayName(String tableId, String elementPath) throws RemoteException {
+    String appName = mActivity.getAppName();
     String elementKey = this.getElementKey(tableId, elementPath);
     if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(mAppName).e(TAG,
+      WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return null;
     }
     try {
       String localizedDisplayName;
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
-        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, tableId, elementKey);
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId, elementKey);
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
       return localizedDisplayName;
     } catch (IllegalArgumentException e) {
-      WebLogger.getLogger(mAppName).e(TAG, "column with elementKey does not exist: " + elementKey);
+      WebLogger.getLogger(appName).e(TAG, "column with elementKey does not exist: " + elementKey);
       return null;
     }
   }
@@ -404,27 +410,29 @@ public class Control {
    * @see {@link ControlIf#getTableDisplayName(String)}
    * @param tableId
    * @return
+   * @throws RemoteException 
    */
-  public String getTableDisplayName(String tableId) {
+  public String getTableDisplayName(String tableId) throws RemoteException {
+    String appName = mActivity.getAppName();
     String localizedDisplayName;
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
-      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
     return localizedDisplayName;
   }
 
-  public boolean updateRow(String tableId, String stringifiedJSON, String rowId) {
+  public boolean updateRow(String tableId, String stringifiedJSON, String rowId) throws RemoteException {
     return helperAddOrUpdateRow(tableId, stringifiedJSON, rowId, true);
   }
 
   protected ContentValues getContentValuesFromMap(Context context, String appName, String tableId,
-      ArrayList<ColumnDefinition> orderedDefns, Map<String, String> elementKeyToValue) {
+      OrderedColumns orderedDefns, Map<String, String> elementKeyToValue) throws RemoteException {
     return WebViewUtil.getContentValuesFromMap(context, appName, tableId, orderedDefns,
         elementKeyToValue);
   }
@@ -436,8 +444,9 @@ public class Control {
    * @param tableId
    * @param stringifiedJSON
    * @return
+   * @throws RemoteException 
    */
-  public String addRow(String tableId, String stringifiedJSON) {
+  public String addRow(String tableId, String stringifiedJSON) throws RemoteException {
     String rowId = this.generateRowId();
     boolean addSuccessful = helperAddOrUpdateRow(tableId, stringifiedJSON, rowId, false);
     if (addSuccessful) {
@@ -466,14 +475,16 @@ public class Control {
    * @param stringifiedJSON
    * @param rowId
    *          cannot be null.
-   * @return
+   * @return true if change was successful, false otherwise.
+   * @throws RemoteException 
    * @throws IllegalArgumentException
    *           if rowId is null.
    */
   protected boolean helperAddOrUpdateRow(String tableId, String stringifiedJSON, String rowId,
-      boolean isUpdate) {
+      boolean isUpdate) throws RemoteException {
+    String appName = mActivity.getAppName();
     if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(mAppName).e(TAG,
+      WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
@@ -485,34 +496,36 @@ public class Control {
       // this case will let us add an empty row if null is passed.
       elementKeyToValue = new HashMap<String, String>();
     } else {
-      elementKeyToValue = WebViewUtil.getMapFromJson(mAppName, stringifiedJSON);
+      elementKeyToValue = WebViewUtil.getMapFromJson(appName, stringifiedJSON);
     }
 
-    SQLiteDatabase db = null;
+    boolean successful = false;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+      db = Tables.getInstance().getDatabase().openDatabase(appName, true);
 
-      ArrayList<ColumnDefinition> orderedColumns = retrieveColumnDefinitions(db, tableId);
-      ContentValues contentValues = getContentValuesFromMap(mActivity, mAppName, tableId,
+      OrderedColumns orderedColumns = retrieveColumnDefinitions(db, tableId);
+      ContentValues contentValues = getContentValuesFromMap(mActivity, appName, tableId,
           orderedColumns, elementKeyToValue);
       if (contentValues == null) {
         // something went wrong parsing.
-        WebLogger.getLogger(mAppName).e(TAG,
+        WebLogger.getLogger(appName).e(TAG,
             "[addRow] cannot assemble assignment data for table: " + tableId);
         return false;
       }
       // If we've made it here, all appears to be well.
       if (isUpdate) {
-        ODKDatabaseUtils.get().updateDataInExistingDBTableWithId(db, tableId, orderedColumns,
-            contentValues, rowId);
+        Tables.getInstance().getDatabase().updateDataInExistingDBTableWithId(appName, db, 
+            tableId, orderedColumns, contentValues, rowId);
 
       } else {
-        ODKDatabaseUtils.get().insertDataIntoExistingDBTableWithId(db, tableId, orderedColumns,
-            contentValues, rowId);
+        Tables.getInstance().getDatabase().insertDataIntoExistingDBTableWithId(appName, db, 
+            tableId, orderedColumns, contentValues, rowId);
       }
+      successful = true;
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
       }
     }
     return true;
@@ -523,12 +536,13 @@ public class Control {
    * @return
    */
   public String getPlatformInfo() {
+    String appName = mActivity.getAppName();
     // This is based on:
     // org.opendatakit.survey.android.views.ODKShimJavascriptCallback
     Map<String, String> platformInfo = new HashMap<String, String>();
     platformInfo.put(PlatformInfoKeys.VERSION, Build.VERSION.RELEASE);
     platformInfo.put(PlatformInfoKeys.CONTAINER, "Android");
-    platformInfo.put(PlatformInfoKeys.APP_NAME, this.mAppName);
+    platformInfo.put(PlatformInfoKeys.APP_NAME, appName);
     platformInfo.put(PlatformInfoKeys.BASE_URI, getBaseContentUri());
     platformInfo.put(PlatformInfoKeys.LOG_LEVEL, "D");
     JSONObject jsonObject = new JSONObject(platformInfo);
@@ -555,9 +569,10 @@ public class Control {
    * @return
    */
   public String getRowFileAsUrl(String tableId, String rowId, String rowPath) {
+    String appName = mActivity.getAppName();
     String baseUri = getBaseContentUri();
-    String folderPath = ODKFileUtils.getInstanceFolder(mAppName, tableId, rowId);
-    String prefix = ODKFileUtils.asRelativePath(mAppName, new File(folderPath));
+    String folderPath = ODKFileUtils.getInstanceFolder(appName, tableId, rowId);
+    String prefix = ODKFileUtils.asRelativePath(appName, new File(folderPath));
     prefix = prefix + "/";
     
     if ( rowPath.startsWith("/")) {
@@ -566,7 +581,7 @@ public class Control {
     
     if ( rowPath.startsWith(prefix) ) {
       // legacy construction
-      WebLogger.getLogger(mAppName).e(TAG,
+      WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] contains old-style rowpath constructs!");
       return baseUri + rowPath;
     } else {
@@ -579,32 +594,34 @@ public class Control {
    * @param tableId
    * @param elementPath
    * @return
+   * @throws RemoteException 
    */
-  public boolean columnExists(String tableId, String elementPath) {
+  public boolean columnExists(String tableId, String elementPath) throws RemoteException {
+    String appName = mActivity.getAppName();
     String elementKey = this.getElementKey(tableId, elementPath);
     if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(mAppName).e(TAG,
+      WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
 
-    ArrayList<ColumnDefinition> orderedDefns;
+    OrderedColumns orderedDefns;
     if (this.mCachedOrderedDefns.containsKey(tableId)) {
       orderedDefns = this.mCachedOrderedDefns.get(tableId);
     } else {
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
         orderedDefns = retrieveColumnDefinitions(db, tableId);
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
     }
 
     try {
-      ColumnDefinition.find(orderedDefns, elementKey);
+      orderedDefns.find(elementKey);
       return true;
     } catch (IllegalArgumentException e) {
       return false;
@@ -617,8 +634,9 @@ public class Control {
    * @return
    */
   private String getBaseContentUri() {
+    String appName = mActivity.getAppName();
     Uri contentUri = UrlUtils.getWebViewContentUri(this.mActivity);
-    contentUri = Uri.withAppendedPath(contentUri, Uri.encode(this.mAppName));
+    contentUri = Uri.withAppendedPath(contentUri, Uri.encode(appName));
     return contentUri.toString() + File.separator;
   }
 
@@ -630,10 +648,11 @@ public class Control {
    * @param relativePath
    */
   public boolean launchHTML(String relativePath) {
-    WebLogger.getLogger(mAppName).d(TAG, "[launchHTML] launching relativePath: " + relativePath);
-    Intent intent = new Intent(this.mActivity, WebViewActivity.class);
+    String appName = mActivity.getAppName();
+    WebLogger.getLogger(appName).d(TAG, "[launchHTML] launching relativePath: " + relativePath);
+    Intent intent = new Intent(this.mActivity, MainActivity.class);
     Bundle bundle = new Bundle();
-    IntentUtil.addAppNameToBundle(bundle, this.mAppName);
+    IntentUtil.addAppNameToBundle(bundle, appName);
     IntentUtil.addFileNameToBundle(bundle, relativePath);
     intent.putExtras(bundle);
     this.mActivity.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_WEB_VIEW);
@@ -651,19 +670,21 @@ public class Control {
    * @param screenPath
    * @param jsonMap
    * @return true if the launch succeeded, false if something went wrong
+   * @throws RemoteException 
    */
   public boolean helperAddRowWithSurvey(String tableId, String formId, String screenPath,
-      String jsonMap) {
+      String jsonMap) throws RemoteException {
+    String appName = mActivity.getAppName();
     // does this "to receive add" call make sense with survey? unclear.
     if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(mAppName).e(TAG,
+      WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
     SurveyFormParameters surveyFormParameters = null;
     if (formId == null) {
       surveyFormParameters = SurveyFormParameters.constructSurveyFormParameters(mActivity,
-          mAppName, tableId);
+          appName, tableId);
       formId = surveyFormParameters.getFormId();
     } else {
       surveyFormParameters = new SurveyFormParameters(true, formId, screenPath);
@@ -673,13 +694,13 @@ public class Control {
     // is not null. This allows other methods doing similar things to call
     // through using this method and passing null values.
     if (jsonMap != null) {
-      map = WebViewUtil.getMapFromJson(mAppName, jsonMap);
+      map = WebViewUtil.getMapFromJson(appName, jsonMap);
       if (map == null) {
-        WebLogger.getLogger(mAppName).e(TAG, "couldn't parse values into map to give to Survey");
+        WebLogger.getLogger(appName).e(TAG, "couldn't parse values into map to give to Survey");
         return false;
       }
     }
-    SurveyUtil.addRowWithSurvey(this.mActivity, this.mAppName, tableId, surveyFormParameters, map);
+    SurveyUtil.addRowWithSurvey(this.mActivity, appName, tableId, surveyFormParameters, map);
     return true;
   }
 
@@ -700,40 +721,42 @@ public class Control {
    *          a json string of values to prepopulate the form with. a null value
    *          won't prepopulate any values.
    * @return true if the launch succeeded, else false
+   * @throws RemoteException 
    */
   public boolean helperAddRowWithCollect(String tableId, String formId, String formVersion,
-      String formRootElement, String jsonMap) {
+      String formRootElement, String jsonMap) throws RemoteException {
+    String appName = mActivity.getAppName();
     if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(mAppName).e(TAG,
+      WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
 
-    ArrayList<ColumnDefinition> orderedDefns;
+    OrderedColumns orderedDefns;
     if (this.mCachedOrderedDefns.containsKey(tableId)) {
       orderedDefns = this.mCachedOrderedDefns.get(tableId);
     } else {
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
         orderedDefns = retrieveColumnDefinitions(db, tableId);
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
     }
 
     Map<String, String> map = null;
     if (jsonMap != null) {
-      map = WebViewUtil.getMapFromJson(mAppName, jsonMap);
+      map = WebViewUtil.getMapFromJson(appName, jsonMap);
       if (map == null) {
-        WebLogger.getLogger(mAppName).e(TAG, "couldn't parse jsonString: " + jsonMap);
+        WebLogger.getLogger(appName).e(TAG, "couldn't parse jsonString: " + jsonMap);
         return false;
       }
     }
     CollectFormParameters formParameters = CollectFormParameters.constructCollectFormParameters(
-        mActivity, mAppName, tableId);
+        mActivity, appName, tableId);
     if (formId != null) {
       formParameters.setFormId(formId);
       if (formVersion != null) {
@@ -759,18 +782,20 @@ public class Control {
    *          value. If this parameter is null, it prepopulates based on the
    *          searchString, if there is one. If this value is not null, it
    *          ignores the queryString and uses only the map.
+   * @throws RemoteException 
    */
   private void prepopulateRowAndLaunchCollect(String tableId,
-      ArrayList<ColumnDefinition> orderedDefns, CollectFormParameters params,
-      Map<String, String> elKeyToValueToPrepopulate) {
+      OrderedColumns orderedDefns, CollectFormParameters params,
+      Map<String, String> elKeyToValueToPrepopulate) throws RemoteException {
+    String appName = mActivity.getAppName();
     Intent addRowIntent;
     if (elKeyToValueToPrepopulate == null) {
       // The prepopulated values we need to get from the query string.
-      addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(this.mActivity, this.mAppName,
+      addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(this.mActivity, appName,
           tableId, orderedDefns, params);
     } else {
       // We've received a map to prepopulate with.
-      addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(this.mActivity, this.mAppName,
+      addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(this.mActivity, appName,
           tableId, orderedDefns, params, elKeyToValueToPrepopulate);
     }
     // Now just launch the intent to add the row.
@@ -785,22 +810,24 @@ public class Control {
    * @param formId
    * @param screenPath
    * @return true if the edit was launched successfully, else false
+   * @throws RemoteException 
    */
   public boolean helperEditRowWithSurvey(String tableId, String rowId, String formId,
-      String screenPath) {
+      String screenPath) throws RemoteException {
+    String appName = mActivity.getAppName();
     if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(mAppName).e(TAG,
+      WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
     SurveyFormParameters surveyFormParameters = null;
     if (formId == null) {
       surveyFormParameters = SurveyFormParameters.constructSurveyFormParameters(mActivity,
-          mAppName, tableId);
+          appName, tableId);
     } else {
       surveyFormParameters = new SurveyFormParameters(true, formId, screenPath);
     }
-    SurveyUtil.editRowWithSurvey(this.mActivity, this.mAppName, tableId, rowId,
+    SurveyUtil.editRowWithSurvey(this.mActivity, appName, tableId, rowId,
         surveyFormParameters);
     return true;
   }
@@ -818,27 +845,29 @@ public class Control {
    * @param formVersion
    * @param formRootElement
    * @return
+   * @throws RemoteException 
    */
   public boolean helperEditRowWithCollect(String tableId, String rowId, String formId,
-      String formVersion, String formRootElement) {
+      String formVersion, String formRootElement) throws RemoteException {
+    String appName = mActivity.getAppName();
     if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(mAppName).e(TAG,
+      WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
     }
     CollectFormParameters formParameters = null;
 
-    ArrayList<ColumnDefinition> orderedDefns;
+    OrderedColumns orderedDefns;
     if (this.mCachedOrderedDefns.containsKey(tableId)) {
       orderedDefns = this.mCachedOrderedDefns.get(tableId);
     } else {
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
         orderedDefns = retrieveColumnDefinitions(db, tableId);
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
     }
@@ -847,50 +876,54 @@ public class Control {
       // Then we want to construct the form parameters using default
       // values.
       formParameters = CollectFormParameters.constructCollectFormParameters(this.mActivity,
-          this.mAppName, tableId);
+          appName, tableId);
       formId = formParameters.getFormId();
       formVersion = formParameters.getFormVersion();
       formRootElement = formParameters.getRootElement();
     } else {
       String localizedDisplayName;
-      SQLiteDatabase db = null;
+      OdkDbHandle db = null;
       try {
-        db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(db, tableId);
+        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
       } finally {
         if (db != null) {
-          db.close();
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
 
       formParameters = new CollectFormParameters(true, formId, formVersion, formRootElement,
           localizedDisplayName);
     }
-    CollectUtil.editRowWithCollect(this.mActivity, this.mAppName, tableId, orderedDefns, rowId,
+    CollectUtil.editRowWithCollect(this.mActivity, appName, tableId, orderedDefns, rowId,
         formParameters);
     return true;
   }
 
   private TableData queryForTableData(String tableId, String sqlWhereClause,
       String[] sqlSelectionArgs, String[] sqlGroupBy, String sqlHaving,
-      String sqlOrderByElementKey, String sqlOrderByDirection) {
+      String sqlOrderByElementKey, String sqlOrderByDirection) throws RemoteException {
+    String appName = mActivity.getAppName();
     if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(mAppName).e(TAG,
+      WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return null;
     }
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(mActivity, mAppName);
-      ArrayList<ColumnDefinition> orderedDefns = retrieveColumnDefinitions(db, tableId);
-      UserTable userTable = ODKDatabaseUtils.get().rawSqlQuery(db, mAppName, tableId, orderedDefns,
-          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey,
+      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      OrderedColumns orderedDefns = retrieveColumnDefinitions(db, tableId);
+      String[] emptyArray = {};
+      UserTable userTable = Tables.getInstance().getDatabase().rawSqlQuery(appName, db,
+          tableId, orderedDefns,
+          sqlWhereClause, (sqlSelectionArgs == null) ? emptyArray : sqlSelectionArgs,
+          (sqlGroupBy == null) ? emptyArray : sqlGroupBy, sqlHaving, sqlOrderByElementKey,
           sqlOrderByDirection);
-      TableData tableData = new TableData(userTable);
+      TableData tableData = new TableData(mActivity, userTable);
       return tableData;
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
   }

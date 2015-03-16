@@ -15,19 +15,18 @@
  */
 package org.opendatakit.tables.views.components;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -41,20 +40,24 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
 
   private static final String TAG = ColorRuleAdapter.class.getSimpleName();
 
-  private final Context mContext;
+  private final TableLevelPreferencesActivity mTableLevelActivity;
   private final String mAppName;
   private final String mTableId;
+  private String[] mAdminColumns;
+  private Map<String,String> mLocalizedDisplayNames;
   private List<ColorRule> mColorRules;
   private int mResourceId;
   private ColorRuleGroup.Type mType;
 
-  public ColorRuleAdapter(Context context, String appName, String tableId, int resource,
-      List<ColorRule> colorRules, ColorRuleGroup.Type colorRuleType) {
-    super(context, resource, colorRules);
-    this.mContext = context;
+  public ColorRuleAdapter(TableLevelPreferencesActivity activity, String appName, String tableId, int resource,
+      String[] adminColumns, Map<String,String> localizedDisplayNames, List<ColorRule> colorRules, ColorRuleGroup.Type colorRuleType) {
+    super(activity, resource, colorRules);
+    this.mTableLevelActivity = activity;
     this.mAppName = appName;
     this.mTableId = tableId;
     this.mResourceId = resource;
+    this.mAdminColumns = adminColumns;
+    this.mLocalizedDisplayNames = localizedDisplayNames;
     this.mColorRules = colorRules;
     this.mType = colorRuleType;
   }
@@ -79,42 +82,33 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
     if (mType == ColorRuleGroup.Type.STATUS_COLUMN || mType == ColorRuleGroup.Type.TABLE) {
       ColorRule colorRule = mColorRules.get(currentPosition);
       String elementKey = colorRule.getColumnElementKey();
-      if (ODKDatabaseUtils.get().getAdminColumns().contains(elementKey)) {
+      
+      String appName = mTableLevelActivity.getAppName();
+        
+      if (Arrays.asList(mAdminColumns).contains(elementKey)) {
         isMetadataRule = true;
         // We know it must be a String rep of an int.
         SyncState targetState = SyncState.valueOf(colorRule.getVal());
         // For now we need to handle the special cases of the sync state.
         if (targetState == SyncState.new_row) {
-          description = this.mContext.getString(R.string.sync_state_equals_new_row_message);
+          description = this.mTableLevelActivity.getString(R.string.sync_state_equals_new_row_message);
         } else if (targetState == SyncState.changed) {
-          description = this.mContext.getString(R.string.sync_state_equals_changed_message);
+          description = this.mTableLevelActivity.getString(R.string.sync_state_equals_changed_message);
         } else if (targetState == SyncState.synced) {
-          description = this.mContext.getString(R.string.sync_state_equals_synced_message);
+          description = this.mTableLevelActivity.getString(R.string.sync_state_equals_synced_message);
         } else if (targetState == SyncState.synced_pending_files) {
-          description = this.mContext
+          description = this.mTableLevelActivity
               .getString(R.string.sync_state_equals_synced_pending_files_message);
         } else if (targetState == SyncState.deleted) {
-          description = this.mContext.getString(R.string.sync_state_equals_deleted_message);
+          description = this.mTableLevelActivity.getString(R.string.sync_state_equals_deleted_message);
         } else if (targetState == SyncState.in_conflict) {
-          description = this.mContext.getString(R.string.sync_state_equals_in_conflict_message);
+          description = this.mTableLevelActivity.getString(R.string.sync_state_equals_in_conflict_message);
         } else {
           WebLogger.getLogger(mAppName).e(TAG, "unrecognized sync state: " + targetState);
           description = "unknown";
         }
       } else {
-
-        String localizedDisplayName;
-        SQLiteDatabase db = null;
-        try {
-          db = DatabaseFactory.get().getDatabase(mContext, mAppName);
-          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, mTableId, elementKey);
-        } finally {
-          if (db != null) {
-            db.close();
-          }
-        }
-
-        description = localizedDisplayName;
+        description = mLocalizedDisplayNames.get(elementKey);
       }
     }
     if (!isMetadataRule) {
@@ -127,7 +121,7 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
     final int textColor = mColorRules.get(currentPosition).getForeground();
     // Will demo the color rule.
     TextView exampleView = (TextView) row.findViewById(R.id.row_ext);
-    exampleView.setText(this.mContext.getString(R.string.status_column));
+    exampleView.setText(this.mTableLevelActivity.getString(R.string.status_column));
     exampleView.setTextColor(textColor);
     exampleView.setBackgroundColor(backgroundColor);
     exampleView.setVisibility(View.VISIBLE);

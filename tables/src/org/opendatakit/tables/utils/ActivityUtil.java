@@ -15,12 +15,12 @@
  */
 package org.opendatakit.tables.utils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -34,6 +34,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.util.DisplayMetrics;
 
 public class ActivityUtil {
@@ -47,12 +48,12 @@ public class ActivityUtil {
    * updateInstanceDatabase() method.
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
-      ArrayList<ColumnDefinition> orderedDefns, Row row) {
+      OrderedColumns orderedDefns, Row row) throws RemoteException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
     if (formType.isCollectForm()) {
       Map<String, String> elementKeyToValue = new HashMap<String, String>();
 
-      for (ColumnDefinition cd : orderedDefns) {
+      for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
         if (cd.isUnitOfRetention()) {
           String value = row.getRawDataOrMetadataByElementKey(cd.getElementKey());
           elementKeyToValue.put(cd.getElementKey(), value);
@@ -85,9 +86,10 @@ public class ActivityUtil {
    *          the activity that should await the return
    * @param tableProperties
    * @param rowId
+   * @throws RemoteException 
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
-      ArrayList<ColumnDefinition> orderedDefns, String rowId) {
+      OrderedColumns orderedDefns, String rowId) throws RemoteException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
     if (formType.isCollectForm()) {
       WebLogger.getLogger(appName).d(TAG, "[editRow] using collect form");
@@ -119,9 +121,10 @@ public class ActivityUtil {
    * @param prepopulatedValues
    *          a map of elementKey to value with which the new row should be
    *          prepopulated.
+   * @throws RemoteException 
    */
   public static void addRow(AbsBaseActivity activity, String appName, String tableId,
-      ArrayList<ColumnDefinition> orderedDefns, Map<String, String> prepopulatedValues) {
+      OrderedColumns orderedDefns, Map<String, String> prepopulatedValues) throws RemoteException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
     if (formType.isCollectForm()) {
       WebLogger.getLogger(appName).d(TAG, "[onOptionsItemSelected] using Collect form");

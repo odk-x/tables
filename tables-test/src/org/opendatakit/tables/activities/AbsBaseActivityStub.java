@@ -18,4 +18,16 @@ public class AbsBaseActivityStub extends AbsBaseActivity {
     APP_NAME = DEFAULT_APP_NAME;
   }
 
+  @Override
+  public void databaseAvailable() {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void databaseUnavailable() {
+    // TODO Auto-generated method stub
+    
+  }
+
 }

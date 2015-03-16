@@ -19,8 +19,10 @@ import java.io.File;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
@@ -28,7 +30,9 @@ import org.opendatakit.tables.views.webkits.GraphData;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.webkit.WebView;
+import android.widget.Toast;
 
 public class GraphViewFragment extends AbsWebTableFragment {
 
@@ -61,43 +65,56 @@ public class GraphViewFragment extends AbsWebTableFragment {
     }
     return this.mGraphName;
   }
-
+  
   @Override
-  public WebView buildView() {
-    WebView result = WebViewUtil.getODKCompliantWebView((AbsBaseActivity) getActivity());
-    Control control = this.createControlObject();
-    result.addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.CONTROL);
-    TableData tableData = this.createDataObject();
-    result.addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.DATA);
-    String relativePathToGraphFile = ODKFileUtils.getFrameworkFolder(getAppName()) + File.separator
-        + TABLES_GRAPH_BASE_FILE_NAME;
-    String relativePath = ODKFileUtils.asUriFragment(getAppName(),
-        new File(relativePathToGraphFile));
-    GraphData graphData = new GraphData(this.getActivity(), getAppName(), getTableId(),
-        this.getGraphName());
-    result.addJavascriptInterface(graphData.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.GRAPH);
-    WebViewUtil.displayFileInWebView(getActivity(), getAppName(), result, relativePath);
-    // Save the references
-    this.mControlReference = control;
-    this.mTableDataReference = tableData;
-    this.mGraphDataStrongReference = graphData;
-    return result;
+  public void databaseAvailable() {
+    if ( Tables.getInstance().getDatabase() != null && getView() != null ) {
+      try {
+        AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+        WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
+        Control control = this.createControlObject();
+        webView.addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(),
+            Constants.JavaScriptHandles.CONTROL);
+        TableData tableData = this.createDataObject();
+        webView.addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(),
+            Constants.JavaScriptHandles.DATA);
+        String relativePathToGraphFile = ODKFileUtils.getFrameworkFolder(getAppName()) + File.separator
+            + TABLES_GRAPH_BASE_FILE_NAME;
+        String relativePath = ODKFileUtils.asUriFragment(getAppName(),
+            new File(relativePathToGraphFile));
+        GraphData graphData = new GraphData(activity, getTableId(), this.getGraphName());
+        webView.addJavascriptInterface(graphData.getJavascriptInterfaceWithWeakReference(),
+            Constants.JavaScriptHandles.GRAPH);
+        setWebKitVisibility();
+        // Save the references
+        this.mControlReference = control;
+        this.mTableDataReference = tableData;
+        this.mGraphDataStrongReference = graphData;
+        WebViewUtil.displayFileInWebView(getActivity(), getAppName(), webView, relativePath);
+      } catch (RemoteException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        Toast.makeText(getActivity(), 
+            getActivity().getString(R.string.abort_error_accessing_database), 
+            Toast.LENGTH_LONG).show();
+      }
+    }
   }
 
   @Override
+  public void databaseUnavailable() {
+    setWebKitVisibility();
+  }
+  
+  @Override
   protected TableData createDataObject() {
     // Graph view displays everything.
-    TableData result = new TableData(getUserTable());
+    TableData result = new TableData(getActivity(), getUserTable());
     return result;
   }
 
   @Override
   public ViewFragmentType getFragmentType() {
-    // TODO Auto-generated method stub
-    return null;
+    return ViewFragmentType.GRAPH_VIEW;
   }
 
 }

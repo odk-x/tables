@@ -13,7 +13,8 @@
 		android:drawSelectorOnTop="false" />
 	<TextView
 		android:id="@android:id/empty"
+		android:gravity="center"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-		android:text="@string/no_data" />
+		android:text="@string/no_table_data" />
 </LinearLayout>

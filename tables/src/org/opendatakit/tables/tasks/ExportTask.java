@@ -15,21 +15,21 @@
  */
 package org.opendatakit.tables.tasks;
 
-import java.util.ArrayList;
-
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.utilities.CsvUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.CsvUtil.ExportListener;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.ExportCSVActivity;
+import org.opendatakit.tables.application.Tables;
 
-import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.os.RemoteException;
 
 public class ExportTask
         extends AsyncTask<ExportRequest, Integer, Boolean> implements ExportListener {
 
+  private static final String TAG = "ExportTask";
   /**
 	 *
 	 */
@@ -50,17 +50,26 @@ public class ExportTask
 
     protected Boolean doInBackground(ExportRequest... exportRequests) {
         ExportRequest request = exportRequests[0];
-        CsvUtil cu = new CsvUtil(this.exportCSVActivity, appName);
-        SQLiteDatabase db = null;
+        CsvUtil cu = new CsvUtil(Tables.getInstance(), appName);
+        OdkDbHandle db = null;
         try {
           String tableId = request.getTableId();
-          db = DatabaseFactory.get().getDatabase(this.exportCSVActivity, appName);
-          ArrayList<ColumnDefinition> orderedDefns = TableUtil.get().getColumnDefinitions(db, appName, tableId);
-          // export goes to output/csv directory...
+          db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+          OrderedColumns orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);          // export goes to output/csv directory...
           return cu.exportSeparable(this, db, tableId, orderedDefns, request.getFileQualifier());
+        } catch (RemoteException e) {
+          WebLogger.getLogger(appName).printStackTrace(e);
+          WebLogger.getLogger(appName).e(TAG, "Unable to access database");
+          e.printStackTrace();
+          return false;
         } finally {
           if ( db != null ) {
-            db.close();
+            try {
+              Tables.getInstance().getDatabase().closeDatabase(appName, db);
+            } catch (RemoteException e) {
+              WebLogger.getLogger(appName).printStackTrace(e);
+              WebLogger.getLogger(appName).e(TAG, "Unable to close database");
+            }
           }
         }
     }

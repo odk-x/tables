@@ -23,10 +23,5 @@ public class WebFragmentStub extends WebFragment {
     FILE_NAME = DEFAULT_FILE_NAME;
   }
   
-  @Override
-  public WebView buildView() {
-    return WEB_VIEW;
-  }
-  
   
 }

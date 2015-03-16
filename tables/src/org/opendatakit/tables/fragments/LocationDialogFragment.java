@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
 
@@ -28,6 +29,8 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.RemoteException;
+import android.widget.Toast;
 
 /**
  * The LocationDialogFragment is used when asking the user if they would like to
@@ -63,10 +66,15 @@ public class LocationDialogFragment extends DialogFragment {
           .setPositiveButton("Add", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
               AbsTableActivity activity = (AbsTableActivity) getActivity();
-              ActivityUtil.addRow(activity, activity.getAppName(), 
-                  activity.getTableId(),
-                  activity.getColumnDefinitions(),
-                  mapping);
+              try {
+                ActivityUtil.addRow(activity, activity.getAppName(), 
+                    activity.getTableId(),
+                    activity.getColumnDefinitions(),
+                    mapping);
+              } catch (RemoteException e) {
+                WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+                Toast.makeText(activity, "Unable to add row", Toast.LENGTH_LONG).show();
+              }
             }
           }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {

@@ -24,6 +24,7 @@ import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.RemoteException;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -33,6 +34,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class EditFormDialogPreference extends DialogPreference {
 
@@ -71,8 +73,9 @@ public class EditFormDialogPreference extends DialogPreference {
    * Retrieve the {@link FormType} for the table.
    * 
    * @return
+   * @throws RemoteException 
    */
-  FormType retrieveFormType() {
+  FormType retrieveFormType() throws RemoteException {
     AbsTableActivity tableActivity = (AbsTableActivity) getContext();
     return FormType.constructFormType(tableActivity, tableActivity.getAppName(),
         tableActivity.getTableId());
@@ -82,7 +85,6 @@ public class EditFormDialogPreference extends DialogPreference {
   protected View onCreateDialogView() {
     AbsTableActivity tableActivity = (AbsTableActivity) getContext();
     WebLogger.getLogger(tableActivity.getAppName()).d(TAG, "in onCreateDialogView");
-    this.mFormType = retrieveFormType();
     LayoutInflater inflater = (LayoutInflater) this.mContext
         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     LinearLayout view = (LinearLayout) inflater
@@ -92,33 +94,38 @@ public class EditFormDialogPreference extends DialogPreference {
     mFormXmlRootElementLabel = (TextView) view.findViewById(R.id.label_root_element);
     mFormXmlRootElement = (EditText) view.findViewById(R.id.edit_root_element);
     this.mDialogView = view;
-    // Set the UI for the first state.
-    if (mFormType.isCollectForm()) {
-      if (mFormType.isCustom()) {
-        this.mRadioChoice.check(R.id.edit_def_form_use_collect_form);
+    try {
+      this.mFormType = retrieveFormType();
+      // Set the UI for the first state.
+      if (mFormType.isCollectForm()) {
+        if (mFormType.isCustom()) {
+          this.mRadioChoice.check(R.id.edit_def_form_use_collect_form);
+          this.mFormId.setEnabled(true);
+          this.mFormId.setText(mFormType.getFormId());
+          this.mFormXmlRootElementLabel.setVisibility(View.VISIBLE);
+          this.mFormXmlRootElement.setVisibility(View.VISIBLE);
+          this.mFormXmlRootElement.setEnabled(true);
+          this.mFormXmlRootElement.setText(mFormType.getFormRootElement());
+        } else {
+          this.mRadioChoice.check(R.id.edit_def_form_use_default_collect_form);
+          this.mFormId.setEnabled(false);
+          this.mFormId.setText(mFormType.getFormId());
+          this.mFormXmlRootElementLabel.setVisibility(View.VISIBLE);
+          this.mFormXmlRootElement.setVisibility(View.VISIBLE);
+          this.mFormXmlRootElement.setEnabled(false);
+          this.mFormXmlRootElement.setText(mFormType.getFormRootElement());
+        }
+      } else {
+        this.mRadioChoice.check(R.id.edit_def_form_use_survey_form);
         this.mFormId.setEnabled(true);
         this.mFormId.setText(mFormType.getFormId());
-        this.mFormXmlRootElementLabel.setVisibility(View.VISIBLE);
-        this.mFormXmlRootElement.setVisibility(View.VISIBLE);
-        this.mFormXmlRootElement.setEnabled(true);
-        this.mFormXmlRootElement.setText(mFormType.getFormRootElement());
-      } else {
-        this.mRadioChoice.check(R.id.edit_def_form_use_default_collect_form);
-        this.mFormId.setEnabled(false);
-        this.mFormId.setText(mFormType.getFormId());
-        this.mFormXmlRootElementLabel.setVisibility(View.VISIBLE);
-        this.mFormXmlRootElement.setVisibility(View.VISIBLE);
+        this.mFormXmlRootElementLabel.setVisibility(View.GONE);
+        this.mFormXmlRootElement.setVisibility(View.GONE);
         this.mFormXmlRootElement.setEnabled(false);
-        this.mFormXmlRootElement.setText(mFormType.getFormRootElement());
+        this.mFormXmlRootElement.setText("");
       }
-    } else {
-      this.mRadioChoice.check(R.id.edit_def_form_use_survey_form);
-      this.mFormId.setEnabled(true);
-      this.mFormId.setText(mFormType.getFormId());
-      this.mFormXmlRootElementLabel.setVisibility(View.GONE);
-      this.mFormXmlRootElement.setVisibility(View.GONE);
-      this.mFormXmlRootElement.setEnabled(false);
-      this.mFormXmlRootElement.setText("");
+    } catch ( RemoteException e ) {
+      Toast.makeText(getContext(), "Unable to access database", Toast.LENGTH_LONG).show();
     }
     mRadioChoice.setOnCheckedChangeListener(new RadioGroupListener());
     return mDialogView;
@@ -160,7 +167,12 @@ public class EditFormDialogPreference extends DialogPreference {
       }
       AbsTableActivity tableActivity = (AbsTableActivity) getContext();
 
-      this.mFormType.persist(tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
+      try {
+        this.mFormType.persist(tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
+      } catch (RemoteException e) {
+        WebLogger.getLogger(tableActivity.getAppName()).printStackTrace(e);
+        Toast.makeText(getContext(), "Unable to save changes to database", Toast.LENGTH_LONG).show();
+      }
     }
   }
 
@@ -170,64 +182,68 @@ public class EditFormDialogPreference extends DialogPreference {
     public void onCheckedChanged(RadioGroup group, int checkedId) {
       AbsTableActivity tableActivity = (AbsTableActivity) getContext();
 
-      if (checkedId == R.id.edit_def_form_use_survey_form) {
-        SurveyFormParameters params = SurveyFormParameters.constructSurveyFormParameters(
-            tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
-        String formId;
-        if (params.isUserDefined()) {
-          formId = params.getFormId();
+      try {
+        if (checkedId == R.id.edit_def_form_use_survey_form) {
+          SurveyFormParameters params = SurveyFormParameters.constructSurveyFormParameters(
+              tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
+          String formId;
+          if (params.isUserDefined()) {
+            formId = params.getFormId();
+          } else {
+            formId = "";
+          }
+          mFormType.setIsCollectForm(false);
+          mFormType.setIsCustom(true);
+          mFormType.setFormId(formId);
+  
+          mFormId.setEnabled(true);
+          mFormId.setText(formId);
+          mFormXmlRootElementLabel.setVisibility(View.GONE);
+          mFormXmlRootElement.setVisibility(View.GONE);
+          mFormXmlRootElement.setEnabled(false);
+          mFormXmlRootElement.setText("");
+        } else if (checkedId == R.id.edit_def_form_use_collect_form) {
+          String formId;
+          String formRootElement;
+          CollectFormParameters params = CollectFormParameters.constructCollectFormParameters(
+              tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
+          if (params.isCustom()) {
+            formId = params.getFormId();
+            formRootElement = params.getRootElement();
+          } else {
+            formId = "";
+            formRootElement = "";
+          }
+          mFormType.setIsCollectForm(true);
+          mFormType.setIsCustom(true);
+          mFormType.setFormId(formId);
+          mFormType.setFormRootElement(formRootElement);
+  
+          mFormId.setEnabled(true);
+          mFormId.setText(formId);
+          mFormXmlRootElementLabel.setVisibility(View.VISIBLE);
+          mFormXmlRootElement.setVisibility(View.VISIBLE);
+          mFormXmlRootElement.setEnabled(true);
+          mFormXmlRootElement.setText(formRootElement);
         } else {
-          formId = "";
+          CollectFormParameters params = CollectFormParameters.constructDefaultCollectFormParameters(
+              tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
+          String formId = params.getFormId();
+          String formRootElement = params.getRootElement();
+          mFormType.setIsCollectForm(true);
+          mFormType.setFormId(formId);
+          mFormType.setFormRootElement(formRootElement);
+          mFormType.setIsCustom(false);
+  
+          mFormId.setEnabled(false);
+          mFormId.setText(formId);
+          mFormXmlRootElementLabel.setVisibility(View.VISIBLE);
+          mFormXmlRootElement.setVisibility(View.VISIBLE);
+          mFormXmlRootElement.setEnabled(false);
+          mFormXmlRootElement.setText(formRootElement);
         }
-        mFormType.setIsCollectForm(false);
-        mFormType.setIsCustom(true);
-        mFormType.setFormId(formId);
-
-        mFormId.setEnabled(true);
-        mFormId.setText(formId);
-        mFormXmlRootElementLabel.setVisibility(View.GONE);
-        mFormXmlRootElement.setVisibility(View.GONE);
-        mFormXmlRootElement.setEnabled(false);
-        mFormXmlRootElement.setText("");
-      } else if (checkedId == R.id.edit_def_form_use_collect_form) {
-        String formId;
-        String formRootElement;
-        CollectFormParameters params = CollectFormParameters.constructCollectFormParameters(
-            tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
-        if (params.isCustom()) {
-          formId = params.getFormId();
-          formRootElement = params.getRootElement();
-        } else {
-          formId = "";
-          formRootElement = "";
-        }
-        mFormType.setIsCollectForm(true);
-        mFormType.setIsCustom(true);
-        mFormType.setFormId(formId);
-        mFormType.setFormRootElement(formRootElement);
-
-        mFormId.setEnabled(true);
-        mFormId.setText(formId);
-        mFormXmlRootElementLabel.setVisibility(View.VISIBLE);
-        mFormXmlRootElement.setVisibility(View.VISIBLE);
-        mFormXmlRootElement.setEnabled(true);
-        mFormXmlRootElement.setText(formRootElement);
-      } else {
-        CollectFormParameters params = CollectFormParameters.constructDefaultCollectFormParameters(
-            tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
-        String formId = params.getFormId();
-        String formRootElement = params.getRootElement();
-        mFormType.setIsCollectForm(true);
-        mFormType.setFormId(formId);
-        mFormType.setFormRootElement(formRootElement);
-        mFormType.setIsCustom(false);
-
-        mFormId.setEnabled(false);
-        mFormId.setText(formId);
-        mFormXmlRootElementLabel.setVisibility(View.VISIBLE);
-        mFormXmlRootElement.setVisibility(View.VISIBLE);
-        mFormXmlRootElement.setEnabled(false);
-        mFormXmlRootElement.setText(formRootElement);
+      } catch ( RemoteException e) {
+        Toast.makeText(getContext(), "Unable to access database", Toast.LENGTH_LONG).show();
       }
     }
 

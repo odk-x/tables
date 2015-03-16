@@ -19,35 +19,37 @@ import java.io.File;
 
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
 import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.preferences.DefaultViewTypePreference;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.preferences.FileSelectorPreference;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.PreferenceUtil;
+import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.view.ContextMenu;
+import android.widget.Toast;
 
 /**
  * Displays preferences and information surrounding a table.
@@ -78,7 +80,12 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     // Verify that we're attaching to the right activity.
     // Now we have to do the various initialization required for the different
     // preferences.
-    this.initializeAllPreferences();
+    try {
+      this.initializeAllPreferences();
+    } catch (RemoteException e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
+    }
   }
 
   @Override
@@ -86,30 +93,35 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     String fullPath = null;
     String relativePath = null;
     WebLogger.getLogger(getAppName()).d(TAG, "[onActivityResult]");
-    switch (requestCode) {
-    case Constants.RequestCodes.CHOOSE_LIST_FILE:
-      if ( data != null ) {
-        fullPath = getFullPathFromIntent(data);
-        relativePath = getRelativePathOfFile(fullPath);
-        this.setListViewFileName(relativePath);
+    try {
+      switch (requestCode) {
+      case Constants.RequestCodes.CHOOSE_LIST_FILE:
+        if ( data != null ) {
+          fullPath = getFullPathFromIntent(data);
+          relativePath = getRelativePathOfFile(fullPath);
+          this.setListViewFileName(relativePath);
+        }
+        break;
+      case Constants.RequestCodes.CHOOSE_DETAIL_FILE:
+        if ( data != null ) {
+          fullPath = getFullPathFromIntent(data);
+          relativePath = getRelativePathOfFile(fullPath);
+          this.setDetailViewFileName(relativePath);
+        }
+        break;
+      case Constants.RequestCodes.CHOOSE_MAP_FILE:
+        if ( data != null ) {
+          fullPath = getFullPathFromIntent(data);
+          relativePath = getRelativePathOfFile(fullPath);
+          this.setMapListViewFileName(relativePath);
+        }
+        break;
+      default:
+        super.onActivityResult(requestCode, resultCode, data);
       }
-      break;
-    case Constants.RequestCodes.CHOOSE_DETAIL_FILE:
-      if ( data != null ) {
-        fullPath = getFullPathFromIntent(data);
-        relativePath = getRelativePathOfFile(fullPath);
-        this.setDetailViewFileName(relativePath);
-      }
-      break;
-    case Constants.RequestCodes.CHOOSE_MAP_FILE:
-      if ( data != null ) {
-        fullPath = getFullPathFromIntent(data);
-        relativePath = getRelativePathOfFile(fullPath);
-        this.setMapListViewFileName(relativePath);
-      }
-      break;
-    default:
-      super.onActivityResult(requestCode, resultCode, data);
+    } catch ( RemoteException e ) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
     }
   }
 
@@ -129,9 +141,10 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * Sets the file name for the list view of this table.
    * 
    * @param relativePath
+   * @throws RemoteException 
    */
-  void setListViewFileName(String relativePath) {
-    KeyValueStoreHelper kvsh = new KeyValueStoreHelper(getActivity(), getAppName(), getTableId(),
+  void setListViewFileName(String relativePath) throws RemoteException {
+    KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), getAppName(), null, getTableId(),
         KeyValueStoreConstants.PARTITION_TABLE);
     kvsh.setString(LocalKeyValueStoreConstants.Tables.KEY_LIST_VIEW_FILE_NAME, relativePath);
   }
@@ -140,9 +153,10 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * Sets the file name for the detail view of this table.
    * 
    * @param relativePath
+   * @throws RemoteException 
    */
-  void setDetailViewFileName(String relativePath) {
-    KeyValueStoreHelper kvsh = new KeyValueStoreHelper(getActivity(), getAppName(), getTableId(),
+  void setDetailViewFileName(String relativePath) throws RemoteException {
+    KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), getAppName(), null, getTableId(),
         KeyValueStoreConstants.PARTITION_TABLE);
     kvsh.setString(LocalKeyValueStoreConstants.Tables.KEY_DETAIL_VIEW_FILE_NAME, relativePath);
   }
@@ -151,9 +165,10 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * Sets the file name for the list view to be displayed in the map.
    * 
    * @param relativePath
+   * @throws RemoteException 
    */
-  void setMapListViewFileName(String relativePath) {
-    KeyValueStoreHelper kvsh = new KeyValueStoreHelper(getActivity(), getAppName(), getTableId(),
+  void setMapListViewFileName(String relativePath) throws RemoteException {
+    KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), getAppName(), null, getTableId(),
         KeyValueStoreConstants.PARTITION_TABLE);
     kvsh.setString(LocalKeyValueStoreConstants.Tables.KEY_MAP_LIST_VIEW_FILE_NAME, relativePath);
   }
@@ -162,11 +177,12 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * Convenience method for initializing all the preferences. Requires a
    * {@link ContextMenu}, so must be called in or after
    * {@link TablePreferenceFragment#onActivityCreated(Bundle)}.
+   * @throws RemoteException 
    */
-  protected void initializeAllPreferences() {
-    SQLiteDatabase db = null;
+  protected void initializeAllPreferences() throws RemoteException {
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
 
       this.initializeDisplayNamePreference(db);
       this.initializeTableIdPreference();
@@ -182,16 +198,16 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       this.initializeColumns();
     } finally {
       if (db != null) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
   }
 
-  private void initializeDisplayNamePreference(SQLiteDatabase db) {
+  private void initializeDisplayNamePreference(OdkDbHandle db) throws RemoteException {
     EditTextPreference displayPref = this
         .findEditTextPreference(Constants.PreferenceKeys.Table.DISPLAY_NAME);
 
-    String rawDisplayName = TableUtil.get().getRawDisplayName(db, getTableId());
+    String rawDisplayName = TableUtil.get().getRawDisplayName(getAppName(), db, getTableId());
 
     displayPref.setSummary(rawDisplayName);
   }
@@ -202,7 +218,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     idPref.setSummary(getTableId());
   }
 
-  private void initializeDefaultViewType() {
+  private void initializeDefaultViewType() throws RemoteException {
     // We have to set the current default view and disable the entries that
     // don't apply to this table.
     DefaultViewTypePreference viewPref = (DefaultViewTypePreference) this
@@ -243,31 +259,31 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     });
   }
 
-  private void initializeListFile(SQLiteDatabase db) {
+  private void initializeListFile(OdkDbHandle db) throws RemoteException {
     FileSelectorPreference listPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.LIST_FILE);
     listPref.setFields(this, Constants.RequestCodes.CHOOSE_LIST_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    listPref.setSummary(TableUtil.get().getListViewFilename(db, getTableId()));
+    listPref.setSummary(TableUtil.get().getListViewFilename(getAppName(), db, getTableId()));
   }
 
-  private void initializeMapListFile(SQLiteDatabase db) {
+  private void initializeMapListFile(OdkDbHandle db) throws RemoteException {
     FileSelectorPreference mapListPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.MAP_LIST_FILE);
     mapListPref.setFields(this, Constants.RequestCodes.CHOOSE_MAP_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    String mapListViewFileName = TableUtil.get().getMapListViewFilename(db, getTableId());
+    String mapListViewFileName = TableUtil.get().getMapListViewFilename(getAppName(), db, getTableId());
     WebLogger.getLogger(getAppName()).d(TAG,
         "[initializeMapListFile] file is: " + mapListViewFileName);
     mapListPref.setSummary(mapListViewFileName);
   }
 
-  private void initializeDetailFile(SQLiteDatabase db) {
+  private void initializeDetailFile(OdkDbHandle db) throws RemoteException {
     FileSelectorPreference detailPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.DETAIL_FILE);
     detailPref.setFields(this, Constants.RequestCodes.CHOOSE_DETAIL_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    detailPref.setSummary(TableUtil.get().getDetailViewFilename(db, getTableId()));
+    detailPref.setSummary(TableUtil.get().getDetailViewFilename(getAppName(), db, getTableId()));
   }
 
   private void initializeStatusColorRules() {

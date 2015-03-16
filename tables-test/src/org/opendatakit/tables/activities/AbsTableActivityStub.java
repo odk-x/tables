@@ -18,7 +18,7 @@ public class AbsTableActivityStub extends AbsTableActivity {
   // be reset to these default values so that tests begin in a known state.
   public static final String DEFAULT_APP_NAME = 
       TestConstants.TABLES_DEFAULT_APP_NAME;
-  public static final String DEFAULT_TABLE_ID = "testTableId";
+  public static final String DEFAULT_TABLE_ID = TestConstants.DEFAULT_TABLE_ID;
   public static final ViewFragmentType DEFAULT_FRAGMENT_TYPE =
       ViewFragmentType.SPREADSHEET;
   
@@ -47,6 +47,18 @@ public class AbsTableActivityStub extends AbsTableActivity {
 
   public ViewFragmentType getCurrentFragmentType() {
     return FRAGMENT_TYPE;
+  }
+
+  @Override
+  public void databaseAvailable() {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void databaseUnavailable() {
+    // TODO Auto-generated method stub
+    
   }
 
 }

@@ -1,63 +1,37 @@
 package org.opendatakit.tables.views.webkits;
 
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
-import org.opendatakit.tables.activities.AbsTableActivityStub;
+import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-
-import android.app.Activity;
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 
 @RunWith(RobolectricTestRunner.class)
 public class TableDataTest {
   
-  Activity activity;
+  TableDisplayActivity activity;
   TableData tableData;
   
   @Before
   public void before() {
-    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
-    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
-    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
-    DatabaseFactory.set(factoryMock);
-    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
-    String tableId = AbsTableActivityStub.DEFAULT_TABLE_ID;
-    List<String> tableIds = new ArrayList<String>();
-    tableIds.add(tableId);
-    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
-    List<Column> columns = new ArrayList<Column>();
-    doReturn(columns).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(AbsTableActivityStub.DEFAULT_TABLE_ID));
-    ODKDatabaseUtils.set(wrapperMock);
-
+    CommonApplication.setMocked();
     TestCaseUtils.setExternalStorageMounted();
-    AbsBaseActivityStub activity = Robolectric.buildActivity(
-        AbsBaseActivityStub.class)
-          .create()
-          .start()
-          .resume()
-          .visible()
-          .get();
-    TableData tableData = new TableData(
-        TestConstants.getUserTableMock());
+
+    TestCaseUtils.setThreeTableDataset(false);
+
+    TableDisplayActivity activity = ODKFragmentTestUtil.startListWebFragmentForTableDisplayActivity(
+        TestConstants.DEFAULT_TABLE_ID, "junkfilename");
+    
+    TableData tableData = new TableData(activity, 
+        activity.getUserTable());
     this.activity = activity;
     this.tableData = tableData;
   }

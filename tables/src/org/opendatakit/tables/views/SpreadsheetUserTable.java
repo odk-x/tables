@@ -21,15 +21,17 @@ import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.database.DatabaseFactory;
 import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
+import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 
 /**
  * Wrapper class for UserTable that presents the table in the way that the
@@ -43,51 +45,40 @@ public class SpreadsheetUserTable {
   private static final String TAG = "SpreadsheetUserTable";
 
   private final AbsTableDisplayFragment fragment;
-  private final UserTable table;
+  private final String indexColumnElementKey;
   private final String[] header;
   private final String[] spreadsheetIndexToElementKey;
-  private final int[] spreadsheetIndexToUserTableIndexRemap;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
 
-  public SpreadsheetUserTable(AbsTableDisplayFragment frag, UserTable table) {
+  public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws RemoteException {
     this.fragment = frag;
-    this.table = table;
-    Context context = fragment.getActivity();
 
+    // UserTable table = frag.getUserTable();
     ArrayList<String> colOrder;
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(context, table.getAppName());
-      colOrder = TableUtil.get().getColumnOrder(db, table.getTableId());
-    } finally {
-      if ( db != null ) {
-        db.close();
-      }
-    }
+      db = Tables.getInstance().getDatabase().openDatabase(frag.getAppName(), false);
+      colOrder = TableUtil.get().getColumnOrder(frag.getAppName(), db, frag.getTableId());
+      indexColumnElementKey = TableUtil.get().getIndexColumn(getAppName(), db, getTableId());
 
-    if (colOrder.isEmpty()) {
-      ArrayList<ColumnDefinition> orderedDefns = fragment.getColumnDefinitions();
-      for (ColumnDefinition cd : orderedDefns) {
-        if ( cd.isUnitOfRetention() ) {
-          colOrder.add(cd.getElementKey());
+      if (colOrder.isEmpty()) {
+        OrderedColumns orderedDefns = fragment.getColumnDefinitions();
+        for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
+          if ( cd.isUnitOfRetention() ) {
+            colOrder.add(cd.getElementKey());
+          }
         }
       }
-    }
 
-    header = new String[colOrder.size()];
-    spreadsheetIndexToUserTableIndexRemap = new int[colOrder.size()];
-    spreadsheetIndexToElementKey = new String[colOrder.size()];
-    elementKeyToSpreadsheetIndex = new HashMap<String, Integer>();
-    db = null;
-    try {
-      db = DatabaseFactory.get().getDatabase(context, table.getAppName());
+      header = new String[colOrder.size()];
+      spreadsheetIndexToElementKey = new String[colOrder.size()];
+      elementKeyToSpreadsheetIndex = new HashMap<String, Integer>();
+
       for (int i = 0; i < colOrder.size(); ++i) {
         String elementKey = colOrder.get(i);
-        spreadsheetIndexToUserTableIndexRemap[i] = this.table
-            .getColumnIndexOfElementKey(elementKey);
-
         String localizedDisplayName;
-        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(db, table.getTableId(),
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(),
+            getAppName(), db, frag.getTableId(),
             elementKey);
 
         header[i] = localizedDisplayName;
@@ -95,44 +86,52 @@ public class SpreadsheetUserTable {
         elementKeyToSpreadsheetIndex.put(elementKey, i);
       }
     } finally {
-      if (db != null) {
-        db.close();
+      if ( db != null ) {
+        Tables.getInstance().getDatabase().closeDatabase(frag.getAppName(), db);
       }
     }
   }
 
   public String getTableId() {
-    return table.getTableId();
+    return fragment.getTableId();
   }
 
   public String getAppName() {
-    return table.getAppName();
+    return fragment.getAppName();
   }
 
-  public ArrayList<ColumnDefinition> getColumnDefinitions() {
+  public OrderedColumns getColumnDefinitions() {
     return fragment.getColumnDefinitions();
   }
 
-  public ColorRuleGroup getColumnColorRuleGroup(String elementKey) {
-    return ColorRuleGroup.getColumnColorRuleGroup(fragment.getActivity(),
-        getAppName(), getTableId(), elementKey);
+  public ColorRuleGroup getColumnColorRuleGroup(OdkDbHandle db, String elementKey, String[] adminColumns) throws RemoteException {
+    return ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(),
+        getAppName(), db, getTableId(), elementKey, adminColumns);
   }
 
-  public ColorRuleGroup getStatusColumnRuleGroup() {
-    return ColorRuleGroup.getStatusColumnRuleGroup(fragment.getActivity(),
-        getAppName(), getTableId());
+  public ColorRuleGroup getStatusColumnRuleGroup(OdkDbHandle db, String[] adminColumns) throws RemoteException {
+    return ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(),
+        getAppName(), db, getTableId(), adminColumns);
   }
 
-  public ColorRuleGroup getTableColorRuleGroup() {
-    return ColorRuleGroup.getTableColorRuleGroup(fragment.getActivity(),
-        getAppName(), getTableId());
+  public ColorRuleGroup getTableColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws RemoteException {
+    return ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(),
+        getAppName(), db, getTableId(), adminColumns);
   }
 
   int getNumberOfRows() {
+    UserTable table = fragment.getUserTable();
+    if ( table == null ) {
+      return 0;
+    }
     return table.getNumberOfRows();
   }
 
   public Row getRowAtIndex(int index) {
+    UserTable table = fragment.getUserTable();
+    if ( table == null ) {
+      return null;
+    }
     return table.getRowAtIndex(index);
   }
 
@@ -140,29 +139,20 @@ public class SpreadsheetUserTable {
   // Whether or not we have a frozen column...
 
   public String getIndexedColumnElementKey() {
-    String indexColumn;
-    SQLiteDatabase db = null;
-    try {
-      db = DatabaseFactory.get().getDatabase(fragment.getActivity(), 
-          getAppName());
-      indexColumn = TableUtil.get().getIndexColumn(db, getTableId());
-    } finally {
-      if ( db != null ) {
-        db.close();
-      }
-    }
-    return indexColumn;
+    return indexColumnElementKey;
   }
 
   boolean isIndexed() {
-    return getIndexedColumnElementKey() != null && getIndexedColumnElementKey().length() != 0;
+    String elementKey = getIndexedColumnElementKey();
+    return elementKey != null && elementKey.length() != 0;
   }
 
   // ///////////////////////////////////
   // These need to be re-worked...
 
   public boolean hasData() {
-    return !(table == null || (spreadsheetIndexToUserTableIndexRemap.length == 0));
+    UserTable table = fragment.getUserTable();
+    return !(table == null || (header.length == 0));
   }
 
   public static class SpreadsheetCell {
@@ -178,8 +168,8 @@ public class SpreadsheetUserTable {
     cell.rowNum = cellInfo.rowId;
     cell.row = getRowAtIndex(cellInfo.rowId);
     cell.elementKey = cellInfo.elementKey;
-    ArrayList<ColumnDefinition> orderedDefns = getColumnDefinitions();
-    ColumnDefinition cd = ColumnDefinition.find(orderedDefns, cellInfo.elementKey);
+    OrderedColumns orderedDefns = getColumnDefinitions();
+    ColumnDefinition cd = orderedDefns.find(cellInfo.elementKey);
     cell.displayText = cell.row.getDisplayTextOfData(context, cd.getType(), cellInfo.elementKey,
         true);
     cell.value = cell.row.getRawDataOrMetadataByElementKey(cellInfo.elementKey);
@@ -191,12 +181,12 @@ public class SpreadsheetUserTable {
   }
 
   public ColumnDefinition getColumnByElementKey(String elementKey) {
-    ArrayList<ColumnDefinition> orderedDefns = getColumnDefinitions();
-    return ColumnDefinition.find(orderedDefns, elementKey);
+    OrderedColumns orderedDefns = getColumnDefinitions();
+    return orderedDefns.find(elementKey);
   }
 
   public int getWidth() {
-    return spreadsheetIndexToUserTableIndexRemap.length;
+    return header.length;
   }
 
   Integer getColumnIndexOfElementKey(String elementKey) {
@@ -204,7 +194,7 @@ public class SpreadsheetUserTable {
   }
 
   public int getNumberOfDisplayColumns() {
-    return spreadsheetIndexToUserTableIndexRemap.length;
+    return header.length;
   }
 
   String getHeader(int colNum) {

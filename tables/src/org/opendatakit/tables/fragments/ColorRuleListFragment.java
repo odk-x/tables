@@ -17,14 +17,20 @@ package org.opendatakit.tables.fragments;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.utilities.ColorRuleUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.TableUtil;
+import org.opendatakit.tables.utils.TableUtil.TableColumns;
 import org.opendatakit.tables.views.components.ColorRuleAdapter;
 
 import android.app.Activity;
@@ -32,6 +38,7 @@ import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -42,6 +49,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
+import android.widget.Toast;
 
 /**
  * Fragment for displaying a list of color rules. All methods for dealing with
@@ -110,19 +118,46 @@ public class ColorRuleListFragment extends ListFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     this.setHasOptionsMenu(true);
-    this.mColorRuleGroup = this.retrieveColorRuleGroup();
-    this.mColorRuleAdapter = this.createColorRuleAdapter();
+    ArrayList<String> colElementKeys = new ArrayList<String>();
+    TableColumns tc = null;
+    OdkDbHandle db = null;
+    try {
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+
+      tc = TableUtil.get().getTableColumns(getAppName(), db, getTableId());
+      for (ColumnDefinition cd : tc.orderedDefns.getColumnDefinitions()) {
+        if (cd.isUnitOfRetention()) {
+          colElementKeys.add(cd.getElementKey());
+        }
+      }
+      this.mColorRuleGroup = this.retrieveColorRuleGroup(db, tc.adminColumns);
+    } catch (RemoteException e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      throw new IllegalStateException("Unable to access database");
+    } finally {
+      if ( db != null ) {
+        try {
+          Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+        } catch (RemoteException e) {
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
+          WebLogger.getLogger(getAppName()).e(TAG, "Error while initializing color rule list");
+          Toast.makeText(getActivity(), "Error while initializing color rule list", Toast.LENGTH_LONG).show();
+        }
+      }
+    }
+    this.mColorRuleAdapter = this.createColorRuleAdapter(tc.adminColumns, tc.localizedDisplayNames);
     this.setListAdapter(this.mColorRuleAdapter);
     this.registerForContextMenu(this.getListView());
   }
   
-  ColorRuleAdapter createColorRuleAdapter() {
+  ColorRuleAdapter createColorRuleAdapter(String[] adminColumns, Map<String,String> colDisplayNames) {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
     ColorRuleAdapter result = new ColorRuleAdapter(
-        getActivity(),
+        (TableLevelPreferencesActivity) getActivity(),
         getAppName(),
         getTableId(),
         R.layout.row_for_edit_view_entry,
+        adminColumns, colDisplayNames,
         this.mColorRuleGroup.getColorRules(),
         type);
     return result;
@@ -180,7 +215,13 @@ public class ColorRuleListFragment extends ListFragment {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-              revertToDefaults();
+              try {
+                revertToDefaults();
+              } catch (RemoteException e) {
+                WebLogger.getLogger(getAppName()).printStackTrace(e);
+                WebLogger.getLogger(getAppName()).e(TAG, "Error while restoring color rules");
+                Toast.makeText(getActivity(), "Error while restoring color rules", Toast.LENGTH_LONG).show();
+              }
             }
           });
       alert.setNegativeButton(R.string.cancel,
@@ -237,7 +278,13 @@ public class ColorRuleListFragment extends ListFragment {
           // store.
           WebLogger.getLogger(appName).d(TAG, "trying to delete rule at position: " + position);
           mColorRuleGroup.getColorRules().remove(position);
-          mColorRuleGroup.saveRuleList(ColorRuleListFragment.this.getActivity());
+          try {
+            mColorRuleGroup.saveRuleList(Tables.getInstance());
+          } catch (RemoteException e) {
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
+            WebLogger.getLogger(getAppName()).e(TAG, "Error while saving color rules");
+            Toast.makeText(getActivity(), "Error while saving color rules", Toast.LENGTH_LONG).show();
+          }
           mColorRuleAdapter.notifyDataSetChanged();
         }
       });
@@ -261,8 +308,9 @@ public class ColorRuleListFragment extends ListFragment {
   
   /**
    * Wipe the current rules and revert to the defaults for the given type.
+   * @throws RemoteException 
    */
-  private void revertToDefaults() {
+  private void revertToDefaults() throws RemoteException {
     TableLevelPreferencesActivity activity =
         this.retrieveTableLevelPreferencesActivity();
     final String appName = activity.getAppName();
@@ -273,7 +321,7 @@ public class ColorRuleListFragment extends ListFragment {
       List<ColorRule> newList = new ArrayList<ColorRule>();
       newList.addAll(ColorRuleUtil.getDefaultSyncStateColorRules());
       this.mColorRuleGroup.replaceColorRuleList(newList);
-      this.mColorRuleGroup.saveRuleList(ColorRuleListFragment.this.getActivity());
+      this.mColorRuleGroup.saveRuleList(Tables.getInstance());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     case COLUMN:
@@ -281,7 +329,7 @@ public class ColorRuleListFragment extends ListFragment {
       // We want to just wipe all the columns for both of these types.
       List<ColorRule> emptyList = new ArrayList<ColorRule>();
       this.mColorRuleGroup.replaceColorRuleList(emptyList);
-      this.mColorRuleGroup.saveRuleList(ColorRuleListFragment.this.getActivity());
+      this.mColorRuleGroup.saveRuleList(Tables.getInstance());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     default:
@@ -310,7 +358,7 @@ public class ColorRuleListFragment extends ListFragment {
     return result.getTableId();
   }
   
-  ColorRuleGroup retrieveColorRuleGroup() {
+  ColorRuleGroup retrieveColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws RemoteException {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
     ColorRuleGroup result = null;
     switch (type) {
@@ -318,15 +366,15 @@ public class ColorRuleListFragment extends ListFragment {
       String elementKey =
           this.retrieveTableLevelPreferencesActivity().getElementKey();
       result = ColorRuleGroup.getColumnColorRuleGroup(
-          getActivity(), getAppName(), getTableId(), elementKey);
+          Tables.getInstance(), getAppName(), db, getTableId(), elementKey, adminColumns);
       break;
     case STATUS_COLUMN:
       result = ColorRuleGroup.getStatusColumnRuleGroup(
-          getActivity(), getAppName(), getTableId());
+          Tables.getInstance(), getAppName(), db, getTableId(), adminColumns);
       break;
     case TABLE:
       result = ColorRuleGroup.getTableColorRuleGroup(
-          getActivity(), getAppName(), getTableId());
+          Tables.getInstance(), getAppName(), db, getTableId(), adminColumns);
       break;
     default:
       throw new IllegalArgumentException(

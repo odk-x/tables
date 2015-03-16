@@ -21,13 +21,16 @@ import java.util.List;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRule.RuleType;
 import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -51,6 +54,7 @@ public class ColorRulesDialog extends Dialog {
 
   public static final String TAG = "DisplayPrefsDialog";
 
+  private String appName;
   private String colName;
   private ColorRuleGroup colorRuler;
   // SS: going to set this as null and ONLY refresh from the db once. Otherwise
@@ -64,9 +68,10 @@ public class ColorRulesDialog extends Dialog {
   private List<EditText> ruleInputFields;
   int lastFocusedRow;
 
-  ColorRulesDialog(Context c, ColorRuleGroup ruler, String colName,
+  ColorRulesDialog(Context c, String appName, ColorRuleGroup ruler, String colName,
       String displayName) {
     super(c);
+    this.appName = appName;
     this.colorRuler = ruler;
     this.colName = colName;
     // get rid of the leading underscore, as this will probably confuse the
@@ -146,12 +151,17 @@ public class ColorRulesDialog extends Dialog {
       public void onClick(View v) {
 //        updateLastRowVal(); // to save any changes that haven't been
         // clicked out of
-        persistRows();
-        // set the colRules to null so that we have to reload if they
-        // open it again suddenly, so no added but unpersisted rows
-        // can linger.
-        cleanForReOpen();
-        dismiss();
+        try {
+          persistRows();
+        } catch (RemoteException e) {
+          WebLogger.getLogger(appName).printStackTrace(e);
+        } finally {
+          // set the colRules to null so that we have to reload if they
+          // open it again suddenly, so no added but unpersisted rows
+          // can linger.
+          cleanForReOpen();
+          dismiss();
+        }
       }
     });
     tl.setColumnStretchable(1, true);
@@ -298,7 +308,7 @@ public class ColorRulesDialog extends Dialog {
    * Ok, in the reimagining I'm just replacing the rows, but I do still need
    * to catch the no op case.
    */
-  private void persistRows() {
+  private void persistRows() throws RemoteException {
     List<ColorRule> rulesToPersist = new ArrayList<ColorRule>();
     for (int i = 0; i < colRules.size(); i++) {
       if (colRules.get(i).getOperator() != ColorRule.RuleType.NO_OP) {
@@ -306,7 +316,7 @@ public class ColorRulesDialog extends Dialog {
       }
     }
     colorRuler.replaceColorRuleList(rulesToPersist);
-    colorRuler.saveRuleList(getContext());
+    colorRuler.saveRuleList(Tables.getInstance());
   }
 
   /*

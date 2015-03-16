@@ -15,16 +15,19 @@
  */
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.androidcommon.R;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.app.Fragment;
+import android.os.RemoteException;
 import android.webkit.WebView;
+import android.widget.Toast;
 
 /**
  * {@link Fragment} for displaying a List view.
@@ -36,26 +39,40 @@ public class ListViewFragment extends AbsWebTableFragment {
   private static final String TAG = ListViewFragment.class.getSimpleName();
 
   @Override
-  public WebView buildView() {
-    WebLogger.getLogger(getAppName()).d(TAG, "[buildView]");
-    WebView result = WebViewUtil.getODKCompliantWebView((AbsBaseActivity) getActivity());
-    Control control = this.createControlObject();
-    result.addJavascriptInterface(
-        control.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.CONTROL);
-    TableData tableData = this.createDataObject();
-    result.addJavascriptInterface(
-        tableData.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.DATA);
-    WebViewUtil.displayFileInWebView(
-        getActivity(),
-        getAppName(),
-        result,
-        getFileName());
-    // Now save the references.
-    this.mControlReference = control;
-    this.mTableDataReference = tableData;
-    return result;
+  public void databaseAvailable() {
+    if ( Tables.getInstance().getDatabase() != null && getView() != null ) {
+      try {
+        WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
+        Control control;
+        control = this.createControlObject();
+        webView.addJavascriptInterface(
+            control.getJavascriptInterfaceWithWeakReference(),
+            Constants.JavaScriptHandles.CONTROL);
+        TableData tableData = this.createDataObject();
+        webView.addJavascriptInterface(
+            tableData.getJavascriptInterfaceWithWeakReference(),
+            Constants.JavaScriptHandles.DATA);
+        // Now save the references.
+        this.mControlReference = control;
+        this.mTableDataReference = tableData;
+        setWebKitVisibility();
+        WebViewUtil.displayFileInWebView(
+            getActivity(),
+            getAppName(),
+            webView,
+            getFileName());
+      } catch (RemoteException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        Toast.makeText(getActivity(), 
+            getActivity().getString(R.string.abort_error_accessing_database), 
+            Toast.LENGTH_LONG).show();
+      }
+    }
+  }
+  
+  @Override
+  public void databaseUnavailable() {
+    setWebKitVisibility();
   }
 
   @Override
@@ -65,7 +82,7 @@ public class ListViewFragment extends AbsWebTableFragment {
 
   @Override
   protected TableData createDataObject() {
-    TableData result = new TableData(getUserTable());
+    TableData result = new TableData(getActivity(), getUserTable());
     return result;
   }
 

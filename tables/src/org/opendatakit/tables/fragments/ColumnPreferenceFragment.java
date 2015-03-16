@@ -15,15 +15,15 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.util.ArrayList;
-
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DatabaseFactory;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.ElementTypeManipulator;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
@@ -31,8 +31,8 @@ import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
 import org.opendatakit.tables.utils.PreferenceUtil;
 import org.opendatakit.tables.views.SpreadsheetView;
 
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 
@@ -69,9 +69,8 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
     String elementKey = activity.getElementKey();
     try {
-      ArrayList<ColumnDefinition> orderedDefns = activity.getColumnDefinitions();
-      ColumnDefinition result =
-          ColumnDefinition.find(orderedDefns, elementKey);
+      OrderedColumns orderedDefns = activity.getColumnDefinitions();
+      ColumnDefinition result = orderedDefns.find(elementKey);
       return result;
     } catch ( IllegalArgumentException e ) {
       WebLogger.getLogger(activity.getAppName()).e(
@@ -91,10 +90,14 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   @Override
   public void onResume() {
     super.onResume();
-    this.initializeAllPreferences();
+    try {
+      this.initializeAllPreferences();
+    } catch (RemoteException e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+    }
   }
 
-  void initializeAllPreferences() {
+  void initializeAllPreferences() throws RemoteException {
     this.initializeColumnType();
     this.initializeColumnWidth();
     this.initializeDisplayName();
@@ -103,19 +106,20 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     this.initializeColorRule();
   }
 
-  private void initializeDisplayName() {
+  private void initializeDisplayName() throws RemoteException {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
 
     String rawDisplayName;
-    SQLiteDatabase db = null;
+    OdkDbHandle db = null;
     try {
-      db = DatabaseFactory.get().getDatabase(getActivity(), getAppName());
-      rawDisplayName = ColumnUtil.get().getRawDisplayName(db, getTableId(), 
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      rawDisplayName = ColumnUtil.get().getRawDisplayName(Tables.getInstance(), getAppName(), 
+          db, getTableId(), 
           this.retrieveColumnDefinition().getElementKey());
     } finally {
       if ( db != null ) {
-        db.close();
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
 
@@ -143,7 +147,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     pref.setSummary(this.retrieveColumnDefinition().getElementName());
   }
 
-  private void initializeColumnWidth() {
+  private void initializeColumnWidth() throws RemoteException {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
     final String appName = activity.getAppName();
     final EditTextPreference pref =

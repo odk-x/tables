@@ -17,14 +17,15 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 import java.util.ArrayList;
 
+import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.provider.TablesProviderAPI;
+import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.provider.TablesProviderAPI;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -50,7 +51,7 @@ import android.widget.TextView;
  * @author ctsims
  * @author carlhartung (modified for ODK)
  */
-public class AndroidShortcuts extends Activity {
+public class AndroidShortcuts extends BaseActivity {
 
   private AlertDialog mAlertDialog;
   private static final boolean EXIT = true;
@@ -123,10 +124,10 @@ public class AndroidShortcuts extends Activity {
           c.moveToPosition(-1);
           while (c.moveToNext()) {
             String tableName = app.getName() + " > "
-                + ODKDatabaseUtils.get().getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
+                + ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
             uri = Uri.withAppendedPath(
                 Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
-                ODKDatabaseUtils.get().getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
+                ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
             choices.add(new Choice(R.drawable.tables_table, tableIcon, uri, tableName, appName));
           }
         }
@@ -219,6 +220,19 @@ public class AndroidShortcuts extends Activity {
     mAlertDialog.setCancelable(false);
     mAlertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok), errorListener);
     mAlertDialog.show();
+  }
+  
+  @Override
+  public String getAppName() {
+    return Tables.getInstance().getToolName();
+  }
+
+  @Override
+  public void databaseAvailable() {
+  }
+
+  @Override
+  public void databaseUnavailable() {
   }
 
 }

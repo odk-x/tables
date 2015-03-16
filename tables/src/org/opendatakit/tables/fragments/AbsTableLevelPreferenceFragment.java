@@ -15,9 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.util.ArrayList;
-
-import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.tables.activities.AbsTableActivity;
 
 import android.os.Bundle;
@@ -60,7 +58,7 @@ public abstract class AbsTableLevelPreferenceFragment
     return activity.getTableId();
   }
   
-  ArrayList<ColumnDefinition> getColumnDefinitions() {
+  OrderedColumns getColumnDefinitions() {
     AbsTableActivity activity = (AbsTableActivity) this.getActivity();
     return activity.getColumnDefinitions();
   }

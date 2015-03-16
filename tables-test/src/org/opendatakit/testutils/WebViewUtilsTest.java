@@ -15,16 +15,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.database.DatabaseFactory;
-import org.opendatakit.common.android.utilities.ODKDatabaseUtils;
+import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.robolectric.RobolectricTestRunner;
 
 import android.content.ContentValues;
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.RemoteException;
 
 /**
  *
@@ -35,12 +36,12 @@ import android.database.sqlite.SQLiteDatabase;
 public class WebViewUtilsTest {
 
   @Test
-  public void getContentValuesInvalidIntFails() {
+  public void getContentValuesInvalidIntFails() throws RemoteException {
     this.assertInvalidHelper(ElementType.parseElementType("integer", false), "invalid");
   }
 
   @Test
-  public void getContentValuesInvalidNumberFails() {
+  public void getContentValuesInvalidNumberFails() throws RemoteException {
     this.assertInvalidHelper(ElementType.parseElementType("number", false), "invalid");
   }
 
@@ -52,32 +53,41 @@ public class WebViewUtilsTest {
    * @param invalidValue
    * @param rowId if null, calls {@link Control#addRow(String, String)}.
    * Otherwise it calls {@link Control#updateRow(String, String, String)}.
+   * @throws RemoteException 
    */
   private void assertInvalidHelper(
       ElementType columnType,
-      String invalidValue) {
+      String invalidValue) throws RemoteException {
     
+    CommonApplication.setMocked();
+    TestCaseUtils.setExternalStorageMounted();
+
     String tableId = "table1";
     String elementKey = "anyKey";
-    
-    SQLiteDatabase stubDb = SQLiteDatabase.create(null);
-    DatabaseFactory factoryMock = mock(DatabaseFactory.class);
-    doReturn(stubDb).when(factoryMock).getDatabase(any(Context.class), any(String.class));
-    DatabaseFactory.set(factoryMock);
-
-    ODKDatabaseUtils wrapperMock = mock(ODKDatabaseUtils.class);
-
-    ArrayList<String> tableIds = new ArrayList<String>();
-    tableIds.add(tableId);
-    doReturn(tableIds).when(wrapperMock).getAllTableIds(any(SQLiteDatabase.class));
-    
     List<Column> columns = new ArrayList<Column>();
     columns.add(new Column(elementKey,elementKey,columnType.toString(), "[]"));
-    ArrayList<ColumnDefinition> orderedDefns = ColumnDefinition.buildColumnDefinitions(TestConstants.TABLES_DEFAULT_APP_NAME, tableId, columns);
+    OrderedColumns orderedDefns = new OrderedColumns(TestConstants.TABLES_DEFAULT_APP_NAME, tableId, columns);
     
-    doReturn(columns).when(wrapperMock).getUserDefinedColumns(any(SQLiteDatabase.class), eq(tableId));
-    ODKDatabaseUtils.set(wrapperMock);
+    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+
+    try {
+      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
+      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
+      doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
+      
+      ArrayList<String> tableIds = new ArrayList<String>();
+      tableIds.add(tableId);
+      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      
+      
+      doReturn(orderedDefns).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId));
+
+    } catch (RemoteException e) {
+      // ignore?
+    }
     
+    Tables.setMockDatabase(stubIf);
     Map<String,String> invalidMap = new HashMap<String,String>();
     invalidMap.put(elementKey,"bogus");
     
