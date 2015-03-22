@@ -1,15 +1,14 @@
 package org.opendatakit.tables.fragments;
 
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.tables.activities.TableDisplayActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.views.webkits.TableData;

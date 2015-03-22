@@ -32,7 +32,6 @@ import org.opendatakit.tables.utils.TableNameStruct;
 import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.components.TableNameStructAdapter;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.content.ComponentName;

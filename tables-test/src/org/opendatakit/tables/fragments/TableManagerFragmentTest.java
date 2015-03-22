@@ -1,30 +1,18 @@
 package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.robolectric.Robolectric.shadowOf;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.MainActivity.ScreenType;
 import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.TableNameStruct;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestContextMenu;
@@ -33,10 +21,8 @@ import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowActivity.IntentForResult;
 import org.robolectric.shadows.ShadowLog;
 
-import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.ComponentName;
-import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.View;

@@ -1,48 +1,26 @@
 package org.opendatakit.tables.activities;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.robolectric.Robolectric.shadowOf;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.fragments.DetailViewFragment;
-import org.opendatakit.tables.fragments.GraphManagerFragment;
-import org.opendatakit.tables.fragments.GraphViewFragment;
-import org.opendatakit.tables.fragments.ListViewFragment;
-import org.opendatakit.tables.fragments.MapListViewFragment;
-import org.opendatakit.tables.fragments.SpreadsheetFragment;
-import org.opendatakit.tables.fragments.TableMapInnerFragment;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowLog;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.os.Bundle;
 import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuItem;

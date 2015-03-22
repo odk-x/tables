@@ -18,7 +18,6 @@ import java.util.ArrayList;
 
 import org.opendatakit.common.android.activities.IAppAwareActivity;
 import org.opendatakit.common.android.activities.IInitResumeActivity;
-import org.opendatakit.common.android.activities.ODKActivity;
 import org.opendatakit.common.android.fragment.AlertDialogFragment;
 import org.opendatakit.common.android.fragment.AlertDialogFragment.ConfirmAlertDialog;
 import org.opendatakit.common.android.fragment.ProgressDialogFragment;
@@ -107,7 +106,7 @@ public class InitializationFragment extends Fragment implements InitializationLi
   private void intializeAppName() {
     // set up the first dialog, but don't show it...
     mAlertTitle = getString(R.string.configuring_app, 
-          getString(Tables.getInstance().getAppNameResourceId()));
+          getString(Tables.getInstance().getApkDisplayNameResourceId()));
     mAlertMsg = getString(R.string.please_wait);
     mDialogState = DialogState.Progress;
     
@@ -238,7 +237,7 @@ public class InitializationFragment extends Fragment implements InitializationLi
   private void updateProgressDialogMessage(String message) {
     if (mDialogState == DialogState.Progress) {
       mAlertTitle = getString(R.string.configuring_app, 
-          getString(Tables.getInstance().getAppNameResourceId()));
+          getString(Tables.getInstance().getApkDisplayNameResourceId()));
       mAlertMsg = message;
       restoreProgressDialog();
     }

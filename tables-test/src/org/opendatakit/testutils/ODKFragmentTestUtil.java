@@ -1,10 +1,8 @@
 package org.opendatakit.testutils;
 
-import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
-import org.opendatakit.tables.logic.TablesToolProperties;
 import org.opendatakit.tables.utils.Constants;
 import org.robolectric.Robolectric;
 import org.robolectric.util.ActivityController;

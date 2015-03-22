@@ -15,7 +15,6 @@
 package org.opendatakit.tables.application;
 
 import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.R;
 
 public class Tables extends CommonApplication {
@@ -36,7 +35,7 @@ public class Tables extends CommonApplication {
   }
 
   @Override
-  public int getAppNameResourceId() {
+  public int getApkDisplayNameResourceId() {
     return R.string.app_name;
   }
 

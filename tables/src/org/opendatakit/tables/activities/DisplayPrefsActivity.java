@@ -26,12 +26,9 @@ import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.logic.TablesToolProperties;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.OutputUtil;
 import org.opendatakit.tables.utils.TableUtil;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -44,6 +41,8 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.widget.Toast;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class DisplayPrefsActivity extends BasePreferenceActivity {
 

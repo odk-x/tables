@@ -17,19 +17,14 @@ package org.opendatakit.tables.views.components;
 
 import java.util.List;
 
-import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.TableNameStruct;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 

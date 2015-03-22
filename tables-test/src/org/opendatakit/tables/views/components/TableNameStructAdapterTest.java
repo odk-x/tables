@@ -16,17 +16,13 @@ import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
-import org.opendatakit.tables.activities.AbsTableActivityStub;
-import org.opendatakit.tables.fragments.AbsBaseFragmentStub;
 import org.opendatakit.tables.utils.TableNameStruct;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
-import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowDrawable;
 
-import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;

@@ -11,14 +11,11 @@ import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
-import org.opendatakit.testutils.TestConstants;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
-import android.webkit.WebView;
 
 @RunWith(RobolectricTestRunner.class)
 public class WebFragmentTest {

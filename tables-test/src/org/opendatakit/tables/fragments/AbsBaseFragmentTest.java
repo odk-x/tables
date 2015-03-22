@@ -1,23 +1,13 @@
 package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
@@ -26,7 +16,6 @@ import org.robolectric.RobolectricTestRunner;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.os.RemoteException;
 
 /**
  * 

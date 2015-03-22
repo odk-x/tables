@@ -1,35 +1,24 @@
 package org.opendatakit.testutils;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.utils.SQLQueryStruct;
-import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
 import org.opendatakit.tables.views.webkits.TableData;
 import org.opendatakit.tables.views.webkits.TableDataIf;
 
-import android.os.RemoteException;
 import android.webkit.WebView;
 
 /**

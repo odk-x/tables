@@ -10,18 +10,13 @@ import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 
-import android.app.Activity;
 import android.app.FragmentManager;
-import android.os.Bundle;
-import android.view.View;
-import android.webkit.WebView;
 
 @RunWith(RobolectricTestRunner.class)
 public class AbsWebTableFragmentTest {
