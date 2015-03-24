@@ -1,17 +1,6 @@
-^bin
-^tests/bin
-^perftests/bin
-tests/.classpath
-perftests/.classpath
-^perftests/dbs
 syntax: glob
-.settings/
-bin/
-gen/
-db\.sql
-perftests/gen/org/opendatakit/tables/test/BuildConfig\.java
-perftests/project\.properties
-local.properties
-
-# ignore the junit output dirs
-tables-test/junit/
+tables.test/bin/**
+tables/bin/**
+tables/gen/**
+tables.test/gen/**
+tables.test/junit/**

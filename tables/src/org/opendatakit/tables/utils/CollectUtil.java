@@ -21,10 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,12 +31,12 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.kxml2.io.KXmlParser;
-import org.kxml2.kdom.Document;
-import org.kxml2.kdom.Element;
-import org.kxml2.kdom.Node;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
@@ -58,7 +55,10 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
-import org.xmlpull.v1.XmlPullParserException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -392,57 +392,6 @@ public class CollectUtil {
       } catch (IOException e) {
       }
     }
-  }
-
-  private static String getJrFormId(String appName, String filepath) {
-    Document formDoc = parseForm(appName, filepath);
-    String namespace = formDoc.getRootElement().getNamespace();
-    Element hhtmlEl = formDoc.getElement(namespace, "h:html");
-    Element hheadEl = hhtmlEl.getElement(namespace, "h:head");
-    Element modelEl = hheadEl.getElement(namespace, "model");
-    Element instanceEl = modelEl.getElement(namespace, "instance");
-    Element dataEl = instanceEl.getElement(1);
-    return dataEl.getAttributeValue(namespace, "id");
-  }
-
-  private static Document parseForm(String appName, String filepath) {
-    File xmlFile = new File(filepath);
-    InputStream is;
-    try {
-      is = new FileInputStream(xmlFile);
-    } catch (FileNotFoundException e) {
-      throw new IllegalStateException(e);
-    }
-    // Now get the reader.
-    InputStreamReader isr = null;
-    try {
-      isr = new InputStreamReader(is, Charset.forName(CharEncoding.UTF_8));
-    } catch (UnsupportedCharsetException e) {
-      WebLogger.getLogger(appName).w(TAG, "UTF-8 wasn't supported--trying with default charset");
-      isr = new InputStreamReader(is);
-    }
-
-    Document formDoc = new Document();
-    KXmlParser formParser = new KXmlParser();
-    try {
-      formParser.setInput(isr);
-      formDoc.parse(formParser);
-    } catch (FileNotFoundException e) {
-      // TODO Auto-generated catch block
-      WebLogger.getLogger(appName).printStackTrace(e);
-    } catch (XmlPullParserException e) {
-      // TODO Auto-generated catch block
-      WebLogger.getLogger(appName).printStackTrace(e);
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      WebLogger.getLogger(appName).printStackTrace(e);
-    } finally {
-      try {
-        isr.close();
-      } catch (IOException e) {
-      }
-    }
-    return formDoc;
   }
 
   /**
@@ -1691,55 +1640,26 @@ public class CollectUtil {
    */
   private static void parseXML(String appName, FormValues fv, File xmlFile) {
 
-    InputStream is;
+    InputStream is = null;
     try {
       is = new FileInputStream(xmlFile);
-    } catch (FileNotFoundException e) {
-      throw new IllegalStateException(e);
-    }
-    // Now get the reader.
-    InputStreamReader isr;
-    try {
-      isr = new InputStreamReader(is, Charset.forName(CharEncoding.UTF_8));
-    } catch (UnsupportedCharsetException e) {
-      WebLogger.getLogger(appName).w(TAG, "UTF-8 wasn't supported--trying with default charset");
-      isr = new InputStreamReader(is);
-    }
-    if (isr != null) {
-      Document document;
-      try {
-        document = new Document();
-        KXmlParser parser = new KXmlParser();
-        try {
-          parser.setInput(isr);
-          document.parse(parser);
-        } catch (XmlPullParserException e) {
-          WebLogger.getLogger(appName).e(TAG, "problem with xmlpullparse");
-          WebLogger.getLogger(appName).printStackTrace(e);
-        } catch (IOException e) {
-          WebLogger.getLogger(appName).e(TAG, "io exception when parsing");
-          WebLogger.getLogger(appName).printStackTrace(e);
-        }
-      } finally {
-        try {
-          isr.close();
-        } catch (IOException e) {
-          WebLogger.getLogger(appName).e(TAG, "couldn't close reader");
-          WebLogger.getLogger(appName).printStackTrace(e);
-        }
-      }
-      Element rootEl = document.getRootElement();
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      Document document = db.parse(is);
+      Element rootEl = document.getDocumentElement();
       fv.locale = Locale.getDefault().getLanguage();
-      fv.formId = rootEl.getAttributeValue(null, "id");
-      Node rootNode = rootEl.getRoot();
-      Element dataEl = rootNode.getElement(0);
-      for (int i = 0; i < dataEl.getChildCount(); i++) {
-        Element child = dataEl.getElement(i);
-        String key = child.getName();
+      fv.formId = rootEl.getAttribute("id");
+      NodeList dataList = rootEl.getChildNodes();
+      Element dataEl = (Element) dataList.item(0);
+      NodeList dataElements = dataEl.getChildNodes();
+      for (int i = 0; i < dataElements.getLength(); i++) {
+        Element child = (Element) dataElements.item(i);
+        String key = child.getTagName();
         if (key.equals("meta")) {
-          for (int j = 0; j < child.getChildCount(); j++) {
-            Element e = child.getElement(j);
-            String name = e.getName();
+          NodeList metaList = child.getChildNodes();
+          for (int j = 0; j < metaList.getLength(); j++) {
+            Element e = (Element) metaList.item(j);
+            String name = e.getTagName();
             if (name.equals("instanceID")) {
               fv.instanceID = ODKFileUtils.getXMLText(e, false);
             }
@@ -1748,6 +1668,24 @@ public class CollectUtil {
           String value = ODKFileUtils.getXMLText(child, false);
           fv.formValues.put(key, value);
         }
+      }
+    } catch (FileNotFoundException e) {
+      throw new IllegalStateException(e);
+    } catch (ParserConfigurationException e) {
+      e.printStackTrace();
+      throw new IllegalStateException(e);
+    } catch (SAXException e) {
+      e.printStackTrace();
+      throw new IllegalStateException(e);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalStateException(e);
+    } finally {
+      try {
+        is.close();
+      } catch (IOException e) {
+        WebLogger.getLogger(appName).e(TAG, "couldn't close reader");
+        WebLogger.getLogger(appName).printStackTrace(e);
       }
     }
   }
