@@ -120,9 +120,11 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
     String filenamePath = filenameValField.getText().toString().trim();
 
     ImportRequest request = null;
-    String[] pathParts = filenamePath.split("/");
-    if ((pathParts.length == 3) && pathParts[0].equals("assets") && pathParts[1].equals("csv")) {
-      String[] terms = pathParts[2].split("\\.");
+    String assetsCsvRelativePath = ODKFileUtils.asRelativePath(appName, 
+        new File(ODKFileUtils.getAssetsCsvFolder(appName)));
+    if ( filenamePath.startsWith(assetsCsvRelativePath)) {
+        String remainingPath = filenamePath.substring(assetsCsvRelativePath.length()+1);
+      String[] terms = remainingPath.split("\\.");
       if (terms.length == 2 && terms[1].equals("csv")) {
         String tableId = terms[0];
         String fileQualifier = null;

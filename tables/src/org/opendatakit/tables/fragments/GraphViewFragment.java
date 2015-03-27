@@ -78,7 +78,7 @@ public class GraphViewFragment extends AbsWebTableFragment {
         TableData tableData = this.createDataObject();
         webView.addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(),
             Constants.JavaScriptHandles.DATA);
-        String relativePathToGraphFile = ODKFileUtils.getFrameworkFolder(getAppName()) + File.separator
+        String relativePathToGraphFile = ODKFileUtils.getSystemFolder(getAppName()) + File.separator
             + TABLES_GRAPH_BASE_FILE_NAME;
         String relativePath = ODKFileUtils.asUriFragment(getAppName(),
             new File(relativePathToGraphFile));

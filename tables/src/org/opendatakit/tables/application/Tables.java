@@ -40,13 +40,13 @@ public class Tables extends CommonApplication {
   }
 
   @Override
-  public int getAssetZipResourceId() {
-    return R.raw.assetszip;
+  public int getConfigZipResourceId() {
+    return R.raw.configzip;
   }
 
   @Override
-  public int getFrameworkZipResourceId() {
-    return R.raw.frameworkzip;
+  public int getSystemZipResourceId() {
+    return R.raw.systemzip;
   }
 
   @Override
