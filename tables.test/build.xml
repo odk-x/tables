@@ -4,6 +4,7 @@
     <property environment="env"/>
     <property name="junit.output.dir" value="junit"/>
     <property name="tables.location" value="../tables"/>
+    <property name="androidlibrary.location" value="../../opendatakit.androidlibrary/androidlibrary" />
     <property name="androidcommon.location" value="../../opendatakit.androidcommon/androidcommon" />
 	<property name="playservices.location" value="../../opendatakit.playservices" />
     <property name="debuglevel" value="source,lines,vars"/>
@@ -20,6 +21,7 @@
 		<fileset dir="${tables.location}/libs" includes="**/*.jar" />
 		<fileset dir="${playservices.location}/libs" includes="**/*.jar" />
 		<fileset dir="${androidcommon.location}/libs" includes="**/*.jar" />
+		<fileset dir="${androidlibrary.location}/libs" includes="**/*.jar" />
     </path>
 	
     <path id="opendatakit.tables.test.classpath">
@@ -28,6 +30,7 @@
         <path refid="tables.test.libs.classpath"/>
 		<path refid="tables.libs.classpath"/> 
         <pathelement location="${androidcommon.location}/bin/classes" />
+        <pathelement location="${androidlibrary.location}/bin/classes" />
     </path>
 	
     <target name="init">
@@ -44,6 +47,7 @@
     <target depends="clean" name="cleanall">
         <ant antfile="build.xml" dir="${tables.location}" inheritAll="false" target="clean"/>
         <ant antfile="build.xml" dir="${androidcommon.location}" inheritAll="false" target="clean" />
+        <ant antfile="build.xml" dir="${androidlibrary.location}" inheritAll="false" target="clean" />
     </target>
     <target depends="build-subprojects,build-project" name="build"/>
     <target name="build-subprojects">
@@ -53,6 +57,11 @@
             </propertyset>
         </ant>
         <ant antfile="build.xml" dir="${androidcommon.location}" inheritAll="false" target="debug">
+            <propertyset>
+                <propertyref name="build.compiler" />
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${androidlibrary.location}" inheritAll="false" target="debug">
             <propertyset>
                 <propertyref name="build.compiler" />
             </propertyset>
