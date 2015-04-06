@@ -1272,10 +1272,10 @@ public class CollectUtil {
                 ODKFileUtils.getAppFolder(appName), value)));
             values.put(cdtype.getElementKey(), mimeType);
           } else {
-            File ifolder = new File(ODKFileUtils.getInstanceFolder(appName, tableId,
-                formValues.instanceID));
-            values.put(cdfrag.getElementKey(),
-                ODKFileUtils.asUriFragment(appName, new File(ifolder, value)));
+            File rowpathFile = ODKFileUtils.getRowpathFile( appName, tableId, formValues.instanceID, value);
+            // determine a cleaned-up rowpathUri (should equal value, but might not).
+            String rowpathUri = ODKFileUtils.asRowpathUri(appName, tableId, formValues.instanceID, rowpathFile);
+            values.put(cdfrag.getElementKey(), rowpathUri);
             values.put(cdtype.getElementKey(), mimeType);
 
           }

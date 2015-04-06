@@ -544,11 +544,11 @@ public class ControlIf {
    * 
    * @param tableId
    * @param rowId
-   * @param rowPath
+   * @param rowPathUri
    * @return
    */
-  public String getRowFileAsUrl(String tableId, String rowId, String rowPath) {
-    return weakControl.get().getRowFileAsUrl(tableId, rowId, rowPath);
+  public String getRowFileAsUrl(String tableId, String rowId, String rowPathUri) {
+    return weakControl.get().getRowFileAsUrl(tableId, rowId, rowPathUri);
   }
 
   /**

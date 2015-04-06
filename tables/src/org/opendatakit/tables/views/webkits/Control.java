@@ -565,28 +565,15 @@ public class Control {
    * @see {@link ControlIf#getRowFileAsUrl(String, String, String)}
    * @param tableId
    * @param rowId
-   * @param rowPath
+   * @param rowPathUri
    * @return
    */
-  public String getRowFileAsUrl(String tableId, String rowId, String rowPath) {
+  public String getRowFileAsUrl(String tableId, String rowId, String rowPathUri) {
     String appName = mActivity.getAppName();
     String baseUri = getBaseContentUri();
-    String folderPath = ODKFileUtils.getInstanceFolder(appName, tableId, rowId);
-    String prefix = ODKFileUtils.asRelativePath(appName, new File(folderPath));
-    prefix = prefix + "/";
-    
-    if ( rowPath.startsWith("/")) {
-      rowPath = rowPath.substring(1);
-    }
-    
-    if ( rowPath.startsWith(prefix) ) {
-      // legacy construction
-      WebLogger.getLogger(appName).e(TAG,
-          "table [" + tableId + "] contains old-style rowpath constructs!");
-      return baseUri + rowPath;
-    } else {
-      return baseUri + prefix + rowPath;
-    }
+    File rowpathFile = ODKFileUtils.getRowpathFile( appName, tableId, rowId, rowPathUri);
+    String uriFragment = ODKFileUtils.asUriFragment(appName, rowpathFile);
+    return baseUri + uriFragment;
   }
 
   /**
@@ -637,7 +624,7 @@ public class Control {
     String appName = mActivity.getAppName();
     Uri contentUri = UrlUtils.getWebViewContentUri(this.mActivity);
     contentUri = Uri.withAppendedPath(contentUri, Uri.encode(appName));
-    return contentUri.toString() + File.separator;
+    return contentUri.toString() + "/";
   }
 
   /**
