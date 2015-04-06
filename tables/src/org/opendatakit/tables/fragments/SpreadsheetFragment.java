@@ -585,8 +585,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN, ContextMenu.NONE, "View Collection");
       mi.setIcon(R.drawable.view);
     }
-    String viewString = row.getDisplayTextOfData(this.getActivity(), cd.getType(),
-        cellInfo.elementKey, true);
+    String viewString = row.getDisplayTextOfData(cd.getType(), cellInfo.elementKey);
     // TODO: display value and use edit icon...
     mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE,
         getString(R.string.edit_cell, viewString));

@@ -650,8 +650,7 @@ class TabularView extends View {
         } else if (this.type == TableLayoutType.INDEX_DATA || this.type == TableLayoutType.MAIN_DATA) {
 
           ColumnDefinition cd = this.mTable.getColumnByIndex(userDataIndex[j]);
-          datum = theRow.getDisplayTextOfData(this.getContext(), cd.getType(), cd.getElementKey(),
-              true);
+          datum = theRow.getDisplayTextOfData(cd.getType(), cd.getElementKey());
         } else {
           WebLogger.getLogger(this.mTable.getAppName()).e(TAG,
               "unrecognized table type: " + this.type.name());

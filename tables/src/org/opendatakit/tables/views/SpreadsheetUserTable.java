@@ -170,8 +170,7 @@ public class SpreadsheetUserTable {
     cell.elementKey = cellInfo.elementKey;
     OrderedColumns orderedDefns = getColumnDefinitions();
     ColumnDefinition cd = orderedDefns.find(cellInfo.elementKey);
-    cell.displayText = cell.row.getDisplayTextOfData(context, cd.getType(), cellInfo.elementKey,
-        true);
+    cell.displayText = cell.row.getDisplayTextOfData(cd.getType(), cellInfo.elementKey);
     cell.value = cell.row.getRawDataOrMetadataByElementKey(cellInfo.elementKey);
     return cell;
   }
