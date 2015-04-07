@@ -21,7 +21,7 @@ import java.util.Map;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;

@@ -35,7 +35,7 @@ import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.database.service.OdkDbHandle;
