@@ -76,7 +76,7 @@
     </target>
     <target name="test">
         <mkdir dir="${junit.output.dir}"/>
-        <junit fork="yes" newenvironment="true" includeantruntime="false" printsummary="withOutAndErr" haltonfailure="yes">
+        <junit fork="yes" printsummary="withOutAndErr" haltonfailure="yes">
             <formatter type="xml"/>
             <classpath refid="opendatakit.tables.test.classpath"/>
             <batchtest fork="yes" todir="${junit.output.dir}">
