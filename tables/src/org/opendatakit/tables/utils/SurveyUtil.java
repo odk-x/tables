@@ -21,8 +21,11 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
+import org.opendatakit.common.android.provider.FormsColumns;
+import org.opendatakit.common.android.provider.FormsProviderAPI;
 import org.opendatakit.common.android.utilities.KeyValueHelper;
 import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
+import org.opendatakit.common.android.utilities.ODKCursorUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -74,15 +77,9 @@ public class SurveyUtil {
   private static final String SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME = "org.opendatakit.survey.android.activities.SplashScreenActivity";
 
   /**
-   * The package name of Survey's FormProvider. Ends with the FormProvider
-   * classname and does not include a forward slash.
-   */
-  private static final String SURVEY_FORM_AUTHORITY = "org.opendatakit.common.android.provider.forms";
-  /**
    * Returns Android's content scheme, with ://, ready for prepending to an
    * authority.
    */
-  private static final String CONTENT_PREFIX_WITH_SCHEME_SUFFIX = "content://";
   private static final String FORWARD_SLASH = "/";
 
   private static final String SURVEY_ADDROW_FORM_ID_PREFIX = "_generated_";
@@ -276,8 +273,12 @@ public class SurveyUtil {
       // again, maybe we allow this and choose a default? likely not.
       throw new IllegalArgumentException("cannot have a null formId");
     }
-    String uriStr = CONTENT_PREFIX_WITH_SCHEME_SUFFIX + SURVEY_FORM_AUTHORITY + FORWARD_SLASH
-        + appName + FORWARD_SLASH + surveyFormParameters.getFormId() + FORWARD_SLASH + "#";
+    Uri uri = Uri.withAppendedPath(
+        Uri.withAppendedPath(
+          Uri.withAppendedPath(FormsProviderAPI.CONTENT_URI, appName),
+            tableId), surveyFormParameters.getFormId());
+
+    String uriStr = uri.toString() + FORWARD_SLASH + "#";
     // Now we need to add our query parameters.
     try {
       uriStr += URI_SURVEY_QUERY_PARAM_INSTANCE_ID + "="
