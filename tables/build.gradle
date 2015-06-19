@@ -6,11 +6,16 @@ android {
 
     defaultConfig {
         applicationId "org.opendatakit.tables"
-        minSdkVersion 16
-        targetSdkVersion 16
+        minSdkVersion 18
+        targetSdkVersion 19
 
-        testApplicationId "org.opendatakit.tables.test"
-        testInstrumentationRunner "android.test.InstrumentationTestRunner"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    sourceSets {
+        // Move the tests to tests/java, tests/res, etc...
+        androidTest.setRoot('src/test')
     }
 
     buildTypes {
@@ -42,4 +47,15 @@ dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
     compile project(':opendatakit.androidlibrary:androidlibrary')
     compile project(':opendatakit.androidcommon:androidcommon')
+
+    // Testing-only dependencies
+    androidTestCompile 'com.android.support.test:runner:0.3'
+    androidTestCompile 'com.android.support.test:rules:0.3'
+    androidTestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.1'
+    androidTestCompile 'com.android.support:support-annotations:22.2.0'
+    androidTestCompile 'com.android.support:support-v13:22.2.0'
+}
+
+repositories {
+    mavenCentral()
 }

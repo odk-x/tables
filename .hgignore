@@ -4,3 +4,9 @@ tables/bin/**
 tables/gen/**
 tables.test/gen/**
 tables.test/junit/**
+build/**
+.idea/**
+.gradle/**
+*.iml
+local.properties
+
