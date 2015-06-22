@@ -1,9 +1,5 @@
 syntax: glob
-tables.test/bin/**
-tables/bin/**
-tables/gen/**
-tables.test/gen/**
-tables.test/junit/**
+tables/build/**
 build/**
 .idea/**
 .gradle/**

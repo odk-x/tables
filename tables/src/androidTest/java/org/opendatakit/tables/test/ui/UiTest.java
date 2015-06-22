@@ -4,7 +4,7 @@
 
 // Import the uiautomator libraries
 
-package org.opendatakit.tables.test;
+package org.opendatakit.tables.test.ui;
 
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -88,6 +88,7 @@ public class UiTest extends InstrumentationTestCase {
                 .className("android.widget.Button")
                 .descriptionContains("next"));
 
+        Thread.sleep(SURVEY_TIMEOUT);
         mDevice.click(50,500); // TODO: Make this implementation less hacky
         nextButton.click();
 

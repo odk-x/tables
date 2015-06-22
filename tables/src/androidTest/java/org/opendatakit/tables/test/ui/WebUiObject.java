@@ -1,4 +1,4 @@
-package org.opendatakit.tables.test;
+package org.opendatakit.tables.test.ui;
 
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
