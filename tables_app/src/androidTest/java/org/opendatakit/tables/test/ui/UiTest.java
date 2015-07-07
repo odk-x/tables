@@ -50,7 +50,6 @@ public class UiTest extends InstrumentationTestCase {
                 .resourceId("com.google.android.googlequicksearchbox:id/apps_customize_pane_content"));
         appMenu.setAsHorizontalList();
 
-        // TODO: Launch core services first
         // Find ODK App
         UiObject odkApp = appMenu.getChildByText(new UiSelector()
                 .className("android.widget.TextView"),
@@ -138,7 +137,7 @@ public class UiTest extends InstrumentationTestCase {
         finalizeButton.click();
     }
 
-    private String generateID() {
+    private String generateID() { // TODO: Perhaps there's a better solution?
         int id = (int) (Math.random() * 101);
         return "household" + Integer.toString(id);
     }
