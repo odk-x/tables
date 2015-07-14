@@ -4,7 +4,7 @@
 
 // Import the uiautomator libraries
 
-package org.opendatakit.tables.test.ui;
+package org.opendatakit.common.android.utilities;
 
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
