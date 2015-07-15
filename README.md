@@ -33,13 +33,13 @@ Be sure to install ODK Core onto your device before attempting to run Tables.
 ## Source tree information
 Quick description of the content in the root folder:
 
-    |-- tables\_app             -- Source tree for Java components
+    |-- tables\_app     -- Source tree for Java components
 
         |-- src
 
             |-- main
 
-                |-- res         -- Source tree for Android resources
+                |-- res     -- Source tree for Android resources
 
                 |-- java
 
@@ -49,4 +49,6 @@ Quick description of the content in the root folder:
 
                             |-- tables
 
-                                |-- android   -- The most relevant Java code lives here
+                                |-- android     -- The most relevant Java code lives here
+                                
+            |-- androidTest    -- Source tree for Android implementation tests
