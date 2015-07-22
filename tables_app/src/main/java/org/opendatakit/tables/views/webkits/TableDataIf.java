@@ -56,7 +56,7 @@ public class TableDataIf {
    * 
    * @return the number of rows in the table
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public int getCount() {
     return weakTable.get().getCount();
   }
@@ -69,7 +69,7 @@ public class TableDataIf {
    *          the element path of the column
    * @return JSONArray of all the data in the column
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public String getColumnData(String elementPath) {
     return weakTable.get().getColumnData(elementPath);
   }
@@ -79,7 +79,7 @@ public class TableDataIf {
    * 
    * @return the tabeId
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public String getTableId() {
     return weakTable.get().getTableId();
   }
@@ -91,7 +91,7 @@ public class TableDataIf {
    *          the row number
    * @return the rowId of the row number
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public String getRowId(int rowNumber) {
     return weakTable.get().getRowId(rowNumber);
   }
@@ -101,7 +101,7 @@ public class TableDataIf {
    * 
    * @return Stringified JSON map of element key to column type
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public String getColumns() {
     return weakTable.get().getColumns();
   }
@@ -116,7 +116,7 @@ public class TableDataIf {
    *          the element path of the column
    * @return String representation of the text color
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public String getColumnForegroundColor(int rowNumber, String elementPath) {
     try {
       return weakTable.get().getColumnForegroundColor(rowNumber, elementPath);
@@ -138,7 +138,7 @@ public class TableDataIf {
    *          the row to evaluate
    * @return String representation of the text color
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public String getStatusForegroundColor(int rowNumber) {
     try {
       return weakTable.get().getStatusForegroundColor(rowNumber);
@@ -160,7 +160,7 @@ public class TableDataIf {
    *          the row to evaluate
    * @return String representation of the text color
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public String getRowForegroundColor(int rowNumber) {
     try {
       return weakTable.get().getRowForegroundColor(rowNumber);
@@ -179,7 +179,7 @@ public class TableDataIf {
    * 
    * @return true if index else false
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public boolean isGroupedBy() {
     return weakTable.get().isGroupedBy();
   }
@@ -204,7 +204,7 @@ public class TableDataIf {
    *         given column, or null if the value in the database is null or the
    *         column does not exist
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public String getData(int rowNumber, String elementPath) {
     return weakTable.get().getData(rowNumber, elementPath);
   }
@@ -219,6 +219,7 @@ public class TableDataIf {
    * @return the String representation of the datum in the given column at the
    *         first row of the table
    */
+  @android.webkit.JavascriptInterface
   public String get(String elementPath) {
     return this.getData(0, elementPath);
   }

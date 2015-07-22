@@ -49,7 +49,7 @@
         android:resizeable="true"
         android:smallScreens="true" />
 
-    <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="16"/>
+    <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="17"/>
 
 
     <application

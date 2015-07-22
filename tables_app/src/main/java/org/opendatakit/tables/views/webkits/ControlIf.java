@@ -54,7 +54,7 @@ public class ControlIf {
    *          If null will not restrict the results.
    * @return true if the open succeeded
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public boolean openTable(String tableId, String whereClause, String[] selectionArgs) {
     // TODO: convert to element keys
     return weakControl.get().helperOpenTable(tableId, whereClause, selectionArgs, null, null, null,
@@ -79,6 +79,7 @@ public class ControlIf {
    *          folder.
    * @return true if the open succeeded
    */
+  @android.webkit.JavascriptInterface
   public boolean openTableToListView(String tableId, String whereClause, String[] selectionArgs,
       String relativePath) {
     return weakControl.get().helperOpenTableWithFile(tableId, relativePath, whereClause,
@@ -102,6 +103,7 @@ public class ControlIf {
    *          NOT YET SUPPORTED
    * @return true if the open succeeded
    */
+  @android.webkit.JavascriptInterface
   public boolean openTableToMapView(String tableId, String whereClause, String[] selectionArgs,
       String relativePath) {
     return weakControl.get().helperOpenTableToMapView(tableId, relativePath, whereClause,
@@ -123,6 +125,7 @@ public class ControlIf {
    *          If null will not restrict the results.
    * @return true if the open succeeded
    */
+  @android.webkit.JavascriptInterface
   public boolean openTableToSpreadsheetView(String tableId, String whereClause,
       String[] selectionArgs) {
     return weakControl.get().helperOpenTableToSpreadsheetView(tableId, whereClause, selectionArgs,
@@ -169,7 +172,7 @@ public class ControlIf {
    * @return a new TableDataIf with the results of the query. Should be released
    *         with {@link #releaseQueryResources(String)} when no longer needed.
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public TableDataIf query(String tableId, String whereClause, String[] selectionArgs) {
     TableData td;
     try {
@@ -197,7 +200,7 @@ public class ControlIf {
    * @param tableId
    *          tableId of the table
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public void releaseQueryResources(String tableId) {
     weakControl.get().releaseQueryResources(tableId);
   }
@@ -207,7 +210,7 @@ public class ControlIf {
    * 
    * @return a stringified json array of the table ids
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public String getAllTableIds() {
     return weakControl.get().getAllTableIds();
   }
@@ -219,7 +222,7 @@ public class ControlIf {
    *          file name relative to the ODK Tables folder.
    * @return true if the file was launched, false if something went wrong
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public boolean launchHTML(String relativePath) {
     return weakControl.get().launchHTML(relativePath);
   }
@@ -238,7 +241,7 @@ public class ControlIf {
    *          used
    * @return true if the open succeeded
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public boolean openDetailView(String tableId, String rowId, String relativePath) {
     return weakControl.get().openDetailViewWithFile(tableId, rowId, relativePath);
   }
@@ -251,7 +254,7 @@ public class ControlIf {
    * @return true if the activity was launched, false if something went wrong
    * @deprecated
    */
-  // @JavascriptInterface
+  @android.webkit.JavascriptInterface
   public boolean addRowWithCollectDefault(String tableId) {
     return this.addRowWithCollect(tableId, null, null, null, null);
   }
@@ -275,6 +278,7 @@ public class ControlIf {
    * @return true if the activity was launched, false if something went wrong
    * @deprecated
    */
+  @android.webkit.JavascriptInterface
   public boolean addRowWithCollect(String tableId, String formId, String formVersion,
       String formRootElement, String jsonMap) {
     try {
@@ -297,6 +301,7 @@ public class ControlIf {
    * @return true if the activity was launched, false if something went wrong
    * @deprecated
    */
+  @android.webkit.JavascriptInterface
   public boolean editRowWithCollectDefault(String tableId, String rowId) {
     return this.editRowWithCollect(tableId, rowId, null, null, null);
   }
@@ -313,6 +318,7 @@ public class ControlIf {
    * @return true if the activity was launched, false if something went wrong
    * @deprecated
    */
+  @android.webkit.JavascriptInterface
   public boolean editRowWithCollect(String tableId, String rowId, String formId,
       String formVersion, String formRootElement) {
     try {
@@ -334,6 +340,7 @@ public class ControlIf {
    * @param rowId
    * @return true if the activity was launched, false if something went wrong
    */
+  @android.webkit.JavascriptInterface
   public boolean editRowWithSurveyDefault(String tableId, String rowId) {
     return editRowWithSurvey(tableId, rowId, null, null);
   }
@@ -347,6 +354,7 @@ public class ControlIf {
    * @param screenPath
    * @return true if the activity was launched, false if something went wrong
    */
+  @android.webkit.JavascriptInterface
   public boolean editRowWithSurvey(String tableId, String rowId, String formId, String screenPath) {
     try {
       return weakControl.get().helperEditRowWithSurvey(tableId, rowId, formId, screenPath);
@@ -366,6 +374,7 @@ public class ControlIf {
    *          the table to receive the add
    * @return true if Survey was launched, else false
    */
+  @android.webkit.JavascriptInterface
   public boolean addRowWithSurveyDefault(String tableId) {
     return this.addRowWithSurvey(tableId, null, null, null);
   }
@@ -382,6 +391,7 @@ public class ControlIf {
    *          prepopulate in the new row
    * @return true if the activity was launched, false if something went wrong
    */
+  @android.webkit.JavascriptInterface
   public boolean addRowWithSurvey(String tableId, String formId, String screenPath, String jsonMap) {
     try {
       return weakControl.get().helperAddRowWithSurvey(tableId, formId, screenPath, jsonMap);
@@ -402,6 +412,7 @@ public class ControlIf {
    * @return the element key for the column, or null if a table cannot be found
    *         with the existing tableId.
    */
+  @android.webkit.JavascriptInterface
   public String getElementKey(String tableId, String elementPath) {
     return weakControl.get().getElementKey(tableId, elementPath);
   }
@@ -413,6 +424,7 @@ public class ControlIf {
    * @param elementPath
    * @return the display name for the given column
    */
+  @android.webkit.JavascriptInterface
   public String getColumnDisplayName(String tableId, String elementPath) {
     try {
       return weakControl.get().getColumnDisplayName(tableId, elementPath);
@@ -435,6 +447,7 @@ public class ControlIf {
    * @return the display name for the table, in stringified json form if the
    *         name has been internationalized
    */
+  @android.webkit.JavascriptInterface
   public String getTableDisplayName(String tableId) {
     try {
       return weakControl.get().getTableDisplayName(tableId);
@@ -469,6 +482,7 @@ public class ControlIf {
    * @return If the add was successful, return the id of the added row. Null if
    *         the add failed.
    */
+  @android.webkit.JavascriptInterface
   public String addRow(String tableId, String stringifiedObject) {
     try {
       return weakControl.get().addRow(tableId, stringifiedObject);
@@ -495,6 +509,7 @@ public class ControlIf {
    * @return
    * @see ControlIf#addRow(String, String)
    */
+  @android.webkit.JavascriptInterface
   public boolean updateRow(String tableId, String stringifiedObject, String rowId) {
     try {
       return weakControl.get().updateRow(tableId, stringifiedObject, rowId);
@@ -515,6 +530,7 @@ public class ControlIf {
    * @return true if the column exists, else false. Returns false also if the
    *         tableId does not match any table.
    */
+  @android.webkit.JavascriptInterface
   public boolean columnExists(String tableId, String elementPath) {
     try {
       return weakControl.get().columnExists(tableId, elementPath);
@@ -534,6 +550,7 @@ public class ControlIf {
    * @param relativePath
    * @return an absolute URI to the file
    */
+  @android.webkit.JavascriptInterface
   public String getFileAsUrl(String relativePath) {
     return weakControl.get().getFileAsUrl(relativePath);
   }
@@ -547,6 +564,7 @@ public class ControlIf {
    * @param rowPathUri
    * @return
    */
+  @android.webkit.JavascriptInterface
   public String getRowFileAsUrl(String tableId, String rowId, String rowPathUri) {
     return weakControl.get().getRowFileAsUrl(tableId, rowId, rowPathUri);
   }
@@ -557,6 +575,7 @@ public class ControlIf {
    * 
    * @return a stringified json object with the above keys
    */
+  @android.webkit.JavascriptInterface
   public String getPlatformInfo() {
     return weakControl.get().getPlatformInfo();
   }
