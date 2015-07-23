@@ -7,7 +7,7 @@ if (libraryProjectGradle.isFile()) { // check if local project is present
 }
 
 def commonProjectGradle = new File('../androidcommon/androidcommon_lib/build.gradle')
-if (libraryProjectGradle.isFile()) { // check if local project is present
+if (commonProjectGradle.isFile()) { // check if local project is present
     include ':androidcommon:androidcommon_lib'
     project(':androidcommon:androidcommon_lib').setProjectDir(new File('../androidcommon/androidcommon_lib')) // set local location
 }
