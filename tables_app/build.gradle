@@ -53,6 +53,7 @@ dependencies {
         compile project(':androidlibrary:androidlibrary_lib')
     } else {
         compile(group: 'org.opendatakit', name: 'androidlibrary_lib', version: '127', ext: 'aar')
+        compile 'joda-time:joda-time:2.2'
     }
 
     def commonProjectGradle = new File('../androidcommon/androidcommon_lib/build.gradle')
