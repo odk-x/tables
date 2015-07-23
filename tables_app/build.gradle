@@ -6,13 +6,19 @@ apply plugin: 'jacoco'  // Can't (yet) use integrated Android JaCoCo for UnitTes
                         // see: https://code.google.com/p/android/issues/detail?id=144664
 apply plugin: 'com.android.application'
 
+group = 'org.opendatakit'
+def androidVersionCode = 127
+version = androidVersionCode
+
 android {
     buildToolsVersion "22.0.1"
     compileSdkVersion 19
     defaultConfig {
-        applicationId "org.opendatakit.tables"
+        applicationId "${group}.tables"
         minSdkVersion 18 // Required for UiAutomator TODO: See if this version can be changed
         targetSdkVersion 18
+        versionCode androidVersionCode
+        versionName '2.0'
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner" // Also required for UiAutomator
     }
