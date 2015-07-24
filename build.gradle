@@ -14,6 +14,9 @@ allprojects {
         jcenter()
         mavenCentral()
         maven {
+            url 'http://cwe.cs.washington.edu:8082/artifactory/libs-release'
+        }
+        maven {
             url 'http://cwe.cs.washington.edu:8082/artifactory/libs-snapshot'
         }
     }
