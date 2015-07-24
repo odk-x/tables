@@ -21,6 +21,7 @@ import org.opendatakit.common.android.activities.IInitResumeActivity;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
+import org.opendatakit.common.android.utilities.DependencyChecker;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
@@ -85,7 +86,13 @@ public class MainActivity extends AbsBaseActivity implements
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.setContentView(R.layout.activity_main_activity);
-    
+
+    DependencyChecker dc = new DependencyChecker(this);
+    boolean dependable = dc.checkDependencies();
+    if (!dependable) { // dependencies missing
+      return;
+    }
+
     webFileToDisplay = getHomeScreen(savedInstanceState);
     
     if ( webFileToDisplay != null ) {
@@ -113,6 +120,13 @@ public class MainActivity extends AbsBaseActivity implements
   @Override
   protected void onResume() {
     super.onResume();
+
+    DependencyChecker dc = new DependencyChecker(this);
+    boolean dependable = dc.checkDependencies();
+    if (!dependable) { // dependencies missing
+      return;
+    }
+
     swapScreens(activeScreenType);
   }
   
