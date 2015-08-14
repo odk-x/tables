@@ -1,13 +1,13 @@
-gradle.ext {
-    local = '../gradle-config/local.gradle'
-    remote = 'https://raw.githubusercontent.com/opendatakit/gradle-config/master/remote.gradle'
-    useLocal = true // set to false to always build against remote artifacts
-}
+gradle.ext.local = '../gradle-config/remote.gradle'
+gradle.ext.remote = 'https://raw.githubusercontent.com/opendatakit/gradle-config/1.0/remote.gradle'
+gradle.ext.useLocal = true // set to false to always build against remote artifacts
 
-if ((new File(gradle.local)).exists()) {
-    apply from: gradle.local
+if ((new File(gradle.ext.local)).exists()) {
+    gradle.ext.useLocalPaths = true
+    apply from: gradle.ext.local
 } else {
-    apply from: gradle.remote
+    gradle.ext.useLocalPaths = false
+    apply from: gradle.ext.remote
 }
 
 settingsScripts.each {
@@ -16,12 +16,12 @@ settingsScripts.each {
 
 include(tablesProjectChild)
 
-if (libraryProjectPath.exists() && gradle.useLocal) { // check if local library project is present
+if (libraryProjectPath.exists() && gradle.ext.useLocal) { // check if local library project is present
     include libraryProjectName
     project(libraryProjectName).setProjectDir(libraryProjectPath) // set local location
 }
 
-if (commonProjectPath.exists() && gradle.useLocal) { // check if local common project is present
+if (commonProjectPath.exists() && gradle.ext.useLocal) { // check if local common project is present
     include commonProjectName
     project(commonProjectName).setProjectDir(commonProjectPath) // set local location
 }
