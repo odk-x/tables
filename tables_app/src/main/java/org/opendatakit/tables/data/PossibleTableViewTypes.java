@@ -36,14 +36,12 @@ public class PossibleTableViewTypes {
   private boolean mSpreadsheetIsValid;
   private boolean mListIsValid;
   private boolean mMapIsValid;
-  private boolean mGraphIsValid;
-  
+
   public PossibleTableViewTypes(String appName, OdkDbHandle db, String tableId, OrderedColumns orderedDefns) throws RemoteException {
     this.mSpreadsheetIsValid = true; // always
     this.mListIsValid = (null != TableUtil.get().getListViewFilename(appName, db, tableId));
     this.mMapIsValid = (null != TableUtil.get().getMapListViewFilename(appName, db, tableId)) &&
         orderedDefns.mapViewIsPossible();
-    this.mGraphIsValid = orderedDefns.graphViewIsPossible();
   }
   
   /**
@@ -62,9 +60,6 @@ public class PossibleTableViewTypes {
     }
     if (this.mapViewIsPossible()) {
       result.add(TableViewType.MAP);
-    }
-    if (this.graphViewIsPossible()) {
-      result.add(TableViewType.GRAPH);
     }
     return result;
   }
@@ -93,13 +88,4 @@ public class PossibleTableViewTypes {
     return this.mMapIsValid;
   }
   
-  /**
-   * 
-   * @return true if the table can be displayed as a graph
-   */
-  public boolean graphViewIsPossible() {
-    return this.mGraphIsValid;
-  }
-  
-
 }

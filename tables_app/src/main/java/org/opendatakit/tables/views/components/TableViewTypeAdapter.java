@@ -79,12 +79,6 @@ public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
       } else {
         return false;
       }
-    } else if (currentItem.equals(TableViewType.GRAPH.name())) {
-      if (this.mPossibleViewTypes.graphViewIsPossible()) {
-        return true;
-      } else {
-        return false;
-      }
     } else {
       // Enable it.
       WebLogger.getLogger(mAppName).e(TAG, "unrecognized entryValue: " + currentItem);

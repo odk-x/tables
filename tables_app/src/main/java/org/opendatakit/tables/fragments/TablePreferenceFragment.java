@@ -26,8 +26,6 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.TableViewType;
@@ -35,7 +33,6 @@ import org.opendatakit.tables.preferences.DefaultViewTypePreference;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.preferences.FileSelectorPreference;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.PreferenceUtil;
 import org.opendatakit.tables.utils.TableUtil;
 
@@ -193,7 +190,6 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       this.initializeMapColorRule();
       this.initializeDetailFile(db);
       this.initializeListFile(db);
-      this.initializeGraphManager();
       this.initializeMapListFile(db);
       this.initializeColumns();
     } finally {
@@ -305,24 +301,6 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     ListPreference mapColorPref = this
         .findListPreference(Constants.PreferenceKeys.Table.MAP_COLOR_RULE);
     // TODO:
-  }
-
-  private void initializeGraphManager() {
-    Preference graphPref = this.findPreference(Constants.PreferenceKeys.Table.GRAPH_MANAGER);
-    graphPref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        Intent selectGraphViewIntent = new Intent(getActivity(), TableDisplayActivity.class);
-        selectGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, getAppName());
-        selectGraphViewIntent.putExtra(Constants.IntentKeys.TABLE_ID, getTableId());
-        IntentUtil.addFragmentViewTypeToBundle(selectGraphViewIntent.getExtras(),
-            ViewFragmentType.GRAPH_MANAGER);
-        startActivityForResult(selectGraphViewIntent, Constants.RequestCodes.LAUNCH_GRAPH_MANAGER);
-        return true;
-      }
-
-    });
   }
 
   private void initializeColumns() {

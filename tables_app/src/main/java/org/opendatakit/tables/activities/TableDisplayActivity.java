@@ -23,8 +23,6 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.fragments.DetailViewFragment;
-import org.opendatakit.tables.fragments.GraphManagerFragment;
-import org.opendatakit.tables.fragments.GraphViewFragment;
 import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.MapListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
@@ -70,7 +68,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
    *
    */
   public enum ViewFragmentType {
-    SPREADSHEET, LIST, MAP, GRAPH_MANAGER, GRAPH_VIEW, DETAIL;
+    SPREADSHEET, LIST, MAP, DETAIL;
   }
   /**
    * The type of fragment that is currently being displayed.
@@ -196,28 +194,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
         }
       }
       break;
-    case GRAPH_MANAGER:
-      GraphManagerFragment graphManagerFragment = (GraphManagerFragment) fragmentManager
-      .findFragmentByTag(mCurrentFragmentType.name());
-      if ( graphManagerFragment != null ) {
-        if ( databaseAvailable ) {
-          graphManagerFragment.databaseAvailable();
-        } else {
-          graphManagerFragment.databaseUnavailable();
-        }
-      }
-      break;
-    case GRAPH_VIEW:
-      GraphViewFragment graphViewFragment = (GraphViewFragment) fragmentManager
-      .findFragmentByTag(mCurrentFragmentType.name());
-      if ( graphViewFragment != null ) {
-        if ( databaseAvailable ) {
-          graphViewFragment.databaseAvailable();
-        } else {
-          graphViewFragment.databaseUnavailable();
-        }
-      }
-      break;
     case DETAIL:
       DetailViewFragment detailViewFragment = (DetailViewFragment) fragmentManager
       .findFragmentByTag(mCurrentFragmentType.name());
@@ -284,7 +260,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     switch (this.getCurrentFragmentType()) {
     case SPREADSHEET:
     case LIST:
-    case GRAPH_MANAGER:
     case MAP:
       menuInflater.inflate(R.menu.top_level_table_menu, menu);
       this.enableAndDisableViewTypes(mPossibleTableViewTypes, menu);
@@ -292,9 +267,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       break;
     case DETAIL:
       menuInflater.inflate(R.menu.detail_view_menu, menu);
-      break;
-    case GRAPH_VIEW:
-      // for now, do nothing.
       break;
     }
     return super.onCreateOptionsMenu(menu);
@@ -313,9 +285,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
         WebLogger.getLogger(getAppName()).printStackTrace(e1);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       }
-      return true;
-    case R.id.top_level_table_menu_view_graph_view:
-      this.showGraphFragment();
       return true;
     case R.id.top_level_table_menu_view_map_view:
       try {
@@ -448,11 +417,9 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
         .findItem(R.id.top_level_table_menu_view_spreadsheet_view);
     MenuItem listItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_list_view);
     MenuItem mapItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_map_view);
-    MenuItem graphItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_graph_view);
     spreadsheetItem.setEnabled((possibleViews != null) && possibleViews.spreadsheetViewIsPossible());
     listItem.setEnabled((possibleViews != null) && possibleViews.listViewIsPossible());
     mapItem.setEnabled((possibleViews != null) && possibleViews.mapViewIsPossible());
-    graphItem.setEnabled((possibleViews != null) && possibleViews.graphViewIsPossible());
   }
 
   /**
@@ -477,10 +444,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       break;
     case LIST:
       menuItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_list_view);
-      menuItem.setChecked(true);
-      break;
-    case GRAPH_MANAGER:
-      menuItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_graph_view);
       menuItem.setChecked(true);
       break;
     case MAP:
@@ -521,22 +484,11 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       case DETAIL:
         this.showDetailFragment(createNew);
         break;
-      case GRAPH_MANAGER:
-        this.showGraphFragment(createNew);
-        break;
       case LIST:
         this.showListFragment(createNew);
         break;
       case MAP:
         this.showMapFragment(createNew);
-        break;
-      case GRAPH_VIEW:
-        String graphName = this.getIntent().getStringExtra(Constants.IntentKeys.GRAPH_NAME);
-        if (graphName == null) {
-          WebLogger.getLogger(getAppName()).e(TAG,
-              "[initializeDisplayFragment] graph name not present in bundle");
-        }
-        this.showGraphViewFragment(graphName, createNew);
         break;
       default:
         WebLogger.getLogger(getAppName()).e(TAG,
@@ -618,8 +570,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       return ViewFragmentType.SPREADSHEET;
     case MAP:
       return ViewFragmentType.MAP;
-    case GRAPH:
-      return ViewFragmentType.GRAPH_MANAGER;
     case LIST:
       return ViewFragmentType.LIST;
     default:
@@ -717,7 +667,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
           "[showSpreadsheetFragment] no existing spreadshseet " + "fragment found");
     } else {
       WebLogger.getLogger(getAppName()).d(TAG,
-          "[showSpreadsheetFragment] existing spreadsheet fragment " + "found");
+              "[showSpreadsheetFragment] existing spreadsheet fragment " + "found");
     }
     WebLogger.getLogger(getAppName())
         .d(TAG, "[showSpreadsheetFragment] createNew is: " + createNew);
@@ -751,27 +701,18 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     // First acquire all the possible fragments.
     Fragment spreadsheet = fragmentManager.findFragmentByTag(ViewFragmentType.SPREADSHEET.name());
     Fragment list = fragmentManager.findFragmentByTag(ViewFragmentType.LIST.name());
-    Fragment graphManager = fragmentManager.findFragmentByTag(ViewFragmentType.GRAPH_MANAGER.name());
     Fragment mapList = fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
     Fragment mapInner = fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_INNER_MAP);
     Fragment detailFragment = fragmentManager
         .findFragmentByTag(ViewFragmentType.DETAIL.name());
-    Fragment graphViewFragment = fragmentManager
-        .findFragmentByTag(ViewFragmentType.GRAPH_VIEW.name());
     if (fragmentToKeepVisible != ViewFragmentType.SPREADSHEET && spreadsheet != null) {
       fragmentTransaction.hide(spreadsheet);
     }
     if (fragmentToKeepVisible != ViewFragmentType.LIST && list != null) {
       fragmentTransaction.hide(list);
     }
-    if (fragmentToKeepVisible != ViewFragmentType.GRAPH_MANAGER && graphManager != null) {
-      fragmentTransaction.hide(graphManager);
-    }
     if (fragmentToKeepVisible != ViewFragmentType.DETAIL && detailFragment != null) {
       fragmentTransaction.hide(detailFragment);
-    }
-    if (fragmentToKeepVisible != ViewFragmentType.GRAPH_VIEW && graphViewFragment != null) {
-      fragmentTransaction.hide(graphViewFragment);
     }
     if (fragmentToKeepVisible != ViewFragmentType.MAP) {
       if (mapList != null) {
@@ -943,97 +884,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     return result;
   }
 
-  public void showGraphFragment() {
-    this.showGraphFragment(false);
-  }
-
-  public void showGraphFragment(boolean createNew) {
-    this.setCurrentFragmentType(ViewFragmentType.GRAPH_MANAGER);
-    this.updateChildViewVisibility(ViewFragmentType.GRAPH_MANAGER);
-    FragmentManager fragmentManager = this.getFragmentManager();
-    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-    this.hideAllOtherViewFragments(ViewFragmentType.GRAPH_MANAGER, fragmentTransaction);
-    // Try to retrieve the fragment if it already exists.
-    GraphManagerFragment graphManagerFragment = (GraphManagerFragment) fragmentManager
-        .findFragmentByTag(ViewFragmentType.GRAPH_MANAGER.name());
-    if (graphManagerFragment == null || createNew) {
-      if (graphManagerFragment == null) {
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "[showGraphFragment] existing graph fragment not found");
-      } else {
-        WebLogger.getLogger(getAppName()).d(TAG, "[showGraphFragment] removing old graph fragment");
-        fragmentTransaction.remove(graphManagerFragment);
-      }
-      graphManagerFragment = this.createGraphManagerFragment();
-      fragmentTransaction.add(R.id.activity_table_display_activity_one_pane_content,
-          graphManagerFragment, ViewFragmentType.GRAPH_MANAGER.name());
-    } else {
-      WebLogger.getLogger(getAppName()).d(TAG, "[showGraphFragment] existing graph fragment found");
-      fragmentTransaction.show(graphManagerFragment);
-    }
-    fragmentTransaction.commit();
-  }
-
-  /**
-   * Create a {@link GraphManagerFragment} that will be used by the activity.
-   * 
-   * @return
-   */
-  GraphManagerFragment createGraphManagerFragment() {
-    GraphManagerFragment result = new GraphManagerFragment();
-    return result;
-  }
-
-  public void showGraphViewFragment(String graphName) {
-    this.showGraphViewFragment(graphName, false);
-  }
-
-  public void showGraphViewFragment(String graphName, boolean createNew) {
-    WebLogger.getLogger(getAppName()).d(TAG, "[showGraphViewFragment] graph name: " + graphName);
-    this.setCurrentFragmentType(ViewFragmentType.GRAPH_VIEW);
-    this.updateChildViewVisibility(ViewFragmentType.GRAPH_VIEW);
-    // Try and use the default.
-    FragmentManager fragmentManager = this.getFragmentManager();
-    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-    this.hideAllOtherViewFragments(ViewFragmentType.GRAPH_VIEW, fragmentTransaction);
-    GraphViewFragment graphViewFragment = (GraphViewFragment) fragmentManager
-        .findFragmentByTag(ViewFragmentType.GRAPH_VIEW.name());
-    if (graphViewFragment == null || createNew) {
-      if (graphViewFragment != null) {
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "[showGraphViewFragment] removing old graphview fragment");
-        fragmentTransaction.remove(graphViewFragment);
-      } else {
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "[showGraphViewFragment] no existing graphview fragment found");
-      }
-      graphViewFragment = this.createGraphViewFragment(graphName);
-    } else {
-      // Add the value to the existing fragment so it displays the correct
-      // value.
-      Bundle arguments = new Bundle();
-      arguments.putString(Constants.IntentKeys.GRAPH_NAME, graphName);
-      graphViewFragment.getArguments().putAll(arguments);
-    }
-    fragmentTransaction.add(R.id.activity_table_display_activity_one_pane_content,
-        graphViewFragment, ViewFragmentType.GRAPH_VIEW.name());
-    fragmentTransaction.commit();
-  }
-
-  /**
-   * Create a {@link GraphViewFragment} to be added to the activity.
-   * 
-   * @param graphName
-   * @return
-   */
-  GraphViewFragment createGraphViewFragment(String graphName) {
-    GraphViewFragment result = new GraphViewFragment();
-    Bundle arguments = new Bundle();
-    arguments.putString(Constants.IntentKeys.GRAPH_NAME, graphName);
-    result.setArguments(arguments);
-    return result;
-  }
-
   public void showDetailFragment() throws RemoteException {
     this.showDetailFragment(false);
   }
@@ -1115,8 +965,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     View mapContent = this.findViewById(R.id.activity_table_display_activity_map_content);
     switch (viewFragmentType) {
     case DETAIL:
-    case GRAPH_MANAGER:
-    case GRAPH_VIEW:
     case LIST:
     case SPREADSHEET:
       onePaneContent.setVisibility(View.VISIBLE);
