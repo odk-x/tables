@@ -42,6 +42,8 @@ public class ControlIf {
 
   /**
    * Open the table with the given id.
+   *
+   * This synchronously launches an intent to open the table in its default view.
    * 
    * @see #query(String, String, String[])
    * @param tableId
@@ -63,7 +65,9 @@ public class ControlIf {
 
   /**
    * Open the given table with the given list view, restricted by given query.
-   * 
+   *
+   * This synchronously launches an intent to open the table in its list view.
+   *
    * @see #query(String, String, String[])
    * @see #openTable(String, String, String[])
    * @param tableId
@@ -88,7 +92,9 @@ public class ControlIf {
 
   /**
    * Open the given table to the map view, restricted with the given SQL query.
-   * 
+   *
+   * This synchronously launches an intent to open the table in its map view.
+   *
    * @see #query(String, String, String[])
    * @see #openTable(String, String, String[])
    * @param tableId
@@ -112,7 +118,9 @@ public class ControlIf {
 
   /**
    * Open the table to spreadsheet view, restricting by the given SQL query.
-   * 
+   *
+   * This synchronously launches an intent to open the table in its java spreadsheet view.
+   *
    * @see #query(String, String, String[])
    * @see #openTable(String, String, String[])
    * @param tableId
@@ -133,6 +141,16 @@ public class ControlIf {
   }
 
   /**
+   * CHANGE THIS TO ASYNC
+   * CHANGE THIS TO ASYNC
+   * CHANGE THIS TO ASYNC
+   * CHANGE THIS TO ASYNC
+   * CHANGE THIS TO ASYNC
+   * CHANGE THIS TO ASYNC
+   * CHANGE THIS TO ASYNC
+   * CHANGE THIS TO ASYNC
+   * CHANGE THIS TO ASYNC
+   *
    * Return a {@link TableDataIf} object for the given table id, where the rows
    * have been restricted by the query.
    * <p>
@@ -217,7 +235,9 @@ public class ControlIf {
 
   /**
    * Launch an arbitrary HTML file specified by filename.
-   * 
+   *
+   * This synchronously launches an intent to open the URL.
+   *
    * @param relativePath
    *          file name relative to the ODK Tables folder.
    * @return true if the file was launched, false if something went wrong
@@ -229,6 +249,8 @@ public class ControlIf {
 
   /**
    * Open the item specified by the index to the detail view.
+   *
+   * This synchronously launches an intent to open the rowId in its detail view
    * <p>
    * The relativePath parameter is optional, and if null an attempt will be made
    * to use the default file.
@@ -248,7 +270,9 @@ public class ControlIf {
 
   /**
    * Add a row using Collect and the default form.
-   * 
+   *
+   * This synchronously launches an intent to open ODK Collect to insert a new row in the table.
+   *
    * @param tableId
    *          the tableId of the table to receive the add.
    * @return true if the activity was launched, false if something went wrong
@@ -261,6 +285,8 @@ public class ControlIf {
 
   /**
    * Add a row using Collect, a specific form, and a map of prepopulated values.
+   *
+   * This synchronously launches an intent to open ODK Collect to insert a new row in the table.
    * <p>
    * The form must have been added to Collect and visible in the "Fill Blank
    * Forms" screen.
@@ -295,7 +321,9 @@ public class ControlIf {
 
   /**
    * Edit the given row using Collect.
-   * 
+   *
+   * This synchronously launches an intent to open ODK Collect to edit a row in the table.
+   *
    * @param tableId
    * @param rowId
    * @return true if the activity was launched, false if something went wrong
@@ -308,7 +336,9 @@ public class ControlIf {
 
   /**
    * Edit the given row using Collect and a specific form.
-   * 
+   *
+   * This synchronously launches an intent to open ODK Collect to edit a row in the table.
+   *
    * @param tableId
    * @param rowId
    * @param formId
@@ -335,7 +365,9 @@ public class ControlIf {
 
   /**
    * Edit the given row using Survey and the default form.
-   * 
+   *
+   * This synchronously launches an intent to open ODK Survey to edit a row in the table.
+   *
    * @param tableId
    * @param rowId
    * @return true if the activity was launched, false if something went wrong
@@ -347,7 +379,9 @@ public class ControlIf {
 
   /**
    * Edit the given row using Survey and a specific form.
-   * 
+   *
+   * This synchronously launches an intent to open ODK Survey to edit a row in the table.
+   *
    * @param tableId
    * @param rowId
    * @param formId
@@ -369,7 +403,9 @@ public class ControlIf {
 
   /**
    * Add a row with Survey and the default form.
-   * 
+   *
+   * This synchronously launches an intent to open ODK Survey to add a row in the table.
+   *
    * @param tableId
    *          the table to receive the add
    * @return true if Survey was launched, else false
@@ -381,7 +417,9 @@ public class ControlIf {
 
   /**
    * Add a row using Survey.
-   * 
+   *
+   * This synchronously launches an intent to open ODK Survey to add a row in the table.
+   *
    * @param tableId
    * @param formId
    *          if null, the default form will be used
@@ -461,6 +499,13 @@ public class ControlIf {
   }
 
   /**
+   * CHANGE TO ASYNC
+   * CHANGE TO ASYNC
+   * CHANGE TO ASYNC
+   * CHANGE TO ASYNC
+   * CHANGE TO ASYNC
+   * CHANGE TO ASYNC
+   *
    * Add a row to the table. Fails if the table cannot be found, if a column in
    * the stringifiedObject cannot be found, or if a value cannot be parsed to
    * the correct type.
@@ -496,6 +541,13 @@ public class ControlIf {
   }
 
   /**
+   * CHANGE TO ASYNC
+   * CHANGE TO ASYNC
+   * CHANGE TO ASYNC
+   * CHANGE TO ASYNC
+   * CHANGE TO ASYNC
+   * CHANGE TO ASYNC
+   *
    * Update the row specified by rowId. Fails if the table cannot be found, if a
    * column in the stringifiedObject cannot be found, or if a value cannot be
    * parsed to the correct type.

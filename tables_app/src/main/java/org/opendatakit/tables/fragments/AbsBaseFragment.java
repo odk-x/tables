@@ -51,7 +51,7 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
    * 
    * @return
    */
-  protected String getAppName() {
+  public String getAppName() {
     // we know this will succeed because of the check in onAttach
     AbsBaseActivity activity = (AbsBaseActivity) getActivity();
     return activity.getAppName();

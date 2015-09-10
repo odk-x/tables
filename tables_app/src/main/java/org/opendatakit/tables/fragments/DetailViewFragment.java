@@ -26,6 +26,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.tables.views.webkits.Data;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.app.Fragment;
@@ -88,6 +89,11 @@ public class DetailViewFragment extends AbsWebTableFragment {
         Control control = this.createControlObject();
         webView.addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(),
             Constants.JavaScriptHandles.CONTROL);
+        Data data;
+        data = this.getDataReference();
+        webView.addJavascriptInterface(
+                data.getJavascriptInterfaceWithWeakReference(),
+                Constants.JavaScriptHandles.DATAIF);
         TableData tableData = this.createDataObject();
         webView.addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(),
             Constants.JavaScriptHandles.DATA);
@@ -103,11 +109,14 @@ public class DetailViewFragment extends AbsWebTableFragment {
             Toast.LENGTH_LONG).show();
       }
     }
+    // TODO: when control changes, we probably don't need to do all the changes above.
+    super.databaseAvailable();
   }
   
   @Override
   public void databaseUnavailable() {
     setWebKitVisibility();
+    super.databaseUnavailable();
   }
 
   /**

@@ -17,7 +17,10 @@ package org.opendatakit.tables.fragments;
 
 import java.lang.ref.WeakReference;
 
+import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
@@ -34,6 +37,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.TextView;
+import org.opendatakit.tables.views.webkits.Data;
+import org.opendatakit.tables.views.webkits.ICallbackFragment;
 
 /**
  * Displays an HTML file that is not associated with a particular table.
@@ -43,10 +48,11 @@ import android.widget.TextView;
  * @author sudar.sam@gmail.com
  *
  */
-public class WebFragment extends AbsBaseFragment implements IWebFragment {
+public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallbackFragment {
   
   private static final String TAG = WebFragment.class.getSimpleName();
-  
+  private static final String RESPONSE_JSON = "responseJSON";
+
   private static final int ID = R.layout.web_view_container;
   
   /** The name of the file this fragment is displaying. */
@@ -58,6 +64,11 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
    * in {@link ControlIf}.
    */
   protected Control mControlReference;
+
+  protected Data mDataReference;
+  String responseJSON = null;
+
+  private DatabaseConnectionListener listener = null;
 
   @Override
   public String retrieveFileNameFromBundle(Bundle bundle) {
@@ -85,12 +96,18 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
       retrievedFileName = this.retrieveFileNameFromBundle(this.getArguments());
     }
     this.mFileName = retrievedFileName;
+    if ( savedInstanceState != null && savedInstanceState.containsKey(RESPONSE_JSON)) {
+      responseJSON = savedInstanceState.getString(RESPONSE_JSON);
+    }
   }
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     putFileNameInBundle(outState);
+    if ( responseJSON != null ) {
+      outState.putString(RESPONSE_JSON, responseJSON);
+    }
   }
   
   @Override
@@ -137,6 +154,15 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
   }
 
   @Override
+  public Data getDataReference() {
+    if ( mDataReference == null ) {
+      mDataReference = new Data(this);
+    }
+    return mDataReference;
+  }
+
+
+  @Override
   public void setWebKitVisibility() {
     if ( getView() == null ) {
       return;
@@ -163,11 +189,16 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
       if ( control == null ) {
         return;
       }
-      
+
       WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
       webView.addJavascriptInterface(
           control.getJavascriptInterfaceWithWeakReference(),
           Constants.JavaScriptHandles.CONTROL);
+      setWebKitVisibility();
+      Data data = this.getDataReference();
+      webView.addJavascriptInterface(
+              data.getJavascriptInterfaceWithWeakReference(),
+              Constants.JavaScriptHandles.DATAIF);
       setWebKitVisibility();
       // save the strong reference
       this.mControlReference = control;
@@ -177,11 +208,48 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
           webView,
           this.getFileName());
     }
+
+    if ( listener != null ) {
+      listener.databaseAvailable();
+    }
   }
 
   @Override
   public void databaseUnavailable() {
     setWebKitVisibility();
+    if ( listener != null ) {
+      listener.databaseUnavailable();
+    }
   }
-  
+
+  @Override
+  public void signalResponseAvailable(String responseJSON) {
+    // TODO: this should be a queue of responses
+    this.responseJSON = responseJSON;
+    final WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
+    this.getActivity().runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        webView.loadUrl("javascript:datarsp.responseAvailable();");
+      }
+    });
+  }
+
+  @Override
+  public String getResponseJSON() {
+    // TODO: this should be a queue of responses
+    String responseJSON = this.responseJSON;
+    this.responseJSON = null;
+    return responseJSON;
+  }
+
+  @Override
+  public void registerDatabaseConnectionBackgroundListener(DatabaseConnectionListener listener) {
+    this.listener = listener;
+  }
+
+  @Override
+  public OdkDbInterface getDatabase() {
+    return ((CommonApplication) this.getActivity().getApplication()).getDatabase();
+  }
 }

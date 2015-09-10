@@ -17,17 +17,17 @@ package org.opendatakit.tables.fragments;
 
 import java.lang.ref.WeakReference;
 
+import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
-import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.ControlIf;
-import org.opendatakit.tables.views.webkits.TableData;
-import org.opendatakit.tables.views.webkits.TableDataIf;
+import org.opendatakit.tables.views.webkits.*;
 
 import android.app.Fragment;
 import android.os.Bundle;
@@ -40,14 +40,15 @@ import android.widget.TextView;
 
 /**
  * Base class for {@link Fragment}s that display information about a table
- * using a {@link CustomView}.
+ * using a WebKit view.
  * @author sudar.sam@gmail.com
  *
  */
 public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
-    implements IWebFragment {
+    implements IWebFragment, ICallbackFragment {
 
   private static final String TAG = AbsWebTableFragment.class.getSimpleName();
+  private static final String RESPONSE_JSON = "responseJSON";
   /**
    * The {@link Control} object that was used to generate the
    * {@link ControlIf} that was passed to the {@link WebView}. This reference
@@ -55,6 +56,10 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    * in {@link ControlIf}.
    */
   Control mControlReference;
+  Data mDataReference;
+  String responseJSON = null;
+
+  DatabaseConnectionListener listener = null;
   /**
    * The {@link TableData} object that was used to generate the
    * {@link TableDataIf} that was passed to the {@link WebView}. This reference
@@ -94,12 +99,18 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
       retrievedFileName = this.retrieveFileNameFromBundle(this.getArguments());
     }
     this.mFileName = retrievedFileName;
+    if ( savedInstanceState != null && savedInstanceState.containsKey(RESPONSE_JSON)) {
+      responseJSON = savedInstanceState.getString(RESPONSE_JSON);
+    }
   }
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     this.putFileNameInBundle(outState);
+    if ( responseJSON != null ) {
+      outState.putString(RESPONSE_JSON, responseJSON);
+    }
   }
 
   @Override
@@ -133,9 +144,16 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   /**
    * Create a {@link TableData} object that can be added toe the webview.
    * @return
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   protected abstract TableData createDataObject() throws RemoteException;
+
+  public Data getDataReference() throws RemoteException {
+    if ( mDataReference == null ) {
+      mDataReference = new Data(this);
+    }
+    return mDataReference;
+  }
 
   @Override
   public void setWebKitVisibility() {
@@ -167,5 +185,51 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   public void setFileName(String relativeFileName) {
     this.mFileName = relativeFileName;
     databaseAvailable();
+  }
+
+
+  @Override
+  public void databaseAvailable() {
+    if ( listener != null ) {
+      listener.databaseAvailable();
+    }
+  }
+
+  @Override
+  public void databaseUnavailable() {
+    if ( listener != null ) {
+      listener.databaseUnavailable();
+    }
+  }
+
+  @Override
+  public void signalResponseAvailable(String responseJSON) {
+    // TODO: this should be a queue of responses
+    this.responseJSON = responseJSON;
+    final WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
+    this.getActivity().runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        webView.loadUrl("javascript:datarsp.responseAvailable();");
+      }
+    });
+  }
+
+  @Override
+  public String getResponseJSON() {
+    // TODO: this should be a queue of responses
+    String responseJSON = this.responseJSON;
+    this.responseJSON = null;
+    return responseJSON;
+  }
+
+  @Override
+  public void registerDatabaseConnectionBackgroundListener(DatabaseConnectionListener listener) {
+    this.listener = listener;
+  }
+
+  @Override
+  public OdkDbInterface getDatabase() {
+    return ((CommonApplication) this.getActivity().getApplication()).getDatabase();
   }
 }

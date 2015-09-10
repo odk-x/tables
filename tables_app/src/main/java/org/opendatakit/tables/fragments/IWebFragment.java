@@ -20,6 +20,7 @@ import org.opendatakit.tables.views.webkits.Control;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.os.RemoteException;
+import org.opendatakit.tables.views.webkits.Data;
 
 /**
  * Interface defining behavior for those {@link Fragment}s that display a
@@ -65,7 +66,14 @@ public interface IWebFragment {
    * @throws RemoteException 
    */
   public Control createControlObject() throws RemoteException;
-  
+
+  /**
+   * Access the data if object for injection into JS
+   * @return
+   * @throws RemoteException
+   */
+  public Data getDataReference() throws RemoteException;
+
   /**
    * Toggles visibility of the "database unavailable" text box and 
    * the webkit based upon the accessibility of the database.

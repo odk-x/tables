@@ -237,6 +237,8 @@ public class Constants {
     public static final String CONTROL = "control";
     public static final String DATA = "data";
     public static final String GRAPH = "graph_data";
+    // new data interface
+    public static final String DATAIF = "dataif";
   }
 
 }
