@@ -38,6 +38,15 @@ public interface ICallbackFragment {
    */
   public String getResponseJSON();
 
+  /**
+   * Return a new ExecutorProcessor that will be able to process data off the
+   * ExecutorContext queue.
+   *
+   * @param context
+   * @return
+   */
+  public ExecutorProcessor newExecutorProcessor(ExecutorContext context);
+
     /**
      * The fragment should remember this listener and notify it of any databse connection
      * status changes.  There will be only one database connection listener registered at

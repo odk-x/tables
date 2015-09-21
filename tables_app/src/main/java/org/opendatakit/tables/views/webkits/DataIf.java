@@ -63,8 +63,11 @@ import java.lang.ref.WeakReference;
  * The metadata object contains:
  * <ul><li>rowIdMap -- mapping rowId to an index in the data array</li>
  * <li>elementKeyMap -- mapping elementKey to an index in the row field array</li>
- * <li>orderedColumns -- if not rawQuery; the ordered column defns for this tableId</li>
- * <li>keyValueStoreMap -- if not rawQuery; optional KeyValueStore content for this tableId</li>
+ * <li>orderedColumns -- if not rawQuery; the ordered column defns for this tableId,
+ * This is a map of elementName to the extended JS schema struct for that element.</li>
+ * <li>keyValueStoreList -- if not rawQuery; optional KeyValueStore content for this tableId.
+ * This is a list of objects [ { dimension: , aspect: , key:, type:, value:}, ...] with integer, boolean and
+ * number types converted to JS representation. Arrays and objects are left as strings for JS decoding.</li>
  * <li>other tool-specific optional fields such as computed row and column colors or extended content</li></ul>
  *
  * The rawQuery result just has the first two entries.

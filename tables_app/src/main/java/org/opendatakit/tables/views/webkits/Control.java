@@ -64,7 +64,7 @@ public class Control {
   protected Map<String, OrderedColumns> mCachedOrderedDefns = new HashMap<String, OrderedColumns>();
   protected List<String> mTableIds;
 
-  public Object getJavascriptInterfaceWithWeakReference() {
+  public ControlIf getJavascriptInterfaceWithWeakReference() {
     return new ControlIf(this);
   }
 

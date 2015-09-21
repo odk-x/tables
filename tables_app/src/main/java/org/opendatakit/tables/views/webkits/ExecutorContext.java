@@ -70,16 +70,26 @@ public class ExecutorContext implements DatabaseConnectionListener {
     private Map<String, OdkDbHandle> activeConnections = new HashMap<String, OdkDbHandle>();
     private Map<String, OrderedColumns> mCachedOrderedDefns = new HashMap<String, OrderedColumns>();
 
-    ExecutorContext(ICallbackFragment fragment) {
+    private ExecutorContext(ICallbackFragment fragment) {
         this.fragment = fragment;
         updateCurrentContext(this);
     }
 
+    public static synchronized ExecutorContext getContext(ICallbackFragment fragment) {
+      if ( currentContext != null && (currentContext.fragment == fragment)) {
+        return currentContext;
+      } else {
+        return new ExecutorContext(fragment);
+      }
+    }
+
     public synchronized void queueRequest(ExecutorRequest request) {
+      if ( !worker.isTerminated() ) {
         // push the request
         workQueue.push(request);
         // signal executor that there is work
-        worker.execute(new ExecutorProcessor(this));
+        worker.execute(fragment.newExecutorProcessor(this));
+      }
     }
 
     public synchronized ExecutorRequest peekRequest() {
@@ -91,10 +101,10 @@ public class ExecutorContext implements DatabaseConnectionListener {
     }
 
     public synchronized void popRequest() {
-        if ( !workQueue.isEmpty() ) {
+        if ( !worker.isTerminated() && !workQueue.isEmpty() ) {
             workQueue.removeFirst();
             // signal that we have work...
-            worker.execute(new ExecutorProcessor(this));
+            worker.execute(fragment.newExecutorProcessor(this));
         }
     }
 
@@ -113,9 +123,11 @@ public class ExecutorContext implements DatabaseConnectionListener {
             // close connection
         }
         while (!workQueue.isEmpty()) {
-            ExecutorRequest req = workQueue.peekFirst();
-            reportError(req.callbackJSON, null, "shutting down worker (" + reason + ") -- rolling back all transactions and releasing all connections");
-            workQueue.pop();
+            ExecutorRequest req = peekRequest();
+            if ( req != null ) {
+              reportError(req.callbackJSON, null, "shutting down worker (" + reason + ") -- rolling back all transactions and releasing all connections");
+              workQueue.pop();
+            }
         }
     }
 
@@ -191,7 +203,9 @@ public class ExecutorContext implements DatabaseConnectionListener {
     @Override
     public void databaseAvailable() {
         // we might have drained the queue -- or not.
-        worker.execute(new ExecutorProcessor(this));
+        if ( !worker.isTerminated()) {
+          worker.execute(fragment.newExecutorProcessor(this));
+        }
     }
 
     @Override

@@ -50,20 +50,19 @@ public class AbsWebTableFragmentStub extends AbsWebTableFragment {
 
   @Override
   protected TableData createDataObject() {
+    // TODO: this goes away...
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public void databaseAvailable() {
-    // TODO Auto-generated method stub
-    
+    // we assume the service connection is mocked and does not require any of these calls
   }
 
   @Override
   public void databaseUnavailable() {
-    // TODO Auto-generated method stub
-    
+    // we assume the service connection is mocked and does not require any of these calls
   }
 
 }

@@ -16,6 +16,8 @@
 package org.opendatakit.tables.fragments;
 
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
@@ -57,7 +59,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    */
   Control mControlReference;
   Data mDataReference;
-  String responseJSON = null;
+  LinkedList<String> queueResponseJSON = new LinkedList<String>();
 
   DatabaseConnectionListener listener = null;
   /**
@@ -100,7 +102,8 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     }
     this.mFileName = retrievedFileName;
     if ( savedInstanceState != null && savedInstanceState.containsKey(RESPONSE_JSON)) {
-      responseJSON = savedInstanceState.getString(RESPONSE_JSON);
+      String[] pendingResponseJSON = savedInstanceState.getStringArray(RESPONSE_JSON);
+      queueResponseJSON.addAll(Arrays.asList(pendingResponseJSON));
     }
   }
 
@@ -108,8 +111,9 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     this.putFileNameInBundle(outState);
-    if ( responseJSON != null ) {
-      outState.putString(RESPONSE_JSON, responseJSON);
+    if ( !queueResponseJSON.isEmpty() ) {
+      String[] qra = queueResponseJSON.toArray(new String[queueResponseJSON.size()]);
+      outState.putStringArray(RESPONSE_JSON, qra);
     }
   }
 
@@ -204,8 +208,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
 
   @Override
   public void signalResponseAvailable(String responseJSON) {
-    // TODO: this should be a queue of responses
-    this.responseJSON = responseJSON;
+    this.queueResponseJSON.push(responseJSON);
     final WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
     this.getActivity().runOnUiThread(new Runnable() {
       @Override
@@ -217,10 +220,16 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
 
   @Override
   public String getResponseJSON() {
-    // TODO: this should be a queue of responses
-    String responseJSON = this.responseJSON;
-    this.responseJSON = null;
+    if ( queueResponseJSON.isEmpty() ) {
+      return null;
+    }
+    String responseJSON = queueResponseJSON.removeFirst();
     return responseJSON;
+  }
+
+  @Override
+  public ExecutorProcessor newExecutorProcessor(ExecutorContext context) {
+    return new TableDataExecutorProcessor(context);
   }
 
   @Override

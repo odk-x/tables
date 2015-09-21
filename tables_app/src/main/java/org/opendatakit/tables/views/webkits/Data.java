@@ -19,19 +19,19 @@ public class Data {
 
     private final ICallbackFragment mFragment;
 
-    // TODO: make this true
     private final ExecutorContext context;
 
     public Data(ICallbackFragment fragment) {
       mFragment = fragment;
-      context = new ExecutorContext(mFragment);
+      // change to support multiple data objects within a single webpage
+      context = ExecutorContext.getContext(mFragment);
     }
 
     private void queueRequest(ExecutorRequest request) {
         context.queueRequest(request);
     }
 
-    public Object getJavascriptInterfaceWithWeakReference()
+    public DataIf getJavascriptInterfaceWithWeakReference()
     {
         return new DataIf(this);
     }

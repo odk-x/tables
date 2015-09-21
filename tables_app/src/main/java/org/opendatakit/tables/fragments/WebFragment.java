@@ -16,6 +16,8 @@
 package org.opendatakit.tables.fragments;
 
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
@@ -27,8 +29,7 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
-import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.ControlIf;
+import org.opendatakit.tables.views.webkits.*;
 
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -37,8 +38,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.TextView;
-import org.opendatakit.tables.views.webkits.Data;
-import org.opendatakit.tables.views.webkits.ICallbackFragment;
 
 /**
  * Displays an HTML file that is not associated with a particular table.
@@ -66,7 +65,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
   protected Control mControlReference;
 
   protected Data mDataReference;
-  String responseJSON = null;
+  LinkedList<String> queueResponseJSON = new LinkedList<String>();
 
   private DatabaseConnectionListener listener = null;
 
@@ -97,7 +96,8 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
     }
     this.mFileName = retrievedFileName;
     if ( savedInstanceState != null && savedInstanceState.containsKey(RESPONSE_JSON)) {
-      responseJSON = savedInstanceState.getString(RESPONSE_JSON);
+      String[] pendingResponseJSON = savedInstanceState.getStringArray(RESPONSE_JSON);
+      queueResponseJSON.addAll(Arrays.asList(pendingResponseJSON));
     }
   }
 
@@ -105,8 +105,9 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     putFileNameInBundle(outState);
-    if ( responseJSON != null ) {
-      outState.putString(RESPONSE_JSON, responseJSON);
+    if ( !queueResponseJSON.isEmpty() ) {
+      String[] qra = queueResponseJSON.toArray(new String[queueResponseJSON.size()]);
+      outState.putStringArray(RESPONSE_JSON, qra);
     }
   }
   
@@ -224,8 +225,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
 
   @Override
   public void signalResponseAvailable(String responseJSON) {
-    // TODO: this should be a queue of responses
-    this.responseJSON = responseJSON;
+    this.queueResponseJSON.push(responseJSON);
     final WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
     this.getActivity().runOnUiThread(new Runnable() {
       @Override
@@ -237,12 +237,17 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
 
   @Override
   public String getResponseJSON() {
-    // TODO: this should be a queue of responses
-    String responseJSON = this.responseJSON;
-    this.responseJSON = null;
+    if ( queueResponseJSON.isEmpty() ) {
+      return null;
+    }
+    String responseJSON = queueResponseJSON.removeFirst();
     return responseJSON;
   }
 
+  @Override
+  public ExecutorProcessor newExecutorProcessor(ExecutorContext context) {
+    return new TableDataExecutorProcessor(context);
+  }
   @Override
   public void registerDatabaseConnectionBackgroundListener(DatabaseConnectionListener listener) {
     this.listener = listener;
