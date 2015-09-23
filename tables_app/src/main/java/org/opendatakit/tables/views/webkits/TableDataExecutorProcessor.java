@@ -15,6 +15,8 @@
 package org.opendatakit.tables.views.webkits;
 
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.views.ExecutorContext;
+import org.opendatakit.common.android.views.ExecutorProcessor;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 
 import java.util.List;

@@ -17,6 +17,7 @@ package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.views.Data;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -26,7 +27,6 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.Data;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.app.Fragment;

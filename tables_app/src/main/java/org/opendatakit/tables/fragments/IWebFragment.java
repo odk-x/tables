@@ -15,12 +15,12 @@
  */
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.common.android.views.Data;
 import org.opendatakit.tables.views.webkits.Control;
 
 import android.app.Fragment;
 import android.os.Bundle;
 import android.os.RemoteException;
-import org.opendatakit.tables.views.webkits.Data;
 
 /**
  * Interface defining behavior for those {@link Fragment}s that display a

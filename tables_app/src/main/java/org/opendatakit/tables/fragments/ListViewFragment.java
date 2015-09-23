@@ -17,12 +17,12 @@ package org.opendatakit.tables.fragments;
 
 import org.opendatakit.androidcommon.R;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.views.Data;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.Data;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.app.Fragment;
