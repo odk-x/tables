@@ -15,10 +15,14 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.LinkedList;
-
+import android.app.Fragment;
+import android.os.Bundle;
+import android.os.RemoteException;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.widget.TextView;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -33,16 +37,11 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
-
-import android.app.Fragment;
-import android.os.Bundle;
-import android.os.RemoteException;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.webkit.WebView;
-import android.widget.TextView;
 import org.opendatakit.tables.views.webkits.*;
+
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 /**
  * Base class for {@link Fragment}s that display information about a table
@@ -212,7 +211,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
 
   @Override
   public void signalResponseAvailable(String responseJSON) {
-    this.queueResponseJSON.push(responseJSON);
+    this.queueResponseJSON.add(responseJSON);
     final WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
     this.getActivity().runOnUiThread(new Runnable() {
       @Override

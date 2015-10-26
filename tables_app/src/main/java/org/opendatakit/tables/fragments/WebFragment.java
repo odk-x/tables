@@ -15,10 +15,13 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.LinkedList;
-
+import android.os.Bundle;
+import android.os.RemoteException;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.widget.TextView;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -33,15 +36,13 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
-import org.opendatakit.tables.views.webkits.*;
+import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.tables.views.webkits.ControlIf;
+import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
 
-import android.os.Bundle;
-import android.os.RemoteException;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.webkit.WebView;
-import android.widget.TextView;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 /**
  * Displays an HTML file that is not associated with a particular table.
@@ -229,12 +230,18 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
 
   @Override
   public void signalResponseAvailable(String responseJSON) {
-    this.queueResponseJSON.push(responseJSON);
+    this.queueResponseJSON.add(responseJSON);
+    View vw = getView();
+    if (vw == null) {
+      return;
+    }
     final WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
     this.getActivity().runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        webView.loadUrl("javascript:datarsp.responseAvailable();");
+        if (webView != null) {
+          webView.loadUrl("javascript:datarsp.responseAvailable();");
+        }
       }
     });
   }
