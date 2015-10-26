@@ -137,7 +137,7 @@ public class WebViewUtil {
       ArrayList<Map<String, Object>> choices;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
             Tables.getInstance(), appName, db, tableId, colDefn.getElementKey());
       } finally {
@@ -185,11 +185,14 @@ public class WebViewUtil {
    * Turn the map into a {@link ContentValues} object. Returns null if any of
    * the element keys do not exist in the table, or if the value cannot be
    * parsed to the type of the column.
-   * 
-   * @param tableProperties
+   *
+   * @param context
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
    * @param elementKeyToValue
    * @return
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   public static ContentValues getContentValuesFromMap(Context context, String appName,
       String tableId, OrderedColumns orderedDefns, Map<String, String> elementKeyToValue) throws RemoteException {
@@ -292,11 +295,14 @@ public class WebViewUtil {
   /**
    * Retrieve a map of element key to value for each of the columns in the row
    * specified by rowId.
-   * 
-   * @param tableProperties
+   *
+   * @param context
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
    * @param rowId
    * @return
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   public static Map<String, String> getMapOfElementKeyToValue(Context context, String appName,
       String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
@@ -306,7 +312,7 @@ public class WebViewUtil {
     {
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
 
         adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
         userTable = Tables.getInstance().getDatabase()

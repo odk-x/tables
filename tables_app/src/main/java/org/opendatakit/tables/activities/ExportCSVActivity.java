@@ -183,7 +183,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
       try {
         List<String> rawTableIds = Collections.emptyList();
         ArrayList<String> localizedNames = new ArrayList<String>();
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         rawTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
         for (String tableId : rawTableIds) {
           String localizedDisplayName;

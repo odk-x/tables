@@ -212,7 +212,7 @@ public class CollectUtil {
       String localizedDisplayName;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
       } finally {
         if (db != null) {
@@ -318,7 +318,7 @@ public class CollectUtil {
 
         db = null;
         try {
-          db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+          db = Tables.getInstance().getDatabase().openDatabase(appName);
           localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId,
               cd.getElementKey());
         } finally {
@@ -886,7 +886,7 @@ public class CollectUtil {
     String localizedDisplayName;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
     } finally {
       if (db != null) {
@@ -1285,7 +1285,7 @@ public class CollectUtil {
         ArrayList<Map<String, Object>> choices;
         OdkDbHandle db = null;
         try {
-          db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+          db = Tables.getInstance().getDatabase().openDatabase(appName);
           choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
               Tables.getInstance(), appName, db,
               tableId, cd.getElementKey());
@@ -1434,7 +1434,7 @@ public class CollectUtil {
     OrderedColumns orderedDefns;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);
 
       ContentValues values = CollectUtil.getMapForInsertion(context, appName, tableId,
@@ -1539,7 +1539,7 @@ public class CollectUtil {
     OrderedColumns orderedDefns;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);
 
       ContentValues values = CollectUtil.getMapForInsertion(context, appName, tableId,
@@ -1747,7 +1747,7 @@ public class CollectUtil {
       String localizedDisplayName;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
       } finally {
         if (db != null) {
@@ -1783,7 +1783,7 @@ public class CollectUtil {
       String localizedDisplayName;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
         KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, tableId, CollectUtil.KVS_PARTITION);
         KeyValueHelper aspectHelper = kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);

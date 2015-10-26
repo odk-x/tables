@@ -94,7 +94,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     if ( Tables.getInstance().getDatabase() != null ) {
       
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
   
         List<String> tableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
   
@@ -196,16 +196,14 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           // treat delete as a local removal -- not a server side deletion
-          boolean successful = false;
           OdkDbHandle db = null;
           try {
             try {
-              db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+              db = Tables.getInstance().getDatabase().openDatabase(appName);
               Tables.getInstance().getDatabase().deleteDBTableAndAllData(appName, db, tableIdOfSelectedItem);
-              successful = true;
             } finally {
               if (db != null) {
-                Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
+                Tables.getInstance().getDatabase().closeDatabase(appName, db);
               }
             }
             // Now update the list.

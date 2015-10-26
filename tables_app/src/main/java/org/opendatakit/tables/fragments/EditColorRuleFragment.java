@@ -148,7 +148,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     super.onResume();
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       this.initializeStateRequiringContext(db);
       this.initializeAllPreferences(db);
     } catch (RemoteException e) {
@@ -282,7 +282,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
         String localizedDisplayName = null;
         OdkDbHandle db = null;
         try {
-          db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+          db = Tables.getInstance().getDatabase().openDatabase(getAppName());
           localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
               db, getTableId(),
               mElementKey);

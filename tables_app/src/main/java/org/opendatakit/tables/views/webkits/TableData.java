@@ -219,7 +219,7 @@ public class TableData {
       // If it's not already there, cache it for future use.
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(mTable.getAppName(), false);
+        db = Tables.getInstance().getDatabase().openDatabase(mTable.getAppName());
         String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
         colRul = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(),
             mTable.getAppName(), db, mTable.getTableId(), elementKey, adminColumns);
@@ -247,7 +247,7 @@ public class TableData {
     if (mStatusColumnColorRuleGroup == null) {
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(mTable.getAppName(), false);
+        db = Tables.getInstance().getDatabase().openDatabase(mTable.getAppName());
         String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
         mStatusColumnColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(),
           mTable.getAppName(), db, mTable.getTableId(), adminColumns);
@@ -274,7 +274,7 @@ public class TableData {
     if (mRowColorRuleGroup == null) {
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(mTable.getAppName(), false);
+        db = Tables.getInstance().getDatabase().openDatabase(mTable.getAppName());
         String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
         mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(),
             mTable.getAppName(), db, mTable.getTableId(), adminColumns);

@@ -92,7 +92,7 @@ public class PreferenceUtil {
     Integer result;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       KeyValueStoreHelper kvsh =
           new KeyValueStoreHelper(Tables.getInstance(), appName, db,
               tableId, KeyValueStoreConstants.PARTITION_COLUMN);

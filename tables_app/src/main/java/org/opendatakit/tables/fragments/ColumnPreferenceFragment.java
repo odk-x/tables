@@ -113,7 +113,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     String rawDisplayName;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       rawDisplayName = ColumnUtil.get().getRawDisplayName(Tables.getInstance(), getAppName(), 
           db, getTableId(), 
           this.retrieveColumnDefinition().getElementKey());

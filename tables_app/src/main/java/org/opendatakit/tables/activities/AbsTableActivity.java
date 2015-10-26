@@ -68,7 +68,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
       CommonApplication app = (CommonApplication) getApplication();
       OdkDbHandle db = null;
       try {
-        db = app.getDatabase().openDatabase(getAppName(), false);
+        db = app.getDatabase().openDatabase(getAppName());
         mColumnDefinitions = app.getDatabase().getUserDefinedColumns(getAppName(), db, getTableId());
       } catch (RemoteException e) {
         WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to access database.");

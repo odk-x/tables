@@ -53,7 +53,7 @@ public class FormType {
     String formType;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db,
           tableId, FormType.KVS_PARTITION);
       KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);

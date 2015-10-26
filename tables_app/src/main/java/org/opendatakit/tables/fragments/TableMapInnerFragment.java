@@ -296,7 +296,7 @@ public class TableMapInnerFragment extends MapFragment {
 
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(activity.getAppName(), false);
+      db = Tables.getInstance().getDatabase().openDatabase(activity.getAppName());
       
       // get the elementKey for the latitude and longitude columns
       mLatitudeElementKey = getLatitudeElementKey(db);

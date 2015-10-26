@@ -105,7 +105,7 @@ public class OutputUtil {
 
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       List<String> tableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
       for (String tableId : tableIds) {
 
@@ -318,7 +318,7 @@ public class OutputUtil {
 
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       List<String> tableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
       for (String tableId : tableIds) {
         writeDataObject(context, appName, db, tableId, numberOfRows);

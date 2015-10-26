@@ -91,7 +91,7 @@ public class Control {
     String appName = mActivity.getAppName();
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       this.mTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
     } finally {
       if (db != null) {
@@ -392,7 +392,7 @@ public class Control {
       String localizedDisplayName;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId, elementKey);
       } finally {
         if (db != null) {
@@ -417,7 +417,7 @@ public class Control {
     String localizedDisplayName;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
     } finally {
       if (db != null) {
@@ -598,7 +598,7 @@ public class Control {
     } else {
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         orderedDefns = retrieveColumnDefinitions(db, tableId);
       } finally {
         if (db != null) {
@@ -725,7 +725,7 @@ public class Control {
     } else {
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         orderedDefns = retrieveColumnDefinitions(db, tableId);
       } finally {
         if (db != null) {
@@ -850,7 +850,7 @@ public class Control {
     } else {
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         orderedDefns = retrieveColumnDefinitions(db, tableId);
       } finally {
         if (db != null) {
@@ -871,7 +871,7 @@ public class Control {
       String localizedDisplayName;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
       } finally {
         if (db != null) {
@@ -898,7 +898,7 @@ public class Control {
     }
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       OrderedColumns orderedDefns = retrieveColumnDefinitions(db, tableId);
       String[] emptyArray = {};
       UserTable userTable = Tables.getInstance().getDatabase().rawSqlQuery(appName, db,

@@ -119,7 +119,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     String localizedDisplayName;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
     } catch (RemoteException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
@@ -155,7 +155,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     String rawDisplayName;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       rawDisplayName = TableUtil.get().getRawDisplayName(appName, db, tableId);
     } catch (RemoteException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
@@ -236,7 +236,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     TableViewType type;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       type = TableUtil.get().getDefaultViewType(appName, db, tableId);
 
       viewTypePref.setValue(type.name());

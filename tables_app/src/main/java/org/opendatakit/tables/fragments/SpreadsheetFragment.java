@@ -382,7 +382,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       ArrayList<JoinColumn> joinColumns;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         joinColumns = ColumnUtil.get().getJoins(Tables.getInstance(), getAppName(), db, getTableId(), cd.getElementKey());
       } catch (RemoteException e) {
         WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
@@ -441,7 +441,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           String joinedColTableDisplayName;
           db = null;
           try {
-            db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+            db = Tables.getInstance().getDatabase().openDatabase(getAppName());
             joinedColTableDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(), 
                 db, tableId,
                 elementKey);
@@ -567,7 +567,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     String localizedDisplayName;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
           db, getTableId(),
           cd.getElementKey());
@@ -603,7 +603,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     ArrayList<JoinColumn> joinColumns;
     db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       joinColumns = ColumnUtil.get().getJoins(Tables.getInstance(), getAppName(), 
           db, getTableId(), cd.getElementKey());
     } finally {
@@ -638,7 +638,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     ArrayList<String> groupByColumns;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       sortColumn = TableUtil.get().getSortColumn(getAppName(), db, getTableId());
       indexColumn = TableUtil.get().getIndexColumn(getAppName(), db, getTableId());
       groupByColumns = TableUtil.get().getColumnOrder(getAppName(), db, getTableId());

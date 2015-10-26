@@ -201,7 +201,7 @@ public class DisplayPrefsActivity extends BasePreferenceActivity {
     String localizedDisplayName;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
     } finally {
       if ( db != null ) {

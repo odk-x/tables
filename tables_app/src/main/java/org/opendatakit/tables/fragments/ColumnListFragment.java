@@ -100,7 +100,7 @@ public class ColumnListFragment extends ListFragment {
     TableColumns tc = null;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       tc = TableUtil.get().getTableColumns(appName, db, activity.getTableId());
 
       ArrayList<String> colOrder;

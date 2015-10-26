@@ -109,7 +109,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
     }
     
     try {
-      db = app.getDatabase().openDatabase(mAppName, false);
+      db = app.getDatabase().openDatabase(mAppName);
       List<TableHealthInfo> tableHealthList = app.getDatabase().getTableHealthStatuses(mAppName, db);
       
       Bundle checkpointTables = new Bundle();

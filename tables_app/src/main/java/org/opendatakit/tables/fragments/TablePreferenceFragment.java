@@ -179,7 +179,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
   protected void initializeAllPreferences() throws RemoteException {
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
 
       this.initializeDisplayNamePreference(db);
       this.initializeTableIdPreference();

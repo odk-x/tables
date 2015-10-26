@@ -54,7 +54,7 @@ public class ExportTask
         OdkDbHandle db = null;
         try {
           String tableId = request.getTableId();
-          db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+          db = Tables.getInstance().getDatabase().openDatabase(appName);
           OrderedColumns orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);          // export goes to output/csv directory...
           return cu.exportSeparable(this, db, tableId, orderedDefns, request.getFileQualifier());
         } catch (RemoteException e) {

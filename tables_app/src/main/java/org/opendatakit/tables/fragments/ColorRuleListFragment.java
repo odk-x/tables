@@ -122,7 +122,7 @@ public class ColorRuleListFragment extends ListFragment {
     TableColumns tc = null;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
 
       tc = TableUtil.get().getTableColumns(getAppName(), db, getTableId());
       for (ColumnDefinition cd : tc.orderedDefns.getColumnDefinitions()) {

@@ -134,7 +134,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     String appName = table.getAppName();
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
       for (ColumnDefinition cd : table.getColumnDefinitions().getColumnDefinitions()) {
         mElementKeyToColorRuleGroup.put(cd.getElementKey(),

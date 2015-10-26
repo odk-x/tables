@@ -57,7 +57,7 @@ public class SpreadsheetUserTable {
     ArrayList<String> colOrder;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(frag.getAppName(), false);
+      db = Tables.getInstance().getDatabase().openDatabase(frag.getAppName());
       colOrder = TableUtil.get().getColumnOrder(frag.getAppName(), db, frag.getTableId());
       indexColumnElementKey = TableUtil.get().getIndexColumn(getAppName(), db, getTableId());
 

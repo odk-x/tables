@@ -494,7 +494,7 @@ public class SurveyUtil {
       String formId;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
         KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName,
             db, tableId, SurveyUtil.KVS_PARTITION);
         KeyValueHelper aspectHelper = kvsh.getAspectHelper(SurveyUtil.KVS_ASPECT);

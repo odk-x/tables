@@ -36,7 +36,7 @@ public class CellValueView {
 
     OdkDbHandle db = null;
     try {
-      db = app.getDatabase().openDatabase(appName, false);
+      db = app.getDatabase().openDatabase(appName);
       ArrayList<Map<String,Object>> displayChoices = (ArrayList<Map<String, Object>>) 
           ColumnUtil.get().getDisplayChoicesList(app, appName, db, tableId, cd.getElementKey());
       if (displayChoices != null) {

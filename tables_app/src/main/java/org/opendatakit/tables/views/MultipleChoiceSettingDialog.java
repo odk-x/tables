@@ -76,7 +76,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
 
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, false);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
       choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
           Tables.getInstance(), appName, db, tableId, cd.getElementKey());
     } catch (RemoteException e) {

@@ -104,7 +104,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       // see if we saved the state
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         if (mCurrentFragmentType == null) {
           // if we don't have a view set, use the default from the database
           TableViewType type;
@@ -615,7 +615,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     OdkDbHandle db = null;
     String[] emptyArray = {};
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       UserTable result = Tables.getInstance().getDatabase().rawSqlQuery(this.getAppName(), db,
           this.getTableId(), getColumnDefinitions(), sqlQueryStruct.whereClause,
           (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs, 
@@ -746,7 +746,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     if (fileName == null) {
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         fileName = TableUtil.get().getMapListViewFilename(getAppName(), db, getTableId());
       } finally {
         if (db != null) {
@@ -838,7 +838,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     if (fileName == null) {
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         fileName = TableUtil.get().getListViewFilename(getAppName(), db, getTableId());
       } finally {
         if (db != null) {
@@ -900,7 +900,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       WebLogger.getLogger(getAppName()).d(TAG, "[showDetailFragment] fileName not found in Intent");
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(getAppName(), false);
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         fileName = TableUtil.get().getDetailViewFilename(getAppName(), db, getTableId());
       } finally {
         if (db != null) {
