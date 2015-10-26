@@ -58,8 +58,9 @@ public class DefaultViewTypePreference extends ListPreference {
     
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(mAppName, true);
-      
+      db = Tables.getInstance().getDatabase().openDatabase(mAppName);
+      Tables.getInstance().getDatabase().beginTransaction(mAppName, db);
+
       this.mPossibleViewTypes = new PossibleTableViewTypes(mAppName, db, 
               tableId, orderedDefns);
       // Let's set the currently selected one.

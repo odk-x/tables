@@ -55,7 +55,8 @@ public class PreferenceUtil {
     boolean successful = false;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
+      Tables.getInstance().getDatabase().beginTransaction(appName, db);
       TableUtil.get().setDefaultViewType(appName, db, tableId, viewType);
       successful = true;
     } catch ( Exception e ) {
@@ -119,7 +120,8 @@ public class PreferenceUtil {
     boolean successful = false;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
+      Tables.getInstance().getDatabase().beginTransaction(appName, db);
       KeyValueStoreHelper kvsh =
           new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
               tableId, KeyValueStoreConstants.PARTITION_COLUMN);

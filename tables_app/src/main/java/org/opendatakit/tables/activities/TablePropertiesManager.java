@@ -478,7 +478,8 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       boolean successful = false;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        Tables.getInstance().getDatabase().beginTransaction(appName, db);
         kvsh = new KeyValueStoreHelper(Tables.getInstance(), this.appName, db, this.tableId,
             LocalKeyValueStoreConstants.ListViews.PARTITION_VIEWS);
         // Set the name here statically, just to test. Later will want to
@@ -536,7 +537,8 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       boolean successful = false;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        Tables.getInstance().getDatabase().beginTransaction(appName, db);
         TableUtil.get().setRawDisplayName(appName, db, tableId, (String) newValue);
         localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
         successful = true;
@@ -568,7 +570,8 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       boolean successful = false;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        Tables.getInstance().getDatabase().beginTransaction(appName, db);
         KeyValueStoreHelper kvsHelper = new KeyValueStoreHelper(Tables.getInstance(), appName, db,
             tableId, KeyValueStoreConstants.PARTITION_TABLE);
         kvsHelper.setString(KEY_COLOR_RULE_COLUMN, (String) newValue);
@@ -597,7 +600,8 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       boolean successful = false;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        Tables.getInstance().getDatabase().beginTransaction(appName, db);
         KeyValueStoreHelper kvsHelper = new KeyValueStoreHelper(Tables.getInstance(), appName,
             null, tableId, KeyValueStoreConstants.PARTITION_TABLE);
         kvsHelper.setString(KEY_COLOR_RULE_TYPE, (String) newValue);
@@ -626,7 +630,8 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       boolean successful = false;
       OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        Tables.getInstance().getDatabase().beginTransaction(appName, db);
         TableUtil.get().setDefaultViewType(appName, db, tableId,
             TableViewType.valueOf((String) newValue));
         successful = true;

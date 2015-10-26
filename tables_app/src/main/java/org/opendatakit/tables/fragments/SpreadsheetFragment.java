@@ -149,7 +149,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     boolean successful = false;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
       newGroupBys = TableUtil.get().getColumnOrder(getAppName(), db, getTableId());
       newGroupBys.add(cd.getElementKey());
       TableUtil.get().setGroupByColumns(getAppName(), db, getTableId(), newGroupBys);
@@ -172,7 +173,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     boolean successful = false;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
       newGroupBys = TableUtil.get().getColumnOrder(getAppName(), db, getTableId());
       newGroupBys.remove(cd.getElementKey());
       TableUtil.get().setGroupByColumns(getAppName(), db, getTableId(), newGroupBys);
@@ -194,7 +196,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     boolean successful = false;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
       TableUtil.get().setSortColumn(getAppName(), db, getTableId(), (cd == null) ? null : cd.getElementKey());
       successful = true;
     } catch (Exception e) {
@@ -213,7 +216,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     boolean successful = false;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
       TableUtil.get().setIndexColumn(getAppName(), db, getTableId(), (cd == null) ? null : cd.getElementKey());
       successful = true;
     } catch (Exception e) {
@@ -302,7 +306,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     boolean successful = false;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
       Tables.getInstance().getDatabase().deleteDataInExistingDBTableWithId(getAppName(), db,
           getTableId(), rowId);
       successful = true;
@@ -718,7 +723,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           ArrayList<Map<String, Object>> choices;
           try {
             try {
-              db = Tables.getInstance().getDatabase().openDatabase(getAppName(), true);
+              db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+              Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
               choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
                   Tables.getInstance(), getAppName(), db,
                   getTableId(), cell.elementKey);

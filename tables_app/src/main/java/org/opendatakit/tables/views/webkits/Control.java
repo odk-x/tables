@@ -502,7 +502,8 @@ public class Control {
     boolean successful = false;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName, true);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
+      Tables.getInstance().getDatabase().beginTransaction(appName, db);
 
       OrderedColumns orderedColumns = retrieveColumnDefinitions(db, tableId);
       ContentValues contentValues = getContentValuesFromMap(mActivity, appName, tableId,
