@@ -23,14 +23,13 @@ import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.utilities.ColorRuleUtil;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.TableUtil;
-import org.opendatakit.tables.utils.TableUtil.TableColumns;
 import org.opendatakit.tables.views.components.ColorRuleAdapter;
 
 import android.app.Activity;
@@ -118,18 +117,12 @@ public class ColorRuleListFragment extends ListFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     this.setHasOptionsMenu(true);
-    ArrayList<String> colElementKeys = new ArrayList<String>();
-    TableColumns tc = null;
+    TableUtil.TableColumns tc = null;
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
 
-      tc = TableUtil.get().getTableColumns(getAppName(), db, getTableId());
-      for (ColumnDefinition cd : tc.orderedDefns.getColumnDefinitions()) {
-        if (cd.isUnitOfRetention()) {
-          colElementKeys.add(cd.getElementKey());
-        }
-      }
+      tc = TableUtil.get().getTableColumns(Tables.getInstance(), getAppName(), db, getTableId());
       this.mColorRuleGroup = this.retrieveColorRuleGroup(db, tc.adminColumns);
     } catch (RemoteException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);

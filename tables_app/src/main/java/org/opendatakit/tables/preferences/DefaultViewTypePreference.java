@@ -18,13 +18,13 @@ package org.opendatakit.tables.preferences;
 import java.util.Arrays;
 
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
-import org.opendatakit.tables.data.TableViewType;
-import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.components.TableViewTypeAdapter;
 
 import android.app.AlertDialog.Builder;
@@ -59,24 +59,25 @@ public class DefaultViewTypePreference extends ListPreference {
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(mAppName);
-      Tables.getInstance().getDatabase().beginTransaction(mAppName, db);
-
-      this.mPossibleViewTypes = new PossibleTableViewTypes(mAppName, db, 
-              tableId, orderedDefns);
+      this.mPossibleViewTypes = new PossibleTableViewTypes(mAppName, db, tableId, orderedDefns);
       // Let's set the currently selected one.
-      defaultViewType = TableUtil.get().getDefaultViewType(mAppName, db, tableId);
+      defaultViewType = TableUtil.get().getDefaultViewType(Tables.getInstance(), mAppName, db, tableId);
     } finally {
       if ( db != null ) {
         Tables.getInstance().getDatabase().closeDatabase(mAppName, db);
       }
     }
 
-    if (defaultViewType == null) {
+    if (defaultViewType == null || !mPossibleViewTypes.getAllPossibleViewTypes().contains(defaultViewType)) {
       // default to spreadsheet.
+      defaultViewType = TableViewType.SPREADSHEET;
       this.setValueIndex(0);
     } else {
       int index = Arrays.asList(this.mEntryValues)
           .indexOf(defaultViewType.name());
+      if ( index < 0 ) {
+        index = 0;
+      }
       this.setValueIndex(index);
     }
   }

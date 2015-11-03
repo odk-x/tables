@@ -19,6 +19,7 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
@@ -166,7 +167,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
           Object newValue) {
         String newValueStr = (String) newValue;
         Integer newWidth = Integer.parseInt(newValueStr);
-        if (newWidth > SpreadsheetView.MAX_COL_WIDTH) {
+        if (newWidth > LocalKeyValueStoreConstants.Spreadsheet.MAX_COL_WIDTH) {
           WebLogger.getLogger(appName).e(TAG, "column width bigger than allowed, doing nothing");
           return false;
         }

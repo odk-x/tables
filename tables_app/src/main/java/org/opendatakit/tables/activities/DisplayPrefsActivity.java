@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.opendatakit.common.android.activities.BasePreferenceActivity;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
@@ -28,7 +29,6 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.logic.TablesToolProperties;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.OutputUtil;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -202,7 +202,7 @@ public class DisplayPrefsActivity extends BasePreferenceActivity {
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
     } finally {
       if ( db != null ) {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);

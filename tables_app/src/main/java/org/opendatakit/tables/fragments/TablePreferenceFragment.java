@@ -17,24 +17,23 @@ package org.opendatakit.tables.fragments;
 
 import java.io.File;
 
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
-import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.preferences.DefaultViewTypePreference;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.preferences.FileSelectorPreference;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.PreferenceUtil;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -141,9 +140,11 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * @throws RemoteException 
    */
   void setListViewFileName(String relativePath) throws RemoteException {
-    KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), getAppName(), null, getTableId(),
-        KeyValueStoreConstants.PARTITION_TABLE);
-    kvsh.setString(LocalKeyValueStoreConstants.Tables.KEY_LIST_VIEW_FILE_NAME, relativePath);
+    try {
+      TableUtil.get().atomicSetListViewFilename(Tables.getInstance(), getAppName(), getTableId(), relativePath);
+    } catch ( RemoteException e) {
+      Toast.makeText(getActivity(), "Unable to save List View filename", Toast.LENGTH_LONG).show();
+    }
   }
 
   /**
@@ -153,9 +154,11 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * @throws RemoteException 
    */
   void setDetailViewFileName(String relativePath) throws RemoteException {
-    KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), getAppName(), null, getTableId(),
-        KeyValueStoreConstants.PARTITION_TABLE);
-    kvsh.setString(LocalKeyValueStoreConstants.Tables.KEY_DETAIL_VIEW_FILE_NAME, relativePath);
+    try {
+      TableUtil.get().atomicSetDetailViewFilename(Tables.getInstance(), getAppName(), getTableId(), relativePath);
+    } catch ( RemoteException e ) {
+      Toast.makeText(getActivity(), "Unable to set Detail View filename", Toast.LENGTH_LONG).show();
+    }
   }
 
   /**
@@ -165,9 +168,11 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * @throws RemoteException 
    */
   void setMapListViewFileName(String relativePath) throws RemoteException {
-    KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), getAppName(), null, getTableId(),
-        KeyValueStoreConstants.PARTITION_TABLE);
-    kvsh.setString(LocalKeyValueStoreConstants.Tables.KEY_MAP_LIST_VIEW_FILE_NAME, relativePath);
+    try {
+      TableUtil.get().atomicSetMapListViewFilename(Tables.getInstance(), getAppName(), getTableId(), relativePath);
+    } catch (RemoteException e) {
+      Toast.makeText(getActivity(), "Unable to set Map List View Filename", Toast.LENGTH_LONG).show();
+    }
   }
 
   /**
@@ -203,7 +208,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     EditTextPreference displayPref = this
         .findEditTextPreference(Constants.PreferenceKeys.Table.DISPLAY_NAME);
 
-    String rawDisplayName = TableUtil.get().getRawDisplayName(getAppName(), db, getTableId());
+    String rawDisplayName = TableUtil.get().getRawDisplayName(Tables.getInstance(), getAppName(), db, getTableId());
 
     displayPref.setSummary(rawDisplayName);
   }
@@ -260,7 +265,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         .findPreference(Constants.PreferenceKeys.Table.LIST_FILE);
     listPref.setFields(this, Constants.RequestCodes.CHOOSE_LIST_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    listPref.setSummary(TableUtil.get().getListViewFilename(getAppName(), db, getTableId()));
+    listPref.setSummary(TableUtil.get().getListViewFilename(Tables.getInstance(), getAppName(), db, getTableId()));
   }
 
   private void initializeMapListFile(OdkDbHandle db) throws RemoteException {
@@ -268,7 +273,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         .findPreference(Constants.PreferenceKeys.Table.MAP_LIST_FILE);
     mapListPref.setFields(this, Constants.RequestCodes.CHOOSE_MAP_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    String mapListViewFileName = TableUtil.get().getMapListViewFilename(getAppName(), db, getTableId());
+    String mapListViewFileName = TableUtil.get().getMapListViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
     WebLogger.getLogger(getAppName()).d(TAG,
         "[initializeMapListFile] file is: " + mapListViewFileName);
     mapListPref.setSummary(mapListViewFileName);
@@ -279,7 +284,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         .findPreference(Constants.PreferenceKeys.Table.DETAIL_FILE);
     detailPref.setFields(this, Constants.RequestCodes.CHOOSE_DETAIL_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    detailPref.setSummary(TableUtil.get().getDetailViewFilename(getAppName(), db, getTableId()));
+    detailPref.setSummary(TableUtil.get().getDetailViewFilename(Tables.getInstance(), getAppName(), db, getTableId()));
   }
 
   private void initializeStatusColorRules() {

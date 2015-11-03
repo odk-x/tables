@@ -44,15 +44,8 @@ import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.DataUtil;
-import org.opendatakit.common.android.utilities.KeyValueHelper;
-import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.RowPathColumnUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.WebUtils;
+import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
 import org.w3c.dom.Document;
@@ -154,7 +147,7 @@ public class CollectUtil {
    * Return the formId for the single file that will be written when there is no
    * custom form defined for a table.
    *
-   * @param tp
+   * @param tableId
    * @return
    */
   private static String getDefaultAddRowFormId(String tableId) {
@@ -187,16 +180,16 @@ public class CollectUtil {
    * Build a default form. This form will allow being swiped through, one field
    * at a time.
    *
+   * @param context
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
    * @param file
    *          the file to write the form to
-   * @param columns
-   *          the columnProperties of the table.
-   * @param title
-   *          the title of the form
    * @param formId
    *          the id of the form
    * @return true if the file was successfully written
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   private static boolean buildBlankForm(Context context, String appName, String tableId,
       OrderedColumns orderedDefns, File file, String formId) throws RemoteException {
@@ -213,7 +206,7 @@ public class CollectUtil {
       OdkDbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
       } finally {
         if (db != null) {
           Tables.getInstance().getDatabase().closeDatabase(appName, db);
@@ -400,7 +393,7 @@ public class CollectUtil {
    * in params.
    * <p>
    * The file generated is at the location and name specified in
-   * {@link DATA_FILE_PATH_AND_NAME}.
+   * {@see DATA_FILE_PATH_AND_NAME}.
    *
    * TODO: add support for select-multiple
    * 
@@ -662,7 +655,7 @@ public class CollectUtil {
 
   /**
    * Insert the values existing in the file specified by
-   * {@link DATA_FILE_PATH_AND_NAME} into the form specified by params.
+   * {@see DATA_FILE_PATH_AND_NAME} into the form specified by params.
    * <p>
    * If the display name is not defined in the {@code params} parameter then the
    * string resource is used.
@@ -677,19 +670,20 @@ public class CollectUtil {
    * or the passed in file names should be uniqued by adding timestamps, or
    * something.
    *
-   * @param params
-   *          the identifying parameters for the form. Should be the same object
-   *          used to write the instance file.
-   * @param rowNum
-   *          the row number of the row being edited
-   * @param resolver
-   *          the ContentResolver of the activity making the request.
-   * @return
-   */
-  /*
    * This is based on the code at: http://code.google.com/p/opendatakit/source/
    * browse/src/org/odk/collect/android/tasks/SaveToDiskTask.java?repo=collect
    * in the method updateInstanceDatabase().
+   *
+   * @param context
+   * @param appName
+   * @param tableId
+   * @param params
+   *          the identifying parameters for the form. Should be the same object
+   *          used to write the instance file.
+   * @param rowId
+   *          the row number of the row being edited
+   * @param shouldUpdate
+   * @return
    */
   private static Uri getUriForCollectInstanceForRowData(Context context, String appName,
       String tableId, CollectFormParameters params, String rowId, boolean shouldUpdate) {
@@ -810,7 +804,7 @@ public class CollectUtil {
    * Precondition: If formId refers to a custom form, it must have already been
    * scanned in and known to exist to Collect. If the formId is not custom, but
    * refers to a form built on the fly, it should be the id of
-   * {@link COLLECT_ADDROW_FORM_ID}, and the form should already have been
+   * {@see COLLECT_ADDROW_FORM_ID}, and the form should already have been
    * written.
    *
    * @param resolver
@@ -819,9 +813,6 @@ public class CollectUtil {
    *          application name.
    * @param formId
    *          id of the form whose uri will be returned
-   * @param formDisplayName
-   *          display name of the table. Only pertinent if the form has been
-   *          programmatically generated.
    * @return the uri of the form.
    */
   private static Uri getUriOfForm(ContentResolver resolver, String appName, String formId) {
@@ -853,15 +844,16 @@ public class CollectUtil {
   /**
    * This is a convenience method that should be called when generating non-user
    * defined forms for adding or editing rows. It calls, in this order,
-   * {@link deleteForm}, {@link buildBlankForm}, and
-   * {@link insertFormIntoCollect}.
+   * {@see deleteForm}, {@see buildBlankForm}, and
+   * {@see insertFormIntoCollect}.
    *
-   * @param resolver
-   *          content resolver of the calling activity
+   * @param context
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
    * @param params
-   * @param tp
    * @return true if every method returned successfully
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   private static boolean deleteWriteAndInsertFormIntoCollect(Context context, String appName,
       String tableId, OrderedColumns orderedDefns, CollectFormParameters params) throws RemoteException {
@@ -887,7 +879,7 @@ public class CollectUtil {
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
     } finally {
       if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);
@@ -908,7 +900,7 @@ public class CollectUtil {
 
   /**
    * Convenience method for calling
-   * {@link #getIntentForOdkCollectAddRow(Context, String, String, ArrayList, CollectFormParameters, Map)}
+   * {@see #getIntentForOdkCollectAddRow(Context, String, String, ArrayList, CollectFormParameters, Map)}
    * followed by {@link #launchCollectToAddRow(Activity, Intent, String)}.
    * 
    * @param activity
@@ -933,7 +925,7 @@ public class CollectUtil {
 
   /**
    * Launch Collect to edit a row. Convenience method for calling
-   * {@link #getIntentForOdkCollectEditRow(Context, String, String, ArrayList, Map, String, String, String, String)
+   * {@see #getIntentForOdkCollectEditRow(Context, String, String, ArrayList, Map, String, String, String, String)
    * followed by {@link #launchCollectToEditRow(Activity, Intent, String)}.
    * 
    * @param activity
@@ -1044,11 +1036,14 @@ public class CollectUtil {
    * particular user.
    *
    * @param context
-   * @param tp
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
    * @param elementKeyToValue
    * @param params
+   * @param rowId
    * @return
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   private static Intent getIntentForOdkCollectEditRow(Context context, String appName,
       String tableId, OrderedColumns orderedDefns,
@@ -1120,7 +1115,7 @@ public class CollectUtil {
    * the activity returns.
    * <p>
    * Launches with the return code
-   * {@link Constants.RequestCodes.ADD_ROW_COLLECT}.
+   * {@see Constants.RequestCodes.ADD_ROW_COLLECT}.
    * 
    * @param activityToAwaitReturn
    * @param collectAddIntent
@@ -1468,7 +1463,7 @@ public class CollectUtil {
    * the intent was not marked as finalized.
    * <p>
    * Otherwise returns the result of
-   * {@link #updateRowFromOdkCollectInstance(Context, tableId, int)}. *
+   * {@see #updateRowFromOdkCollectInstance(Context, tableId, int)}. *
    * 
    * @param context
    * @param appName
@@ -1574,12 +1569,14 @@ public class CollectUtil {
    * Return an intent that can be launched to add a row.
    *
    * @param context
-   * @param tp
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
    * @param params
    * @param elementKeyToValue
    *          values with which you want to prepopulate the add row form.
    * @return
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   public static Intent getIntentForOdkCollectAddRow(Context context, String appName,
       String tableId, OrderedColumns orderedDefns, CollectFormParameters params,
@@ -1748,7 +1745,7 @@ public class CollectUtil {
       OdkDbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
       } finally {
         if (db != null) {
           Tables.getInstance().getDatabase().closeDatabase(appName, db);
@@ -1777,20 +1774,28 @@ public class CollectUtil {
      */
     public static CollectFormParameters constructCollectFormParameters(Context context,
         String appName, String tableId) throws RemoteException {
-      String formId;
+      String formId = null;
       String formVersion = null;
       String rootElement = null;
       String localizedDisplayName;
       OdkDbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
-        KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, tableId, CollectUtil.KVS_PARTITION);
-        KeyValueHelper aspectHelper = kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);
-        formId = aspectHelper.getString(CollectUtil.KEY_FORM_ID);
-        if (formId != null) {
-          formVersion = aspectHelper.getString(CollectUtil.KEY_FORM_VERSION);
-          rootElement = aspectHelper.getString(CollectUtil.KEY_FORM_ROOT_ELEMENT);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
+        List<KeyValueStoreEntry> kvsList =  Tables.getInstance().getDatabase()
+                .getDBTableMetadata(appName, db, tableId, CollectUtil.KVS_PARTITION, CollectUtil.KVS_ASPECT, null );
+        for ( KeyValueStoreEntry entry : kvsList ) {
+          if ( entry.key.equals(CollectUtil.KEY_FORM_ID) ) {
+            formId = KeyValueStoreUtils.getString(appName, entry);
+          } else if ( entry.key.equals(CollectUtil.KEY_FORM_VERSION) ) {
+            formVersion = KeyValueStoreUtils.getString(appName, entry);
+          } else if ( entry.key.equals(CollectUtil.KEY_FORM_ROOT_ELEMENT) ) {
+            rootElement = KeyValueStoreUtils.getString(appName, entry);
+          }
+        }
+        if (formId == null) {
+          formVersion = null;
+          rootElement = null;
         }
       } finally {
         if (db != null) {
@@ -1810,17 +1815,31 @@ public class CollectUtil {
     }
 
     public void persist(String appName, OdkDbHandle db, String tableId) throws RemoteException {
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, tableId, CollectUtil.KVS_PARTITION);
-      KeyValueHelper aspectHelper = kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);
-      if (this.isCustom()) {
-        aspectHelper.setString(CollectUtil.KEY_FORM_ID, this.mFormId);
-        aspectHelper.setString(CollectUtil.KEY_FORM_VERSION, this.mFormVersion);
-        aspectHelper.setString(CollectUtil.KEY_FORM_ROOT_ELEMENT, this.mFormXMLRootElement);
-      } else {
-        aspectHelper.removeKey(CollectUtil.KEY_FORM_ID);
-        aspectHelper.removeKey(CollectUtil.KEY_FORM_VERSION);
-        aspectHelper.removeKey(CollectUtil.KEY_FORM_ROOT_ELEMENT);
-      }
+      ArrayList<KeyValueStoreEntry> kvsList = new ArrayList<KeyValueStoreEntry>();
+      KeyValueStoreEntry entry = null;
+
+      entry = KeyValueStoreUtils.buildEntry(tableId,
+              CollectUtil.KVS_PARTITION,
+              CollectUtil.KVS_ASPECT,
+              CollectUtil.KEY_FORM_ID,
+              ElementDataType.string, this.isCustom() ? this.mFormId : null);
+      kvsList.add(entry);
+
+      entry = KeyValueStoreUtils.buildEntry(tableId,
+              CollectUtil.KVS_PARTITION,
+              CollectUtil.KVS_ASPECT,
+              CollectUtil.KEY_FORM_VERSION,
+              ElementDataType.string, this.isCustom() ? this.mFormVersion : null);
+      kvsList.add(entry);
+
+      entry = KeyValueStoreUtils.buildEntry(tableId,
+              CollectUtil.KVS_PARTITION,
+              CollectUtil.KVS_ASPECT,
+              CollectUtil.KEY_FORM_ROOT_ELEMENT,
+              ElementDataType.string, this.isCustom() ? this.mFormXMLRootElement : null);
+      kvsList.add(entry);
+
+      Tables.getInstance().getDatabase().replaceDBTableMetadataSubList(appName, db, tableId, CollectUtil.KVS_PARTITION, CollectUtil.KVS_ASPECT, kvsList);
     }
 
     /**
@@ -1873,7 +1892,7 @@ public class CollectUtil {
 
     /**
      * Return the root element of the form to be used for writing. If none has
-     * been set, returns the {@link DEFAULT_ROOT_ELEMENT}.
+     * been set, returns the {@see DEFAULT_ROOT_ELEMENT}.
      *
      * @return
      */

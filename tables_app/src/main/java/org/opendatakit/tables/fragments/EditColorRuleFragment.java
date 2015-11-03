@@ -21,6 +21,7 @@ import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
@@ -29,8 +30,6 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.preferences.EditColorPreference;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.TableUtil;
-import org.opendatakit.tables.utils.TableUtil.TableColumns;
 import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;
 
 import android.os.Bundle;
@@ -174,7 +173,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
 
     // 1) First fill in the color rule group and list.
-    TableColumns tc = TableUtil.get().getTableColumns(getAppName(), db, getTableId());
+    TableUtil.TableColumns tc = TableUtil.get().getTableColumns(Tables.getInstance(), getAppName(), db, getTableId());
     
     switch (this.mColorRuleGroupType) {
     case COLUMN:
@@ -214,22 +213,14 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     this.mOperatorHumanFriendlyValues = ColorRule.RuleType.getValues();
     this.mOperatorEntryValues = ColorRule.RuleType.getValues();
 
-    ArrayList<String> displayNames = new ArrayList<String>();
-    ArrayList<String> elementKeys = new ArrayList<String>();
-
-    for ( ColumnDefinition cd : tc.orderedDefns.getColumnDefinitions()) {
-      if (cd.isUnitOfRetention()) {
-
-        String localizedDisplayName;
-        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(
-            Tables.getInstance(), getAppName(), db, getTableId(),
-            cd.getElementKey());
-        displayNames.add(localizedDisplayName);
-        elementKeys.add(cd.getElementKey());
-      }
+    ArrayList<String> colorColElementKeys = new ArrayList<String>(tc.orderedDefns.getRetentionColumnNames());
+    ArrayList<String> colorColDisplayNames = new ArrayList<String>();
+    for ( String elementKey : colorColElementKeys ) {
+      String localizedDisplayName = tc.localizedDisplayNames.get(elementKey);
+      colorColDisplayNames.add(localizedDisplayName);
     }
-    mColumnDisplayNames = displayNames.toArray(new String[displayNames.size()]);
-    mColumnElementKeys = elementKeys.toArray(new String[elementKeys.size()]);
+    mColumnDisplayNames = colorColDisplayNames.toArray(new String[colorColDisplayNames.size()]);
+    mColumnElementKeys = colorColElementKeys.toArray(new String[colorColElementKeys.size()]);
   }
 
   private void initializeAllPreferences(OdkDbHandle db) throws RemoteException {

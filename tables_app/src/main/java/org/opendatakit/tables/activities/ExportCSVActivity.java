@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
@@ -29,7 +30,6 @@ import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -187,7 +187,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
         rawTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
         for (String tableId : rawTableIds) {
           String localizedDisplayName;
-          localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+          localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
           localizedNames.add(localizedDisplayName);
         }
         tableIds = rawTableIds.toArray(new String[rawTableIds.size()]);

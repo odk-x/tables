@@ -15,13 +15,14 @@
  */
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
-import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.fragments.DetailViewFragment;
 import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.MapListViewFragment;
@@ -33,7 +34,6 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -108,7 +108,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
         if (mCurrentFragmentType == null) {
           // if we don't have a view set, use the default from the database
           TableViewType type;
-            type = TableUtil.get().getDefaultViewType(getAppName(), db, getTableId());
+          type = TableUtil.get().getDefaultViewType(Tables.getInstance(), getAppName(), db, getTableId());
           mCurrentFragmentType = this.getViewFragmentTypeFromViewType(type);
           if (mCurrentFragmentType == null) {
             // and if that isn't set, use spreadsheet
@@ -409,7 +409,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
    * currently invalid or valid, respectively. The inflatedMenu must have
    * already been created from the resource.
    * 
-   * @param validViewTypes
+   * @param possibleViews
    * @param inflatedMenu
    */
   private void enableAndDisableViewTypes(PossibleTableViewTypes possibleViews, Menu inflatedMenu) {
@@ -424,9 +424,8 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
 
   /**
    * Selects the correct view type that is being displayed by the
-   * {@link ITopLevelTableMenuActivity}.
+   * {@see ITopLevelTableMenuActivity}.
    * 
-   * @param impl
    * @param inflatedMenu
    */
   private void selectCorrectViewType(Menu inflatedMenu) {
@@ -535,7 +534,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
    * passed in bundle takes precedence, on the assumption that is was from a
    * saved instance state. Next is any type that was passed in the Intent. If
    * neither is present, the value corresponding to
-   * {@link TableUtil#getDefaultViewType()} wins. If none is present, returns
+   * {@see TableUtil#getDefaultViewType()} wins. If none is present, returns
    * {@link ViewFragmentType#SPREADSHEET}.
    * 
    * @return
@@ -747,7 +746,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       OdkDbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-        fileName = TableUtil.get().getMapListViewFilename(getAppName(), db, getTableId());
+        fileName = TableUtil.get().getMapListViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
       } finally {
         if (db != null) {
           Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
@@ -839,7 +838,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       OdkDbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-        fileName = TableUtil.get().getListViewFilename(getAppName(), db, getTableId());
+        fileName = TableUtil.get().getListViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
       } finally {
         if (db != null) {
           Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
@@ -901,7 +900,7 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
       OdkDbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-        fileName = TableUtil.get().getDetailViewFilename(getAppName(), db, getTableId());
+        fileName = TableUtil.get().getDetailViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
       } finally {
         if (db != null) {
           Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);

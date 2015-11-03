@@ -27,10 +27,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.MainActivity;
@@ -44,7 +41,6 @@ import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
-import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
 
 import android.content.ContentValues;
@@ -163,7 +159,7 @@ public class Control {
    * Actually open the table. The sql-related parameters are null safe, so only
    * pass them in if necessary.
    *
-   * @see {@link ControlIf#openTableWithSqlQuery(String, String, String[])}
+   * @see {@see ControlIf#openTableWithSqlQuery(String, String, String[])}
    * @param tableId
    * @param sqlWhereClause
    * @param sqlSelectionArgs
@@ -180,7 +176,7 @@ public class Control {
    * Actually open the table. The sql-related parameters are null safe, so only
    * pass them in if necessary.
    *
-   * @see {@link ControlIf#openTableWithSqlQuery(String, String, String[])}
+   * @see {@see ControlIf#openTableWithSqlQuery(String, String, String[])}
    * @param tableId
    * @param sqlWhereClause
    * @param sqlSelectionArgs
@@ -251,7 +247,7 @@ public class Control {
 
   /**
    * Actually open the table with the file. see
-   * {@link ControlIf#launchListView(String, String, String, String[], String[], String, String, String)}
+   * {@see ControlIf#launchListView(String, String, String, String[], String[], String, String, String)}
    *
    * @param tableId
    * @param relativePath
@@ -272,7 +268,7 @@ public class Control {
   /**
    * Open the table to the map view.
    *
-   * @see {@link ControlIf#openTableToMapViewWithSqlQuery(String, String, String[])}
+   * @see {@see ControlIf#openTableToMapViewWithSqlQuery(String, String, String[])}
    * @param tableId
    * @param sqlWhereClause
    * @param sqlSelectionArgs
@@ -290,7 +286,7 @@ public class Control {
   /**
    * Open the table to the spreadsheet view.
    *
-   * @see {@link ControlIf#openTableToSpreadsheetViewWithSqlQuery(String, String, String[])}
+   * @see {@see ControlIf#openTableToSpreadsheetViewWithSqlQuery(String, String, String[])}
    * @param tableId
    * @param sqlWhereClause
    * @param sqlSelectionArgs
@@ -338,7 +334,7 @@ public class Control {
    *          the where clause for the selection. This is the body of the
    *          "WHERE" clause WITHOUT the "WHERE" References to other tables,
    *          e.g. for joins, in this statement must use the name of the table
-   *          as returned by {@link getDbNameForTable}.
+   *          as returned by {@see getDbNameForTable}.
    * @param selectionArgs
    * @return
    * @throws RemoteException 
@@ -418,7 +414,7 @@ public class Control {
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
     } finally {
       if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);
@@ -458,7 +454,7 @@ public class Control {
 
   /**
    * Generate a row id. Eventually this should be moved to a common function
-   * provided by {@link ODKDatabaseUtils} or something similar so that we can
+   * provided by {@see ODKDatabaseUtils} or something similar so that we can
    * more easily remain consistent.
    * 
    * @return
@@ -499,12 +495,12 @@ public class Control {
       elementKeyToValue = WebViewUtil.getMapFromJson(appName, stringifiedJSON);
     }
 
-    boolean successful = false;
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      Tables.getInstance().getDatabase().beginTransaction(appName, db);
 
+      // This may return cached content or access database. It does not need
+      // to be within a transaction with the update/insert.
       OrderedColumns orderedColumns = retrieveColumnDefinitions(db, tableId);
       ContentValues contentValues = getContentValuesFromMap(mActivity, appName, tableId,
           orderedColumns, elementKeyToValue);
@@ -523,10 +519,9 @@ public class Control {
         Tables.getInstance().getDatabase().insertDataIntoExistingDBTableWithId(appName, db, 
             tableId, orderedColumns, contentValues, rowId);
       }
-      successful = true;
     } finally {
       if (db != null) {
-        Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
     return true;
@@ -629,7 +624,7 @@ public class Control {
   }
 
   /**
-   * Launch the {@link CustomHomeScreenActivity} with the custom filename to
+   * Launch the {@see CustomHomeScreenActivity} with the custom filename to
    * display. The return type on this method currently is always true, should
    * probably check if the file exists first.
    *
@@ -762,15 +757,16 @@ public class Control {
    * It prepopulates the form as it needs based on the query (or the
    * elKeyToValueToPrepopulate parameter) and launches the form.
    *
+   * @param tableId
+   * @param orderedDefns
    * @param params
-   * @param tp
    * @param elKeyToValueToPrepopulate
    *          a map of element key to value that will prepopulate the Collect
    *          form for the new add row. Must be a map of column element key to
    *          value. If this parameter is null, it prepopulates based on the
    *          searchString, if there is one. If this value is not null, it
    *          ignores the queryString and uses only the map.
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   private void prepopulateRowAndLaunchCollect(String tableId,
       OrderedColumns orderedDefns, CollectFormParameters params,
@@ -873,7 +869,7 @@ public class Control {
       OdkDbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
       } finally {
         if (db != null) {
           Tables.getInstance().getDatabase().closeDatabase(appName, db);

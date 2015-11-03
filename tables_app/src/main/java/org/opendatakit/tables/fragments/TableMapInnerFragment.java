@@ -22,16 +22,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.Row;
-import org.opendatakit.common.android.utilities.GeoColumnUtil;
-import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
-import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -303,32 +303,24 @@ public class TableMapInnerFragment extends MapFragment {
       mLongitudeElementKey = getLongitudeElementKey(db);
 
       String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
-      // Grab the key value store helper from the map fragment.
-      final KeyValueStoreHelper kvsHelper = new KeyValueStoreHelper(
-          Tables.getInstance(), activity.getAppName(), db,
-          activity.getTableId(), LocalKeyValueStoreConstants.Map.PARTITION);
-      String colorType = kvsHelper.getString(TablePropertiesManager.KEY_COLOR_RULE_TYPE);
-      if (colorType == null) {
-        kvsHelper.setString(TablePropertiesManager.KEY_COLOR_RULE_TYPE,
-            TablePropertiesManager.COLOR_TYPE_NONE);
-        colorType = TablePropertiesManager.COLOR_TYPE_NONE;
-      }
-  
+
+      TableUtil.MapViewColorRuleInfo colorRuleInfo =
+              TableUtil.get().getMapListViewColorRuleInfo(Tables.getInstance(), activity.getAppName(), db, activity.getTableId());
+
       // Create a guide depending on what type of color rule is selected.
       mColorGroup = null;
-      if (colorType.equals(TablePropertiesManager.COLOR_TYPE_TABLE)) {
+      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
         mColorGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), activity.getAppName(),
             db, activity.getTableId(), adminColumns);
       }
-      if (colorType.equals(TablePropertiesManager.COLOR_TYPE_STATUS)) {
+      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
         mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), activity.getAppName(),
             db, activity.getTableId(), adminColumns);
       }
-      if (colorType.equals(TablePropertiesManager.COLOR_TYPE_COLUMN)) {
-        String colorColumnKey = kvsHelper.getString(TablePropertiesManager.KEY_COLOR_RULE_COLUMN);
-        if (colorColumnKey != null) {
+      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_COLUMN)) {
+        if (colorRuleInfo.colorElementKey != null) {
           mColorGroup = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(), activity.getAppName(),
-              db, activity.getTableId(), colorColumnKey, adminColumns);
+              db, activity.getTableId(), colorRuleInfo.colorElementKey, adminColumns);
         }
       }
     } finally {
@@ -457,50 +449,16 @@ public class TableMapInnerFragment extends MapFragment {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    final List<ColumnDefinition> geoPointCols = orderedDefns.getGeopointColumnDefinitions();
-    // Grab the key value store helper from the table activity.
-    final KeyValueStoreHelper kvsHelper = new KeyValueStoreHelper(
-        Tables.getInstance(), activity.getAppName(), dbHandle,
-        activity.getTableId(), LocalKeyValueStoreConstants.Map.PARTITION);
-    String latitudeElementKey = kvsHelper
-        .getString(LocalKeyValueStoreConstants.Map.KEY_MAP_LAT_COL);
-    if (latitudeElementKey == null) {
-      // Go through each of the columns and check to see if there are
-      // any columns labeled latitude or longitude.
-      for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
-        if (GeoColumnUtil.get().isLatitudeColumnDefinition(geoPointCols, cd)) {
-          latitudeElementKey = cd.getElementKey();
-          kvsHelper.setString(LocalKeyValueStoreConstants.Map.KEY_MAP_LAT_COL, latitudeElementKey);
-          break;
-        }
-      }
-    }
+    String latitudeElementKey =
+            TableUtil.get().getMapListViewLatitudeElementKey(Tables.getInstance(), activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
     return latitudeElementKey;
   }
 
   private String getLongitudeElementKey(OdkDbHandle dbHandle) throws RemoteException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-
-    final List<ColumnDefinition> geoPointCols = orderedDefns.getGeopointColumnDefinitions();
-    // Grab the key value store helper from the table activity.
-    final KeyValueStoreHelper kvsHelper = new KeyValueStoreHelper(
-        Tables.getInstance(), activity.getAppName(), dbHandle, 
-        activity.getTableId(), LocalKeyValueStoreConstants.Map.PARTITION);
-    String longitudeElementKey = kvsHelper
-        .getString(LocalKeyValueStoreConstants.Map.KEY_MAP_LONG_COL);
-    if (longitudeElementKey == null) {
-      // Go through each of the columns and check to see if there are
-      // any columns labled longitude
-      for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
-        if (GeoColumnUtil.get().isLongitudeColumnDefinition(geoPointCols, cd)) {
-          longitudeElementKey = cd.getElementKey();
-          kvsHelper
-              .setString(LocalKeyValueStoreConstants.Map.KEY_MAP_LONG_COL, longitudeElementKey);
-          break;
-        }
-      }
-    }
+    String longitudeElementKey =
+            TableUtil.get().getMapListViewLongitudeElementKey(Tables.getInstance(), activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
     return longitudeElementKey;
   }
 

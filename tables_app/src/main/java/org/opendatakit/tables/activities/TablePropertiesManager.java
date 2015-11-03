@@ -20,25 +20,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.activities.BasePreferenceActivity;
 import org.opendatakit.common.android.activities.IAppAwareActivity;
+import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
-import org.opendatakit.common.android.utilities.KeyValueHelper;
-import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
-import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.utils.TableUtil;
-import org.opendatakit.tables.utils.TableUtil.TableColumns;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -72,22 +69,6 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
   private static final int RC_LIST_VIEW_FILE = 1;
   private static final int RC_MAP_LIST_VIEW_FILE = 2;
 
-  /** The key for the type of color rule to use on the map. */
-  public static final String KEY_COLOR_RULE_TYPE = "keyColorRuleType";
-  /**
-   * The key for, if the color rule is based off of a column, the column to use.
-   */
-  public static final String KEY_COLOR_RULE_COLUMN = "keyColorRuleColumn";
-
-  /** The constant if we want no color rules. */
-  public static final String COLOR_TYPE_NONE = "None";
-  /** The constant if we want the color rules based off of the table. */
-  public static final String COLOR_TYPE_TABLE = "Table Color Rules";
-  /** The constant if we want the color rules based off of the status column. */
-  public static final String COLOR_TYPE_STATUS = "Status Column Color Rules";
-  /** The constant if we want the color rules based off of a column. */
-  public static final String COLOR_TYPE_COLUMN = "Selectable Column Color Rules";
-
   private String appName;
   private String tableId;
   private OrderedColumns orderedDefns;
@@ -120,7 +101,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
     } catch (RemoteException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
@@ -156,7 +137,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      rawDisplayName = TableUtil.get().getRawDisplayName(appName, db, tableId);
+      rawDisplayName = TableUtil.get().getRawDisplayName(Tables.getInstance(), appName, db, tableId);
     } catch (RemoteException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
@@ -237,7 +218,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      type = TableUtil.get().getDefaultViewType(appName, db, tableId);
+      type = TableUtil.get().getDefaultViewType(Tables.getInstance(), appName, db, tableId);
 
       viewTypePref.setValue(type.name());
       // TODO: currently throwing an error i think
@@ -300,54 +281,49 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       // });
       // prefCat.addPreference(statusColumnColorRulePref);
 
-      // Grab the key value store helper from the table activity.
-      KeyValueStoreHelper kvsHelper = new KeyValueStoreHelper(Tables.getInstance(), appName, db,
-          tableId, KeyValueStoreConstants.PARTITION_TABLE);
+      TableUtil.MapViewColorRuleInfo info =
+              TableUtil.get().getMapListViewColorRuleInfo(Tables.getInstance(), getAppName(), db, tableId);
 
-      // Color Options Preference!
-      String colorType = kvsHelper.getString(KEY_COLOR_RULE_TYPE);
-      if (colorType == null) {
-        kvsHelper.setString(KEY_COLOR_RULE_TYPE, COLOR_TYPE_NONE);
-        colorType = COLOR_TYPE_NONE;
-      }
-      ListPreference colorRulePref = new ListPreference(this);
-      colorRulePref.setTitle("Color Rule for Graph and Map Markers");
-      colorRulePref.setDialogTitle("Change which color rule markers adhere to.");
-      String[] colorRuleTypes = { COLOR_TYPE_NONE, COLOR_TYPE_TABLE, COLOR_TYPE_STATUS,
-          COLOR_TYPE_COLUMN };
-      colorRulePref.setEntryValues(colorRuleTypes);
-      colorRulePref.setEntries(colorRuleTypes);
-      colorRulePref.setValue(colorType);
-      colorRulePref.setSummary(colorType);
-      colorRulePref.setOnPreferenceChangeListener(new ColorRuleTypeChangeListener());
-      prefCat.addPreference(colorRulePref);
-
-      // If the color rule type is columns, add the preference to select the
-      // column.
-      if (colorType.equals(COLOR_TYPE_COLUMN)) {
-        TableColumns tc = TableUtil.get().getTableColumns(appName, db, tableId);
-
-        ArrayList<String> colorColDisplayNames = new ArrayList<String>();
-        ArrayList<String> colorColElementKeys = new ArrayList<String>();
-        for (ColumnDefinition cd : tc.orderedDefns.getColumnDefinitions()) {
-          if (cd.isUnitOfRetention()) {
-            String localizedDisplayName;
-            localizedDisplayName = tc.localizedDisplayNames.get(cd.getElementKey());
-
-            colorColDisplayNames.add(localizedDisplayName);
-            colorColElementKeys.add(cd.getElementKey());
-          }
-        }
-
-        ColumnDefinition colorColumn = null;
+      ColumnDefinition colorColumn = null;
+      // If the color rule type is columns, find the column that it identifies.
+      // If that column cannot be found, then reset to color type none.
+      if (info.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_COLUMN)) {
         try {
-          colorColumn = orderedDefns.find(kvsHelper.getString(KEY_COLOR_RULE_COLUMN));
+          colorColumn = orderedDefns.find(info.colorElementKey);
         } catch (IllegalArgumentException e) {
           // no-op
         }
-        if (colorColumn == null && colorColElementKeys.size() > 0) {
-          kvsHelper.setString(KEY_COLOR_RULE_COLUMN, colorColElementKeys.get(0));
-          colorColumn = orderedDefns.find(colorColElementKeys.get(0));
+        if (colorColumn == null) {
+          info = new TableUtil.MapViewColorRuleInfo(LocalKeyValueStoreConstants.Map.COLOR_TYPE_NONE, null);
+          TableUtil.get().setMapListViewColorRuleInfo(Tables.getInstance(), appName, db, tableId, info);
+        }
+      }
+
+      // Color Options Preference!
+      ListPreference colorRulePref = new ListPreference(this);
+      colorRulePref.setTitle("Color Rule for Graph and Map Markers");
+      colorRulePref.setDialogTitle("Change which color rule markers adhere to.");
+      String[] colorRuleTypes = { LocalKeyValueStoreConstants.Map.COLOR_TYPE_NONE,
+              LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE,
+              LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS,
+              LocalKeyValueStoreConstants.Map.COLOR_TYPE_COLUMN };
+      colorRulePref.setEntryValues(colorRuleTypes);
+      colorRulePref.setEntries(colorRuleTypes);
+      colorRulePref.setValue(info.colorType);
+      colorRulePref.setSummary(info.colorType);
+      colorRulePref.setOnPreferenceChangeListener(new ColorRuleTypeChangeListener(
+              (colorColumn == null) ? orderedDefns.getColumnDefinitions().get(0) : colorColumn));
+      prefCat.addPreference(colorRulePref);
+
+      if ( colorColumn != null ) {
+
+        TableUtil.TableColumns tc = TableUtil.get().getTableColumns(Tables.getInstance(), appName, db, tableId);
+
+        ArrayList<String> colorColElementKeys = new ArrayList<String>(tc.orderedDefns.getRetentionColumnNames());
+        ArrayList<String> colorColDisplayNames = new ArrayList<String>();
+        for (String elementKey : colorColElementKeys) {
+          String localizedDisplayName = tc.localizedDisplayNames.get(elementKey);
+          colorColDisplayNames.add(localizedDisplayName);
         }
 
         String localizedDisplayName;
@@ -357,9 +333,9 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
         colorColumnPref.setTitle("Color Rule Column");
         colorColumnPref.setDialogTitle("Change the column that applies the color rule.");
         colorColumnPref.setEntryValues(colorColElementKeys.toArray(new String[colorColElementKeys
-            .size()]));
+                .size()]));
         colorColumnPref.setEntries(colorColDisplayNames.toArray(new String[colorColDisplayNames
-            .size()]));
+                .size()]));
         colorColumnPref.setValue(colorColumn.getElementKey());
         colorColumnPref.setSummary(localizedDisplayName);
         colorColumnPref.setOnPreferenceChangeListener(new ColorRuleColumnChangeListener());
@@ -455,7 +431,6 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     if (resultCode == RESULT_CANCELED) {
       return;
     }
-    KeyValueStoreHelper kvsh;
     Uri uri;
     String filename;
     String relativePath;
@@ -463,10 +438,13 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     case RC_DETAIL_VIEW_FILE:
       uri = data.getData();
       filename = uri.getPath();
+      // We need to get the relative path under the app name.
       relativePath = getRelativePathOfFile(filename);
-      // kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
-      // kvsh.setString(DetailDisplayActivity.KEY_FILENAME, relativePath);
-      // tp.setDetailViewFilename(filename);
+      try {
+        TableUtil.get().atomicSetDetailViewFilename(Tables.getInstance(), appName, tableId, relativePath);
+      } catch (RemoteException e) {
+        Toast.makeText(getParent(), "Unable to set Detail View Filename", Toast.LENGTH_LONG).show();
+      }
       init();
       break;
     case RC_LIST_VIEW_FILE:
@@ -474,38 +452,23 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       filename = uri.getPath();
       // We need to get the relative path under the app name.
       relativePath = getRelativePathOfFile(filename);
-      // Trying to get the new name to the _VIEWS partition.
-      boolean successful = false;
-      OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        Tables.getInstance().getDatabase().beginTransaction(appName, db);
-        kvsh = new KeyValueStoreHelper(Tables.getInstance(), this.appName, db, this.tableId,
-            LocalKeyValueStoreConstants.ListViews.PARTITION_VIEWS);
-        // Set the name here statically, just to test. Later will want to
-        // allow custom naming, checking for redundancy, etc.
-        KeyValueHelper aspectHelper = kvsh.getAspectHelper("List View 1");
-        aspectHelper.setString(LocalKeyValueStoreConstants.ListViews.KEY_FILENAME, relativePath);
-        successful = true;
+        TableUtil.get().atomicSetListViewFilename(Tables.getInstance(), appName, tableId, relativePath);
       } catch (RemoteException e) {
-        WebLogger.getLogger(appName).printStackTrace(e);
-        Toast.makeText(this, "Error while saving list view selection", Toast.LENGTH_LONG).show();
-      } finally {
-        if ( db != null ) {
-          try {
-            Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
-          } catch (RemoteException e) {
-            WebLogger.getLogger(appName).printStackTrace(e);
-            Toast.makeText(this, "Unable to close database", Toast.LENGTH_LONG).show();
-          }
-        }
+        Toast.makeText(getParent(), "Unable to set List View Filename", Toast.LENGTH_LONG).show();
       }
       init();
       break;
     case RC_MAP_LIST_VIEW_FILE:
-      // tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION).setString(
-      // TableMapFragment.KEY_FILENAME,
-      // getRelativePathOfFile(data.getData().getPath()));
+      uri = data.getData();
+      filename = uri.getPath();
+      // We need to get the relative path under the app name.
+      relativePath = getRelativePathOfFile(filename);
+      try {
+        TableUtil.get().atomicSetMapListViewFilename(Tables.getInstance(), appName, tableId, relativePath);
+      } catch (RemoteException e) {
+        Toast.makeText(getParent(), "Unable to set Map List View Filename", Toast.LENGTH_LONG).show();
+      }
       init();
     default:
       super.onActivityResult(requestCode, resultCode, data);
@@ -534,29 +497,13 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
       String localizedDisplayName;
-      boolean successful = false;
-      OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        Tables.getInstance().getDatabase().beginTransaction(appName, db);
-        TableUtil.get().setRawDisplayName(appName, db, tableId, (String) newValue);
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
-        successful = true;
-      } catch (Exception e) {
-        WebLogger.getLogger(appName).printStackTrace(e);
-        WebLogger.getLogger(appName).e(TAG, "Unable to change display name: " + e.toString());
+        localizedDisplayName = ODKDataUtils.getLocalizedDisplayName(
+                TableUtil.get().atomicSetRawDisplayName(Tables.getInstance(), appName, tableId, (String) newValue));
+      } catch ( RemoteException e ) {
         Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
         init();
         return false;
-      } finally {
-        if (db != null) {
-          try {
-            Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
-          } catch (RemoteException e) {
-            WebLogger.getLogger(appName).printStackTrace(e);
-            Toast.makeText(TablePropertiesManager.this, "Unable to close database", Toast.LENGTH_LONG).show();
-          }
-        }
       }
       setTitle(getString(R.string.table_manager_title, localizedDisplayName));
       init();
@@ -567,22 +514,18 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
   private final class ColorRuleColumnChangeListener implements OnPreferenceChangeListener {
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
-      boolean successful = false;
       OdkDbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
-        Tables.getInstance().getDatabase().beginTransaction(appName, db);
-        KeyValueStoreHelper kvsHelper = new KeyValueStoreHelper(Tables.getInstance(), appName, db,
-            tableId, KeyValueStoreConstants.PARTITION_TABLE);
-        kvsHelper.setString(KEY_COLOR_RULE_COLUMN, (String) newValue);
-        successful = true;
+        TableUtil.get().setMapListViewColorRuleInfo(Tables.getInstance(), getAppName(), db, tableId,
+                new TableUtil.MapViewColorRuleInfo(LocalKeyValueStoreConstants.Map.COLOR_TYPE_COLUMN, (String) newValue));
       } catch (RemoteException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(TablePropertiesManager.this, "Error while saving color rule column selection", Toast.LENGTH_LONG).show();
       } finally {
         if (db != null) {
           try {
-            Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
+            Tables.getInstance().getDatabase().closeDatabase(appName, db);
           } catch (RemoteException e) {
             WebLogger.getLogger(appName).printStackTrace(e);
             Toast.makeText(TablePropertiesManager.this, "Unable to close database", Toast.LENGTH_LONG).show();
@@ -595,24 +538,33 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
   }
 
   private final class ColorRuleTypeChangeListener implements OnPreferenceChangeListener {
+
+    private String defaultColorElementKey;
+
+    public ColorRuleTypeChangeListener(ColumnDefinition columnDefinition) {
+      defaultColorElementKey = columnDefinition.getElementKey();
+    }
+
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
-      boolean successful = false;
       OdkDbHandle db = null;
       try {
+        String colorType = (String) newValue;
+        TableUtil.MapViewColorRuleInfo info = null;
+        if ( colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_COLUMN) ) {
+          info = new TableUtil.MapViewColorRuleInfo(colorType, defaultColorElementKey);
+        } else {
+          info = new TableUtil.MapViewColorRuleInfo(colorType, null);
+        }
         db = Tables.getInstance().getDatabase().openDatabase(appName);
-        Tables.getInstance().getDatabase().beginTransaction(appName, db);
-        KeyValueStoreHelper kvsHelper = new KeyValueStoreHelper(Tables.getInstance(), appName,
-            null, tableId, KeyValueStoreConstants.PARTITION_TABLE);
-        kvsHelper.setString(KEY_COLOR_RULE_TYPE, (String) newValue);
-        successful = true;
+        TableUtil.get().setMapListViewColorRuleInfo(Tables.getInstance(), appName, db, tableId, info);
       } catch (RemoteException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(TablePropertiesManager.this, "Error while saving color rule type selection", Toast.LENGTH_LONG).show();
       } finally {
         if (db != null) {
           try {
-            Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
+            Tables.getInstance().getDatabase().closeDatabase(appName, db);
           } catch (RemoteException e) {
             WebLogger.getLogger(appName).printStackTrace(e);
             Toast.makeText(TablePropertiesManager.this, "Unable to close database", Toast.LENGTH_LONG).show();
@@ -627,31 +579,10 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
   private final class DefaultViewTypeChangeListener implements OnPreferenceChangeListener {
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
-      boolean successful = false;
-      OdkDbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        Tables.getInstance().getDatabase().beginTransaction(appName, db);
-        TableUtil.get().setDefaultViewType(appName, db, tableId,
-            TableViewType.valueOf((String) newValue));
-        successful = true;
-      } catch (Exception e) {
-        WebLogger.getLogger(appName).printStackTrace(e);
-        WebLogger.getLogger(appName).e(TAG, "Unable to change default view type: " + e.toString());
+        TableUtil.get().atomicSetDefaultViewType(Tables.getInstance(), appName, tableId, TableViewType.valueOf((String) newValue));
+      } catch (RemoteException e) {
         Toast.makeText(getParent(), "Unable to change default view type", Toast.LENGTH_LONG).show();
-      } finally {
-        if (db != null) {
-          try {
-            Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
-          } catch (RemoteException e) {
-            WebLogger.getLogger(appName).printStackTrace(e);
-            WebLogger.getLogger(appName).e(TAG,
-                "Unable to change default view type: " + e.toString());
-            Toast
-                .makeText(getParent(), "Error while changing default view type", Toast.LENGTH_LONG)
-                .show();
-          }
-        }
       }
       init();
       return false;

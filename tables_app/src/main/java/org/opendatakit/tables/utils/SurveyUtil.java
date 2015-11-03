@@ -17,16 +17,16 @@ package org.opendatakit.tables.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.common.android.provider.FormsColumns;
 import org.opendatakit.common.android.provider.FormsProviderAPI;
-import org.opendatakit.common.android.utilities.KeyValueHelper;
-import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
@@ -40,7 +40,7 @@ import android.net.Uri;
 import android.os.RemoteException;
 
 /**
- * The ODKSurvey analogue to {@link CollectUtil}. Various functions and
+ * The ODKSurvey analogue to {@see CollectUtil}. Various functions and
  * utilities necessary to use Survey to interact with ODKTables.
  *
  * @author sudar.sam@gmail.com
@@ -88,7 +88,7 @@ public class SurveyUtil {
    * Return the formId for the single file that will be written when there is no
    * custom form defined for a table.
    *
-   * @param tp
+   * @param tableId
    * @return
    */
   private static String getDefaultAddRowFormId(String tableId) {
@@ -97,7 +97,7 @@ public class SurveyUtil {
 
   /**
    * Acquire an intent that will be set up to add a row using Survey. As with
-   * {@link CollectUtil#getIntentForOdkCollectAddRow(Context, String, String, org.opendatakit.tables.utils.CollectUtil.CollectFormParameters, Map)}
+   * {@see CollectUtil#getIntentForOdkCollectAddRow(Context, String, String, org.opendatakit.tables.utils.CollectUtil.CollectFormParameters, Map)}
    * , it
    * should eventually be able to prepopulate the row with the values in
    * elementKeyToValue. However! Much of this is still unimplemented.
@@ -145,8 +145,8 @@ public class SurveyUtil {
    * this.
    *
    * @param context
-   * @param tp
    * @param appName
+   * @param tableId
    * @param surveyFormParameters
    * @param instanceId
    * @return
@@ -174,19 +174,19 @@ public class SurveyUtil {
    * the specified table and app using the form pointed to by
    * surveyFormParameters.
    *
-   * @param tp
+   * The ContentResolver is being added here because it was needed in Collect.
+   * It is conceivable to me that we might eventually need it to query Survey
+   * in order to get the default form for a table or something of this nature.
+   * For at least the very short term, it will remain.
+   *
+   * @param context
    * @param appName
+   * @param tableId
    * @param surveyFormParameters
    * @param elementNameToValue
    *          a map of prepopulated values to add to the form
    * @param resolver
    * @return
-   */
-  /*
-   * The ContentResolver is being added here because it was needed in Collect.
-   * It is conceivable to me that we might eventually need it to query Survey
-   * in order to get the default form for a table or something of this nature.
-   * For at least the very short term, it will remain.
    */
   private static Uri getUriForSurveyAddRow(Context context, String appName, String tableId,
                                            SurveyFormParameters surveyFormParameters,
@@ -203,18 +203,18 @@ public class SurveyUtil {
    * Get a Uri that can be added to a Survey Intent in order to edit the row
    * specified by instanceId using the form specified by surveyFormParameters.
    *
-   * @param tp
-   * @param appName
-   * @param surveyFormParameters
-   * @param instanceId
-   * @param resolver
-   * @return
-   */
-  /*
    * The ContentResolver is being added here because it was needed in Collect.
    * It is conceivable to me that we might eventually need it to query Survey
    * in order to get the default form for a table or something of this nature.
    * For at least the very short term, it will remain.
+   *
+   * @param context
+   * @param appName
+   * @param tableId
+   * @param surveyFormParameters
+   * @param instanceId
+   * @param resolver
+   * @return
    */
   private static Uri getUriForSurveyEditRow(Context context, String appName, String tableId,
                                             SurveyFormParameters surveyFormParameters,
@@ -233,21 +233,19 @@ public class SurveyUtil {
   /**
    * Helper function for getting an Intent to add or edit data using Survey.
    *
-   * @param tp
-   *          the table that will be receiving the add
-   *          TODO: are we going to handle adding data to multiple tables? Does
-   *          Survey
-   *          know how to do this to the point that we don't even need this
-   *          parameter?
-   * @param surveyFormParameters
-   *          the parameters detailing the form to use.
+   * @param context
    * @param appName
    *          the app name
+   * @param tableId
+   *          the table that will be receiving the add Survey
+   * @param surveyFormParameters
+   *          the parameters detailing the form to use.
    * @param instanceId
    *          the instance of the id that will be edited or added. A
    *          newly-generated id will result in an add row--an existent ID will
    *          result
    *          in an edit row for the specified id.
+   * @param elementNameToValue
    * @return
    */
   private static Uri getUriForSurveyHelper(Context context, String appName,
@@ -325,8 +323,8 @@ public class SurveyUtil {
    * however, just starts it directly without waiting for return.
    *
    * @param activityToAwaitReturn
+   * @param tableId
    * @param surveyAddIntent
-   * @param tp
    */
   public static void launchSurveyToAddRow(AbsBaseActivity activityToAwaitReturn, 
       String tableId, Intent surveyAddIntent) {
@@ -338,9 +336,9 @@ public class SurveyUtil {
 
   /**
    * Add a row with Survey. Convenience method for calling
-   * {@link #getIntentForOdkSurveyAddRow(Context, String, String,
+   * {@see  #getIntentForOdkSurveyAddRow(Context, String, String,
    *  SurveyFormParameters, Map)} followed by
-   *  {@link #launchSurveyToAddRow(Activity, String, Intent)}.
+   *  {@see  #launchSurveyToAddRow(Activity, String, Intent)}.
    * 
    * @param activity activity to await activity return
    * @param appName
@@ -366,9 +364,9 @@ public class SurveyUtil {
 
   /**
    * Launch survey to edit a row. Convenience method for calling
-   * {@link #getIntentForOdkSurveyEditRow(Context, String, String,
+   * {@see  #getIntentForOdkSurveyEditRow(Context, String, String,
    *  SurveyFormParameters, String)} followed by
-   * {@link #launchSurveyToEditRow(Activity, Intent, String, String)}.
+   * {@see  #launchSurveyToEditRow(Activity, Intent, String, String)}.
    * 
    * @param activity activity to await the return of the launch
    * @param appName
@@ -400,8 +398,9 @@ public class SurveyUtil {
    * the activity without waiting for the return.
    *
    * @param activityToAwaitReturn
+   * @param tableId
    * @param surveyEditIntent
-   * @param tp
+   * @param rowId
    */
   public static void launchSurveyToEditRow(AbsBaseActivity activityToAwaitReturn, 
                                            String tableId,
@@ -485,9 +484,11 @@ public class SurveyUtil {
      * <p>
      * The display name of the row will be the display name of the table.
      *
-     * @param tp
+     * @param context
+     * @param appName
+     * @param tableId
      * @return
-     * @throws RemoteException 
+     * @throws RemoteException
      */
     public static SurveyFormParameters constructSurveyFormParameters(
         Context context, String appName, String tableId) throws RemoteException {
@@ -495,10 +496,13 @@ public class SurveyUtil {
       OdkDbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
-        KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName,
-            db, tableId, SurveyUtil.KVS_PARTITION);
-        KeyValueHelper aspectHelper = kvsh.getAspectHelper(SurveyUtil.KVS_ASPECT);
-        formId = aspectHelper.getString(SurveyUtil.KEY_FORM_ID);
+        List<KeyValueStoreEntry> kvsList =  Tables.getInstance().getDatabase()
+                .getDBTableMetadata(appName, db, tableId, SurveyUtil.KVS_PARTITION, SurveyUtil.KVS_ASPECT, SurveyUtil.KEY_FORM_ID );
+        if ( kvsList.size() != 1 ) {
+          formId = null;
+        } else {
+          formId = KeyValueStoreUtils.getString(appName, kvsList.get(0));
+        }
       } finally {
         if ( db != null ) {
           Tables.getInstance().getDatabase().closeDatabase(appName, db);
@@ -512,14 +516,13 @@ public class SurveyUtil {
     }
 
     public void persist(String appName, OdkDbHandle db, String tableId) throws RemoteException {
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
-          tableId, SurveyUtil.KVS_PARTITION);
-      KeyValueHelper aspectHelper = kvsh.getAspectHelper(SurveyUtil.KVS_ASPECT);
-      if (this.isUserDefined()) {
-        aspectHelper.setString(SurveyUtil.KEY_FORM_ID, this.mFormId);
-      } else {
-        aspectHelper.removeKey(SurveyUtil.KEY_FORM_ID);
-      }
+      KeyValueStoreEntry entry = KeyValueStoreUtils.buildEntry(tableId,
+              SurveyUtil.KVS_PARTITION,
+              SurveyUtil.KVS_ASPECT,
+              SurveyUtil.KEY_FORM_ID,
+              ElementDataType.string, this.isUserDefined() ? this.mFormId : null);
+
+      Tables.getInstance().getDatabase().replaceDBTableMetadata(appName, db, entry);
     }
   }
 
