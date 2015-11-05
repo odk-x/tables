@@ -5,7 +5,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.2.3'
+        classpath 'com.android.tools.build:gradle:1.3.1'
     }
 }
 
@@ -16,16 +16,8 @@ allprojects {
         maven {
             url 'http://cwe.cs.washington.edu:8082/artifactory/libs-release'
         }
-        maven {
+        ivy {
             url 'http://cwe.cs.washington.edu:8082/artifactory/libs-snapshot'
         }
-    }
-
-    configurations.all {
-        // Conflict with dependency 'com.android.support:support-annotations'. Resolved versions for app (20.0.0) and test app (22.2.0) differ.
-        resolutionStrategy.force 'com.android.support:support-annotations:22.2.0'
-
-        resolutionStrategy.cacheChangingModulesFor(0, 'seconds')
-        transitive = true
     }
 }
