@@ -74,8 +74,9 @@ public class EditNameDialogPreference extends DialogPreference {
    */
   @Override
   protected void onBindDialogView(View view) {
-	int viewName = R.id.edit_view_name;
-	mText = callingActivity.getCurrentViewName();
+    super.onBindDialogView(view);
+	  int viewName = R.id.edit_view_name;
+	  mText = callingActivity.getCurrentViewName();
     mEditText = (EditText)
         view.findViewById(viewName);
     mEditText.setText(mText);
