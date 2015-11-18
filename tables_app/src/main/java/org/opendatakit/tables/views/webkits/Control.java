@@ -15,41 +15,28 @@
  */
 package org.opendatakit.tables.views.webkits;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.RemoteException;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.*;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.RequestCodes;
-import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
-import org.opendatakit.tables.utils.WebViewUtil;
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.RemoteException;
+import java.util.*;
 
 public class Control {
 
@@ -301,57 +288,6 @@ public class Control {
   }
 
   /**
-   * @see {@link ControlIf#releaseQueryResources(String)}
-   */
-  public void releaseQueryResources(String tableId) {
-    Iterator<TableData> iter = queryResults.iterator();
-    while (iter.hasNext()) {
-      TableData td = iter.next();
-      if (td.getTableId().equals(tableId)) {
-        iter.remove();
-      }
-    }
-  }
-
-  /**
-   * Query the database using sql. Only returns the columns for the table
-   * specified by the tableName parameter.
-   * <p>
-   * Any arguments in the WHERE statement must be replaced by "?" and contained
-   * in order in the selectionArgs array. In this sense it is exactly a sql
-   * select minus the WHERE.
-   * <p>
-   * For example, if you wanted all the rows where the column foo equaled bar,
-   * the where clause would be "foo = ? " and the selection args would be
-   * ["bar"].
-   *
-   * @see {@link ControlIf#query(String, String, String[])}
-   *
-   * @param tableId
-   *          the display name of the table for which you want the columns to be
-   *          returned.
-   * @param whereClause
-   *          the where clause for the selection. This is the body of the
-   *          "WHERE" clause WITHOUT the "WHERE" References to other tables,
-   *          e.g. for joins, in this statement must use the name of the table
-   *          as returned by {@see getDbNameForTable}.
-   * @param selectionArgs
-   * @return
-   * @throws RemoteException 
-   */
-  public TableData query(String tableId, String whereClause, String[] selectionArgs,
-      String[] groupBy, String having, String orderByElementKey, String orderByDirection) throws RemoteException {
-    TableData tableData = queryForTableData(tableId, whereClause, selectionArgs, groupBy, having,
-        orderByElementKey, orderByDirection);
-    /**
-     * IMPORTANT: remember the td. The interfaces will hold weak references to
-     * them, so we need a strong reference to prevent GC.
-     */
-    queryResults.add(tableData);
-    return tableData;
-  }
-
-  /**
    * @see {@link ControlIf#getAllTableIds()}
    */
   public String getAllTableIds() {
@@ -423,33 +359,12 @@ public class Control {
     return localizedDisplayName;
   }
 
-  public boolean updateRow(String tableId, String stringifiedJSON, String rowId) throws RemoteException {
-    return helperAddOrUpdateRow(tableId, stringifiedJSON, rowId, true);
-  }
+
 
   protected ContentValues getContentValuesFromMap(Context context, String appName, String tableId,
       OrderedColumns orderedDefns, Map<String, String> elementKeyToValue) throws RemoteException {
     return WebViewUtil.getContentValuesFromMap(context, appName, tableId, orderedDefns,
         elementKeyToValue);
-  }
-
-  /**
-   * Add a row. Returns the id of the added row is successful or null if the add
-   * failed.
-   * 
-   * @param tableId
-   * @param stringifiedJSON
-   * @return
-   * @throws RemoteException 
-   */
-  public String addRow(String tableId, String stringifiedJSON) throws RemoteException {
-    String rowId = this.generateRowId();
-    boolean addSuccessful = helperAddOrUpdateRow(tableId, stringifiedJSON, rowId, false);
-    if (addSuccessful) {
-      return rowId;
-    } else {
-      return null;
-    }
   }
 
   /**
@@ -462,165 +377,6 @@ public class Control {
   protected String generateRowId() {
     String result = "uuid:" + UUID.randomUUID().toString();
     return result;
-  }
-
-  /**
-   * Add or update a row. If isUpdate is false, add is called. is called.
-   * 
-   * @param tableId
-   * @param stringifiedJSON
-   * @param rowId
-   *          cannot be null.
-   * @return true if change was successful, false otherwise.
-   * @throws RemoteException 
-   * @throws IllegalArgumentException
-   *           if rowId is null.
-   */
-  protected boolean helperAddOrUpdateRow(String tableId, String stringifiedJSON, String rowId,
-      boolean isUpdate) throws RemoteException {
-    String appName = mActivity.getAppName();
-    if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(appName).e(TAG,
-          "table [" + tableId + "] could not be found. " + "returning.");
-      return false;
-    }
-    if (rowId == null) {
-      throw new IllegalArgumentException("row id cannot be null");
-    }
-    Map<String, String> elementKeyToValue;
-    if (stringifiedJSON == null) {
-      // this case will let us add an empty row if null is passed.
-      elementKeyToValue = new HashMap<String, String>();
-    } else {
-      elementKeyToValue = WebViewUtil.getMapFromJson(appName, stringifiedJSON);
-    }
-
-    OdkDbHandle db = null;
-    try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-
-      // This may return cached content or access database. It does not need
-      // to be within a transaction with the update/insert.
-      OrderedColumns orderedColumns = retrieveColumnDefinitions(db, tableId);
-      ContentValues contentValues = getContentValuesFromMap(mActivity, appName, tableId,
-          orderedColumns, elementKeyToValue);
-      if (contentValues == null) {
-        // something went wrong parsing.
-        WebLogger.getLogger(appName).e(TAG,
-            "[addRow] cannot assemble assignment data for table: " + tableId);
-        return false;
-      }
-      // If we've made it here, all appears to be well.
-      if (isUpdate) {
-        Tables.getInstance().getDatabase().updateDataInExistingDBTableWithId(appName, db, 
-            tableId, orderedColumns, contentValues, rowId);
-
-      } else {
-        Tables.getInstance().getDatabase().insertDataIntoExistingDBTableWithId(appName, db, 
-            tableId, orderedColumns, contentValues, rowId);
-      }
-    } finally {
-      if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
-      }
-    }
-    return true;
-  }
-
-  /**
-   * @see {@link ControlIf#getPlatformInfo()}
-   * @return
-   */
-  public String getPlatformInfo() {
-    String appName = mActivity.getAppName();
-    // This is based on:
-    // org.opendatakit.survey.android.views.ODKShimJavascriptCallback
-    Map<String, String> platformInfo = new HashMap<String, String>();
-    platformInfo.put(PlatformInfoKeys.VERSION, Build.VERSION.RELEASE);
-    platformInfo.put(PlatformInfoKeys.CONTAINER, "Android");
-    platformInfo.put(PlatformInfoKeys.APP_NAME, appName);
-    platformInfo.put(PlatformInfoKeys.BASE_URI, getBaseContentUri());
-    platformInfo.put(PlatformInfoKeys.LOG_LEVEL, "D");
-    JSONObject jsonObject = new JSONObject(platformInfo);
-    String result = jsonObject.toString();
-    return result;
-  }
-
-  /**
-   * @see {@link ControlIf#getFileAsUrl(String)}
-   * @param relativePath
-   * @return
-   */
-  public String getFileAsUrl(String relativePath) {
-    String baseUri = getBaseContentUri();
-    String result = baseUri + relativePath;
-    return result;
-  }
-
-  /**
-   * @see {@link ControlIf#getRowFileAsUrl(String, String, String)}
-   * @param tableId
-   * @param rowId
-   * @param rowPathUri
-   * @return
-   */
-  public String getRowFileAsUrl(String tableId, String rowId, String rowPathUri) {
-    String appName = mActivity.getAppName();
-    String baseUri = getBaseContentUri();
-    File rowpathFile = ODKFileUtils.getRowpathFile( appName, tableId, rowId, rowPathUri);
-    String uriFragment = ODKFileUtils.asUriFragment(appName, rowpathFile);
-    return baseUri + uriFragment;
-  }
-
-  /**
-   * @see ControlIf#columnExists(String, String)
-   * @param tableId
-   * @param elementPath
-   * @return
-   * @throws RemoteException 
-   */
-  public boolean columnExists(String tableId, String elementPath) throws RemoteException {
-    String appName = mActivity.getAppName();
-    String elementKey = this.getElementKey(tableId, elementPath);
-    if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(appName).e(TAG,
-          "table [" + tableId + "] could not be found. " + "returning.");
-      return false;
-    }
-
-    OrderedColumns orderedDefns;
-    if (this.mCachedOrderedDefns.containsKey(tableId)) {
-      orderedDefns = this.mCachedOrderedDefns.get(tableId);
-    } else {
-      OdkDbHandle db = null;
-      try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        orderedDefns = retrieveColumnDefinitions(db, tableId);
-      } finally {
-        if (db != null) {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
-        }
-      }
-    }
-
-    try {
-      orderedDefns.find(elementKey);
-      return true;
-    } catch (IllegalArgumentException e) {
-      return false;
-    }
-  }
-
-  /**
-   * Return the base uri for the Tables app name with a trailing separator.
-   *
-   * @return
-   */
-  private String getBaseContentUri() {
-    String appName = mActivity.getAppName();
-    Uri contentUri = UrlUtils.getWebViewContentUri(this.mActivity);
-    contentUri = Uri.withAppendedPath(contentUri, Uri.encode(appName));
-    return contentUri.toString() + "/";
   }
 
   /**
@@ -882,48 +638,6 @@ public class Control {
     CollectUtil.editRowWithCollect(this.mActivity, appName, tableId, orderedDefns, rowId,
         formParameters);
     return true;
-  }
-
-  private TableData queryForTableData(String tableId, String sqlWhereClause,
-      String[] sqlSelectionArgs, String[] sqlGroupBy, String sqlHaving,
-      String sqlOrderByElementKey, String sqlOrderByDirection) throws RemoteException {
-    String appName = mActivity.getAppName();
-    if (!mTableIds.contains(tableId)) {
-      WebLogger.getLogger(appName).e(TAG,
-          "table [" + tableId + "] could not be found. " + "returning.");
-      return null;
-    }
-    OdkDbHandle db = null;
-    try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      OrderedColumns orderedDefns = retrieveColumnDefinitions(db, tableId);
-      String[] emptyArray = {};
-      UserTable userTable = Tables.getInstance().getDatabase().rawSqlQuery(appName, db,
-          tableId, orderedDefns,
-          sqlWhereClause, (sqlSelectionArgs == null) ? emptyArray : sqlSelectionArgs,
-          (sqlGroupBy == null) ? emptyArray : sqlGroupBy, sqlHaving, sqlOrderByElementKey,
-          sqlOrderByDirection);
-      TableData tableData = new TableData(mActivity, userTable);
-      return tableData;
-    } finally {
-      if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
-      }
-    }
-  }
-
-  /**
-   * The keys for the platformInfo json object.
-   * 
-   * @author sudar.sam@gmail.com
-   *
-   */
-  private static class PlatformInfoKeys {
-    public static final String CONTAINER = "container";
-    public static final String VERSION = "version";
-    public static final String APP_NAME = "appName";
-    public static final String BASE_URI = "baseUri";
-    public static final String LOG_LEVEL = "logLevel";
   }
 
 }
