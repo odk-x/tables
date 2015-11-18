@@ -15,15 +15,15 @@
  */
 package org.opendatakit.tables.views.components;
 
+import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
-import org.opendatakit.tables.data.TableViewType;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;
 
 /**
- * Adapter that displays {@link TableViewType} options.
+ * Adapter that displays {@see TableViewType} options.
  * @author sudar.sam@gmail.com
  *
  */

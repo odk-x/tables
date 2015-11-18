@@ -55,6 +55,14 @@ android {
     }
 }
 
+configurations.all {
+  resolutionStrategy {
+    cacheDynamicVersionsFor(0, 'seconds')
+    cacheChangingModulesFor(0, 'seconds')
+  }
+  transitive = true
+}
+
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
 
@@ -95,6 +103,6 @@ dependencies {
     androidTestCompile 'com.android.support.test:runner:0.3'
     androidTestCompile 'com.android.support.test:rules:0.3'
     androidTestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.1'
-    androidTestCompile 'com.android.support:support-annotations:22.2.0'
-    androidTestCompile 'com.android.support:support-v13:22.2.0'
+    androidTestCompile 'com.android.support:support-annotations:23.1.0'
+    androidTestCompile 'com.android.support:support-v13:23.1.0'
 }

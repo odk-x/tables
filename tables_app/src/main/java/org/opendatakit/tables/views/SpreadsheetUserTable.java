@@ -25,10 +25,10 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.content.Context;
 import android.os.RemoteException;
@@ -49,6 +49,7 @@ public class SpreadsheetUserTable {
   private final String[] header;
   private final String[] spreadsheetIndexToElementKey;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
+  private final Map<String, ArrayList<Map<String,Object>>> elementKeyToDisplayChoicesList;
 
   public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws RemoteException {
     this.fragment = frag;
@@ -58,21 +59,14 @@ public class SpreadsheetUserTable {
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(frag.getAppName());
-      colOrder = TableUtil.get().getColumnOrder(frag.getAppName(), db, frag.getTableId());
-      indexColumnElementKey = TableUtil.get().getIndexColumn(getAppName(), db, getTableId());
-
-      if (colOrder.isEmpty()) {
-        OrderedColumns orderedDefns = fragment.getColumnDefinitions();
-        for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
-          if ( cd.isUnitOfRetention() ) {
-            colOrder.add(cd.getElementKey());
-          }
-        }
-      }
+      indexColumnElementKey = TableUtil.get().getIndexColumn(Tables.getInstance(), getAppName(), db, getTableId());
+      colOrder = TableUtil.get().getColumnOrder(Tables.getInstance(), frag.getAppName(), db, frag.getTableId(),
+              frag.getColumnDefinitions());
 
       header = new String[colOrder.size()];
       spreadsheetIndexToElementKey = new String[colOrder.size()];
       elementKeyToSpreadsheetIndex = new HashMap<String, Integer>();
+      elementKeyToDisplayChoicesList = new HashMap<String, ArrayList<Map<String,Object>>>();
 
       for (int i = 0; i < colOrder.size(); ++i) {
         String elementKey = colOrder.get(i);
@@ -84,6 +78,10 @@ public class SpreadsheetUserTable {
         header[i] = localizedDisplayName;
         spreadsheetIndexToElementKey[i] = elementKey;
         elementKeyToSpreadsheetIndex.put(elementKey, i);
+
+        ArrayList<Map<String,Object>> choices =
+        ColumnUtil.get().getDisplayChoicesList(Tables.getInstance(), getAppName(), db, frag.getTableId(), elementKey);
+        elementKeyToDisplayChoicesList.put(elementKey, choices);
       }
     } finally {
       if ( db != null ) {
@@ -102,6 +100,10 @@ public class SpreadsheetUserTable {
 
   public OrderedColumns getColumnDefinitions() {
     return fragment.getColumnDefinitions();
+  }
+
+  public ArrayList<Map<String,Object>> getColumnDisplayChoicesList(String elementKey) {
+    return elementKeyToDisplayChoicesList.get(elementKey);
   }
 
   public ColorRuleGroup getColumnColorRuleGroup(OdkDbHandle db, String elementKey, String[] adminColumns) throws RemoteException {

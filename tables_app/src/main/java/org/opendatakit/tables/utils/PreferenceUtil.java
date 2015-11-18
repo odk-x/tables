@@ -15,19 +15,19 @@
  */
 package org.opendatakit.tables.utils;
 
-import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.utilities.KeyValueHelper;
-import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
-import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
+import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.content.Context;
 import android.os.RemoteException;
 import android.widget.Toast;
+
+import java.util.List;
 
 /**
  * 
@@ -52,61 +52,36 @@ public class PreferenceUtil {
       String tableId,
       TableViewType viewType) {
 
-    boolean successful = false;
-    OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      Tables.getInstance().getDatabase().beginTransaction(appName, db);
-      TableUtil.get().setDefaultViewType(appName, db, tableId, viewType);
-      successful = true;
-    } catch ( Exception e ) {
-      WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Unable to change default view type: " + e.toString());
-      Toast.makeText(
-          context,
-          "Unable to change default view type",
-          Toast.LENGTH_LONG).show();
-    } finally {
-      if ( db != null ) {
-        try {
-          Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
-        } catch (RemoteException e) {
-          e.printStackTrace();
-          WebLogger.getLogger(appName).printStackTrace(e);
-          WebLogger.getLogger(appName).e(TAG, "Unable to close database");
-        }
-      }
+      TableUtil.get().atomicSetDefaultViewType(Tables.getInstance(), appName, tableId, viewType);
+    } catch (RemoteException e) {
+      Toast.makeText(context, "Unable to change default view type", Toast.LENGTH_LONG).show();
     }
   }
   
   /**
    * Get the width thast has been set for the column. If none has been set,
-   * returns {@link SpreadsheetView#DEFAULT_COL_WIDTH}.
-   * @param tableProperties
+   * returns {@see DEFAULT_COL_WIDTH}.
+   *
+   * @param context
+   * @param appName
+   * @param tableId
    * @param elementKey
    * @return
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   public static int getColumnWidth(
       Context context, String appName, String tableId,
       String elementKey) throws RemoteException {
-    Integer result;
+    Integer result = null;
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      KeyValueStoreHelper kvsh =
-          new KeyValueStoreHelper(Tables.getInstance(), appName, db,
-              tableId, KeyValueStoreConstants.PARTITION_COLUMN);
-      KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
-      result = aspectHelper.getInteger(
-          LocalKeyValueStoreConstants.Spreadsheet.KEY_COLUMN_WIDTH);
+      result = ColumnUtil.get().getColumnWidth(Tables.getInstance(), appName, db, tableId, elementKey);
     } finally {
       if ( db != null ) {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
-    }
-    if (result == null) {
-      result = SpreadsheetView.DEFAULT_COL_WIDTH;
     }
     return result;
   }
@@ -116,37 +91,12 @@ public class PreferenceUtil {
       String appName,
       String tableId,
       String elementKey,
-      int newColumnWith) {
-    boolean successful = false;
-    OdkDbHandle db = null;
+      int newColumnWidth) {
+
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      Tables.getInstance().getDatabase().beginTransaction(appName, db);
-      KeyValueStoreHelper kvsh =
-          new KeyValueStoreHelper(Tables.getInstance(), appName, db, 
-              tableId, KeyValueStoreConstants.PARTITION_COLUMN);
-      KeyValueHelper aspectHelper = kvsh.getAspectHelper(elementKey);
-      aspectHelper.setInteger(
-          LocalKeyValueStoreConstants.Spreadsheet.KEY_COLUMN_WIDTH,
-          newColumnWith);
-      successful = true;
-    } catch ( Exception e ) {
-      WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Unable to change column width: " + e.toString());
-      Toast.makeText(
-          context,
-          "Unable to change column width",
-          Toast.LENGTH_LONG).show();
-    } finally {
-      if ( db != null ) {
-        try {
-          Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
-        } catch (RemoteException e) {
-          e.printStackTrace();
-          WebLogger.getLogger(appName).printStackTrace(e);
-          WebLogger.getLogger(appName).e(TAG, "Unable to close database");
-        }
-      }
+      ColumnUtil.get().atomicSetColumnWidth(Tables.getInstance(), appName, tableId, elementKey, newColumnWidth);
+    } catch ( RemoteException e ) {
+      Toast.makeText(context, "Unable to change Column Width", Toast.LENGTH_LONG).show();
     }
   }
 

@@ -15,6 +15,24 @@
  */
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.common.android.listener.DatabaseConnectionListener;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.opendatakit.common.android.listener.DatabaseConnectionListener;
+import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.utils.ActivityUtil;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.TableNameStruct;
+import org.opendatakit.tables.views.components.TableNameStructAdapter;
 import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.content.ComponentName;
@@ -95,7 +113,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
         List<String> tableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
   
         for (String tableId : tableIds) {
-          String localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+          String localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
   
           TableNameStruct tableNameStruct = new TableNameStruct(tableId, localizedDisplayName);
   

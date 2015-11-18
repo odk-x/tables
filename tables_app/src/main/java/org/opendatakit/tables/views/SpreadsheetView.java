@@ -25,9 +25,8 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.KeyValueHelper;
-import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.*;
+import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
@@ -60,22 +59,6 @@ import android.widget.Toast;
 public class SpreadsheetView extends LinearLayout implements TabularView.Controller {
 
   private static final String TAG = "SpreadsheetView";
-
-  // moved this from the old TableViewSettings
-  public static final int DEFAULT_COL_WIDTH = 125;
-
-  public static final int MAX_COL_WIDTH = 1000;
-
-  /******************************
-   * These are constants needed for the key value store.
-   ******************************/
-  public static final String KVS_PARTITION = "SpreadsheetView";
-  public static final String KVS_ASPECT_DEFAULT = "default";
-  // So this key should go into the column aspect, b/c it is a column key value
-  // entry that needs to be associated with a single column, but also needs
-  // to have this naming convention to avoid namespace collisions.
-  public static final String KEY_COLUMN_WIDTH = "SpreadsheetView.columnWidth";
-  public static final String DEFAULT_KEY_COLUMN_WIDTHS = Integer.toString(DEFAULT_COL_WIDTH);
 
   private static final int MIN_CLICK_DURATION = 0;
   private static final int MIN_LONG_CLICK_DURATION = 1000;
@@ -145,15 +128,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       mTableColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(),
           appName, db, table.getTableId(), adminColumns);
       completeColWidths = getColumnWidths(db);
-
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db, table.getTableId(), "SpreadsheetView");
-      if (kvsh.getInteger("fontSize") == null) {
-        PropertiesSingleton props = TablesToolProperties.get(context, table.getAppName());
-        Integer fs = props.getIntegerProperty(CommonToolProperties.KEY_FONT_SIZE);
-        fontSize = fs == null ? CommonToolProperties.DEFAULT_FONT_SIZE : fs.intValue();
-      } else {
-        fontSize = kvsh.getInteger("fontSize");
-      }
+      fontSize = TableUtil.get().getSpreadsheetViewFontSize(Tables.getInstance(), appName, db, table.getTableId());
     } finally {
       if ( db != null ) {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);
@@ -625,19 +600,14 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     int numberOfDisplayColumns = table.getNumberOfDisplayColumns();
     int[] columnWidths = new int[numberOfDisplayColumns];
     String appName = table.getAppName();
-    KeyValueStoreHelper columnKVSH = 
-        new KeyValueStoreHelper(Tables.getInstance(), appName, db, table.getTableId(), KeyValueStoreConstants.PARTITION_COLUMN);
+
+    Map<String, Integer> colWidths =
+            ColumnUtil.get().getColumnWidths(Tables.getInstance(), appName, db, table.getTableId(), table.getColumnDefinitions());
 
     for (int i = 0; i < numberOfDisplayColumns; i++) {
       ColumnDefinition cd = table.getColumnByIndex(i);
       String elementKey = cd.getElementKey();
-      KeyValueHelper aspectHelper = columnKVSH.getAspectHelper(elementKey);
-      Integer value = aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);
-      if (value == null) {
-        columnWidths[i] = DEFAULT_COL_WIDTH;
-      } else {
-        columnWidths[i] = value;
-      }
+      columnWidths[i] = colWidths.get(elementKey);
     }
     return columnWidths;
   }

@@ -39,7 +39,8 @@ import java.util.Map;
 public class Common {
 
    protected AbsBaseActivity mActivity;
-   private final WebLogger log;
+   //private final WebLogger log;
+
    // no need to preserve
    private PropertyManager mPropertyManager;
 
@@ -59,7 +60,7 @@ public class Common {
    public Common(AbsBaseActivity activity) throws RemoteException {
       this.mActivity = activity;
 
-      log = WebLogger.getLogger(this.mActivity.getAppName());
+      //log = WebLogger.getLogger(this.mActivity.getAppName());
 
       // Is this the best place for the
       // property manager creation to reside?
@@ -119,28 +120,28 @@ public class Common {
       char l = (level == null) ? 'I' : level.charAt(0);
       switch (l) {
       case 'A':
-         log.a("shim", loggingString);
+         WebLogger.getLogger(this.mActivity.getAppName()).a("shim", loggingString);
          break;
       case 'D':
-         log.d("shim", loggingString);
+         WebLogger.getLogger(this.mActivity.getAppName()).d("shim", loggingString);
          break;
       case 'E':
-         log.e("shim", loggingString);
+         WebLogger.getLogger(this.mActivity.getAppName()).e("shim", loggingString);
          break;
       case 'I':
-         log.i("shim", loggingString);
+         WebLogger.getLogger(this.mActivity.getAppName()).i("shim", loggingString);
          break;
       case 'S':
-         log.s("shim", loggingString);
+         WebLogger.getLogger(this.mActivity.getAppName()).s("shim", loggingString);
          break;
       case 'V':
-         log.v("shim", loggingString);
+         WebLogger.getLogger(this.mActivity.getAppName()).v("shim", loggingString);
          break;
       case 'W':
-         log.w("shim", loggingString);
+         WebLogger.getLogger(this.mActivity.getAppName()).w("shim", loggingString);
          break;
       default:
-         log.i("shim", loggingString);
+         WebLogger.getLogger(this.mActivity.getAppName()).i("shim", loggingString);
          break;
       }
    }

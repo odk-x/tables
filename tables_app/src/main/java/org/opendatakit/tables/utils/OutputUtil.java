@@ -32,6 +32,7 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
@@ -110,7 +111,7 @@ public class OutputUtil {
       for (String tableId : tableIds) {
 
         String localizedDisplayName;
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(appName, db, tableId);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
         tableIdToDisplayName.put(tableId, localizedDisplayName);
         Map<String, Object> controlTable = getMapForControlTable(appName, db, tableId);
         tableIdToControlTable.put(tableId, controlTable);
@@ -156,8 +157,8 @@ public class OutputUtil {
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
 
     orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);
-    defaultDetailFileName = TableUtil.get().getDetailViewFilename(appName, db, tableId);
-    defaultListFileName = TableUtil.get().getListViewFilename(appName, db, tableId);
+    defaultDetailFileName = TableUtil.get().getDetailViewFilename(Tables.getInstance(), appName, db, tableId);
+    defaultListFileName = TableUtil.get().getListViewFilename(Tables.getInstance(), appName, db, tableId);
 
     for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
       String elementName = cd.getElementName();
@@ -183,11 +184,11 @@ public class OutputUtil {
   /**
    * Gets a string containing information necessary for the data object for this
    * particular table. The object is something like the following:<br>
-   * { {@link #DATA_KEY_IN_COLLECTION_MODE}: boolean, {@link #DATA_KEY_COUNT}:
-   * int, {@link #DATA_KEY_COLLECTION_SIZE}: Array, (an array of ints)
-   * {@link #DATA_KEY_IS_INDEXED}: boolean, {@link #DATA_KEY_DATA: Array, (2d,
-   * array of rows) {@link #DATA_KEY_COLUMNS}: {elementKey: string, ...},
-   * {@link #DATA_KEY_ELEMENT_KEY_TO_PATH: elementPath: elementPath, ...},
+   * { {@see #DATA_KEY_IN_COLLECTION_MODE}: boolean, {@see #DATA_KEY_COUNT}:
+   * int, {@see #DATA_KEY_COLLECTION_SIZE}: Array, (an array of ints)
+   * {@see #DATA_KEY_IS_INDEXED}: boolean, {@see #DATA_KEY_DATA: Array, (2d,
+   * array of rows) {@see #DATA_KEY_COLUMNS}: {elementKey: string, ...},
+   * {@see #DATA_KEY_ELEMENT_KEY_TO_PATH: elementPath: elementPath, ...},
    *
    * @param db
    * @param appName

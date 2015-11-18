@@ -20,13 +20,12 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.TableUtil;
-import org.opendatakit.tables.utils.TableUtil.TableColumns;
 
 import android.app.Activity;
 import android.app.ListFragment;
@@ -97,21 +96,14 @@ public class ColumnListFragment extends ListFragment {
     AbsTableActivity activity = retrieveTableActivity();
     String appName = activity.getAppName();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    TableColumns tc = null;
+    TableUtil.TableColumns tc = null;
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      tc = TableUtil.get().getTableColumns(appName, db, activity.getTableId());
+      tc = TableUtil.get().getTableColumns(Tables.getInstance(), appName, db, activity.getTableId());
 
       ArrayList<String> colOrder;
-      colOrder = TableUtil.get().getColumnOrder(appName, db, activity.getTableId());
-      if (colOrder.isEmpty()) {
-        for ( ColumnDefinition cd : orderedDefns.getColumnDefinitions() ) {
-          if ( cd.isUnitOfRetention() ) {
-            colOrder.add(cd.getElementKey());
-          }
-        }
-      }
+      colOrder = TableUtil.get().getColumnOrder(Tables.getInstance(), appName, db, activity.getTableId(), orderedDefns);
       this.mElementKeys = colOrder;
       List<String> displayNames = new ArrayList<String>();
       for (String elementKey : mElementKeys) {

@@ -27,6 +27,7 @@ import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
@@ -40,7 +41,6 @@ import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.ParseUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
-import org.opendatakit.tables.utils.TableUtil;
 import org.opendatakit.tables.views.CellInfo;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.SpreadsheetUserTable;
@@ -143,93 +143,35 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     return new SpreadsheetView((TableDisplayActivity) this.getActivity(), this, spreadsheetTable);
   }
 
-  private void addGroupByColumn(ColumnDefinition cd) throws RemoteException {
-
-    ArrayList<String> newGroupBys;
-    boolean successful = false;
-    OdkDbHandle db = null;
+  void addGroupByColumn(ColumnDefinition cd) throws RemoteException {
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
-      newGroupBys = TableUtil.get().getColumnOrder(getAppName(), db, getTableId());
-      newGroupBys.add(cd.getElementKey());
-      TableUtil.get().setGroupByColumns(getAppName(), db, getTableId(), newGroupBys);
-      successful = true;
-    } catch (Exception e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      WebLogger.getLogger(getAppName()).e(TAG,
-          "Error while changing groupBy columns: " + e.toString());
-      Toast.makeText(this.getActivity(), getString(R.string.error_while_changing_group_by_columns),
-          Toast.LENGTH_LONG).show();
-    } finally {
-      if (db != null) {
-        Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
-      }
+      TableUtil.get().atomicAddGroupByColumn(Tables.getInstance(), getAppName(), getTableId(), cd.getElementKey());
+    } catch ( RemoteException e ) {
+      Toast.makeText(getActivity(), "Unable to add column to Group By list", Toast.LENGTH_LONG).show();
     }
   }
 
   void removeGroupByColumn(ColumnDefinition cd) throws RemoteException {
-    ArrayList<String> newGroupBys;
-    boolean successful = false;
-    OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
-      newGroupBys = TableUtil.get().getColumnOrder(getAppName(), db, getTableId());
-      newGroupBys.remove(cd.getElementKey());
-      TableUtil.get().setGroupByColumns(getAppName(), db, getTableId(), newGroupBys);
-      successful = true;
-    } catch (Exception e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      WebLogger.getLogger(getAppName()).e(TAG,
-          "Error while changing groupBy columns: " + e.toString());
-      Toast.makeText(this.getActivity(), getString(R.string.error_while_changing_group_by_columns),
-          Toast.LENGTH_LONG).show();
-    } finally {
-      if (db != null) {
-        Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
-      }
+      TableUtil.get().atomicRemoveGroupByColumn(Tables.getInstance(), getAppName(), getTableId(), cd.getElementKey());
+    } catch ( RemoteException e ) {
+      Toast.makeText(getActivity(), "Unable to remove column from Group By list", Toast.LENGTH_LONG).show();
     }
   }
 
   void setColumnAsSort(ColumnDefinition cd) throws RemoteException {
-    boolean successful = false;
-    OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
-      TableUtil.get().setSortColumn(getAppName(), db, getTableId(), (cd == null) ? null : cd.getElementKey());
-      successful = true;
-    } catch (Exception e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      WebLogger.getLogger(getAppName()).e(TAG, "Error while changing sort column: " + e.toString());
-      Toast.makeText(this.getActivity(), this.getString(R.string.error_while_changing_sort_column),
-          Toast.LENGTH_LONG).show();
-    } finally {
-      if (db != null) {
-        Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
-      }
+      TableUtil.get().atomicSetSortColumn(Tables.getInstance(), getAppName(), getTableId(), (cd == null) ? null : cd.getElementKey());
+    } catch ( RemoteException e ) {
+      Toast.makeText(getActivity(), "Unable to set Sort Column", Toast.LENGTH_LONG).show();
     }
   }
 
   void setColumnAsIndexedCol(ColumnDefinition cd) throws RemoteException {
-    boolean successful = false;
-    OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
-      TableUtil.get().setIndexColumn(getAppName(), db, getTableId(), (cd == null) ? null : cd.getElementKey());
-      successful = true;
-    } catch (Exception e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      WebLogger.getLogger(getAppName())
-          .e(TAG, "Error while changing index column: " + e.toString());
-      Toast.makeText(this.getActivity(),
-          this.getString(R.string.error_while_changing_index_column), Toast.LENGTH_LONG).show();
-    } finally {
-      if (db != null) {
-        Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
-      }
+      TableUtil.get().atomicSetIndexColumn(Tables.getInstance(), getAppName(), getTableId(), (cd == null) ? null : cd.getElementKey());
+    } catch ( RemoteException e ) {
+      Toast.makeText(getActivity(), "Unable to set Index Column", Toast.LENGTH_LONG).show();
     }
   }
 
@@ -303,17 +245,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   }
 
   private void deleteRow(String rowId) throws RemoteException {
-    boolean successful = false;
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
       Tables.getInstance().getDatabase().deleteDataInExistingDBTableWithId(getAppName(), db,
           getTableId(), rowId);
-      successful = true;
     } finally {
       if (db != null) {
-        Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
   }
@@ -644,9 +583,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      sortColumn = TableUtil.get().getSortColumn(getAppName(), db, getTableId());
-      indexColumn = TableUtil.get().getIndexColumn(getAppName(), db, getTableId());
-      groupByColumns = TableUtil.get().getColumnOrder(getAppName(), db, getTableId());
+      sortColumn = TableUtil.get().getSortColumn(Tables.getInstance(), getAppName(), db, getTableId());
+      indexColumn = TableUtil.get().getIndexColumn(Tables.getInstance(), getAppName(), db, getTableId());
+      groupByColumns = TableUtil.get().getColumnOrder(Tables.getInstance(), getAppName(), db, getTableId(),
+              spreadsheetTable.getColumnDefinitions());
     } finally {
       if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
@@ -718,20 +658,16 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       setButton.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-          boolean successful = false;
           OdkDbHandle db = null;
-          ArrayList<Map<String, Object>> choices;
           try {
             try {
               db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-              Tables.getInstance().getDatabase().beginTransaction(getAppName(), db);
-              choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
-                  Tables.getInstance(), getAppName(), db,
-                  getTableId(), cell.elementKey);
-  
-              String value = ParseUtil.validifyValue(getAppName(), dataUtil, choices,
+
+              String value = ParseUtil.validifyValue(getAppName(), dataUtil,
+                  spreadsheetTable.getColumnDisplayChoicesList(CellEditDialog.this.cell.elementKey),
                   spreadsheetTable.getColumnByElementKey(CellEditDialog.this.cell.elementKey),
                   cev.getValue());
+
               if (value == null) {
                 // TODO: alert the user
                 return;
@@ -743,10 +679,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
               Tables.getInstance().getDatabase().updateDataInExistingDBTableWithId(getAppName(), db,
                   getTableId(),
                   getColumnDefinitions(), values, cell.row.getRowId());
-              successful = true;
             } finally {
               if (db != null) {
-                Tables.getInstance().getDatabase().closeTransactionAndDatabase(getAppName(), db, successful);
+                Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
               }
             }
   

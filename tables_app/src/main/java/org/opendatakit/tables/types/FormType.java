@@ -15,8 +15,9 @@
  */
 package org.opendatakit.tables.types;
 
-import org.opendatakit.common.android.utilities.KeyValueHelper;
-import org.opendatakit.common.android.utilities.KeyValueStoreHelper;
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
+import org.opendatakit.common.android.utilities.KeyValueStoreUtils;
+import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
@@ -24,6 +25,8 @@ import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import android.content.Context;
 import android.os.RemoteException;
+
+import java.util.List;
 
 /**
  * Definition of the form data type.
@@ -54,10 +57,13 @@ public class FormType {
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db,
-          tableId, FormType.KVS_PARTITION);
-      KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
-      formType = aspectHelper.getString(FormType.KEY_FORM_TYPE);
+      List<KeyValueStoreEntry> kvsList =  Tables.getInstance().getDatabase()
+              .getDBTableMetadata(appName, db, tableId, FormType.KVS_PARTITION, FormType.KVS_ASPECT, FormType.KEY_FORM_TYPE );
+      if ( kvsList.size() != 1 ) {
+        formType = null;
+      } else {
+        formType = KeyValueStoreUtils.getString(appName, kvsList.get(0));
+      }
     } finally {
       if ( db != null ) {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);
@@ -71,7 +77,7 @@ public class FormType {
       Type t = Type.valueOf(formType);
       if (t == Type.COLLECT) {
         return new FormType(context, appName, tableId, CollectFormParameters.constructCollectFormParameters(
-            context, appName, tableId));
+                context, appName, tableId));
       }
       return new FormType(context, appName, tableId, SurveyFormParameters.constructSurveyFormParameters(
           context, appName, tableId));
@@ -82,22 +88,34 @@ public class FormType {
   }
 
   public void persist(Context context, String appName, String tableId) throws RemoteException {
-    boolean successful = false;
     OdkDbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      Tables.getInstance().getDatabase().beginTransaction(appName, db);
-      KeyValueStoreHelper kvsh = new KeyValueStoreHelper(Tables.getInstance(), appName, db,
-          tableId, FormType.KVS_PARTITION);
-      KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
-      aspectHelper.setString(KEY_FORM_TYPE, type.name());
+      KeyValueStoreEntry entry = KeyValueStoreUtils.buildEntry(tableId,
+              FormType.KVS_PARTITION,
+              FormType.KVS_ASPECT,
+              FormType.KEY_FORM_TYPE,
+              ElementDataType.string, type.name());
 
-      this.mCollectParams.persist(appName, db, tableId);
-      this.mSurveyParams.persist(appName, db, tableId);
-      successful = true;
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
+      // don't use a transaction, but ensure that if we are transitioning to
+      // the collect type (or updating it), that we update its settings first.
+      // ditto survey.
+      if ( type == Type.COLLECT ) {
+        this.mCollectParams.persist(appName, db, tableId);
+      } else {
+        this.mSurveyParams.persist(appName, db, tableId);
+      }
+      Tables.getInstance().getDatabase().replaceDBTableMetadata(appName, db, entry);
+      // and once we have transitioned, then we alter the settings
+      // of the form type we are no longer using.
+      if ( type == Type.COLLECT ) {
+        this.mSurveyParams.persist(appName, db, tableId);
+      } else {
+        this.mCollectParams.persist(appName, db, tableId);
+      }
     } finally {
       if ( db != null ) {
-        Tables.getInstance().getDatabase().closeTransactionAndDatabase(appName, db, successful);
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
   }

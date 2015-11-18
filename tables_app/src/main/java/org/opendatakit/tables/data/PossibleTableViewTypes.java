@@ -19,13 +19,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.tables.utils.TableUtil;
 
 import android.os.RemoteException;
+import org.opendatakit.tables.application.Tables;
 
 /**
- * Contains information about which {@link TableViewType}s are valid for a
+ * Contains information about which {@see TableViewType}s are valid for a
  * table based on its configuration. A List view may only be appropriate if a
  * list file has been set, for example.
  * @author sudar.sam@gmail.com
@@ -39,15 +41,15 @@ public class PossibleTableViewTypes {
 
   public PossibleTableViewTypes(String appName, OdkDbHandle db, String tableId, OrderedColumns orderedDefns) throws RemoteException {
     this.mSpreadsheetIsValid = true; // always
-    this.mListIsValid = (null != TableUtil.get().getListViewFilename(appName, db, tableId));
-    this.mMapIsValid = (null != TableUtil.get().getMapListViewFilename(appName, db, tableId)) &&
+    this.mListIsValid = (null != TableUtil.get().getListViewFilename(Tables.getInstance(), appName, db, tableId));
+    this.mMapIsValid = (null != TableUtil.get().getMapListViewFilename(Tables.getInstance(), appName, db, tableId)) &&
         orderedDefns.mapViewIsPossible();
   }
   
   /**
-   * Get a set with all the {@link TableViewType}s that are valid. If only a
+   * Get a set with all the {@see TableViewType}s that are valid. If only a
    * spreadsheet and list view are possible, for instance, it will contain
-   * {@link TableViewType#SPREADSHEET} and {@link TableViewType#LIST}.
+   * {@see TableViewType#SPREADSHEET} and {@see TableViewType#LIST}.
    * @return a {@link Set} of the possible view types.
    */
   public Set<TableViewType> getAllPossibleViewTypes() {
