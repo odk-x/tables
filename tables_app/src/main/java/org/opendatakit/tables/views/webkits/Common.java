@@ -113,7 +113,7 @@ public class Common {
    }
 
    /**
-    * @see {@link CommonIf#log()}
+    * @see {@link CommonIf#log(String, String)}
     * @return
     */
    public void log(String level, String loggingString) {
@@ -147,7 +147,7 @@ public class Common {
    }
 
    /**
-    * @see {@link CommonIf#getProperty()}
+    * @see {@link CommonIf#getProperty(String)}
     * @return
     */
    public String getProperty(String propertyId) {
