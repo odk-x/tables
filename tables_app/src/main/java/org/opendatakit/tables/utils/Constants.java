@@ -235,6 +235,7 @@ public class Constants {
    */
   public static class JavaScriptHandles {
     public static final String CONTROL = "control";
+    public static final String COMMON = "common";
     public static final String DATA = "data";
     public static final String GRAPH = "graph_data";
     // new data interface

@@ -15,6 +15,11 @@
  */
 package org.opendatakit.tables.fragments;
 
+import android.app.Fragment;
+import android.os.Bundle;
+import android.os.RemoteException;
+import android.webkit.WebView;
+import android.widget.Toast;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.views.Data;
@@ -26,14 +31,9 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
+import org.opendatakit.tables.views.webkits.Common;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.TableData;
-
-import android.app.Fragment;
-import android.os.Bundle;
-import android.os.RemoteException;
-import android.webkit.WebView;
-import android.widget.Toast;
 
 /**
  * {@link Fragment} for displaying a detail view.
@@ -89,6 +89,9 @@ public class DetailViewFragment extends AbsWebTableFragment {
         Control control = this.createControlObject();
         webView.addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(),
             Constants.JavaScriptHandles.CONTROL);
+        Common common = this.createCommonObject();
+        webView.addJavascriptInterface(common.getJavascriptInterfaceWithWeakReference(),
+            Constants.JavaScriptHandles.COMMON);
         Data data;
         data = this.getDataReference();
         webView.addJavascriptInterface(
@@ -100,6 +103,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
         setWebKitVisibility();
         // Now save the references.
         this.mControlReference = control;
+        this.mCommonReference = common;
         this.mTableDataReference = tableData;
         WebViewUtil.displayFileInWebView(activity, getAppName(), webView, getFileName());
       } catch (RemoteException e) {

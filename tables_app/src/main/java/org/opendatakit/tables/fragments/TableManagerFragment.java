@@ -15,23 +15,6 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.ActivityUtil;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.TableNameStruct;
-import org.opendatakit.tables.utils.TableUtil;
-import org.opendatakit.tables.views.components.TableNameStructAdapter;
-
 import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.content.ComponentName;
@@ -49,6 +32,19 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.opendatakit.common.android.listener.DatabaseConnectionListener;
+import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.utils.*;
+import org.opendatakit.tables.views.components.TableNameStructAdapter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TableManagerFragment extends ListFragment implements DatabaseConnectionListener {
 

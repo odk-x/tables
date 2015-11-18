@@ -15,13 +15,12 @@
  */
 package org.opendatakit.tables.views.webkits;
 
-import java.lang.ref.WeakReference;
-
+import android.os.RemoteException;
+import android.widget.Toast;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 
-import android.os.RemoteException;
-import android.widget.Toast;
+import java.lang.ref.WeakReference;
 
 /**
  * This object is handed to all the javascript views as "control".
@@ -520,25 +519,25 @@ public class ControlIf {
    * 
    * @param tableId
    *          the id of the table you are adding to
-   * @param valuesMap
+   * @param stringifiedObject
    *          a stringified JSON object mapping element key to value. The values
    *          must be able to be parsed to the appropriate types for each row.
    *          E.g. an integer column cannot have a value "cat".
    * @return If the add was successful, return the id of the added row. Null if
    *         the add failed.
    */
-  @android.webkit.JavascriptInterface
-  public String addRow(String tableId, String stringifiedObject) {
-    try {
-      return weakControl.get().addRow(tableId, stringifiedObject);
-    } catch (RemoteException e) {
-      String appName = weakControl.get().retrieveAppName();
-      WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
-      Toast.makeText(weakControl.get().mActivity, R.string.error_accessing_database, Toast.LENGTH_LONG).show();
-      return null;
-    }
-  }
+//  @android.webkit.JavascriptInterface
+//  public String addRow(String tableId, String stringifiedObject) {
+//    try {
+//      return weakControl.get().addRow(tableId, stringifiedObject);
+//    } catch (RemoteException e) {
+//      String appName = weakControl.get().retrieveAppName();
+//      WebLogger.getLogger(appName).printStackTrace(e);
+//      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
+//      Toast.makeText(weakControl.get().mActivity, R.string.error_accessing_database, Toast.LENGTH_LONG).show();
+//      return null;
+//    }
+//  }
 
   /**
    * CHANGE TO ASYNC
@@ -561,18 +560,18 @@ public class ControlIf {
    * @return
    * @see ControlIf#addRow(String, String)
    */
-  @android.webkit.JavascriptInterface
-  public boolean updateRow(String tableId, String stringifiedObject, String rowId) {
-    try {
-      return weakControl.get().updateRow(tableId, stringifiedObject, rowId);
-    } catch (RemoteException e) {
-      String appName = weakControl.get().retrieveAppName();
-      WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
-      Toast.makeText(weakControl.get().mActivity, R.string.error_accessing_database, Toast.LENGTH_LONG).show();
-      return false;
-    }
-  }
+//  @android.webkit.JavascriptInterface
+//  public boolean updateRow(String tableId, String stringifiedObject, String rowId) {
+//    try {
+//      return weakControl.get().updateRow(tableId, stringifiedObject, rowId);
+//    } catch (RemoteException e) {
+//      String appName = weakControl.get().retrieveAppName();
+//      WebLogger.getLogger(appName).printStackTrace(e);
+//      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
+//      Toast.makeText(weakControl.get().mActivity, R.string.error_accessing_database, Toast.LENGTH_LONG).show();
+//      return false;
+//    }
+//  }
 
   /**
    * Determine if the column exist in the given table.
@@ -602,10 +601,10 @@ public class ControlIf {
    * @param relativePath
    * @return an absolute URI to the file
    */
-  @android.webkit.JavascriptInterface
-  public String getFileAsUrl(String relativePath) {
-    return weakControl.get().getFileAsUrl(relativePath);
-  }
+//  @android.webkit.JavascriptInterface
+//  public String getFileAsUrl(String relativePath) {
+//    return weakControl.get().getFileAsUrl(relativePath);
+//  }
 
   /**
    * Convert the rowpath value for a media attachment (e.g., uriFragment) field
@@ -616,10 +615,10 @@ public class ControlIf {
    * @param rowPathUri
    * @return
    */
-  @android.webkit.JavascriptInterface
-  public String getRowFileAsUrl(String tableId, String rowId, String rowPathUri) {
-    return weakControl.get().getRowFileAsUrl(tableId, rowId, rowPathUri);
-  }
+//  @android.webkit.JavascriptInterface
+//  public String getRowFileAsUrl(String tableId, String rowId, String rowPathUri) {
+//    return weakControl.get().getRowFileAsUrl(tableId, rowId, rowPathUri);
+//  }
 
   /**
    * Return the platform info as a stringified json object. This is an object
@@ -627,9 +626,9 @@ public class ControlIf {
    * 
    * @return a stringified json object with the above keys
    */
-  @android.webkit.JavascriptInterface
-  public String getPlatformInfo() {
-    return weakControl.get().getPlatformInfo();
-  }
+//  @android.webkit.JavascriptInterface
+//  public String getPlatformInfo() {
+//    return weakControl.get().getPlatformInfo();
+//  }
 
 }

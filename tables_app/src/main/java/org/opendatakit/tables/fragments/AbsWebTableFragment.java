@@ -23,6 +23,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.TextView;
+import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -61,6 +62,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    * in {@link ControlIf}.
    */
   Control mControlReference;
+  Common mCommonReference;
   Data mDataReference;
   LinkedList<String> queueResponseJSON = new LinkedList<String>();
 
@@ -120,6 +122,13 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     }
   }
 
+  @Override public void onResume() {
+    super.onResume();
+    if ( mDataReference != null ) {
+      mDataReference.refreshContext();
+    }
+  }
+
   @Override
   public View onCreateView(
       LayoutInflater inflater,
@@ -149,15 +158,25 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   }
 
   /**
+   * @throws RemoteException
+   * @see IWebFragment#createCommonObject()
+   */
+  @Override
+  public Common createCommonObject() throws RemoteException {
+    Common result = new Common((AbsBaseActivity) getActivity());
+    return result;
+  }
+
+  /**
    * Create a {@link TableData} object that can be added toe the webview.
    * @return
    * @throws RemoteException
    */
   protected abstract TableData createDataObject() throws RemoteException;
 
-  public Data getDataReference() throws RemoteException {
+  public synchronized Data getDataReference() throws RemoteException {
     if ( mDataReference == null ) {
-      mDataReference = new Data(this);
+      mDataReference = new Data(this, (BaseActivity)getActivity());
     }
     return mDataReference;
   }
@@ -211,14 +230,20 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
 
   @Override
   public void signalResponseAvailable(String responseJSON) {
-    this.queueResponseJSON.add(responseJSON);
-    final WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
-    this.getActivity().runOnUiThread(new Runnable() {
-      @Override
-      public void run() {
-        webView.loadUrl("javascript:datarsp.responseAvailable();");
-      }
-    });
+    View vw = getView();
+    if (vw != null) {
+      this.queueResponseJSON.add(responseJSON);
+      final WebView webView = (WebView) vw.findViewById(org.opendatakit.tables.R.id.webkit);
+      this.getActivity().runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          webView.loadUrl("javascript:datarsp.responseAvailable();");
+        }
+      });
+    } else {
+      WebLogger.getLogger(getAppName()).d(TAG, "signalResponseAvailable: trying to deliver a "
+          + "response when view is null");
+    }
   }
 
   @Override
@@ -243,5 +268,13 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   @Override
   public OdkDbInterface getDatabase() {
     return ((CommonApplication) this.getActivity().getApplication()).getDatabase();
+  }
+
+  @Override
+  public void onDestroy() {
+    if (mDataReference != null) {
+      this.mDataReference.shutdownContext();
+    }
+    super.onDestroy();
   }
 }

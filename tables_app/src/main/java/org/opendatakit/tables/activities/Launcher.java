@@ -15,19 +15,17 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.List;
-
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.widget.Toast;
 import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.provider.TablesProviderAPI;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.TableFileUtils;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.widget.Toast;
+import java.util.List;
 
 public class Launcher extends BaseActivity {
 
@@ -49,7 +47,7 @@ public class Launcher extends BaseActivity {
 
     this.mAppName = IntentUtil.retrieveAppNameFromBundle(extras);
     if (this.mAppName == null) {
-      this.mAppName = TableFileUtils.getDefaultAppName();
+      this.mAppName = "tables";
     }
 
     Uri uri = intent.getData();

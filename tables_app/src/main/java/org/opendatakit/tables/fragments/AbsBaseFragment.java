@@ -16,6 +16,7 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
+import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
 
@@ -32,12 +33,15 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
 
   private static final String LOGTAG = "AbsBaseFragment";
 
+  protected String mAppName;
+
   public void onAttach(Activity activity) {
     super.onAttach(activity);
     if (!(activity instanceof AbsBaseActivity)) {
       throw new IllegalStateException(AbsBaseFragment.class.getSimpleName()
           + " must be attached to an " + AbsBaseActivity.class.getSimpleName());
     }
+    mAppName = ((AbsBaseActivity) activity).getAppName();
   }
 
   @Override
@@ -52,9 +56,23 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
    * @return
    */
   public String getAppName() {
-    // we know this will succeed because of the check in onAttach
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    return activity.getAppName();
+    // we do NOT know this will succeed because of the check in onAttach
+    // Actually we found fragments still alive after their corresponding
+    // activities are null so we need to always check that the activity is
+    // valid in a fragment
+    if (mAppName == null) {
+      Activity activity = getActivity();
+      if (activity != null) {
+        if (!(activity instanceof AbsBaseActivity)) {
+          throw new IllegalStateException(AbsBaseFragment.class.getSimpleName()
+              + " must be attached to an " + AbsBaseActivity.class.getSimpleName());
+        }
+        mAppName = ((AbsBaseActivity) activity).getAppName();
+      }
+      WebLogger.getLogger(mAppName).d(LOGTAG, "mAppName was null and has been set using the "
+          + "activity");
+    }
+    return mAppName;
   }
 
 }

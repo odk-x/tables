@@ -561,7 +561,7 @@ public class Control {
     String result = baseUri + relativePath;
     return result;
   }
-  
+
   /**
    * @see {@link ControlIf#getRowFileAsUrl(String, String, String)}
    * @param tableId
@@ -629,7 +629,7 @@ public class Control {
   }
 
   /**
-   * Launch the {@link CustomHomeScreenActivity} with the custom filename to
+   * Launch the with the custom filename to
    * display. The return type on this method currently is always true, should
    * probably check if the file exists first.
    *
@@ -762,8 +762,9 @@ public class Control {
    * It prepopulates the form as it needs based on the query (or the
    * elKeyToValueToPrepopulate parameter) and launches the form.
    *
+   * @param tableId
+   * @param orderedDefns
    * @param params
-   * @param tp
    * @param elKeyToValueToPrepopulate
    *          a map of element key to value that will prepopulate the Collect
    *          form for the new add row. Must be a map of column element key to

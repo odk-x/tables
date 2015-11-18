@@ -15,12 +15,12 @@
  */
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.common.android.views.Data;
-import org.opendatakit.tables.views.webkits.Control;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.os.RemoteException;
+import org.opendatakit.common.android.views.Data;
+import org.opendatakit.tables.views.webkits.Common;
+import org.opendatakit.tables.views.webkits.Control;
 
 /**
  * Interface defining behavior for those {@link Fragment}s that display a
@@ -66,6 +66,13 @@ public interface IWebFragment {
    * @throws RemoteException 
    */
   public Control createControlObject() throws RemoteException;
+
+  /**
+   * Create a {@link Common} object that can be added to this webview.
+   * @return
+   * @throws RemoteException
+   */
+  public Common createCommonObject() throws RemoteException;
 
   /**
    * Access the data if object for injection into JS

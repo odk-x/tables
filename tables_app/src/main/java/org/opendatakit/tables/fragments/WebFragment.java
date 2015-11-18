@@ -36,6 +36,7 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
+import org.opendatakit.tables.views.webkits.Common;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
 import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
@@ -68,6 +69,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
    * in {@link ControlIf}.
    */
   protected Control mControlReference;
+  protected Common mCommonReference;
 
   protected Data mDataReference;
   LinkedList<String> queueResponseJSON = new LinkedList<String>();
@@ -159,10 +161,24 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
     }
   }
 
+  /**
+   * @see IWebFragment#createCommonObject()
+   */
   @Override
-  public Data getDataReference() {
+  public Common createCommonObject()  {
+    try {
+      Common result = new Common((AbsBaseActivity) this.getActivity());
+      return result;
+    } catch (RemoteException e) {
+      WebLogger.getLogger(getAppName()).e(TAG, "Unable to access database during Common init");
+      return null;
+    }
+  }
+
+  @Override
+  public synchronized Data getDataReference() {
     if ( mDataReference == null ) {
-      mDataReference = new Data(this);
+      mDataReference = new Data(this, this.getActivity());
     }
     return mDataReference;
   }
@@ -200,6 +216,13 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
       webView.addJavascriptInterface(
           control.getJavascriptInterfaceWithWeakReference(),
           Constants.JavaScriptHandles.CONTROL);
+
+      Common common = this.createCommonObject();
+      if (common == null) {
+        return;
+      }
+      webView.addJavascriptInterface(common.getJavascriptInterfaceWithWeakReference(), Constants
+          .JavaScriptHandles.COMMON);
       setWebKitVisibility();
       Data data = this.getDataReference();
       webView.addJavascriptInterface(
@@ -208,6 +231,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
       setWebKitVisibility();
       // save the strong reference
       this.mControlReference = control;
+      this.mCommonReference = common;
       WebViewUtil.displayFileInWebView(
           getActivity(),
           ((AbsBaseActivity) getActivity()).getAppName(),

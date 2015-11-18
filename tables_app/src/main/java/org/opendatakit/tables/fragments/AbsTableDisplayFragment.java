@@ -46,16 +46,7 @@ public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     return activity.getTableId();
   }
-  
-  /**
-   * Get the AppName under which we are operating.
-   * 
-   * @return appName
-   */
-  public String getAppName() {
-    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-    return activity.getAppName(); 
-  }
+
   /**
    * Get the description of the table.
    * 
