@@ -39,15 +39,19 @@ public class UiTest extends InstrumentationTestCase {
         mDevice.pressHome();
         // TODO: add check for home screen
 
-        // Goto all apps
+       // Goto all apps
         UiObject appButton = mDevice.findObject(new UiSelector()
                 .description("Apps"));
         appButton.clickAndWaitForNewWindow();
 
-        // Find scroll object
+       // Find the all-apps launcher listing screen
+       UiObject appScreen = mDevice.findObject(new UiSelector()
+            .resourceId("com.android.launcher:id/apps_customize_content"));
+
+        // Find scroll pane within it
         UiScrollable appMenu = new UiScrollable(new UiSelector()
                 .scrollable(true)
-                .resourceId("com.google.android.googlequicksearchbox:id/apps_customize_pane_content"));
+                .resourceId("com.android.launcher:id/apps_customize_pane_content"));
         appMenu.setAsHorizontalList();
 
         // Find ODK App
@@ -82,43 +86,61 @@ public class UiTest extends InstrumentationTestCase {
                 .resourceId("org.opendatakit.tables:id/top_level_table_menu_add"));
         addRow.clickAndWaitForNewWindow();
 
-        // Click next
-        WebUiObject nextButton = new WebUiObject(mDevice, new UiSelector()
-                .className("android.widget.Button")
-                .descriptionContains("next"));
-
         Thread.sleep(SURVEY_TIMEOUT);
-        mDevice.click(50,500); // TODO: Make this implementation less hacky
-        nextButton.click();
+        mDevice.click(50, 500); // TODO: Make this implementation less hacky
+
+       Thread.sleep(500);
+       // Click next
+       WebUiObject nextButton = new WebUiObject(mDevice, new UiSelector()
+           .className("android.widget.Button")
+           .descriptionContains("next"));
+
+       nextButton.click();
 
         // Fill textbox
         WebUiObject textBox = new WebUiObject(mDevice,new UiSelector()
                 .className("android.widget.EditText"));
         textBox.setText(generateID());
-
+        nextButton = new WebUiObject(mDevice, new UiSelector()
+           .className("android.widget.Button")
+           .descriptionContains("next"));
         nextButton.click();
 
         // Enter 7 into number of rooms
+        textBox = new WebUiObject(mDevice,new UiSelector()
+           .className("android.widget.EditText"));
         textBox.setText("7");
+        nextButton = new WebUiObject(mDevice, new UiSelector()
+           .className("android.widget.Button")
+           .descriptionContains("next"));
         nextButton.click();
 
         // Return to previous screen and change to 17
         WebUiObject backButton = new WebUiObject(mDevice,new UiSelector()
                 .className("android.widget.Button")
                 .descriptionContains("back"));
-
         backButton.click();
+
+        textBox = new WebUiObject(mDevice,new UiSelector()
+           .className("android.widget.EditText"));
         textBox.setText("17");
+        nextButton = new WebUiObject(mDevice, new UiSelector()
+           .className("android.widget.Button")
+           .descriptionContains("next"));
         nextButton.click();
 
+       // electricity
         // Select yes
         WebUiObject yesRadioButton = new WebUiObject(mDevice,new UiSelector()
                 .descriptionContains("yes")
                 .className("android.widget.RadioButton"));
         yesRadioButton.click();
-
+        nextButton = new WebUiObject(mDevice, new UiSelector()
+           .className("android.widget.Button")
+           .descriptionContains("next"));
         nextButton.click();
 
+       // running water
         // Select no
         WebUiObject noRadioButton = new WebUiObject(mDevice,new UiSelector()
                 .descriptionContains("no")
@@ -126,15 +148,25 @@ public class UiTest extends InstrumentationTestCase {
         noRadioButton.click();
 
         // Reach end of form and finalize
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 9; i++) {
+            nextButton = new WebUiObject(mDevice, new UiSelector()
+               .className("android.widget.Button")
+               .descriptionContains("next"));
             nextButton.click();
+            Thread.sleep(500L);
         }
 
         // Click finalize
         UiObject finalizeButton = mDevice.findObject(new UiSelector()
-                .descriptionContains("Finalize")
-                .className("android.widget.Button"));
+                .className("android.widget.Button")
+                .descriptionContains("Finalize"));
         finalizeButton.click();
+
+       Thread.sleep(SURVEY_TIMEOUT);
+
+       // Should find the addRow button (and be back in tables)
+       addRow = mDevice.findObject(new UiSelector()
+           .resourceId("org.opendatakit.tables:id/top_level_table_menu_add"));
     }
 
     private String generateID() { // TODO: Perhaps there's a better solution?
