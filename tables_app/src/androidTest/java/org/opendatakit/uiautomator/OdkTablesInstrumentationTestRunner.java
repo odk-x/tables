@@ -12,17 +12,13 @@
  * the License.
  */
 
-package org.opendatakit.common.android;
+package org.opendatakit.uiautomator;
 
-import android.test.suitebuilder.TestSuiteBuilder;
-
-import junit.framework.Test;
 import junit.framework.TestSuite;
 
-public class AllTablesTests extends TestSuite  {
-  
-  public static Test suite() {
-    return new TestSuiteBuilder(AllTablesTests.class).includeAllPackagesUnderHere().build();
-  }
+public class OdkTablesInstrumentationTestRunner extends android.support.test.uiautomator.UiAutomatorInstrumentationTestRunner {
 
+  public OdkTablesInstrumentationTestRunner() {
+    super();
+  }
 }

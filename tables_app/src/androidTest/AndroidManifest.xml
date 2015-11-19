@@ -8,6 +8,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <instrumentation
-            android:name="org.opendatakit.common.android.OdkTablesInstrumentationTestRunner"
-					 android:targetPackage="org.opendatakit.tables"/>
+            android:name="org.opendatakit.uiautomator.OdkTablesInstrumentationTestRunner"
+            android:targetPackage="org.opendatakit.tables.test"/>
 </manifest>
