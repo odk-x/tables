@@ -28,7 +28,6 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Common;
 import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.TableData;
 
 /**
  * {@link Fragment} for displaying a List view.
@@ -58,14 +57,9 @@ public class ListViewFragment extends AbsWebTableFragment {
         webView.addJavascriptInterface(
                 data.getJavascriptInterfaceWithWeakReference(),
                 Constants.JavaScriptHandles.DATAIF);
-        TableData tableData = this.createDataObject();
-        webView.addJavascriptInterface(
-            tableData.getJavascriptInterfaceWithWeakReference(),
-            Constants.JavaScriptHandles.DATA);
         // Now save the references.
         this.mControlReference = control;
         this.mCommonReference = common;
-        this.mTableDataReference = tableData;
         setWebKitVisibility();
         WebViewUtil.displayFileInWebView(
             getActivity(),
@@ -92,12 +86,6 @@ public class ListViewFragment extends AbsWebTableFragment {
   @Override
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.LIST;
-  }
-
-  @Override
-  protected TableData createDataObject() {
-    TableData result = new TableData(getActivity(), getUserTable());
-    return result;
   }
 
 }

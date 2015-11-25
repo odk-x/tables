@@ -51,9 +51,6 @@ public class Control {
     return new ControlIf(this);
   }
 
-  // hold onto references to all the results returned to the WebKit
-  private LinkedList<TableData> queryResults = new LinkedList<TableData>();
-
   /**
    * This construct requires an activity rather than a context because we want
    * to be able to launch intents for result rather than merely launch them on

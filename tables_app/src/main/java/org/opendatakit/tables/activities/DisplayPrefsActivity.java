@@ -15,9 +15,16 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.File;
-import java.io.IOException;
-
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.RemoteException;
+import android.preference.CheckBoxPreference;
+import android.preference.Preference;
+import android.preference.Preference.OnPreferenceChangeListener;
+import android.preference.PreferenceCategory;
+import android.preference.PreferenceScreen;
+import android.widget.Toast;
 import org.opendatakit.common.android.activities.BasePreferenceActivity;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -28,21 +35,8 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.logic.TablesToolProperties;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.OutputUtil;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
-import android.os.RemoteException;
-import android.preference.CheckBoxPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceScreen;
-import android.widget.Toast;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
+import java.io.File;
 
 public class DisplayPrefsActivity extends BasePreferenceActivity {
 
@@ -144,52 +138,6 @@ public class DisplayPrefsActivity extends BasePreferenceActivity {
       }
     });
     genCat.addPreference(useHomescreenPref);
-
-    /*********************************
-     * The write debug objects preference.
-     *********************************/
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setMessage(getString(R.string.are_you_sure_write_debug_objects));
-    builder.setCancelable(true);
-    builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        // So now we have to write the data and control objects.
-        try {
-          OutputUtil.writeControlObject(
-              DisplayPrefsActivity.this,DisplayPrefsActivity.this.appName);
-          OutputUtil.writeAllDataObjects(
-              DisplayPrefsActivity.this,DisplayPrefsActivity.this.appName);
-        } catch (JsonProcessingException e) {
-          WebLogger.getLogger(appName).printStackTrace(e);
-          Toast.makeText(DisplayPrefsActivity.this, "Failure during JSON parsing", Toast.LENGTH_LONG).show();
-        } catch (RemoteException e) {
-          WebLogger.getLogger(appName).printStackTrace(e);
-          Toast.makeText(DisplayPrefsActivity.this, "Unable to access database", Toast.LENGTH_LONG).show();
-        } catch (IOException e) {
-          WebLogger.getLogger(appName).printStackTrace(e);
-          Toast.makeText(DisplayPrefsActivity.this, "Failure while writing files", Toast.LENGTH_LONG).show();
-        }
-      }
-    });
-    mOutputDebugObjectsDialog = builder.create();
-
-    // The preference for debugging stuff.
-    PreferenceCategory developerCategory = new PreferenceCategory(this);
-    root.addPreference(developerCategory);
-    developerCategory.setTitle(getString(R.string.developer));
-
-    // the actual entry that has the option above.
-    Preference writeDebugObjectsPref = new Preference(this);
-    writeDebugObjectsPref.setTitle(getString(R.string.write_debug_objects));
-    writeDebugObjectsPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        mOutputDebugObjectsDialog.show();
-        return true;
-      }
-    });
-    developerCategory.addPreference(writeDebugObjectsPref);
 
     setPreferenceScreen(root);
   }

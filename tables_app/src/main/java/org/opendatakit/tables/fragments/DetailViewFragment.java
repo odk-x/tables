@@ -33,7 +33,6 @@ import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Common;
 import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.TableData;
 
 /**
  * {@link Fragment} for displaying a detail view.
@@ -97,14 +96,10 @@ public class DetailViewFragment extends AbsWebTableFragment {
         webView.addJavascriptInterface(
                 data.getJavascriptInterfaceWithWeakReference(),
                 Constants.JavaScriptHandles.DATAIF);
-        TableData tableData = this.createDataObject();
-        webView.addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(),
-            Constants.JavaScriptHandles.DATA);
         setWebKitVisibility();
         // Now save the references.
         this.mControlReference = control;
         this.mCommonReference = common;
-        this.mTableDataReference = tableData;
         WebViewUtil.displayFileInWebView(activity, getAppName(), webView, getFileName());
       } catch (RemoteException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
@@ -174,13 +169,6 @@ public class DetailViewFragment extends AbsWebTableFragment {
    */
   public String getRowId() {
     return this.mRowId;
-  }
-
-  @Override
-  protected TableData createDataObject() throws RemoteException {
-    UserTable singleRowTable = this.getSingleRowTable();
-    TableData result = new TableData(getActivity(), singleRowTable);
-    return result;
   }
 
 }

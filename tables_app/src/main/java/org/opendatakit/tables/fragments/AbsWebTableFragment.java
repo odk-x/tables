@@ -38,7 +38,10 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
-import org.opendatakit.tables.views.webkits.*;
+import org.opendatakit.tables.views.webkits.Common;
+import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.tables.views.webkits.ControlIf;
+import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
@@ -67,13 +70,6 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   LinkedList<String> queueResponseJSON = new LinkedList<String>();
 
   DatabaseConnectionListener listener = null;
-  /**
-   * The {@link TableData} object that was used to generate the
-   * {@link TableDataIf} that was passed to the {@link WebView}. This reference
-   * must be saved to prevent garbage collection of the {@link WeakReference}
-   * in {@link TableDataIf}.
-   */
-  TableData mTableDataReference;
 
   /** The file name this fragment is displaying. */
   String mFileName;
@@ -166,13 +162,6 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     Common result = new Common((AbsBaseActivity) getActivity());
     return result;
   }
-
-  /**
-   * Create a {@link TableData} object that can be added toe the webview.
-   * @return
-   * @throws RemoteException
-   */
-  protected abstract TableData createDataObject() throws RemoteException;
 
   public synchronized Data getDataReference() throws RemoteException {
     if ( mDataReference == null ) {

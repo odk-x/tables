@@ -15,35 +15,26 @@
  */
 package org.opendatakit.tables.utils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import android.content.Context;
+import android.os.RemoteException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.views.webkits.TableData;
 
-import android.content.Context;
-import android.os.RemoteException;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Methods for dealing with things necessary for debugging in chrome. This
@@ -182,103 +173,6 @@ public class OutputUtil {
   }
 
   /**
-   * Gets a string containing information necessary for the data object for this
-   * particular table. The object is something like the following:<br>
-   * { {@see #DATA_KEY_IN_COLLECTION_MODE}: boolean, {@see #DATA_KEY_COUNT}:
-   * int, {@see #DATA_KEY_COLLECTION_SIZE}: Array, (an array of ints)
-   * {@see #DATA_KEY_IS_INDEXED}: boolean, {@see #DATA_KEY_DATA: Array, (2d,
-   * array of rows) {@see #DATA_KEY_COLUMNS}: {elementKey: string, ...},
-   * {@see #DATA_KEY_ELEMENT_KEY_TO_PATH: elementPath: elementPath, ...},
-   *
-   * @param db
-   * @param appName
-   * @param tableId
-   * @return
-   * @throws RemoteException 
-   * @throws IOException 
-   * @throws JsonMappingException 
-   * @throws JsonParseException 
-   */
-  private static String getStringForDataObject(Context context, String appName, OdkDbHandle db, String tableId,
-      int numberOfRows) throws RemoteException, JsonParseException, JsonMappingException, IOException {
-
-    OrderedColumns orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db,
-        tableId);
-
-    UserTable userTable = null;
-    String[] emptyArray = {};
-    userTable = Tables.getInstance().getDatabase().rawSqlQuery(appName, db,
-        tableId, orderedDefns, null, emptyArray,
-        emptyArray, null, null, null);
-
-    // TODO: This is broken w.r.t. elementKey != elementPath
-    // TODO: HACKED HACKED HACKED HACKED
-    // Because the code is so freaked up we don't have an easy way to get the
-    // information out of the UserTable without going through the TableData
-    // object. So we need to create a dummy CustomTableView to get it to work.
-    TableData tableData = new TableData(context, userTable);
-    // We need to also store the element key to the index of the data so that
-    // we know how to access it out of the array representing each row.
-    Map<String, Integer> elementKeyToIndex = new HashMap<String, Integer>();
-    for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
-      if (cd.isUnitOfRetention()) {
-        elementKeyToIndex.put(cd.getElementKey(),
-            userTable.getColumnIndexOfElementKey(cd.getElementKey()));
-      }
-    }
-    // We don't want to try and write more rows than we have.
-    int numRowsToWrite = Math.min(numberOfRows, userTable.getNumberOfRows());
-    // First write the array of row ids.
-    String[] rowIds = new String[numRowsToWrite];
-    for (int i = 0; i < rowIds.length; i++) {
-      rowIds[i] = userTable.getRowAtIndex(i).getRowId();
-    }
-    // Here we're using this object b/c these appear to be the columns
-    // available to the client--are metadata columns exposed to them? It's
-    // not obvious to me here.
-    Set<String> columnKeys = elementKeyToIndex.keySet();
-    Map[] partialData = new Map[numRowsToWrite];
-    // Now construct up the partial data object.
-    for (int i = 0; i < numRowsToWrite; i++) {
-      Map<String, Object> rowOut = new HashMap<String, Object>();
-      for (String elementKey : columnKeys) {
-        rowOut.put(elementKey, tableData.getData(i, elementKey));
-      }
-      partialData[i] = rowOut;
-    }
-    // And now construct the object storing the columns data.
-    Map<String, Object> elementKeyToColumnData = new HashMap<String, Object>();
-    for (String elementKey : columnKeys) {
-      // The tableData object returns a string, so we'll have to parse it back
-      // into json.
-      String strColumnData = tableData.getColumnDataForElementKey(elementKey, numRowsToWrite);
-      if (strColumnData == null)
-        continue;
-      ArrayList<Object> columnData = ODKFileUtils.mapper.readValue(strColumnData, ArrayList.class);
-      elementKeyToColumnData.put(elementKey, columnData);
-    }
-    // We need to parse some of the String objects returned by TableData into
-    // json so that they're output as objects rather than strings.
-    String columnString = tableData.getColumns();
-    Map<String, Object> columnJsonMap = ODKFileUtils.mapper.readValue(columnString, HashMap.class);
-    // Here, as with JsonArray, we need to convert this to a map or else we'll
-    // serialize as the object to a "members" key.
-    Map<String, Object> outputObject = new HashMap<String, Object>();
-    outputObject.put(DATA_KEY_IS_GROUPED_BY, tableData.isGroupedBy());
-    // We don't want the real count, as that could interfere with for loops in
-    // the code. We in fact want the number of rows that are written, as that
-    // will be the number of rows available to the javascript.
-    outputObject.put(DATA_KEY_TABLE_ID, userTable.getTableId());
-    outputObject.put(DATA_KEY_COUNT, numRowsToWrite);
-    outputObject.put(DATA_KEY_COLUMNS, columnJsonMap);
-    outputObject.put(DATA_KEY_COLUMN_DATA, elementKeyToColumnData);
-    outputObject.put(DATA_KEY_DATA, partialData);
-    outputObject.put(DATA_KEY_ROW_IDS, rowIds);
-    String outputString = ODKFileUtils.mapper.writeValueAsString(outputObject);
-    return outputString;
-  }
-
-  /**
    * Writes the control string to a json file in the debug folder.
    *
    * @param context
@@ -295,82 +189,6 @@ public class OutputUtil {
       writer = new PrintWriter(fileName, CharEncoding.UTF_8);
       WebLogger.getLogger(appName).d(TAG, "writing control to: " + fileName);
       writer.print(controlString);
-      writer.flush();
-      writer.close();
-    } catch (FileNotFoundException e) {
-      WebLogger.getLogger(appName).printStackTrace(e);
-    } catch (UnsupportedEncodingException e) {
-      WebLogger.getLogger(appName).printStackTrace(e);
-    }
-  }
-
-  /**
-   * Writes the data objects for all the data tables in the database.
-   *
-   * @param context
-   * @param appName
-   * @param numberOfRows
-   * @throws RemoteException 
-   * @throws IOException 
-   * @throws JsonMappingException 
-   * @throws JsonParseException 
-   */
-  public static void writeAllDataObjects(Context context, String appName, int numberOfRows) throws RemoteException, JsonParseException, JsonMappingException, IOException {
-
-    OdkDbHandle db = null;
-    try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      List<String> tableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
-      for (String tableId : tableIds) {
-        writeDataObject(context, appName, db, tableId, numberOfRows);
-      }
-    } finally {
-      if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
-      }
-    }
-  }
-
-  /**
-   * Convenience method. Calls
-   * {@link #writeAllDataObjects(Context, String, int)} with
-   * {@link #NUM_ROWS_IN_DATA_OBJECT}.
-   *
-   * @param context
-   * @param appName
-   * @throws RemoteException 
-   * @throws IOException 
-   * @throws JsonMappingException 
-   * @throws JsonParseException 
-   */
-  public static void writeAllDataObjects(Context context, String appName) throws RemoteException, JsonParseException, JsonMappingException, IOException {
-    writeAllDataObjects(context, appName, NUM_ROWS_IN_DATA_OBJECT);
-  }
-
-  /**
-   * Write the data object with the given number of rows to the debug folder.
-   * The file is tableId_DATA_FILE_SUFFIX.
-   *
-   * @param db
-   * @param tableId
-   * @param numberOfRows
-   * @throws IOException 
-   * @throws RemoteException 
-   * @throws JsonMappingException 
-   * @throws JsonParseException 
-   */
-  public static void writeDataObject(Context context, String appName, OdkDbHandle db, String tableId,
-      int numberOfRows) throws JsonParseException, JsonMappingException, RemoteException, IOException {
-    String dataString = getStringForDataObject(context, appName, db, tableId, numberOfRows);
-    if (dataString == null)
-      return;
-    String fileName = ODKFileUtils.getTablesDebugObjectFolder(appName) + File.separator + tableId
-        + DATA_FILE_SUFFIX;
-    PrintWriter writer;
-    try {
-      writer = new PrintWriter(fileName, CharEncoding.UTF_8);
-      WebLogger.getLogger(appName).d(TAG, "writing data object to: " + fileName);
-      writer.print(dataString);
       writer.flush();
       writer.close();
     } catch (FileNotFoundException e) {

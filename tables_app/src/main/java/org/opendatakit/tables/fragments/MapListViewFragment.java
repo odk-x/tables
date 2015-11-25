@@ -17,7 +17,6 @@ package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.views.webkits.TableData;
 
 import android.os.Bundle;
 import android.webkit.WebView;
@@ -65,18 +64,6 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
     outState.putInt(INTENT_KEY_SELECTED_INDEX, this.mSelectedItemIndex);
   }
 
-  @Override
-  protected TableData createDataObject() {
-    // We need to account for the fact that we had previously selected an item.
-    TableData result = super.createDataObject();
-    if (mSelectedItemIndex != INVALID_INDEX) {
-      result.setSelectedMapIndex(this.mSelectedItemIndex);
-    } else {
-      result.setNoItemSelected();
-    }
-    return result;
-  }
-
   /**
    * Resets the webview (the list), and sets the visibility to visible.
    */
@@ -113,7 +100,8 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   @Override
   public void setIndexOfSelectedItem(final int index) {
     this.mSelectedItemIndex = index;
-    this.mTableDataReference.setSelectedMapIndex(index);
+    // TODO: Make map index work with async API
+    //this.mTableDataReference.setSelectedMapIndex(index);
     this.resetView();
   }
 
@@ -124,7 +112,8 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   @Override
   public void setNoItemSelected() {
     this.mSelectedItemIndex = INVALID_INDEX;
-    this.mTableDataReference.setNoItemSelected();
+    // TODO: Make map index work with async API
+    //this.mTableDataReference.setNoItemSelected();
     this.resetView();
   }
 
