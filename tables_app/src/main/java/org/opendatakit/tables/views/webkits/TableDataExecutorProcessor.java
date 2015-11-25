@@ -86,20 +86,21 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
     // Should reuse this code for column and status color rules
 
     ColorRuleGroup crg = null;
+
+    // Get the table color rules and determine which rows are affected
+    if (crType == colorRuleType.TABLE) {
+      crg = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), userTable.getAppName(), db, userTable.getTableId(), adminCols);
+    } else if (crType == colorRuleType.COLUMN) {
+      crg = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(), userTable.getAppName(), db, userTable.getTableId(), elementKey, adminCols);
+    } else if (crType == colorRuleType.STATUS) {
+      crg = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), userTable.getAppName(), db, userTable.getTableId(), adminCols);
+
+    } else {
+      return;
+    }
+
     // Loop through the rows
     for (int i = 0; i < userTable.getNumberOfRows(); i++) {
-      // Get the table color rules and determine which rows are affected
-      if (crType == colorRuleType.TABLE) {
-        crg = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), userTable.getAppName(), db, userTable.getTableId(), adminCols);
-      } else if (crType == colorRuleType.COLUMN) {
-        crg = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(), userTable.getAppName(), db, userTable.getTableId(), elementKey, adminCols);
-      } else if (crType == colorRuleType.STATUS) {
-        crg = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), userTable.getAppName(), db, userTable.getTableId(), adminCols);
-
-      } else {
-        return;
-      }
-
       ColorGuide tcg = crg.getColorGuide(userTable.getColumnDefinitions(), userTable.getRowAtIndex(i));
 
       if (tcg != null) {
