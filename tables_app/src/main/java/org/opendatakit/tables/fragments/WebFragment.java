@@ -25,7 +25,7 @@ import android.widget.TextView;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.Data;
+import org.opendatakit.common.android.views.OdkData;
 import org.opendatakit.common.android.views.ExecutorContext;
 import org.opendatakit.common.android.views.ExecutorProcessor;
 import org.opendatakit.common.android.views.ICallbackFragment;
@@ -36,9 +36,9 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
-import org.opendatakit.tables.views.webkits.Common;
-import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.ControlIf;
+import org.opendatakit.tables.views.webkits.OdkCommon;
+import org.opendatakit.tables.views.webkits.OdkTables;
+import org.opendatakit.tables.views.webkits.OdkTablesIf;
 import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
 
 import java.lang.ref.WeakReference;
@@ -63,15 +63,15 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
   /** The name of the file this fragment is displaying. */
   protected String mFileName;
   
-  /** The {@link Control} object that was jused to generate the
-   * {@link ControlIf} that was passed to the {@link WebView}. This reference
+  /** The {@link OdkTables} object that was jused to generate the
+   * {@link OdkTablesIf} that was passed to the {@link WebView}. This reference
    * must be saved to prevent garbage collection of the {@link WeakReference}
-   * in {@link ControlIf}.
+   * in {@link OdkTablesIf}.
    */
-  protected Control mControlReference;
-  protected Common mCommonReference;
+  protected OdkTables mOdkTablesReference;
+  protected OdkCommon mOdkCommonReference;
 
-  protected Data mDataReference;
+  protected OdkData mOdkDataReference;
   LinkedList<String> queueResponseJSON = new LinkedList<String>();
 
   private DatabaseConnectionListener listener = null;
@@ -151,9 +151,9 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
    * @see IWebFragment#createControlObject()
    */
   @Override
-  public Control createControlObject() {
+  public OdkTables createControlObject() {
     try {
-      Control result = new Control((AbsBaseActivity) this.getActivity(), null, null);
+      OdkTables result = new OdkTables((AbsBaseActivity) this.getActivity(), null, null);
       return result;
     } catch (RemoteException e) {
       WebLogger.getLogger(getAppName()).e(TAG, "Unable to access database");
@@ -165,22 +165,22 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
    * @see IWebFragment#createCommonObject()
    */
   @Override
-  public Common createCommonObject()  {
+  public OdkCommon createCommonObject()  {
     try {
-      Common result = new Common((AbsBaseActivity) this.getActivity());
+      OdkCommon result = new OdkCommon((AbsBaseActivity) this.getActivity());
       return result;
     } catch (RemoteException e) {
-      WebLogger.getLogger(getAppName()).e(TAG, "Unable to access database during Common init");
+      WebLogger.getLogger(getAppName()).e(TAG, "Unable to access database during OdkCommon init");
       return null;
     }
   }
 
   @Override
-  public synchronized Data getDataReference() {
-    if ( mDataReference == null ) {
-      mDataReference = new Data(this, this.getActivity());
+  public synchronized OdkData getDataReference() {
+    if ( mOdkDataReference == null ) {
+      mOdkDataReference = new OdkData(this, this.getActivity());
     }
-    return mDataReference;
+    return mOdkDataReference;
   }
 
 
@@ -207,31 +207,31 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
 
     if ( Tables.getInstance().getDatabase() != null && getView() != null && getFileName() != null ) {
 
-      Control control = this.createControlObject();
-      if ( control == null ) {
+      OdkTables odkTables = this.createControlObject();
+      if ( odkTables == null ) {
         return;
       }
 
       WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
       webView.addJavascriptInterface(
-          control.getJavascriptInterfaceWithWeakReference(),
+          odkTables.getJavascriptInterfaceWithWeakReference(),
           Constants.JavaScriptHandles.CONTROL);
 
-      Common common = this.createCommonObject();
-      if (common == null) {
+      OdkCommon odkCommon = this.createCommonObject();
+      if (odkCommon == null) {
         return;
       }
-      webView.addJavascriptInterface(common.getJavascriptInterfaceWithWeakReference(), Constants
+      webView.addJavascriptInterface(odkCommon.getJavascriptInterfaceWithWeakReference(), Constants
           .JavaScriptHandles.COMMON);
       setWebKitVisibility();
-      Data data = this.getDataReference();
+      OdkData odkData = this.getDataReference();
       webView.addJavascriptInterface(
-              data.getJavascriptInterfaceWithWeakReference(),
+              odkData.getJavascriptInterfaceWithWeakReference(),
               Constants.JavaScriptHandles.DATAIF);
       setWebKitVisibility();
       // save the strong reference
-      this.mControlReference = control;
-      this.mCommonReference = common;
+      this.mOdkTablesReference = odkTables;
+      this.mOdkCommonReference = odkCommon;
       WebViewUtil.displayFileInWebView(
           getActivity(),
           ((AbsBaseActivity) getActivity()).getAppName(),
@@ -264,7 +264,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment, ICallb
       @Override
       public void run() {
         if (webView != null) {
-          webView.loadUrl("javascript:datarsp.responseAvailable();");
+          webView.loadUrl("javascript:odkData.responseAvailable();");
         }
       }
     });

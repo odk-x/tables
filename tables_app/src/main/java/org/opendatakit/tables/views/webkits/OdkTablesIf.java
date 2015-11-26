@@ -29,14 +29,14 @@ import java.lang.ref.WeakReference;
  * @author sudar.sam@gmail.com
  *
  */
-public class ControlIf {
+public class OdkTablesIf {
 
-  public static final String TAG = "ControlIf";
+  public static final String TAG = "OdkTablesIf";
   
-  private WeakReference<Control> weakControl;
+  private WeakReference<OdkTables> weakControl;
 
-  ControlIf(Control control) {
-    weakControl = new WeakReference<Control>(control);
+  OdkTablesIf(OdkTables odkTables) {
+    weakControl = new WeakReference<OdkTables>(odkTables);
   }
 
   /**

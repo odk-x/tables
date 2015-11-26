@@ -38,17 +38,17 @@ import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import java.util.*;
 
-public class Control {
+public class OdkTables {
 
-  private static final String TAG = Control.class.getSimpleName();
+  private static final String TAG = OdkTables.class.getSimpleName();
 
   protected AbsBaseActivity mActivity;
   protected String mDefaultTableId;
   protected Map<String, OrderedColumns> mCachedOrderedDefns = new HashMap<String, OrderedColumns>();
   protected List<String> mTableIds;
 
-  public ControlIf getJavascriptInterfaceWithWeakReference() {
-    return new ControlIf(this);
+  public OdkTablesIf getJavascriptInterfaceWithWeakReference() {
+    return new OdkTablesIf(this);
   }
 
   /**
@@ -60,7 +60,7 @@ public class Control {
    *          the activity that will be holding the view
    * @throws RemoteException 
    */
-  public Control(AbsBaseActivity activity, String defaultTableId,
+  public OdkTables(AbsBaseActivity activity, String defaultTableId,
       OrderedColumns defaultColumnDefinitions) throws RemoteException {
     this.mActivity = activity;
     this.mDefaultTableId = defaultTableId;
@@ -125,7 +125,7 @@ public class Control {
    */
   String retrieveAppName() {
     if (!(this.mActivity instanceof AbsBaseActivity)) {
-      throw new IllegalStateException(Control.class.getSimpleName() + " must be have an "
+      throw new IllegalStateException(OdkTables.class.getSimpleName() + " must be have an "
           + AbsBaseActivity.class.getSimpleName());
     }
     AbsBaseActivity baseActivity = (AbsBaseActivity) this.mActivity;
@@ -133,7 +133,7 @@ public class Control {
   }
 
   /**
-   * @see {@link ControlIf#openDetailView(String, String, String)}
+   * @see {@link OdkTablesIf#openDetailView(String, String, String)}
    */
   public boolean openDetailViewWithFile(String tableId, String rowId, String relativePath) {
     return this.helperLaunchDetailView(tableId, rowId, relativePath);
@@ -143,7 +143,7 @@ public class Control {
    * Actually open the table. The sql-related parameters are null safe, so only
    * pass them in if necessary.
    *
-   * @see {@see ControlIf#openTableWithSqlQuery(String, String, String[])}
+   * @see {@see OdkTablesIf#openTableWithSqlQuery(String, String, String[])}
    * @param tableId
    * @param sqlWhereClause
    * @param sqlSelectionArgs
@@ -160,7 +160,7 @@ public class Control {
    * Actually open the table. The sql-related parameters are null safe, so only
    * pass them in if necessary.
    *
-   * @see {@see ControlIf#openTableWithSqlQuery(String, String, String[])}
+   * @see {@see OdkTablesIf#openTableWithSqlQuery(String, String, String[])}
    * @param tableId
    * @param sqlWhereClause
    * @param sqlSelectionArgs
@@ -231,7 +231,7 @@ public class Control {
 
   /**
    * Actually open the table with the file. see
-   * {@see ControlIf#launchListView(String, String, String, String[], String[], String, String, String)}
+   * {@see OdkTablesIf#launchListView(String, String, String, String[], String[], String, String, String)}
    *
    * @param tableId
    * @param relativePath
@@ -252,7 +252,7 @@ public class Control {
   /**
    * Open the table to the map view.
    *
-   * @see {@see ControlIf#openTableToMapViewWithSqlQuery(String, String, String[])}
+   * @see {@see OdkTablesIf#openTableToMapViewWithSqlQuery(String, String, String[])}
    * @param tableId
    * @param sqlWhereClause
    * @param sqlSelectionArgs
@@ -270,7 +270,7 @@ public class Control {
   /**
    * Open the table to the spreadsheet view.
    *
-   * @see {@see ControlIf#openTableToSpreadsheetViewWithSqlQuery(String, String, String[])}
+   * @see {@see OdkTablesIf#openTableToSpreadsheetViewWithSqlQuery(String, String, String[])}
    * @param tableId
    * @param sqlWhereClause
    * @param sqlSelectionArgs
@@ -285,7 +285,7 @@ public class Control {
   }
 
   /**
-   * @see {@link ControlIf#getAllTableIds()}
+   * @see {@link OdkTablesIf#getAllTableIds()}
    */
   public String getAllTableIds() {
     JSONArray result = new JSONArray(mTableIds);
@@ -293,7 +293,7 @@ public class Control {
   }
 
   /**
-   * @see {@link ControlIf#getElementKey(String, String)}
+   * @see {@link OdkTablesIf#getElementKey(String, String)}
    * @param tableId
    * @param elementPath
    * @return
@@ -303,7 +303,7 @@ public class Control {
   }
 
   /**
-   * @see {@link ControlIf#getColumnDisplayName(String, String)}
+   * @see {@link OdkTablesIf#getColumnDisplayName(String, String)}
    * @param tableId
    * @param elementPath
    * @return
@@ -336,7 +336,7 @@ public class Control {
   }
 
   /**
-   * @see {@link ControlIf#getTableDisplayName(String)}
+   * @see {@link OdkTablesIf#getTableDisplayName(String)}
    * @param tableId
    * @return
    * @throws RemoteException 

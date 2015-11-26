@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * Created by clarice on 11/3/15.
  */
-public class Common {
+public class OdkCommon {
 
    protected AbsBaseActivity mActivity;
    //private final WebLogger log;
@@ -44,8 +44,8 @@ public class Common {
    // no need to preserve
    private PropertyManager mPropertyManager;
 
-   public CommonIf getJavascriptInterfaceWithWeakReference() {
-      return new CommonIf(this);
+   public OdkCommonIf getJavascriptInterfaceWithWeakReference() {
+      return new OdkCommonIf(this);
    }
 
    /**
@@ -57,7 +57,7 @@ public class Common {
     *          the activity that will be holding the view
     * @throws RemoteException
     */
-   public Common(AbsBaseActivity activity) throws RemoteException {
+   public OdkCommon(AbsBaseActivity activity) throws RemoteException {
       this.mActivity = activity;
 
       //log = WebLogger.getLogger(this.mActivity.getAppName());
@@ -68,7 +68,7 @@ public class Common {
    }
 
    /**
-    * @see {@link CommonIf#getPlatformInfo()}
+    * @see {@link OdkCommonIf#getPlatformInfo()}
     * @return
     */
    public String getPlatformInfo() {
@@ -87,7 +87,7 @@ public class Common {
    }
 
    /**
-    * @see {@link CommonIf#getFileAsUrl(String)}
+    * @see {@link OdkCommonIf#getFileAsUrl(String)}
     * @param relativePath
     * @return
     */
@@ -98,7 +98,7 @@ public class Common {
    }
 
    /**
-    * @see {@link CommonIf#getRowFileAsUrl(String, String, String)}
+    * @see {@link OdkCommonIf#getRowFileAsUrl(String, String, String)}
     * @param tableId
     * @param rowId
     * @param rowPathUri
@@ -113,7 +113,7 @@ public class Common {
    }
 
    /**
-    * @see {@link CommonIf#log(String, String)}
+    * @see {@link OdkCommonIf#log(String, String)}
     * @return
     */
    public void log(String level, String loggingString) {
@@ -147,7 +147,7 @@ public class Common {
    }
 
    /**
-    * @see {@link CommonIf#getProperty(String)}
+    * @see {@link OdkCommonIf#getProperty(String)}
     * @return
     */
    public String getProperty(String propertyId) {
@@ -171,7 +171,7 @@ public class Common {
    }
 
    /**
-    * @see {@link CommonIf#getBaseUrl()}
+    * @see {@link OdkCommonIf#getBaseUrl()}
     * @return
     */
    public String getBaseUrl() {

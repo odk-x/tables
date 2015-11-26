@@ -18,9 +18,9 @@ package org.opendatakit.tables.fragments;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.os.RemoteException;
-import org.opendatakit.common.android.views.Data;
-import org.opendatakit.tables.views.webkits.Common;
-import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.common.android.views.OdkData;
+import org.opendatakit.tables.views.webkits.OdkCommon;
+import org.opendatakit.tables.views.webkits.OdkTables;
 
 /**
  * Interface defining behavior for those {@link Fragment}s that display a
@@ -61,25 +61,25 @@ public interface IWebFragment {
   public void setFileName(String relativeFileName);
   
   /**
-   * Create a {@link Control} object that can be added to this webview.
+   * Create a {@link OdkTables} object that can be added to this webview.
    * @return
    * @throws RemoteException 
    */
-  public Control createControlObject() throws RemoteException;
+  public OdkTables createControlObject() throws RemoteException;
 
   /**
-   * Create a {@link Common} object that can be added to this webview.
+   * Create a {@link OdkCommon} object that can be added to this webview.
    * @return
    * @throws RemoteException
    */
-  public Common createCommonObject() throws RemoteException;
+  public OdkCommon createCommonObject() throws RemoteException;
 
   /**
    * Access the data if object for injection into JS
    * @return
    * @throws RemoteException
    */
-  public Data getDataReference() throws RemoteException;
+  public OdkData getDataReference() throws RemoteException;
 
   /**
    * Toggles visibility of the "database unavailable" text box and 

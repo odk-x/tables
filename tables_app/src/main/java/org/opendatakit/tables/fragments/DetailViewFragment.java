@@ -22,7 +22,7 @@ import android.webkit.WebView;
 import android.widget.Toast;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.Data;
+import org.opendatakit.common.android.views.OdkData;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -31,8 +31,8 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
-import org.opendatakit.tables.views.webkits.Common;
-import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.tables.views.webkits.OdkCommon;
+import org.opendatakit.tables.views.webkits.OdkTables;
 
 /**
  * {@link Fragment} for displaying a detail view.
@@ -85,21 +85,21 @@ public class DetailViewFragment extends AbsWebTableFragment {
         AbsBaseActivity activity = (AbsBaseActivity) getActivity();
         WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
         this.mSingleRowTable = this.retrieveSingleRowTable();
-        Control control = this.createControlObject();
-        webView.addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(),
+        OdkTables odkTables = this.createControlObject();
+        webView.addJavascriptInterface(odkTables.getJavascriptInterfaceWithWeakReference(),
             Constants.JavaScriptHandles.CONTROL);
-        Common common = this.createCommonObject();
-        webView.addJavascriptInterface(common.getJavascriptInterfaceWithWeakReference(),
+        OdkCommon odkCommon = this.createCommonObject();
+        webView.addJavascriptInterface(odkCommon.getJavascriptInterfaceWithWeakReference(),
             Constants.JavaScriptHandles.COMMON);
-        Data data;
-        data = this.getDataReference();
+        OdkData odkData;
+        odkData = this.getDataReference();
         webView.addJavascriptInterface(
-                data.getJavascriptInterfaceWithWeakReference(),
+                odkData.getJavascriptInterfaceWithWeakReference(),
                 Constants.JavaScriptHandles.DATAIF);
         setWebKitVisibility();
         // Now save the references.
-        this.mControlReference = control;
-        this.mCommonReference = common;
+        this.mOdkTablesReference = odkTables;
+        this.mOdkCommonReference = odkCommon;
         WebViewUtil.displayFileInWebView(activity, getAppName(), webView, getFileName());
       } catch (RemoteException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);

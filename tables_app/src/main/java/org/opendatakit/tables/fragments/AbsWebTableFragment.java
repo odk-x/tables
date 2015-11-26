@@ -27,7 +27,7 @@ import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.Data;
+import org.opendatakit.common.android.views.OdkData;
 import org.opendatakit.common.android.views.ExecutorContext;
 import org.opendatakit.common.android.views.ExecutorProcessor;
 import org.opendatakit.common.android.views.ICallbackFragment;
@@ -38,9 +38,9 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
-import org.opendatakit.tables.views.webkits.Common;
-import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.ControlIf;
+import org.opendatakit.tables.views.webkits.OdkCommon;
+import org.opendatakit.tables.views.webkits.OdkTables;
+import org.opendatakit.tables.views.webkits.OdkTablesIf;
 import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
 
 import java.lang.ref.WeakReference;
@@ -59,14 +59,14 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   private static final String TAG = AbsWebTableFragment.class.getSimpleName();
   private static final String RESPONSE_JSON = "responseJSON";
   /**
-   * The {@link Control} object that was used to generate the
-   * {@link ControlIf} that was passed to the {@link WebView}. This reference
+   * The {@link OdkTables} object that was used to generate the
+   * {@link OdkTablesIf} that was passed to the {@link WebView}. This reference
    * must be saved to prevent garbage collection of the {@link WeakReference}
-   * in {@link ControlIf}.
+   * in {@link OdkTablesIf}.
    */
-  Control mControlReference;
-  Common mCommonReference;
-  Data mDataReference;
+  OdkTables mOdkTablesReference;
+  OdkCommon mOdkCommonReference;
+  OdkData mOdkDataReference;
   LinkedList<String> queueResponseJSON = new LinkedList<String>();
 
   DatabaseConnectionListener listener = null;
@@ -120,8 +120,8 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
 
   @Override public void onResume() {
     super.onResume();
-    if ( mDataReference != null ) {
-      mDataReference.refreshContext();
+    if ( mOdkDataReference != null ) {
+      mOdkDataReference.refreshContext();
     }
   }
 
@@ -148,8 +148,8 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    * @see IWebFragment#createControlObject()
    */
   @Override
-  public Control createControlObject() throws RemoteException {
-    Control result = new Control((AbsBaseActivity) getActivity(), getTableId(), getColumnDefinitions());
+  public OdkTables createControlObject() throws RemoteException {
+    OdkTables result = new OdkTables((AbsBaseActivity) getActivity(), getTableId(), getColumnDefinitions());
     return result;
   }
 
@@ -158,16 +158,16 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    * @see IWebFragment#createCommonObject()
    */
   @Override
-  public Common createCommonObject() throws RemoteException {
-    Common result = new Common((AbsBaseActivity) getActivity());
+  public OdkCommon createCommonObject() throws RemoteException {
+    OdkCommon result = new OdkCommon((AbsBaseActivity) getActivity());
     return result;
   }
 
-  public synchronized Data getDataReference() throws RemoteException {
-    if ( mDataReference == null ) {
-      mDataReference = new Data(this, (BaseActivity)getActivity());
+  public synchronized OdkData getDataReference() throws RemoteException {
+    if ( mOdkDataReference == null ) {
+      mOdkDataReference = new OdkData(this, (BaseActivity)getActivity());
     }
-    return mDataReference;
+    return mOdkDataReference;
   }
 
   @Override
@@ -226,7 +226,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
       this.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          webView.loadUrl("javascript:datarsp.responseAvailable();");
+          webView.loadUrl("javascript:odkData.responseAvailable();");
         }
       });
     } else {
@@ -261,8 +261,8 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
 
   @Override
   public void onDestroy() {
-    if (mDataReference != null) {
-      this.mDataReference.shutdownContext();
+    if (mOdkDataReference != null) {
+      this.mOdkDataReference.shutdownContext();
     }
     super.onDestroy();
   }

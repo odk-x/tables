@@ -21,14 +21,14 @@ import java.lang.ref.WeakReference;
 /**
  * Created by clarice on 11/3/15.
  */
-public class CommonIf {
+public class OdkCommonIf {
 
-   public static final String TAG = "CommonIf";
+   public static final String TAG = "OdkCommonIf";
 
-   private WeakReference<Common> weakControl;
+   private WeakReference<OdkCommon> weakControl;
 
-   CommonIf(Common common) {
-      weakControl = new WeakReference<Common>(common);
+   OdkCommonIf(OdkCommon odkCommon) {
+      weakControl = new WeakReference<OdkCommon>(odkCommon);
    }
 
    /**
