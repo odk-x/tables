@@ -248,8 +248,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      Tables.getInstance().getDatabase().deleteDataInExistingDBTableWithId(getAppName(), db,
-          getTableId(), rowId);
+      Tables.getInstance().getDatabase().deleteRowWithId(getAppName(), db, getTableId(),
+          getColumnDefinitions(), rowId);
     } finally {
       if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
@@ -676,7 +676,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
               ContentValues values = new ContentValues();
               values.put(CellEditDialog.this.cell.elementKey, value);
     
-              Tables.getInstance().getDatabase().updateDataInExistingDBTableWithId(getAppName(), db,
+              Tables.getInstance().getDatabase().updateRowWithId(getAppName(), db,
                   getTableId(),
                   getColumnDefinitions(), values, cell.row.getRowId());
             } finally {

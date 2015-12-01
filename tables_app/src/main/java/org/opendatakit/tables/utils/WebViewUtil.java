@@ -114,12 +114,16 @@ public class WebViewUtil {
   /**
    * Add a stringified value to the given content values. This respects the
    * column's type, as defined by {@link ColumnDefinition#getType()}.
-   * 
-   * @param columnProperties
+   *
+   * @param context
+   * @param appName
+   * @param tableId
+   * @param du
+   * @param colDefn
    * @param rawValue
    * @param contentValues
    * @return false if the data was invalid for the given type
-   * @throws RemoteException 
+   * @throws RemoteException
    */
   public static boolean addValueToContentValues(Context context, String appName, String tableId,
       DataUtil du,
@@ -315,8 +319,7 @@ public class WebViewUtil {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
 
         adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
-        userTable = Tables.getInstance().getDatabase()
-            .getDataInExistingDBTableWithId(appName, db, tableId, orderedDefns, rowId);
+        userTable = Tables.getInstance().getDatabase().getRowsWithId(appName, db, tableId, orderedDefns, rowId);
       } finally {
         if (db != null) {
           Tables.getInstance().getDatabase().closeDatabase(appName, db);

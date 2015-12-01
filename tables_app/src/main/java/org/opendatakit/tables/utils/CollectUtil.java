@@ -1442,7 +1442,7 @@ public class CollectUtil {
           TableConstants.nanoSecondsFromMillis(formValues.timestamp));
       values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
 
-      Tables.getInstance().getDatabase().updateDataInExistingDBTableWithId(appName, db,
+      Tables.getInstance().getDatabase().updateRowWithId(appName, db,
           tableId, orderedDefns, values,
           rowId);
     } finally {
@@ -1547,7 +1547,7 @@ public class CollectUtil {
           TableConstants.nanoSecondsFromMillis(formValues.timestamp));
       values.put(DataTableColumns.SAVEPOINT_CREATOR, formValues.savepointCreator);
 
-      Tables.getInstance().getDatabase().insertDataIntoExistingDBTableWithId(appName, db,
+      Tables.getInstance().getDatabase().insertRowWithId(appName, db,
           tableId, orderedDefns, values,
           formValues.instanceID);
     } finally {

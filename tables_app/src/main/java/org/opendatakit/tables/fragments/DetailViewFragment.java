@@ -143,7 +143,8 @@ public class DetailViewFragment extends AbsWebTableFragment {
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      UserTable result = Tables.getInstance().getDatabase().getDataInExistingDBTableWithId(getAppName(), db,
+      UserTable result = Tables.getInstance().getDatabase().getRowsWithId
+          (getAppName(), db,
           getTableId(), getColumnDefinitions(), rowId);
       if (result.getNumberOfRows() > 1) {
         WebLogger.getLogger(getAppName()).e(TAG,
