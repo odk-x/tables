@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
+import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.provider.TablesProviderAPI;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -81,7 +82,7 @@ public class Launcher extends BaseActivity {
     if (extras != null) {
       i.putExtras(extras);
     }
-    i.putExtra(Constants.IntentKeys.APP_NAME, this.mAppName);
+    i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, this.mAppName);
     startActivity(i);
     finish();
   }

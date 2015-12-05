@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.utils;
 
+import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
@@ -134,7 +135,7 @@ public class IntentUtil {
   /**
    * Return the table id from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
-   * {@link Constants.IntentKeys#TABLE_ID}.
+   * {@link IntentConsts#INTENT_KEY_TABLE_ID}.
    * @param bundle
    * @return the table id, null if it does not exist or if bundle is null
    */
@@ -142,14 +143,14 @@ public class IntentUtil {
     if (bundle == null) {
       return null;
     }
-    String tableId = bundle.getString(IntentKeys.TABLE_ID);
+    String tableId = bundle.getString(IntentConsts.INTENT_KEY_TABLE_ID);
     return tableId;
   }
 
   /**
    * Return the app name from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
-   * {@link Constants.IntentKeys#APP_NAME}.
+   * {@link IntentConsts#INTENT_KEY_APP_NAME}.
    * @param bundle
    * @return the app name, null if it does not exist or if bundle is null
    */
@@ -157,7 +158,7 @@ public class IntentUtil {
     if (bundle == null) {
       return null;
     }
-    String appName = bundle.getString(IntentKeys.APP_NAME);
+    String appName = bundle.getString(IntentConsts.INTENT_KEY_APP_NAME);
     return appName;
   }
   
@@ -180,7 +181,7 @@ public class IntentUtil {
   /**
    * Return the row id from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
-   * {@link Constants.IntentKeys#ROW_ID}.
+   * {@link IntentConsts#INTENT_KEY_INSTANCE_ID}.
    * @param bundle
    * @return the row id, null if it does not exist or if bundle is null
    */
@@ -188,7 +189,7 @@ public class IntentUtil {
     if (bundle == null) {
       return null;
     }
-    String rowId = bundle.getString(IntentKeys.ROW_ID);
+    String rowId = bundle.getString(IntentConsts.INTENT_KEY_INSTANCE_ID);
     return rowId;
   }
 
@@ -197,7 +198,8 @@ public class IntentUtil {
    * method for calling the corresponding methods in this class, including
    * {@link #addFragmentViewTypeToBundle(Bundle, ViewFragmentType)} with
    * {@link ViewFragmentType#DETAIL}.
-   * @param intent
+   *
+   * @param bundle
    * @param appName
    * @param tableId
    * @param rowId
@@ -263,8 +265,9 @@ public class IntentUtil {
    * Add orderByElementKey to bundle keyed to
    *  {@link IntentKeys#SQL_ORDER_BY_ELEMENT_KEY}.
    * If bundle or orderByElementKey is null, does nothing.
+   *
    * @param bundle
-   * @param whereClause
+   * @param orderByElementKey
    */
   public static void addOrderByElementKeyToBundle(
       Bundle bundle,
@@ -347,14 +350,14 @@ public class IntentUtil {
   }
 
   /**
-   * Add appName to the bundle keyed to {@link Constants.IntentKeys#APP_NAME}.
+   * Add appName to the bundle keyed to {@link IntentConsts#INTENT_KEY_APP_NAME}.
    * If bundle or appName is null, does nothing.
    * @param bundle
    * @param appName
    */
   public static void addAppNameToBundle(Bundle bundle, String appName) {
     if (bundle != null && appName != null) {
-      bundle.putString(Constants.IntentKeys.APP_NAME, appName);
+      bundle.putString(IntentConsts.INTENT_KEY_APP_NAME, appName);
     }
   }
   
@@ -387,14 +390,14 @@ public class IntentUtil {
   }
 
   /**
-   * Add tableId to bundle keyed to {@link Constants.IntentKeys#TABLE_ID}.
+   * Add tableId to bundle keyed to {@link IntentConsts#INTENT_KEY_TABLE_ID}.
    * If bundle or appName is null, does nothing.
    * @param bundle
    * @param tableId
    */
   public static void addTableIdToBundle(Bundle bundle, String tableId) {
     if (bundle != null && tableId != null) {
-      bundle.putString(Constants.IntentKeys.TABLE_ID, tableId);
+      bundle.putString(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
     }
   }
   
@@ -416,14 +419,14 @@ public class IntentUtil {
   }
 
   /**
-   * Add rowId to bundle keyed to {@link Constants.IntentKeys#ROW_ID}.
+   * Add rowId to bundle keyed to {@link IntentConsts#INTENT_KEY_INSTANCE_ID}.
    * If bundle or rowId is null, does nothing.
    * @param bundle
    * @param rowId
    */
   public static void addRowIdToBundle(Bundle bundle, String rowId) {
     if (bundle != null && rowId != null) {
-      bundle.putString(Constants.IntentKeys.ROW_ID, rowId);
+      bundle.putString(IntentConsts.INTENT_KEY_INSTANCE_ID, rowId);
     }
   }
 

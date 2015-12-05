@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import java.util.Iterator;
 import java.util.List;
 
+import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -166,14 +167,11 @@ public abstract class AbsBaseActivity extends BaseActivity {
 
       Intent i;
       i = new Intent();
-      i.setComponent(new ComponentName(Constants.ExternalIntentStrings.SYNC_PACKAGE_NAME,
-              Constants.ExternalIntentStrings.SYNC_CHECKPOINT_ACTIVITY_COMPONENT_NAME));
+      i.setComponent(new ComponentName(IntentConsts.ResolveCheckpoint.APPLICATION_NAME,
+          IntentConsts.ResolveCheckpoint.ACTIVITY_NAME));
       i.setAction(Intent.ACTION_EDIT);
-      i.putExtra(Constants.IntentKeys.APP_NAME,
-          getAppName());
-      i.putExtra(
-          Constants.IntentKeys.TABLE_ID,
-          tableId);
+      i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+      i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
       try {
         this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
       } catch ( ActivityNotFoundException e ) {
@@ -184,8 +182,8 @@ public abstract class AbsBaseActivity extends BaseActivity {
             AbsBaseActivity.this.runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                Toast.makeText(AbsBaseActivity.this, getString(R.string.activity_not_found, 
-                    Constants.ExternalIntentStrings.SYNC_CHECKPOINT_ACTIVITY_COMPONENT_NAME), Toast.LENGTH_LONG).show();
+                Toast.makeText(AbsBaseActivity.this, getString(R.string.activity_not_found,
+                    IntentConsts.ResolveCheckpoint.ACTIVITY_NAME), Toast.LENGTH_LONG).show();
               }});
           }
         }, 100);
@@ -198,14 +196,11 @@ public abstract class AbsBaseActivity extends BaseActivity {
 
       Intent i;
       i = new Intent();
-      i.setComponent(new ComponentName(Constants.ExternalIntentStrings.SYNC_PACKAGE_NAME,
-          Constants.ExternalIntentStrings.SYNC_CONFLICT_ACTIVITY_COMPONENT_NAME));
+      i.setComponent(new ComponentName(IntentConsts.ResolveConflict.APPLICATION_NAME,
+          IntentConsts.ResolveConflict.ACTIVITY_NAME));
       i.setAction(Intent.ACTION_EDIT);
-      i.putExtra(Constants.IntentKeys.APP_NAME,
-          getAppName());
-      i.putExtra(
-          Constants.IntentKeys.TABLE_ID,
-          tableId);
+      i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
+      i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
       try {
         this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
       } catch ( ActivityNotFoundException e ) {
@@ -216,8 +211,8 @@ public abstract class AbsBaseActivity extends BaseActivity {
             AbsBaseActivity.this.runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                Toast.makeText(AbsBaseActivity.this, getString(R.string.activity_not_found, 
-                    Constants.ExternalIntentStrings.SYNC_CHECKPOINT_ACTIVITY_COMPONENT_NAME), Toast.LENGTH_LONG).show();
+                Toast.makeText(AbsBaseActivity.this, getString(R.string.activity_not_found,
+                    IntentConsts.ResolveConflict.ACTIVITY_NAME), Toast.LENGTH_LONG).show();
               }});
           }
         }, 100);
@@ -233,7 +228,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
    */
   String retrieveAppNameFromIntent() {
     String result = 
-        this.getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
+        this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (result == null) {
       result = TableFileUtils.getDefaultAppName();
     }
@@ -256,9 +251,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
    */
   public Intent createNewIntentWithAppName() {
     Intent intent = new Intent();
-    intent.putExtra(
-        Constants.IntentKeys.APP_NAME,
-        getAppName());
+    intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
     return intent;
   }
 

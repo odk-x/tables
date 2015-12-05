@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 
 import java.util.ArrayList;
@@ -175,7 +176,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       // Set the tableId.
       TableNameStruct nameStruct = (TableNameStruct) this.getListView().getItemAtPosition(position);
       String tableId = nameStruct.getTableId();
-      intent.putExtra(Constants.IntentKeys.TABLE_ID, tableId);
+      intent.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
       ComponentName componentName = new ComponentName(baseActivity, TableDisplayActivity.class);
       intent.setComponent(componentName);
       startActivityForResult(intent, Constants.RequestCodes.DISPLAY_VIEW);

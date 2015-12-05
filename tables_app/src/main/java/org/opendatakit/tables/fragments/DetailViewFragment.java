@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.webkit.WebView;
 import android.widget.Toast;
+import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.views.OdkData;
@@ -75,7 +76,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    outState.putString(Constants.IntentKeys.ROW_ID, this.getRowId());
+    outState.putString(IntentConsts.INTENT_KEY_INSTANCE_ID, this.getRowId());
   }
   
   @Override
