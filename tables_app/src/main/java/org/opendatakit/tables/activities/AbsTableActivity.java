@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -27,7 +28,7 @@ import android.os.RemoteException;
 /**
  * This class is the base for any Activity that will display information about
  * a particular table. Callers must pass in a table id in the bundle with the
- * key {@link Constants.IntentKeys#TABLE_ID}.
+ * key {@link IntentConsts#INTENT_KEY_TABLE_ID}.
  * @author sudar.sam@gmail.com
  *
  */
@@ -55,7 +56,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
    * @return
    */
   String retrieveTableIdFromIntent() {
-    return this.getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
+    return this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_TABLE_ID);
   }
 
   public String getTableId() {

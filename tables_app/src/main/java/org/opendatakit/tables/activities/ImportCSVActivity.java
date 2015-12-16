@@ -17,6 +17,7 @@ package org.opendatakit.tables.activities;
 
 import java.io.File;
 
+import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
@@ -61,7 +62,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
+    appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (appName == null) {
       appName = TableFileUtils.getDefaultAppName();
     }

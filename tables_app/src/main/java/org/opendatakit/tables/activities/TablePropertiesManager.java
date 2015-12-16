@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.IntentConsts;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.activities.BasePreferenceActivity;
@@ -78,11 +79,11 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
+    appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (appName == null) {
       appName = TableFileUtils.getDefaultAppName();
     }
-    tableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
+    tableId = getIntent().getStringExtra(IntentConsts.INTENT_KEY_TABLE_ID);
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }

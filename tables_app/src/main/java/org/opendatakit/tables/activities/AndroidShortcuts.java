@@ -17,6 +17,7 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 import java.util.ArrayList;
 
+import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.provider.TablesProviderAPI;
@@ -185,7 +186,7 @@ public class AndroidShortcuts extends BaseActivity {
    */
   private void returnShortcut(Choice choice) {
     Intent shortcutIntent = new Intent(Intent.ACTION_VIEW);
-    shortcutIntent.putExtra(Constants.IntentKeys.APP_NAME, choice.appName);
+    shortcutIntent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, choice.appName);
     shortcutIntent.setData(choice.command);
 
     Intent intent = new Intent();

@@ -46,10 +46,6 @@ public class Constants {
   public static class ExternalIntentStrings {
     /** Survey's package name as declared in the manifest. */
     public static final String SYNC_PACKAGE_NAME = "org.opendatakit.sync";
-    /** The full path to Sync's checkpoint list activity. */
-    public static final String SYNC_CHECKPOINT_ACTIVITY_COMPONENT_NAME = "org.opendatakit.conflict.activities.CheckpointResolutionListActivity";
-    /** The full path to Sync's conflict list activity. */
-    public static final String SYNC_CONFLICT_ACTIVITY_COMPONENT_NAME = "org.opendatakit.conflict.activities.ConflictResolutionListActivity";
   }
 
   /**
@@ -66,19 +62,14 @@ public class Constants {
     /** tables that have checkpoint rows */
     public static final String CHECKPOINT_TABLES = "checkpointTables";
 
-    /** for conflict resolution screens */
-    public static final String TABLE_ID = "tableId";
-    /** common for all activities */
-    public static final String APP_NAME = "appName";
     /**
      * Tells {@link TableDisplayActivity} what time of view it should be
      * displaying.
      */
     public static final String TABLE_DISPLAY_VIEW_TYPE = "tableDisplayViewType";
     public static final String FILE_NAME = "filename";
-    public static final String ROW_ID = "rowId";
+// should be instanceID?    public static final String ROW_ID = "rowId";
     /** The name of the graph view that should be displayed. */
-    public static final String GRAPH_NAME = "graphName";
     public static final String ELEMENT_KEY = "elementKey";
     public static final String COLOR_RULE_TYPE = "colorRuleType";
     /**
@@ -89,16 +80,11 @@ public class Constants {
     /**
      * Key to the where clause if this list view is to be opened with a more
      * complex query than permissible by the simple query object. Must conform
-     * to the expectations of {@link ODKDatabaseUtils#rawSqlQuery} and
-     * {@link CustomView$Control#queryWithSql}.
-     *
-     * @see INTENT_KEY_SQL_SELECTION_ARGS
+     * to the expectations of rawSqlQuery() AIDL.
      */
     public static final String SQL_WHERE = "sqlWhereClause";
     /**
      * An array of strings for restricting the rows displayed in the table.
-     *
-     * @see INTENT_KEY_SQL_WHERE
      */
     public static final String SQL_SELECTION_ARGS = "sqlSelectionArgs";
     /**
@@ -144,17 +130,6 @@ public class Constants {
     public static final String COLUMN_PREFERENCE = "tagColumnPreference";
     public static final String COLOR_RULE_LIST = "tagColorRuleList";
     public static final String EDIT_COLOR_RULE = "tagEditColorRule";
-    // /** Tag for {@link TopLevelTableMenuFragment} */
-    // public static final String TABLE_MENU = "tagTableMenuFragment";
-    // public static final String SPREADSHEET = "tagSpreadsheetFragment";
-    // public static final String MAP = "tagMapFragment";
-    // public static final String LIST = "tagListFragment";
-    // public static final String GRAPH_MANAGER = "tagGraphManagerFragment";
-    // public static final String GRAPH_VIEW = "tagGraphViewFragment";
-    // public static final String DETAIL_FRAGMENT = "tagDetailFragment";
-    // public static final String INITIALIZE_TASK_DIALOG = "tagInitializeTask";
-    // public static final String TABLE_MANAGER = "tagTableManager";
-    // public static final String WEB_FRAGMENT = "tagWebFragment";
   }
 
   public static class PreferenceKeys {
@@ -175,7 +150,6 @@ public class Constants {
       public static final String MAP_COLOR_RULE = "table_pref_map_color_rule";
       public static final String LIST_FILE = "table_pref_list_file";
       public static final String DETAIL_FILE = "table_pref_detail_file";
-      public static final String GRAPH_MANAGER = "table_pref_graph_view_manager";
       public static final String MAP_LIST_FILE = "table_pref_map_list_file";
       public static final String COLUMNS = "table_pref_columns";
     }
@@ -186,7 +160,6 @@ public class Constants {
       public static final String TYPE = "column_pref_column_type";
       public static final String WIDTH = "column_pref_column_width";
       public static final String COLOR_RULES = "column_pref_color_rules";
-      public static final String ELEMENT_NAME = "column_pref_element_name";
     }
 
     public static class ColorRule {
@@ -216,8 +189,6 @@ public class Constants {
     public static final int LAUNCH_TABLE_PREFS = 11;
     public static final int EDIT_ROW_COLLECT = 12;
     public static final int ADD_ROW_COLLECT = 13;
-    public static final int LAUNCH_GRAPH_MANAGER = 14;
-    public static final int LAUNCH_COLUMN_LIST = 15;
     public static final int LAUNCH_COLOR_RULE_LIST = 16;
     public static final int ADD_ROW_SURVEY = 17;
     public static final int EDIT_ROW_SURVEY = 18;
@@ -236,8 +207,6 @@ public class Constants {
   public static class JavaScriptHandles {
     public static final String CONTROL = "odkTables";
     public static final String COMMON = "odkCommon";
-    public static final String DATA = "data";
-    public static final String GRAPH = "graph_data";
     // new data interface
     public static final String DATAIF = "odkDataIf";
   }
