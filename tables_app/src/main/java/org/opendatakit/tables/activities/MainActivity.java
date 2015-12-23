@@ -17,6 +17,7 @@ package org.opendatakit.tables.activities;
 
 import java.io.File;
 
+import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.IInitResumeActivity;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
@@ -381,8 +382,8 @@ public class MainActivity extends AbsBaseActivity implements
     case R.id.menu_table_manager_sync:
       try {
         Intent syncIntent = new Intent();
-        syncIntent.setComponent(new ComponentName("org.opendatakit.sync",
-            "org.opendatakit.sync.activities.SyncActivity"));
+        syncIntent.setComponent(new ComponentName(IntentConsts.Sync.APPLICATION_NAME,
+            IntentConsts.Sync.ACTIVITY_NAME));
         syncIntent.setAction(Intent.ACTION_DEFAULT);
         syncIntent.putExtras(bundle);
         this.startActivityForResult(syncIntent, Constants.RequestCodes.LAUNCH_SYNC);
