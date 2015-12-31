@@ -29,10 +29,6 @@ android {
         testApplicationId(groupId + tablesName + testNameSuffix)
         testInstrumentationRunner(instrumentationRunner)
     }
-
-	jacoco {
-        version = jacocoVersionName
-    }
 	
     buildTypes {
         release {
