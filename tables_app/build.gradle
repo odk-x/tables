@@ -1,5 +1,5 @@
 /**************************************************************************************************
-                                        GRADLE CONFIG
+ GRADLE CONFIG
  *************************************************************************************************/
 
 if ((new File(gradle.local)).exists()) {
@@ -12,58 +12,59 @@ applicationScripts.each {
     apply from: it
 }
 
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.model.application'
 
-android {
-    // The following are set in the common.gradle file
-    compileSdkVersion(compileVersion)
-    buildToolsVersion(buildTools)
+model {
+    android {
+        // The following are set in the common.gradle file
+        compileSdkVersion(compileVersion)
+        buildToolsVersion(buildTools)
 
-    defaultConfig {
-        applicationId(groupId + tablesName)
-        minSdkVersion(18) // changed from minVersion for UiAutomator
-        targetSdkVersion(targetVersion)
-        versionCode(releaseVersionCode)
-        versionName(versionCodeName)
+        defaultConfig {
+            applicationId(groupId + tablesName)
+            minSdkVersion.apiLevel(18) // changed from minVersion for UiAutomator
+            targetSdkVersion.apiLevel(targetVersion)
+            versionCode(releaseVersionCode)
+            versionName(versionCodeName)
 
-        testApplicationId(groupId + tablesName + testNameSuffix)
-        testInstrumentationRunner(instrumentationRunner)
+            testApplicationId(groupId + tablesName + testNameSuffix)
+            testInstrumentationRunner(instrumentationRunner)
+        }
     }
-	
-    buildTypes {
+
+    android.buildTypes {
         release {
             minifyEnabled(minify)
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-        }
-        snapshot {
-            // Build type for snapshots
         }
         debug {
-            testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
+            testCoverageEnabled(testCoverage)
+            // Allows AndroidTest JaCoCo reports to be generated
         }
     }
 
-    packagingOptions { // Pick first occurrence of any files that cause conflicts, as defined in common.gradle
+    android.packagingOptions {
+        // Pick first occurrence of any files that cause conflicts, as defined in common.gradle
         packageList.each {
             pickFirst it
         }
 
         exclude('META-INF/maven/com.google.guava/guava/pom.properties')
-        exclude ('META-INF/maven/com.google.guava/guava/pom.xml')
+        exclude('META-INF/maven/com.google.guava/guava/pom.xml')
     }
 
-    compileOptions {
-      sourceCompatibility javaVersion
-      targetCompatibility javaVersion
+    android.compileOptions {
+        sourceCompatibility javaVersion
+        targetCompatibility javaVersion
     }
 }
 
+
 configurations.all {
-  resolutionStrategy {
-    cacheDynamicVersionsFor(0, 'seconds')
-    cacheChangingModulesFor(0, 'seconds')
-  }
-  transitive = true
+    resolutionStrategy {
+        cacheDynamicVersionsFor(0, 'seconds')
+        cacheChangingModulesFor(0, 'seconds')
+    }
+    transitive = true
 }
 
 dependencies {
