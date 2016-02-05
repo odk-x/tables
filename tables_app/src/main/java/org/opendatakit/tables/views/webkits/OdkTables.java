@@ -25,6 +25,7 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.MainActivity;
@@ -36,12 +37,14 @@ import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class OdkTables {
 
   private static final String TAG = OdkTables.class.getSimpleName();
 
+  private WeakReference<ODKWebView> mWebView;
   protected AbsBaseActivity mActivity;
   protected String mDefaultTableId;
   protected Map<String, OrderedColumns> mCachedOrderedDefns = new HashMap<String, OrderedColumns>();
@@ -60,9 +63,14 @@ public class OdkTables {
    *          the activity that will be holding the view
    * @throws RemoteException 
    */
-  public OdkTables(AbsBaseActivity activity, String defaultTableId) {
+  public OdkTables(AbsBaseActivity activity, ODKWebView webView, String defaultTableId) {
     this.mActivity = activity;
+    this.mWebView = new WeakReference<ODKWebView>(webView);
     this.mDefaultTableId = defaultTableId;
+  }
+
+  public boolean isInactive() {
+    return (mWebView.get() == null) || mWebView.get().isInactive();
   }
 
   private List<String> getTableIds() throws RemoteException {

@@ -19,7 +19,6 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 
 import android.os.Bundle;
-import android.webkit.WebView;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
@@ -71,7 +70,7 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
     }
     OdkTablesWebView currentView = (OdkTablesWebView) this.getView().findViewById(R.id.webkit);
     // Just reload the page.
-    currentView.clearPage();
+    currentView.reloadPage();
   }
 
   /**

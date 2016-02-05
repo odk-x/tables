@@ -23,7 +23,7 @@ public class OdkTablesWebView extends ODKWebView {
     AbsBaseWebActivity activity = (AbsBaseWebActivity) context;
 
     // stomp on the odkTables object...
-    tables = new OdkTables(activity, activity.getTableId());
+    tables = new OdkTables(activity, this, activity.getTableId());
     addJavascriptInterface(tables.getJavascriptInterfaceWithWeakReference(),
         Constants.JavaScriptHandles.CONTROL);
   }
@@ -58,16 +58,16 @@ public class OdkTablesWebView extends ODKWebView {
 
   }
 
-  @Override public void clearPage() {
-    log.i(t, "clearPage: current loadPageUrl: " + getLoadPageUrl());
+  @Override public void reloadPage() {
+    log.i(t, "reloadPage: current loadPageUrl: " + getLoadPageUrl());
     String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(false);
 
     if ( baseUrl != null ) {
       resetLoadPageStatus(baseUrl);
-      log.i(t, "clearPage: full reload: " + baseUrl);
+      log.i(t, "reloadPage: full reload: " + baseUrl);
       loadUrl(baseUrl);
     } else {
-      log.w(t, "clearPage: framework did not load -- cannot load anything!");
+      log.w(t, "reloadPage: framework did not load -- cannot load anything!");
     }
 
   }

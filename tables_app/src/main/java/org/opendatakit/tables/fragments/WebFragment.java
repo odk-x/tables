@@ -16,32 +16,19 @@
 package org.opendatakit.tables.fragments;
 
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.TextView;
-import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.*;
-import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
-import org.opendatakit.tables.views.webkits.OdkTables;
-import org.opendatakit.tables.views.webkits.OdkTablesIf;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
-import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
-
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.LinkedList;
 
 /**
  * Displays an HTML file that is not associated with a particular table.
