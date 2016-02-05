@@ -36,7 +36,7 @@ import android.widget.Toast;
  * @author sudar.sam@gmail.com
  * @author unknown
  */
-public abstract class AbstractImportExportActivity extends BaseActivity {
+public abstract class AbstractImportExportActivity extends AbsBaseActivity {
 
 	/** dialog IDs */
 	public static final int CSVEXPORT_SUCCESS_DIALOG = 1;

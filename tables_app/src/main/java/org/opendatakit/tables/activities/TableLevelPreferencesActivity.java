@@ -89,23 +89,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
               this.mCurrentFragmentType);
     }
   }
-  
-  @Override
-  public void onPostResume() {
-    super.onPostResume();
-    Tables.getInstance().establishDatabaseConnectionListener(this);
-  }
-  
-  @Override
-  public void databaseAvailable() {
-    
-  }
-  
-  @Override
-  public void databaseUnavailable() {
-    
-  }
-  
+
   public void showTablePreferenceFragment() {
     this.mCurrentFragmentType = FragmentType.TABLE_PREFERENCE;
     FragmentManager fragmentManager = this.getFragmentManager();
@@ -193,8 +177,9 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
   }
   
   /**
-   * Wrapper around {@link showColorRuleListFragment} with addToBackStack set
-   * to true.
+   * Wrapper around {@link #showColorRuleListFragment(String, ColorRuleGroup.Type)}
+   * with addToBackStack set to true.
+   *
    * @param elementKey
    * @param colorRuleGroupType
    */

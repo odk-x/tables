@@ -235,46 +235,6 @@ public class WebViewUtil {
   }
 
   /**
-   * Get a {@link WebView} that is ready to be used for ODK settings. This
-   * includes, e.g., having attached a logger and enabling javascript.
-   * 
-   * @return
-   */
-  @SuppressLint({ "NewApi", "SetJavaScriptEnabled" })
-  public static WebView getODKCompliantWebView(AbsBaseActivity context, WebView webView) {
-    final String appName = context.getAppName();
-    final String webViewTag = "ODKCompliantWebView";
-    if (Build.VERSION.SDK_INT >= 19) {
-      WebView.setWebContentsDebuggingEnabled(true);
-    }
-    webView.getSettings().setJavaScriptEnabled(true);
-    webView.setWebViewClient(new WebViewClient() {
-
-      @Override
-      public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-        super.onReceivedError(view, errorCode, description, failingUrl);
-        WebLogger.getLogger(appName).e(
-            webViewTag,
-            "[onReceivedError] errorCode: " + errorCode + "; description: " + description
-                + "; failingUrl: " + failingUrl);
-      }
-    });
-    webView.setWebChromeClient(new WebChromeClient() {
-
-      @Override
-      public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-        WebLogger.getLogger(appName).i(
-            webViewTag,
-            "[onConsoleMessage] level: " + consoleMessage.messageLevel().name()
-                + consoleMessage.message());
-        return super.onConsoleMessage(consoleMessage);
-      }
-
-    });
-    return webView;
-  }
-
-  /**
    * Display the file in the WebView.
    * 
    * @param context

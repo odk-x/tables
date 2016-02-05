@@ -18,13 +18,14 @@ package org.opendatakit.tables.fragments;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.os.RemoteException;
+import org.opendatakit.common.android.views.OdkCommon;
 import org.opendatakit.common.android.views.OdkData;
-import org.opendatakit.tables.views.webkits.OdkCommon;
 import org.opendatakit.tables.views.webkits.OdkTables;
+import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
  * Interface defining behavior for those {@link Fragment}s that display a
- * {@link CustomView}.
+ * {@link org.opendatakit.common.android.views.ODKWebView }.
  * <p>
  * All such fragments should set and retrieve the file name in
  * {@link Fragment#onSaveInstanceState(Bundle)} and
@@ -59,27 +60,12 @@ public interface IWebFragment {
    * @param relativeFileName
    */
   public void setFileName(String relativeFileName);
-  
-  /**
-   * Create a {@link OdkTables} object that can be added to this webview.
-   * @return
-   * @throws RemoteException 
-   */
-  public OdkTables createControlObject() throws RemoteException;
 
   /**
-   * Create a {@link OdkCommon} object that can be added to this webview.
+   * Get the webkit in this fragment
    * @return
-   * @throws RemoteException
    */
-  public OdkCommon createCommonObject() throws RemoteException;
-
-  /**
-   * Access the data if object for injection into JS
-   * @return
-   * @throws RemoteException
-   */
-  public OdkData getDataReference() throws RemoteException;
+  public OdkTablesWebView getWebKit();
 
   /**
    * Toggles visibility of the "database unavailable" text box and 

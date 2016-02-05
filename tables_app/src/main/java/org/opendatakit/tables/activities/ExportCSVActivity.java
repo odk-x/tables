@@ -172,13 +172,8 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
   }
 
   @Override
-  public void onPostResume() {
-    super.onPostResume();
-    Tables.getInstance().establishDatabaseConnectionListener(this);
-  }
-  
-  @Override
   public void databaseAvailable() {
+    super.databaseAvailable();
     if ( Tables.getInstance().getDatabase() != null ) {
       OdkDbHandle db = null;
       try {
@@ -215,6 +210,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 
   @Override
   public void databaseUnavailable() {
+    super.databaseUnavailable();
   }
 
 }

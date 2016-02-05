@@ -16,18 +16,7 @@
 package org.opendatakit.tables.fragments;
 
 import android.app.Fragment;
-import android.os.RemoteException;
-import android.webkit.WebView;
-import android.widget.Toast;
-import org.opendatakit.androidcommon.R;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.OdkData;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.WebViewUtil;
-import org.opendatakit.tables.views.webkits.OdkCommon;
-import org.opendatakit.tables.views.webkits.OdkTables;
 
 /**
  * {@link Fragment} for displaying a List view.
@@ -37,51 +26,6 @@ import org.opendatakit.tables.views.webkits.OdkTables;
 public class ListViewFragment extends AbsWebTableFragment {
   
   private static final String TAG = ListViewFragment.class.getSimpleName();
-
-  @Override
-  public void databaseAvailable() {
-    if ( Tables.getInstance().getDatabase() != null && getView() != null ) {
-      try {
-        WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
-        OdkTables odkTables;
-        odkTables = this.createControlObject();
-        webView.addJavascriptInterface(
-            odkTables.getJavascriptInterfaceWithWeakReference(),
-            Constants.JavaScriptHandles.CONTROL);
-        OdkCommon odkCommon;
-        odkCommon = this.createCommonObject();
-        webView.addJavascriptInterface(odkCommon.getJavascriptInterfaceWithWeakReference(),
-            Constants.JavaScriptHandles.COMMON);
-        OdkData odkData;
-        odkData = this.getDataReference();
-        webView.addJavascriptInterface(
-                odkData.getJavascriptInterfaceWithWeakReference(),
-                Constants.JavaScriptHandles.DATAIF);
-        // Now save the references.
-        this.mOdkTablesReference = odkTables;
-        this.mOdkCommonReference = odkCommon;
-        setWebKitVisibility();
-        WebViewUtil.displayFileInWebView(
-            getActivity(),
-            getAppName(),
-            webView,
-            getFileName());
-      } catch (RemoteException e) {
-        WebLogger.getLogger(getAppName()).printStackTrace(e);
-        Toast.makeText(getActivity(), 
-            getActivity().getString(R.string.abort_error_accessing_database), 
-            Toast.LENGTH_LONG).show();
-      }
-    }
-    // TODO: when control changes, we should revisit the actions we are doing above
-    super.databaseAvailable();
-  }
-  
-  @Override
-  public void databaseUnavailable() {
-    setWebKitVisibility();
-    super.databaseUnavailable();
-  }
 
   @Override
   public ViewFragmentType getFragmentType() {

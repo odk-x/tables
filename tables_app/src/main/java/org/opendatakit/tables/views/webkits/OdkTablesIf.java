@@ -138,7 +138,15 @@ public class OdkTablesIf {
    */
   @android.webkit.JavascriptInterface
   public String getAllTableIds() {
-    return weakControl.get().getAllTableIds();
+    try {
+      return weakControl.get().getAllTableIds();
+    } catch (RemoteException e) {
+      String appName = weakControl.get().retrieveAppName();
+      WebLogger.getLogger(appName).printStackTrace(e);
+      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
+      Toast.makeText(weakControl.get().mActivity, R.string.error_accessing_database, Toast.LENGTH_LONG).show();
+      return "[]";
+    }
   }
 
   /**

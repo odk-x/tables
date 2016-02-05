@@ -25,6 +25,7 @@ import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.DependencyChecker;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.InitializationFragment;
@@ -57,12 +58,37 @@ import android.widget.Toast;
  * @author sudar.sam@gmail.com
  *
  */
-public class MainActivity extends AbsBaseActivity implements
+public class MainActivity extends AbsBaseWebActivity implements
     DatabaseConnectionListener, IInitResumeActivity {
 
   private static final String TAG = "MainActivity";
   private static final String CURRENT_FRAGMENT = "currentFragment";
-  
+
+  @Override
+  public ODKWebView getWebKitView() {
+    if ( activeScreenType == ScreenType.WEBVIEW_SCREEN ) {
+      FragmentManager mgr = this.getFragmentManager();
+      Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
+      if ( newFragment != null ) {
+        return ((WebFragment) newFragment).getWebKit();
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public String getUrlBaseLocation(boolean ifChanged) {
+    // TODO: do we need to track the ifChanged status?
+    if ( activeScreenType == ScreenType.WEBVIEW_SCREEN ) {
+      FragmentManager mgr = this.getFragmentManager();
+      Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
+      if ( newFragment != null ) {
+        return ((WebFragment) newFragment).getFileName();
+      }
+    }
+    return null;
+  }
+
   public enum ScreenType {
     INITIALIZATION_SCREEN,
     TABLE_MANAGER_SCREEN,
@@ -106,6 +132,14 @@ public class MainActivity extends AbsBaseActivity implements
           .valueOf(savedInstanceState.containsKey(CURRENT_FRAGMENT) ? savedInstanceState
               .getString(CURRENT_FRAGMENT) : activeScreenType.name());
     }
+  }
+
+  @Override public String getTableId() {
+    return null;
+  }
+
+  @Override public String getInstanceId() {
+    return null;
   }
 
   @Override
@@ -165,40 +199,6 @@ public class MainActivity extends AbsBaseActivity implements
         props.writeProperties();
       }
       return null;
-    }
-  }
-
-  @Override
-  public void onPostResume() {
-    super.onPostResume();
-    Tables.getInstance().establishDatabaseConnectionListener(this);
-  }
-
-  @Override
-  public void databaseAvailable() {
-    FragmentManager mgr = this.getFragmentManager();
-    int idxLast = mgr.getBackStackEntryCount() - 1;
-    if (idxLast >= 0) {
-      BackStackEntry entry = mgr.getBackStackEntryAt(idxLast);
-      Fragment newFragment = null;
-      newFragment = mgr.findFragmentByTag(entry.getName());
-      if ( newFragment instanceof DatabaseConnectionListener ) {
-        ((DatabaseConnectionListener) newFragment).databaseAvailable();
-      }
-    }
-  }
-
-  @Override
-  public void databaseUnavailable() {
-    FragmentManager mgr = this.getFragmentManager();
-    int idxLast = mgr.getBackStackEntryCount() - 1;
-    if (idxLast >= 0) {
-      BackStackEntry entry = mgr.getBackStackEntryAt(idxLast);
-      Fragment newFragment = null;
-      newFragment = mgr.findFragmentByTag(entry.getName());
-      if ( newFragment instanceof DatabaseConnectionListener ) {
-        ((DatabaseConnectionListener) newFragment).databaseUnavailable();
-      }
     }
   }
 

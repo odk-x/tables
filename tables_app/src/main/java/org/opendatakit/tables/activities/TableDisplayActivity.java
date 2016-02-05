@@ -15,10 +15,12 @@
  */
 package org.opendatakit.tables.activities;
 
+import android.view.*;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
@@ -43,10 +45,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 /**
@@ -56,10 +54,15 @@ import android.widget.Toast;
  * @author sudar.sam@gmail.com
  *
  */
-public class TableDisplayActivity extends AbsTableActivity implements TableMapInnerFragmentListener {
+public class TableDisplayActivity extends AbsTableWebActivity implements
+    TableMapInnerFragmentListener {
 
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
   public static final String INTENT_KEY_CURRENT_FRAGMENT = "saveInstanceCurrentFragment";
+
+  @Override public void initializationCompleted() {
+
+  }
 
   /**
    * The fragment types this activity could be displaying.
@@ -74,18 +77,12 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
    * The type of fragment that is currently being displayed.
    */
   private ViewFragmentType mCurrentFragmentType;
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.mCurrentFragmentType = this.retrieveFragmentTypeToDisplay(savedInstanceState);
     this.setContentView(R.layout.activity_table_display_activity);
-  }
-
-  @Override
-  public void onPostResume() {
-    super.onPostResume();
-    Tables.getInstance().establishDatabaseConnectionListener(this);
   }
 
   private boolean reloadCachedValues = false;
@@ -100,6 +97,9 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
 
   @Override
   public void databaseAvailable() {
+    super.databaseAvailable();
+    // TODO: is this necessary
+
     if ( Tables.getInstance().getDatabase() != null ) {
       // see if we saved the state
       OdkDbHandle db = null;
@@ -154,6 +154,8 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
 
   @Override
   public void databaseUnavailable() {
+    super.databaseUnavailable();
+    // TODO: is this necessary
     notifyCurrentFragment(false);
   }
   
@@ -225,6 +227,76 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     WebLogger.getLogger(getAppName()).d(TAG, "[onDestroy]");
   }
 
+  @Override public String getInstanceId() {
+    if ( this.mCurrentFragmentType == ViewFragmentType.DETAIL ) {
+      DetailViewFragment detailViewFragment = this.findDetailViewFragment();
+      if ( detailViewFragment != null ) {
+        return detailViewFragment.getRowId();
+      }
+    }
+    // map views are not considered to have a specific instanceId.
+    // While one of the items happens to be distinguished, the view
+    // is still a list of items.
+    return null;
+  }
+
+  @Override public ODKWebView getWebKitView() {
+    switch (this.getCurrentFragmentType()) {
+    case SPREADSHEET:
+      // this isn't a webkit
+      return null;
+    case LIST:
+      ListViewFragment listViewFragment = this.findListViewFragment();
+      if ( listViewFragment != null ) {
+        return listViewFragment.getWebKit();
+      }
+      break;
+    case MAP:
+      MapListViewFragment mapListViewFragment = this.findMapListViewFragment();
+      if ( mapListViewFragment != null ) {
+        return mapListViewFragment.getWebKit();
+      }
+      break;
+    case DETAIL:
+      DetailViewFragment detailViewFragment = this.findDetailViewFragment();
+      if ( detailViewFragment != null ) {
+        return detailViewFragment.getWebKit();
+      }
+      break;
+    }
+    // TODO: use view extended from webkit inside fragments
+    return null;
+  }
+
+  @Override
+  public String getUrlBaseLocation(boolean ifChanged) {
+    // TODO: do we need to track the ifChanged status?
+    switch (this.getCurrentFragmentType()) {
+    case SPREADSHEET:
+      // this isn't a webkit
+      return null;
+    case LIST:
+      ListViewFragment listViewFragment = this.findListViewFragment();
+      if ( listViewFragment != null ) {
+        return listViewFragment.getFileName();
+      }
+      break;
+    case MAP:
+      MapListViewFragment mapListViewFragment = this.findMapListViewFragment();
+      if ( mapListViewFragment != null ) {
+        return mapListViewFragment.getFileName();
+      }
+      break;
+    case DETAIL:
+      DetailViewFragment detailViewFragment = this.findDetailViewFragment();
+      if ( detailViewFragment != null ) {
+        return detailViewFragment.getFileName();
+      }
+      break;
+    }
+    return null;
+  }
+
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -240,12 +312,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     }
   }
 
-  @Override
-  protected void onResume() {
-    super.onResume();
-    WebLogger.getLogger(getAppName()).i(TAG, "[onResume]");
-  }
-  
   private PossibleTableViewTypes getPossibleTableViewTypes(OdkDbHandle db) throws RemoteException {
     PossibleTableViewTypes viewTypes = null;
     viewTypes = new PossibleTableViewTypes(getAppName(), db, getTableId(), getColumnDefinitions());
@@ -452,12 +518,6 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     default:
       WebLogger.getLogger(getAppName()).e(TAG, "view type not recognized: " + currentFragment);
     }
-  }
-
-  @Override
-  protected void onStart() {
-    super.onStart();
-    WebLogger.getLogger(getAppName()).i(TAG, "[onStart]");
   }
 
   public void refreshDisplayFragment() {
@@ -990,6 +1050,13 @@ public class TableDisplayActivity extends AbsTableActivity implements TableMapIn
     DetailViewFragment result = (DetailViewFragment) fragmentManager
         .findFragmentByTag(ViewFragmentType.DETAIL.name());
     return result;
+  }
+
+  ListViewFragment findListViewFragment() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    ListViewFragment listViewFragment = (ListViewFragment) fragmentManager
+        .findFragmentByTag(ViewFragmentType.LIST.name());
+    return listViewFragment;
   }
 
   /**

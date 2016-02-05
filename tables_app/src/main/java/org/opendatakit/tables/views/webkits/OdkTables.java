@@ -45,7 +45,7 @@ public class OdkTables {
   protected AbsBaseActivity mActivity;
   protected String mDefaultTableId;
   protected Map<String, OrderedColumns> mCachedOrderedDefns = new HashMap<String, OrderedColumns>();
-  protected List<String> mTableIds;
+  private List<String> mTableIds = null;
 
   public OdkTablesIf getJavascriptInterfaceWithWeakReference() {
     return new OdkTablesIf(this);
@@ -60,24 +60,25 @@ public class OdkTables {
    *          the activity that will be holding the view
    * @throws RemoteException 
    */
-  public OdkTables(AbsBaseActivity activity, String defaultTableId,
-      OrderedColumns defaultColumnDefinitions) throws RemoteException {
+  public OdkTables(AbsBaseActivity activity, String defaultTableId) {
     this.mActivity = activity;
     this.mDefaultTableId = defaultTableId;
-    if (defaultTableId != null) {
-      this.mCachedOrderedDefns.put(defaultTableId, defaultColumnDefinitions);
-    }
+  }
 
-    String appName = mActivity.getAppName();
-    OdkDbHandle db = null;
-    try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      this.mTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
-    } finally {
-      if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
+  private List<String> getTableIds() throws RemoteException {
+    if ( mTableIds == null ) {
+      String appName = mActivity.getAppName();
+      OdkDbHandle db = null;
+      try {
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        mTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
+      } finally {
+        if (db != null) {
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
+        }
       }
     }
+    return mTableIds;
   }
 
   /**
@@ -287,8 +288,8 @@ public class OdkTables {
   /**
    * @see {@link OdkTablesIf#getAllTableIds()}
    */
-  public String getAllTableIds() {
-    JSONArray result = new JSONArray(mTableIds);
+  public String getAllTableIds() throws RemoteException {
+    JSONArray result = new JSONArray(getTableIds());
     return result.toString();
   }
 
@@ -312,7 +313,7 @@ public class OdkTables {
   public String getColumnDisplayName(String tableId, String elementPath) throws RemoteException {
     String appName = mActivity.getAppName();
     String elementKey = this.getElementKey(tableId, elementPath);
-    if (!mTableIds.contains(tableId)) {
+    if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return null;
@@ -412,7 +413,7 @@ public class OdkTables {
       String jsonMap) throws RemoteException {
     String appName = mActivity.getAppName();
     // does this "to receive add" call make sense with survey? unclear.
-    if (!mTableIds.contains(tableId)) {
+    if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
@@ -462,7 +463,7 @@ public class OdkTables {
   public boolean helperAddRowWithCollect(String tableId, String formId, String formVersion,
       String formRootElement, String jsonMap) throws RemoteException {
     String appName = mActivity.getAppName();
-    if (!mTableIds.contains(tableId)) {
+    if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
@@ -552,7 +553,7 @@ public class OdkTables {
   public boolean helperEditRowWithSurvey(String tableId, String rowId, String formId,
       String screenPath) throws RemoteException {
     String appName = mActivity.getAppName();
-    if (!mTableIds.contains(tableId)) {
+    if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
@@ -587,7 +588,7 @@ public class OdkTables {
   public boolean helperEditRowWithCollect(String tableId, String rowId, String formId,
       String formVersion, String formRootElement) throws RemoteException {
     String appName = mActivity.getAppName();
-    if (!mTableIds.contains(tableId)) {
+    if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
