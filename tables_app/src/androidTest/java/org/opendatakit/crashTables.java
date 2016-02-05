@@ -89,7 +89,6 @@ public class crashTables {
   }
 
   @Test
-  @SuppressWarnings("ConstantConditions") //to get rid of AS's annoying highlighting
   public void crashBy_SIGSEGV() {
     //Open "Hope"
     EspressoUtils.delayedFindElement(Locator.ID, HOPE_TAB_ID, WEB_WAIT_TIMEOUT).perform(webClick());

@@ -59,6 +59,6 @@ public class EspressoUtils {
       }
     }
 
-    return null;
+    return wInteraction;
   }
 }
