@@ -63,9 +63,13 @@ public class OdkTablesWebView extends ODKWebView {
     String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(false);
 
     if ( baseUrl != null ) {
-      resetLoadPageStatus(baseUrl);
-      log.i(t, "reloadPage: full reload: " + baseUrl);
-      loadUrl(baseUrl);
+      if ( hasPageFrameworkFinishedLoading() || !baseUrl.equals(getLoadPageUrl()) ) {
+        resetLoadPageStatus(baseUrl);
+        log.i(t, "reloadPage: full reload: " + baseUrl);
+        loadUrl(baseUrl);
+      } else {
+        log.w(t, "reloadPage: framework in process of loading -- ignoring request!");
+      }
     } else {
       log.w(t, "reloadPage: framework did not load -- cannot load anything!");
     }

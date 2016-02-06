@@ -35,6 +35,7 @@ import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
@@ -232,28 +233,6 @@ public class WebViewUtil {
       }
     }
     return result;
-  }
-
-  /**
-   * Display the file in the WebView.
-   * 
-   * @param context
-   * @param appName
-   * @param webView
-   *          the WebView in which the file should be displayed
-   * @param fileName
-   *          the relativePath to the file. If null, a no file specified message
-   *          is displayed.
-   */
-  public static void displayFileInWebView(Context context, String appName, WebView webView,
-      String fileName) {
-    if (fileName != null) {
-      String webUrl = UrlUtils.getAsWebViewUri(context, appName, fileName);
-      webView.loadUrl(webUrl);
-    } else {
-      // load the no file found html.
-      webView.loadData(Constants.HTML.NO_FILE_NAME, Constants.MimeTypes.TEXT_HTML, null);
-    }
   }
 
   /**

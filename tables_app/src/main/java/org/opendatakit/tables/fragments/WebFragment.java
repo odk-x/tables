@@ -134,13 +134,8 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
   public void databaseAvailable() {
 
     if ( getView() != null && getFileName() != null ) {
-      OdkTablesWebView webView = (OdkTablesWebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
       setWebKitVisibility();
-      WebViewUtil.displayFileInWebView(
-          getActivity(),
-          ((AbsBaseActivity) getActivity()).getAppName(),
-          webView,
-          this.getFileName());
+      getWebKit().reloadPage();
     }
   }
 

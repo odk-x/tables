@@ -19,17 +19,14 @@ import android.view.*;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
-import org.opendatakit.tables.fragments.DetailViewFragment;
-import org.opendatakit.tables.fragments.ListViewFragment;
-import org.opendatakit.tables.fragments.MapListViewFragment;
-import org.opendatakit.tables.fragments.SpreadsheetFragment;
-import org.opendatakit.tables.fragments.TableMapInnerFragment;
+import org.opendatakit.tables.fragments.*;
 import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.CollectUtil;
@@ -271,6 +268,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
   @Override
   public String getUrlBaseLocation(boolean ifChanged) {
     // TODO: do we need to track the ifChanged status?
+    String filename = null;
     switch (this.getCurrentFragmentType()) {
     case SPREADSHEET:
       // this isn't a webkit
@@ -278,21 +276,25 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
     case LIST:
       ListViewFragment listViewFragment = this.findListViewFragment();
       if ( listViewFragment != null ) {
-        return listViewFragment.getFileName();
+        filename = listViewFragment.getFileName();
       }
       break;
     case MAP:
       MapListViewFragment mapListViewFragment = this.findMapListViewFragment();
       if ( mapListViewFragment != null ) {
-        return mapListViewFragment.getFileName();
+        filename = mapListViewFragment.getFileName();
       }
       break;
     case DETAIL:
       DetailViewFragment detailViewFragment = this.findDetailViewFragment();
       if ( detailViewFragment != null ) {
-        return detailViewFragment.getFileName();
+        filename = detailViewFragment.getFileName();
       }
       break;
+    }
+
+    if ( filename != null ) {
+      return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
     }
     return null;
   }

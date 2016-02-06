@@ -24,6 +24,7 @@ import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.DependencyChecker;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.tables.R;
@@ -83,7 +84,10 @@ public class MainActivity extends AbsBaseWebActivity implements
       FragmentManager mgr = this.getFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
       if ( newFragment != null ) {
-        return ((WebFragment) newFragment).getFileName();
+        String filename = ((WebFragment) newFragment).getFileName();
+        if ( filename != null ) {
+          return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
+        }
       }
     }
     return null;

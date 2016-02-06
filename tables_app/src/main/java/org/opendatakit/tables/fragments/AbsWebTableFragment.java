@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.TextView;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.application.Tables;
@@ -140,13 +141,8 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   public void databaseAvailable() {
 
     if ( getView() != null && getFileName() != null ) {
-      WebView webView = (WebView) getView().findViewById(org.opendatakit.tables.R.id.webkit);
       setWebKitVisibility();
-      WebViewUtil.displayFileInWebView(
-          getActivity(),
-          ((AbsBaseWebActivity) getActivity()).getAppName(),
-          webView,
-          this.getFileName());
+      getWebKit().reloadPage();
     }
   }
 
