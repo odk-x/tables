@@ -454,7 +454,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
         runOnUiThread(new Runnable() {
           @Override
           public void run() {
-            webView.loadUrl("javascript:odkData.responseAvailable();");
+            webView.signalResponseAvailable();
           }
         });
       }
