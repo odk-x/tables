@@ -64,10 +64,7 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
    */
   void resetView() {
     WebLogger.getLogger(getAppName()).d(TAG, "[resetView]");
-    if (this.getFileName() == null) {
-      // don't need to do anything, as the view won't be getting updated.
-      return;
-    }
+
     OdkTablesWebView currentView = (OdkTablesWebView) this.getView().findViewById(R.id.webkit);
     // Just reload the page.
     currentView.reloadPage();

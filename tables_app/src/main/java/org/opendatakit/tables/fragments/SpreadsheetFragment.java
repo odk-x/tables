@@ -240,8 +240,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
   private void init() throws RemoteException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-    activity.refreshDataTable();
-    activity.refreshDisplayFragment();
+    activity.refreshDataAndDisplayFragment();
   }
 
   private void deleteRow(String rowId) throws RemoteException {

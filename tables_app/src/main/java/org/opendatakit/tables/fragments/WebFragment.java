@@ -23,11 +23,7 @@ import android.webkit.WebView;
 import android.widget.TextView;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
@@ -43,44 +39,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
   private static final String TAG = WebFragment.class.getSimpleName();
 
   private static final int ID = R.layout.web_view_container;
-  
-  /** The name of the file this fragment is displaying. */
-  protected String mFileName;
 
-  @Override
-  public String retrieveFileNameFromBundle(Bundle bundle) {
-    if ( bundle == null ) {
-      return null;
-    }
-    String fileName = IntentUtil.retrieveFileNameFromBundle(bundle);
-    return fileName;
-  }
-
-  @Override
-  public void putFileNameInBundle(Bundle bundle) {
-    if (this.getFileName() != null) {
-      bundle.putString(Constants.IntentKeys.FILE_NAME, this.getFileName());
-    }
-  }
-  
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    // AppName may not be available...
-    // Get the file name. Saved state gets precedence. Then arguments.
-    String retrievedFileName = retrieveFileNameFromBundle(savedInstanceState);
-    if (retrievedFileName == null) {
-      retrievedFileName = this.retrieveFileNameFromBundle(this.getArguments());
-    }
-    this.mFileName = retrievedFileName;
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    putFileNameInBundle(outState);
-  }
-  
   @Override
   public View onCreateView(
       LayoutInflater inflater,
@@ -94,17 +53,6 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
         false);
 
     return v;
-  }
-
-  @Override
-  public String getFileName() {
-    return this.mFileName;
-  }
-  
-  @Override
-  public void setFileName(String relativeFileName) {
-    this.mFileName = relativeFileName;
-    databaseAvailable();
   }
 
   @Override
@@ -133,7 +81,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
   @Override
   public void databaseAvailable() {
 
-    if ( getView() != null && getFileName() != null ) {
+    if ( getView() != null ) {
       setWebKitVisibility();
       getWebKit().reloadPage();
     }

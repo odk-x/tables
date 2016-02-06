@@ -15,51 +15,16 @@
  */
 package org.opendatakit.tables.fragments;
 
-import android.app.Fragment;
-import android.os.Bundle;
-import android.os.RemoteException;
-import org.opendatakit.common.android.views.OdkCommon;
-import org.opendatakit.common.android.views.OdkData;
-import org.opendatakit.tables.views.webkits.OdkTables;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
- * Interface defining behavior for those {@link Fragment}s that display a
+ * Interface defining behavior for those Fragments that display a
  * {@link org.opendatakit.common.android.views.ODKWebView }.
- * <p>
- * All such fragments should set and retrieve the file name in
- * {@link Fragment#onSaveInstanceState(Bundle)} and
- * {@link Fragment#onCreate(Bundle)}. 
+ *
  * @author sudar.sam@gmail.com
  *
  */
 public interface IWebFragment {
-  
-  /**
-   * Retrieve the file name that should be displayed.
-   * @param bundle
-   * @return the file name, or null if one has not been set.
-   */
-  public String retrieveFileNameFromBundle(Bundle bundle);
-  
-  /**
-   * Store the file name in a bundle.
-   * @param bundle
-   */
-  public void putFileNameInBundle(Bundle bundle);
-  
-  /**
-   * Get the file name that is being displayed.
-   * @return
-   */
-  public String getFileName();
-  
-  /**
-   * Set the file name that is to be displayed.
-   * 
-   * @param relativeFileName
-   */
-  public void setFileName(String relativeFileName);
 
   /**
    * Get the webkit in this fragment

@@ -16,63 +16,19 @@
 package org.opendatakit.tables.fragments;
 
 import android.app.Fragment;
-import android.os.Bundle;
-import org.opendatakit.IntentConsts;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
-import org.opendatakit.tables.utils.IntentUtil;
 
 /**
  * {@link Fragment} for displaying a detail view.
- * 
  * @author sudar.sam@gmail.com
  *
  */
 public class DetailViewFragment extends AbsWebTableFragment {
 
   private static final String TAG = DetailViewFragment.class.getSimpleName();
-  
-  /**
-   * The row id of the row that is being displayed in this table.
-   */
-  private String mRowId;
-
-  /**
-   * Retrieve the row id from the bundle.
-   * 
-   * @param bundle
-   *          the row id, or null if not present.
-   * @return
-   */
-  String retrieveRowIdFromBundle(Bundle bundle) {
-    String rowId = IntentUtil.retrieveRowIdFromBundle(bundle);
-    return rowId;
-  }
-
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    String retrievedRowId = this.retrieveRowIdFromBundle(this.getArguments());
-    this.mRowId = retrievedRowId;
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    outState.putString(IntentConsts.INTENT_KEY_INSTANCE_ID, this.getRowId());
-  }
 
   @Override
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.DETAIL;
   }
-
-  /**
-   * Get the id of the row being displayed.
-   * 
-   * @return
-   */
-  public String getRowId() {
-    return this.mRowId;
-  }
-
 }

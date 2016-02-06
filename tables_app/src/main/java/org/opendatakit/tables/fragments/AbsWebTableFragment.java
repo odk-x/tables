@@ -23,13 +23,8 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.TextView;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
@@ -42,49 +37,6 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     implements IWebFragment {
 
   private static final String TAG = AbsWebTableFragment.class.getSimpleName();
-
-  /** The file name this fragment is displaying. */
-  String mFileName;
-  
-  /**
-   * Retrieve the file name that should be displayed.
-   * @return the file name, or null if one has not been set.
-   */
-  @Override
-  public String retrieveFileNameFromBundle(Bundle bundle) {
-    String fileName = IntentUtil.retrieveFileNameFromBundle(bundle);
-    return fileName;
-  }
-
-  @Override
-  public void putFileNameInBundle(Bundle bundle) {
-    if (this.getFileName() != null) {
-      bundle.putString(Constants.IntentKeys.FILE_NAME, this.getFileName());
-    }
-  }
-
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    // AppName is unknown since Activity is likely null
-    // Get the file name if it was there.
-    String retrievedFileName = retrieveFileNameFromBundle(savedInstanceState);
-    if (retrievedFileName == null) {
-      // then try to get it from its arguments.
-      retrievedFileName = this.retrieveFileNameFromBundle(this.getArguments());
-    }
-    this.mFileName = retrievedFileName;
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    this.putFileNameInBundle(outState);
-  }
-
-  @Override public void onResume() {
-    super.onResume();
-  }
 
   @Override
   public View onCreateView(
@@ -99,19 +51,6 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
         false);
 
     return v;
-  }
-
-  /**
-   * Get the file name this fragment is displaying.
-   */
-  @Override
-  public String getFileName() {
-    return this.mFileName;
-  }
-
-  @Override
-  public void setFileName(String relativeFileName) {
-    this.mFileName = relativeFileName;
   }
 
   @Override
@@ -140,7 +79,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   @Override
   public void databaseAvailable() {
 
-    if ( getView() != null && getFileName() != null ) {
+    if ( getView() != null ) {
       setWebKitVisibility();
       getWebKit().reloadPage();
     }

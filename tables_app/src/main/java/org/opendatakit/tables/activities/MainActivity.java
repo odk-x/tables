@@ -83,8 +83,8 @@ public class MainActivity extends AbsBaseWebActivity implements
     if ( activeScreenType == ScreenType.WEBVIEW_SCREEN ) {
       FragmentManager mgr = this.getFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
-      if ( newFragment != null ) {
-        String filename = ((WebFragment) newFragment).getFileName();
+      if ( newFragment != null && webFileToDisplay != null) {
+        String filename = ODKFileUtils.asRelativePath(mAppName, webFileToDisplay);
         if ( filename != null ) {
           return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
         }
@@ -249,15 +249,8 @@ public class MainActivity extends AbsBaseWebActivity implements
       break;
     case WEBVIEW_SCREEN:
       newFragment = mgr.findFragmentByTag(newScreenType.name());
-      
       if ( newFragment == null ) {
         newFragment = new WebFragment();
-
-        if ( this.webFileToDisplay != null ) {
-          Bundle args = new Bundle();
-          args.putString(Constants.IntentKeys.FILE_NAME, ODKFileUtils.asRelativePath(mAppName, webFileToDisplay));
-          newFragment.setArguments(args);
-        }
       }
       break;
     case ABOUT_SCREEN:
