@@ -6,7 +6,10 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.intent.Intents;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
+import android.support.test.espresso.matcher.BoundedMatcher;
+import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.test.suitebuilder.annotation.LargeTest;
 import org.junit.Before;
@@ -15,11 +18,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
 
 import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.Espresso.setFailureHandler;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.intended;
@@ -53,6 +58,8 @@ public class TablePrefTest {
 
   @Before
   public void setup() {
+    assertThat("Initialization unsuccessful.", initSuccess, is(true));
+
     intending(not(isInternal()))
         .respondWith(new Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null));
 
@@ -116,5 +123,33 @@ public class TablePrefTest {
       onData(withKey(DEFAULT_VIEW_TYPE)).perform(click());
       onView(withText("List")).perform(click());
     }
+  }
+
+  @Test
+  public void views_columns() {
+    final int numCol = 19;
+
+    //click "Tea Houses"
+    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID, T_HOUSE_DISPLAY_NAME)).perform(click());
+
+    //go to columns
+    onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
+    onData(withKey(COLUMNS_LIST)).perform(click());
+
+    //Check num of column
+    onView(withId(android.R.id.list)).check(matches(ODKMatchers.withSize(numCol)));
+  }
+
+  @Test
+  public void intent_tableLevelPref() {
+    //click "Tea Houses"
+    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID, T_HOUSE_DISPLAY_NAME)).perform(click());
+
+    //go to table preferences
+    onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
+
+    intended(allOf(
+        hasComponent(TableLevelPreferencesActivity.class.getName()),
+        hasExtra("tableId", T_HOUSE_TABLE_ID)));
   }
 }

@@ -1,5 +1,6 @@
 package org.opendatakit.util;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -94,6 +95,18 @@ public class UAUtils {
 
   public static String getString(int id) {
     return InstrumentationRegistry.getTargetContext().getString(id);
+  }
+
+  /**
+   * Note: this doesn't work with low x and y values
+   *
+   * @param mDevice
+   * @param x
+   * @param y
+   * @return
+   */
+  public static boolean longPress(UiDevice mDevice, int x, int y) {
+    return mDevice.swipe(x, y, x, y, 400);
   }
 
   /**

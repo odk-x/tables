@@ -32,6 +32,7 @@ public class TestConstants {
   public static final String LIST_VIEW_FILE = "table_pref_list_file";
   public static final String DETAIL_VIEW_FILE = "table_pref_detail_file";
   public static final String MAP_LIST_VIEW_FILE = "table_pref_map_list_file";
+  public static final String COLUMNS_LIST = "table_pref_columns";
 
   //Misc.
   public static final String OI_PICK_FILE = "org.openintents.action.PICK_FILE";
