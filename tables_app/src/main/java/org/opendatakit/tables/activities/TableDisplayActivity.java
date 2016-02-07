@@ -16,8 +16,10 @@
 package org.opendatakit.tables.activities;
 
 import android.view.*;
+import com.google.android.gms.maps.MapFragment;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.utilities.DependencyChecker;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -76,8 +78,6 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
   public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
   public static final String INTENT_KEY_CURRENT_FILE_NAME = "currentFileName";
 
-
-  public static final String INTENT_KEY_CURRENT_FRAGMENT = "saveInstanceCurrentFragment";
   /**
    * The fragment types this activity could be displaying.
    * 
@@ -180,6 +180,13 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
     }
   }
 
+  @Override
+  protected void onResume() {
+    super.onResume();
+
+    showCurrentDisplayFragment(false);
+  }
+
   /** Cached data from database */
   private PossibleTableViewTypes mPossibleTableViewTypes = null;
 
@@ -188,132 +195,20 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
    */
   private UserTable mUserTable = null;
 
-  @Override
-  public void databaseAvailable() {
-
-    // see if we saved the state
-    OdkDbHandle db = null;
-    try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      if (mOriginalFragmentType == null) {
-        // recover the default view for this table from the database...
-        TableViewType type;
-        type = TableUtil.get().getDefaultViewType(Tables.getInstance(), getAppName(), db, getTableId());
-        mOriginalFragmentType = this.getViewFragmentTypeFromViewType(type);
-        if (mOriginalFragmentType == null) {
-          // and if that isn't set, use spreadsheet
-          WebLogger.getLogger(getAppName()).i(TAG,
-              "[retrieveFragmentTypeToDisplay] no view type found, defaulting to spreadsheet");
-          mOriginalFragmentType = ViewFragmentType.SPREADSHEET;
-        }
-      }
-      if (mOriginalFileName == null && mOriginalFragmentType != ViewFragmentType.SPREADSHEET ) {
-        mOriginalFileName = getDefaultFileNameForViewFragmentType(db, mOriginalFragmentType);
-      }
-
-      if ( mCurrentFragmentType == null ) {
-        mCurrentFragmentType = mOriginalFragmentType;
-        mCurrentFileName = mOriginalFileName;
-      }
-
-      if ( mCurrentFileName == null ) {
-        mCurrentFileName = getDefaultFileNameForViewFragmentType(db, mCurrentFragmentType);
-      }
-
-      if ( mPossibleTableViewTypes == null ) {
-        this.mPossibleTableViewTypes = new PossibleTableViewTypes(getAppName(), db, getTableId(),
-            getColumnDefinitions());
-      }
-    } catch (RemoteException e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      WebLogger.getLogger(getAppName()).e(TAG,
-          "[databaseAvailable] unable to access database");
-      Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
-    } finally {
-      if (db != null) {
-        try {
-          Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-        } catch (RemoteException e) {
-          WebLogger.getLogger(getAppName()).printStackTrace(e);
-          WebLogger.getLogger(getAppName()).e(TAG,
-              "[databaseAvailable] unable to access database");
-          Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
-        }
-      }
+  private String getDefaultFileNameForViewFragmentType(ViewFragmentType fragmentType) {
+    if ( mPossibleTableViewTypes == null || fragmentType == null ) {
+      return null;
     }
-
-    // at this point, we have all the information necessary to render the fragment
-    this.showCurrentDisplayFragment(false);
-
-    // wait for the appropriate fragment to render, then call notify to change status
-    Handler handler = new Handler() {};
-    handler.postDelayed(new Runnable() {
-
-      @Override
-      public void run() {
-        notifyCurrentFragment(true);
-      }}, 100);
-    super.databaseAvailable();
-  }
-
-  @Override
-  public void databaseUnavailable() {
-    super.databaseUnavailable();
-    // TODO: is this necessary
-    notifyCurrentFragment(false);
-  }
-
-  private String getDefaultFileNameForViewFragmentType(OdkDbHandle db,
-      ViewFragmentType fragmentType) throws
-      RemoteException {
     switch ( fragmentType ) {
     case SPREADSHEET:
       return null;
     case LIST:
-      return TableUtil.get().getListViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
+      return mPossibleTableViewTypes.getDefaultListViewFileName();
     case MAP:
-      return TableUtil.get().getMapListViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
+      return mPossibleTableViewTypes.getDefaultMapListViewFileName();
     case DETAIL:
-      return TableUtil.get().getDetailViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
+      return mPossibleTableViewTypes.getDefaultDetailFileName();
     default:
-      return null;
-    }
-  }
-
-  /**
-   * Get the {@link UserTable} from the database that should be displayed.
-   *
-   * @return
-   * @throws RemoteException
-   */
-  void initializeBackingTable(OdkDbHandle db) throws RemoteException {
-    SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(this.getIntent().getExtras());
-    String[] emptyArray = {};
-    UserTable result = Tables.getInstance().getDatabase().rawSqlQuery(this.getAppName(), db,
-        this.getTableId(), getColumnDefinitions(), sqlQueryStruct.whereClause,
-        (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs,
-        (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
-        sqlQueryStruct.having, sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
-    mUserTable = result;
-  }
-
-  /**
-   * Get the {@link ViewFragmentType} that corresponds to {@link TableViewType}.
-   * If no match is found, returns null.
-   *
-   * @param viewType
-   * @return
-   */
-  public ViewFragmentType getViewFragmentTypeFromViewType(TableViewType viewType) {
-    switch (viewType) {
-    case SPREADSHEET:
-      return ViewFragmentType.SPREADSHEET;
-    case MAP:
-      return ViewFragmentType.MAP;
-    case LIST:
-      return ViewFragmentType.LIST;
-    default:
-      WebLogger.getLogger(getAppName()).e(TAG, "viewType " + viewType + " not recognized.");
       return null;
     }
   }
@@ -328,7 +223,14 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
       OdkDbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-        initializeBackingTable(db);
+        SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(this.getIntent().getExtras());
+        String[] emptyArray = {};
+        UserTable result = Tables.getInstance().getDatabase().rawSqlQuery(this.getAppName(), db,
+            this.getTableId(), getColumnDefinitions(), sqlQueryStruct.whereClause,
+            (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs,
+            (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
+            sqlQueryStruct.having, sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
+        mUserTable = result;
       } catch (RemoteException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
@@ -365,58 +267,6 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
     // While one of the items happens to be distinguished, the view
     // is still a list of items.
     return null;
-  }
-
-  private void notifyCurrentFragment(boolean databaseAvailable) {
-    FragmentManager fragmentManager = this.getFragmentManager();
-
-    switch ( mCurrentFragmentType ) {
-    case SPREADSHEET:
-      SpreadsheetFragment spreadsheetFragment = (SpreadsheetFragment) fragmentManager
-        .findFragmentByTag(mCurrentFragmentType.name());
-      if ( spreadsheetFragment != null ) {
-        if ( databaseAvailable ) {
-          spreadsheetFragment.databaseAvailable();
-        } else {
-          spreadsheetFragment.databaseUnavailable();
-        }
-      }
-      break;
-    case LIST:
-      ListViewFragment listViewFragment = (ListViewFragment) fragmentManager
-      .findFragmentByTag(mCurrentFragmentType.name());
-      if ( listViewFragment != null ) {
-        if ( databaseAvailable ) {
-          listViewFragment.databaseAvailable();
-        } else {
-          listViewFragment.databaseUnavailable();
-        }
-      }
-      break;
-    case MAP:
-      MapListViewFragment mapListViewFragment = (MapListViewFragment) fragmentManager
-        .findFragmentByTag(mCurrentFragmentType.name());
-      if ( mapListViewFragment != null ) {
-        if ( databaseAvailable ) {
-          mapListViewFragment.databaseAvailable();
-        } else {
-          mapListViewFragment.databaseUnavailable();
-        }
-      }
-      break;
-    case DETAIL:
-      DetailViewFragment detailViewFragment = (DetailViewFragment) fragmentManager
-      .findFragmentByTag(mCurrentFragmentType.name());
-      if ( detailViewFragment != null ) {
-        if ( databaseAvailable ) {
-          detailViewFragment.databaseAvailable();
-        } else {
-          detailViewFragment.databaseUnavailable();
-        }
-      }
-      break;
-    }
-
   }
 
   @Override
@@ -466,9 +316,31 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
     case SPREADSHEET:
     case LIST:
     case MAP:
+      /*
+       * Disable or enable those menu items corresponding to view types that are
+       * currently invalid or valid, respectively.
+       */
       menuInflater.inflate(R.menu.top_level_table_menu, menu);
-      enableAndDisableViewTypes(mPossibleTableViewTypes, menu);
-      selectCorrectViewType(menu);
+      MenuItem spreadsheetItem = menu.findItem(R.id.top_level_table_menu_view_spreadsheet_view);
+      MenuItem listItem = menu.findItem(R.id.top_level_table_menu_view_list_view);
+      MenuItem mapItem = menu.findItem(R.id.top_level_table_menu_view_map_view);
+      spreadsheetItem.setEnabled(true); // always possible
+      listItem.setEnabled((mPossibleTableViewTypes != null) && mPossibleTableViewTypes.listViewIsPossible());
+      mapItem.setEnabled((mPossibleTableViewTypes != null) && mPossibleTableViewTypes.mapViewIsPossible());
+      /**
+       * Set the checkbox highlight to the view type being displayed.
+       */
+      switch (mCurrentFragmentType) {
+      case SPREADSHEET:
+        spreadsheetItem.setChecked(true);
+        break;
+      case LIST:
+        listItem.setChecked(true);
+        break;
+      case MAP:
+        mapItem.setChecked(true);
+        break;
+      }
       break;
     case DETAIL:
       menuInflater.inflate(R.menu.detail_view_menu, menu);
@@ -485,14 +357,22 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
       setCurrentFragmentType(ViewFragmentType.SPREADSHEET, null);
       return true;
     case R.id.top_level_table_menu_view_list_view:
-      if ( mOriginalFragmentType == ViewFragmentType.LIST ) {
+      if ( mOriginalFragmentType != null && mOriginalFragmentType == ViewFragmentType.LIST ) {
         filename = mOriginalFileName;
+      }
+      if ( filename == null ) {
+        filename = (mPossibleTableViewTypes != null) ?
+            mPossibleTableViewTypes.getDefaultListViewFileName() : null;
       }
       setCurrentFragmentType(ViewFragmentType.LIST, filename);
       return true;
     case R.id.top_level_table_menu_view_map_view:
-      if ( mOriginalFragmentType == ViewFragmentType.MAP ) {
+      if ( mOriginalFragmentType != null && mOriginalFragmentType == ViewFragmentType.MAP ) {
         filename = mOriginalFileName;
+      }
+      if ( filename == null ) {
+        filename = (mPossibleTableViewTypes != null) ?
+            mPossibleTableViewTypes.getDefaultMapListViewFileName() : null;
       }
       setCurrentFragmentType(ViewFragmentType.MAP, filename);
       return true;
@@ -572,61 +452,18 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
         }
         break;
       }
-      // verify that the data table doesn't contain checkpoints...
-      // always refresh, as survey may have done something
-      refreshDataAndDisplayFragment();
     } catch ( RemoteException e ) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
+
     super.onActivityResult(requestCode, resultCode, data);
-  }
 
-  /**
-   * Disable or enable those menu items corresponding to view types that are
-   * currently invalid or valid, respectively. The inflatedMenu must have
-   * already been created from the resource.
-   * 
-   * @param possibleViews
-   * @param inflatedMenu
-   */
-  private void enableAndDisableViewTypes(PossibleTableViewTypes possibleViews, Menu inflatedMenu) {
-    MenuItem spreadsheetItem = inflatedMenu
-        .findItem(R.id.top_level_table_menu_view_spreadsheet_view);
-    MenuItem listItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_list_view);
-    MenuItem mapItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_map_view);
-    spreadsheetItem.setEnabled((possibleViews != null) && possibleViews.spreadsheetViewIsPossible());
-    listItem.setEnabled((possibleViews != null) && possibleViews.listViewIsPossible());
-    mapItem.setEnabled((possibleViews != null) && possibleViews.mapViewIsPossible());
-  }
-
-  /**
-   * Selects the correct view type that is being displayed by the
-   * {@see ITopLevelTableMenuActivity}.
-   * 
-   * @param inflatedMenu
-   */
-  private void selectCorrectViewType(Menu inflatedMenu) {
-    if (mCurrentFragmentType == null) {
-      WebLogger.getLogger(getAppName()).e(TAG,
-          "did not find a current fragment type. Not selecting view.");
-      return;
-    }
-    MenuItem menuItem = null;
-    switch (mCurrentFragmentType) {
-    case SPREADSHEET:
-      menuItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_spreadsheet_view);
-      menuItem.setChecked(true);
-      break;
-    case LIST:
-      menuItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_list_view);
-      menuItem.setChecked(true);
-      break;
-    case MAP:
-      menuItem = inflatedMenu.findItem(R.id.top_level_table_menu_view_map_view);
-      menuItem.setChecked(true);
-      break;
-    default:
-      WebLogger.getLogger(getAppName()).e(TAG, "view type not recognized: " + mCurrentFragmentType);
+    try {
+      // verify that the data table doesn't contain checkpoints...
+      // always refresh, as table properties may have done something
+      refreshDataAndDisplayFragment();
+    } catch ( RemoteException e ) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
   }
 
@@ -634,6 +471,8 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
     WebLogger.getLogger(getAppName()).d(TAG, "[refreshDataAndDisplayFragment]");
     // drop cached table, if any...
     mUserTable = null;
+    // drop default filenames...
+    mPossibleTableViewTypes = null;
     showCurrentDisplayFragment(true);
   }
 
@@ -646,44 +485,87 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
    */
   public void setCurrentFragmentType(ViewFragmentType requestedType, String fileName) {
     if ( requestedType != ViewFragmentType.SPREADSHEET &&
-        fileName == null &&
-        Tables.getInstance().getDatabase() != null ) {
-      try {
-        OdkDbHandle db = null;
-        try {
-          db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-          fileName = getDefaultFileNameForViewFragmentType(db, requestedType);
-        } finally {
-          if ( db != null ) {
-            Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-          }
-        }
-      } catch (RemoteException e1) {
-        WebLogger.getLogger(getAppName()).printStackTrace(e1);
-        Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
-        return;
-      }
+        fileName == null && mPossibleTableViewTypes != null ) {
+      fileName = getDefaultFileNameForViewFragmentType(requestedType);
     }
     mCurrentFragmentType = requestedType;
     mCurrentFileName = fileName;
     showCurrentDisplayFragment(false);
   }
 
+  private void possiblySupplyDefaults() {
+
+    if ( mPossibleTableViewTypes == null && Tables.getInstance().getDatabase() != null ) {
+      OdkDbHandle db = null;
+      try {
+        db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+        mPossibleTableViewTypes = new PossibleTableViewTypes(getAppName(), db, getTableId(),
+            getColumnDefinitions());
+      } catch (RemoteException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        WebLogger.getLogger(getAppName()).e(TAG,
+            "[databaseAvailable] unable to access database");
+        Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+      } finally {
+        if (db != null) {
+          try {
+            Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+          } catch (RemoteException e) {
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
+            WebLogger.getLogger(getAppName()).e(TAG,
+                "[databaseAvailable] unable to access database");
+            Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+          }
+        }
+      }
+    }
+
+    if (mOriginalFragmentType == null && mPossibleTableViewTypes != null) {
+      // recover the default view for this table from the database...
+      mOriginalFragmentType = mPossibleTableViewTypes.getDefaultViewType();
+    }
+
+    ViewFragmentType original = mOriginalFragmentType;
+    if (mOriginalFragmentType == null) {
+      // and if that isn't set, use spreadsheet
+      WebLogger.getLogger(getAppName()).i(TAG,
+          "[retrieveFragmentTypeToDisplay] no view type found, defaulting to spreadsheet");
+      original = ViewFragmentType.SPREADSHEET;
+    }
+
+    if (mOriginalFileName == null ) {
+      mOriginalFileName = getDefaultFileNameForViewFragmentType(mOriginalFragmentType);
+    }
+
+    if ( mCurrentFragmentType == null ) {
+      mCurrentFragmentType = original;
+      mCurrentFileName = mOriginalFileName;
+    }
+
+    if ( mCurrentFileName == null ) {
+      mCurrentFileName = getDefaultFileNameForViewFragmentType(mCurrentFragmentType);
+    }
+  }
   /**
    * Initialize the correct display fragment based on the result of
    * {@link #retrieveTableIdFromIntent()}. Initializes Spreadsheet if none is
    * present in Intent.
    */
   private void showCurrentDisplayFragment(boolean createNew) {
-    this.updateChildViewVisibility(mCurrentFragmentType);
+    possiblySupplyDefaults();
+    updateChildViewVisibility(mCurrentFragmentType);
     FragmentManager fragmentManager = this.getFragmentManager();
     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
     // First acquire all the possible fragments.
-    Fragment spreadsheetFragment = fragmentManager.findFragmentByTag(ViewFragmentType.SPREADSHEET.name());
-    Fragment listViewFragment = fragmentManager.findFragmentByTag(ViewFragmentType.LIST.name());
-    Fragment mapListViewFragment = fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+    AbsBaseFragment spreadsheetFragment =
+        (AbsBaseFragment) fragmentManager.findFragmentByTag(ViewFragmentType.SPREADSHEET.name());
+    AbsBaseFragment listViewFragment =
+        (AbsBaseFragment) fragmentManager.findFragmentByTag(ViewFragmentType.LIST.name());
+    AbsBaseFragment mapListViewFragment =
+        (AbsBaseFragment) fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
     Fragment innerMapFragment = fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_INNER_MAP);
-    Fragment detailViewFragment = fragmentManager.findFragmentByTag(ViewFragmentType.DETAIL.name());
+    AbsBaseFragment detailViewFragment =
+        (AbsBaseFragment) fragmentManager.findFragmentByTag(ViewFragmentType.DETAIL.name());
 
     // Hide all fragments other than the current fragment type...
     if (mCurrentFragmentType != ViewFragmentType.SPREADSHEET && spreadsheetFragment != null) {

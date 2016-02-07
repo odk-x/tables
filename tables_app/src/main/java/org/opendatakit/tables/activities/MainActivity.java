@@ -118,12 +118,6 @@ public class MainActivity extends AbsBaseWebActivity implements
     super.onCreate(savedInstanceState);
     this.setContentView(R.layout.activity_main_activity);
 
-    DependencyChecker dc = new DependencyChecker(this);
-    boolean dependable = dc.checkDependencies();
-    if (!dependable) { // dependencies missing
-      return;
-    }
-
     webFileToDisplay = getHomeScreen(savedInstanceState);
     
     if ( webFileToDisplay != null ) {
@@ -159,12 +153,6 @@ public class MainActivity extends AbsBaseWebActivity implements
   @Override
   protected void onResume() {
     super.onResume();
-
-    DependencyChecker dc = new DependencyChecker(this);
-    boolean dependable = dc.checkDependencies();
-    if (!dependable) { // dependencies missing
-      return;
-    }
 
     swapScreens(activeScreenType);
   }

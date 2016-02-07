@@ -24,6 +24,7 @@ import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
+import org.opendatakit.common.android.utilities.DependencyChecker;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
@@ -76,6 +77,12 @@ public abstract class AbsBaseActivity extends BaseActivity {
         mConflictTables = savedInstanceState.getBundle(Constants.IntentKeys.CONFLICT_TABLES);
       }
     }
+
+    DependencyChecker dc = new DependencyChecker(this);
+    boolean dependable = dc.checkDependencies();
+    if (!dependable) { // dependencies missing
+      return;
+    }
   }
   
   
@@ -95,9 +102,15 @@ public abstract class AbsBaseActivity extends BaseActivity {
   }
 
   @Override
+  protected void onResume() {
+    super.onResume();
+    ((Tables) getApplication()).establishDoNotFireDatabaseConnectionListener(this);
+  }
+
+  @Override
   public void onPostResume() {
     super.onPostResume();
-    ((Tables) getApplication()).establishDatabaseConnectionListener(this);
+    ((Tables) getApplication()).fireDatabaseConnectionListener();
   }
 
   public String getActionTableId() {

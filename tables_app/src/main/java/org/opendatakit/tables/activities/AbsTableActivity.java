@@ -67,22 +67,24 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
     if ( this.mColumnDefinitions == null ) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] building mColumnDefinitions.");
       CommonApplication app = (CommonApplication) getApplication();
-      OdkDbHandle db = null;
-      try {
-        db = app.getDatabase().openDatabase(getAppName());
-        mColumnDefinitions = app.getDatabase().getUserDefinedColumns(getAppName(), db, getTableId());
-      } catch (RemoteException e) {
-        WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to access database.");
-        WebLogger.getLogger(getAppName()).printStackTrace(e);
-        throw new IllegalStateException("unable to access database");
-      } finally {
-        if ( db != null ) {
-          try {
-            app.getDatabase().closeDatabase(getAppName(), db);
-          } catch (RemoteException e) {
-            WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to close database.");
-            WebLogger.getLogger(getAppName()).printStackTrace(e);
-            throw new IllegalStateException("unable to close database");
+      if ( app.getDatabase() != null ) {
+        OdkDbHandle db = null;
+        try {
+          db = app.getDatabase().openDatabase(getAppName());
+          mColumnDefinitions = app.getDatabase().getUserDefinedColumns(getAppName(), db, getTableId());
+        } catch (RemoteException e) {
+          WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to access database.");
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
+          throw new IllegalStateException("unable to access database");
+        } finally {
+          if (db != null) {
+            try {
+              app.getDatabase().closeDatabase(getAppName(), db);
+            } catch (RemoteException e) {
+              WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to close database.");
+              WebLogger.getLogger(getAppName()).printStackTrace(e);
+              throw new IllegalStateException("unable to close database");
+            }
           }
         }
       }
