@@ -54,8 +54,7 @@ public class UAUtils {
     assertThat("mDevice cannot be null", mDevice != null, is(true));
     assertThat("group cannot be null", group != null, is(true));
 
-    UiObject2 checked = mDevice.findObject(group.checked(true));
-    return checked.getText();
+    return mDevice.findObject(group.checked(true)).getText();
   }
 
   public static void startApp(UiDevice mDevice, String pkgName) {
@@ -66,23 +65,31 @@ public class UAUtils {
 
     //start app
     Context context = InstrumentationRegistry.getContext();
-    final Intent intent = context.getPackageManager().getLaunchIntentForPackage(TABLES_PKG_NAME);
+    final Intent intent = context.getPackageManager().getLaunchIntentForPackage(pkgName);
     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
     context.startActivity(intent);
 
     //wait for app to start
-    mDevice.wait(Until.hasObject(By.pkg(TABLES_PKG_NAME).depth(0)), APP_START_TIMEOUT);
+    mDevice.wait(Until.hasObject(By.pkg(pkgName).depth(0)), APP_START_TIMEOUT);
   }
 
   /**
    * WARNING:
-   * This might not work on all OSes
+   * This might not work on all versions of Android
+   *
+   * appName is name of app displayed on device, for example "ODK Tables"
    */
-  public static void closeApp(UiDevice mDevice, String appName)
+  public static void closeApp(UiDevice mDevice, String appName, String pkgName, int method)
       throws RemoteException, IOException {
-    mDevice.pressRecentApps();
-    mDevice.wait(Until.findObject(By.text(appName)), OBJ_WAIT_TIMEOUT).swipe(Direction.RIGHT, 1.0f);
-    //mDevice.executeShellCommand("am force-stop " + TABLES_PKG_NAME);
+    if (method == 1) {
+      mDevice.pressRecentApps();
+      //swipe to kill app
+      mDevice.wait(Until.findObject(By.text(appName)), OBJ_WAIT_TIMEOUT)
+          .swipe(Direction.RIGHT, 1.0f);
+      mDevice.pressHome();
+    } else {
+      mDevice.executeShellCommand("am force-stop " + pkgName);
+    }
   }
 
   public static String getString(int id) {

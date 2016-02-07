@@ -42,7 +42,7 @@ import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class crashTables {
+public class CrashTables {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
 
@@ -165,5 +165,16 @@ public class crashTables {
     onData(anything()).atPosition(0).perform(click());
 
     //CRASH
+  }
+
+  @Test
+  public void experiment() throws IOException, RemoteException {
+    while (true) {
+      UAUtils.startApp(mDevice, "org.opendatakit.scan");
+
+      mDevice.wait(Until.findObject(By.desc("ODKScan title")), 50000);
+
+      UAUtils.closeApp(mDevice, "ODK Scan", "org.opendatakit.scan", 2);
+    }
   }
 }
