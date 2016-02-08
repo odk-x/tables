@@ -270,6 +270,8 @@ public class CrashTables {
   /**
    * This bug is caused by attempting to modify an unmodifiableList
    * so this bug doesn't happen in table color rule and column color rule
+   *
+   * Deleting one rule or adding a rule triggers the same bug.
    */
   @Test
   public void crashBy_resetStatusColColorRule() {
