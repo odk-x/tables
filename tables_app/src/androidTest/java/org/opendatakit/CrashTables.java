@@ -262,7 +262,7 @@ public class CrashTables {
 
     //take advantage of Espresso's wait for idle feature
     //the actual Espresso call doesn't matter
-    onView(withText("dummy"));
+    onView(withText("dummy")).check(doesNotExist());
 
     //CRASH
   }
