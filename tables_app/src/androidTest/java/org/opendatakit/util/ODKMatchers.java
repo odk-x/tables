@@ -7,7 +7,6 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.opendatakit.tables.utils.TableNameStruct;
-import org.opendatakit.tables.views.TabularView;
 
 public class ODKMatchers {
   public static Matcher<View> withSize(final int size) {
@@ -27,22 +26,6 @@ public class ODKMatchers {
       }
     };
   }
-
-//  public static Matcher<View> withCell(final int value) {
-//    return new BoundedMatcher<View, TabularView>(TabularView.class) {
-//
-//      @Override
-//      public void describeTo(Description description) {
-//
-//      }
-//
-//      @Override
-//      protected boolean matchesSafely(TabularView item) {
-//        item.getTableHeight()
-//        return false;
-//      }
-//    };
-//  }
 
   public static Matcher<TableNameStruct> withTable(final String tableId, final String displayName) {
     return new TypeSafeMatcher<TableNameStruct>() {
