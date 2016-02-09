@@ -45,8 +45,8 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
   }
 
   @Override
-  public void onStart() {
-    super.onStart();
+  public void onResume() {
+    super.onResume();
     Tables.getInstance().possiblyFireDatabaseCallback(getActivity(), this);
   }
 

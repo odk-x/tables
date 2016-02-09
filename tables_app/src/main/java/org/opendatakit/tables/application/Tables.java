@@ -57,7 +57,7 @@ public class Tables extends CommonApplication {
 
   @Override
   public int getWebKitResourceId() {
-    return -1;
+    return -1; // R.id.webkit;
   }
 
   public String getVersionedAppName() {

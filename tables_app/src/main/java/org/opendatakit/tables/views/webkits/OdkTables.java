@@ -25,6 +25,7 @@ import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.MainActivity;
@@ -36,16 +37,18 @@ import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class OdkTables {
 
   private static final String TAG = OdkTables.class.getSimpleName();
 
+  private WeakReference<ODKWebView> mWebView;
   protected AbsBaseActivity mActivity;
   protected String mDefaultTableId;
   protected Map<String, OrderedColumns> mCachedOrderedDefns = new HashMap<String, OrderedColumns>();
-  protected List<String> mTableIds;
+  private List<String> mTableIds = null;
 
   public OdkTablesIf getJavascriptInterfaceWithWeakReference() {
     return new OdkTablesIf(this);
@@ -60,24 +63,30 @@ public class OdkTables {
    *          the activity that will be holding the view
    * @throws RemoteException 
    */
-  public OdkTables(AbsBaseActivity activity, String defaultTableId,
-      OrderedColumns defaultColumnDefinitions) throws RemoteException {
+  public OdkTables(AbsBaseActivity activity, ODKWebView webView, String defaultTableId) {
     this.mActivity = activity;
+    this.mWebView = new WeakReference<ODKWebView>(webView);
     this.mDefaultTableId = defaultTableId;
-    if (defaultTableId != null) {
-      this.mCachedOrderedDefns.put(defaultTableId, defaultColumnDefinitions);
-    }
+  }
 
-    String appName = mActivity.getAppName();
-    OdkDbHandle db = null;
-    try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      this.mTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
-    } finally {
-      if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
+  public boolean isInactive() {
+    return (mWebView.get() == null) || mWebView.get().isInactive();
+  }
+
+  private List<String> getTableIds() throws RemoteException {
+    if ( mTableIds == null ) {
+      String appName = mActivity.getAppName();
+      OdkDbHandle db = null;
+      try {
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        mTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
+      } finally {
+        if (db != null) {
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
+        }
       }
     }
+    return mTableIds;
   }
 
   /**
@@ -287,8 +296,8 @@ public class OdkTables {
   /**
    * @see {@link OdkTablesIf#getAllTableIds()}
    */
-  public String getAllTableIds() {
-    JSONArray result = new JSONArray(mTableIds);
+  public String getAllTableIds() throws RemoteException {
+    JSONArray result = new JSONArray(getTableIds());
     return result.toString();
   }
 
@@ -312,7 +321,7 @@ public class OdkTables {
   public String getColumnDisplayName(String tableId, String elementPath) throws RemoteException {
     String appName = mActivity.getAppName();
     String elementKey = this.getElementKey(tableId, elementPath);
-    if (!mTableIds.contains(tableId)) {
+    if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return null;
@@ -412,7 +421,7 @@ public class OdkTables {
       String jsonMap) throws RemoteException {
     String appName = mActivity.getAppName();
     // does this "to receive add" call make sense with survey? unclear.
-    if (!mTableIds.contains(tableId)) {
+    if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
@@ -462,7 +471,7 @@ public class OdkTables {
   public boolean helperAddRowWithCollect(String tableId, String formId, String formVersion,
       String formRootElement, String jsonMap) throws RemoteException {
     String appName = mActivity.getAppName();
-    if (!mTableIds.contains(tableId)) {
+    if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
@@ -552,7 +561,7 @@ public class OdkTables {
   public boolean helperEditRowWithSurvey(String tableId, String rowId, String formId,
       String screenPath) throws RemoteException {
     String appName = mActivity.getAppName();
-    if (!mTableIds.contains(tableId)) {
+    if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;
@@ -587,7 +596,7 @@ public class OdkTables {
   public boolean helperEditRowWithCollect(String tableId, String rowId, String formId,
       String formVersion, String formRootElement) throws RemoteException {
     String appName = mActivity.getAppName();
-    if (!mTableIds.contains(tableId)) {
+    if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
           "table [" + tableId + "] could not be found. " + "returning.");
       return false;

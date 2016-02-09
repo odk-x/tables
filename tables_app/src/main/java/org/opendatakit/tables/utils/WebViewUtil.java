@@ -35,6 +35,7 @@ import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
@@ -232,68 +233,6 @@ public class WebViewUtil {
       }
     }
     return result;
-  }
-
-  /**
-   * Get a {@link WebView} that is ready to be used for ODK settings. This
-   * includes, e.g., having attached a logger and enabling javascript.
-   * 
-   * @return
-   */
-  @SuppressLint({ "NewApi", "SetJavaScriptEnabled" })
-  public static WebView getODKCompliantWebView(AbsBaseActivity context, WebView webView) {
-    final String appName = context.getAppName();
-    final String webViewTag = "ODKCompliantWebView";
-    if (Build.VERSION.SDK_INT >= 19) {
-      WebView.setWebContentsDebuggingEnabled(true);
-    }
-    webView.getSettings().setJavaScriptEnabled(true);
-    webView.setWebViewClient(new WebViewClient() {
-
-      @Override
-      public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-        super.onReceivedError(view, errorCode, description, failingUrl);
-        WebLogger.getLogger(appName).e(
-            webViewTag,
-            "[onReceivedError] errorCode: " + errorCode + "; description: " + description
-                + "; failingUrl: " + failingUrl);
-      }
-    });
-    webView.setWebChromeClient(new WebChromeClient() {
-
-      @Override
-      public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-        WebLogger.getLogger(appName).i(
-            webViewTag,
-            "[onConsoleMessage] level: " + consoleMessage.messageLevel().name()
-                + consoleMessage.message());
-        return super.onConsoleMessage(consoleMessage);
-      }
-
-    });
-    return webView;
-  }
-
-  /**
-   * Display the file in the WebView.
-   * 
-   * @param context
-   * @param appName
-   * @param webView
-   *          the WebView in which the file should be displayed
-   * @param fileName
-   *          the relativePath to the file. If null, a no file specified message
-   *          is displayed.
-   */
-  public static void displayFileInWebView(Context context, String appName, WebView webView,
-      String fileName) {
-    if (fileName != null) {
-      String webUrl = UrlUtils.getAsWebViewUri(context, appName, fileName);
-      webView.loadUrl(webUrl);
-    } else {
-      // load the no file found html.
-      webView.loadData(Constants.HTML.NO_FILE_NAME, Constants.MimeTypes.TEXT_HTML, null);
-    }
   }
 
   /**

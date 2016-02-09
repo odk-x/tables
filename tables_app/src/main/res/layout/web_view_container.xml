@@ -3,14 +3,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
-    
-	<android.webkit.WebView
-		android:id="@+id/webkit"
-		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-		android:visibility="gone"
-	/>
-	
+
+	<org.opendatakit.tables.views.webkits.OdkTablesWebView
+			android:id="@+id/webkit"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:background="@android:color/black"
+			android:visibility="gone" />
+
 	<!-- empty view -->
 	<TextView
 		android:id="@android:id/empty"
