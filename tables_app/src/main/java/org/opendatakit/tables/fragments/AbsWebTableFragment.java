@@ -87,6 +87,9 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
 
   @Override
   public void databaseUnavailable() {
-    setWebKitVisibility();
+    if ( getView() != null ) {
+      setWebKitVisibility();
+      getWebKit().setForceLoadDuringReload();
+    }
   }
 }
