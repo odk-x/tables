@@ -89,6 +89,9 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
 
   @Override
   public void databaseUnavailable() {
-    setWebKitVisibility();
+    if ( getView() != null ) {
+      setWebKitVisibility();
+      getWebKit().setForceLoadDuringReload();
+    }
   }
 }
