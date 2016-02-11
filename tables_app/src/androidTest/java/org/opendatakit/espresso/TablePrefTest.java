@@ -16,6 +16,7 @@ import org.junit.runner.RunWith;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
 
@@ -54,10 +55,8 @@ public class TablePrefTest {
 
   @Before
   public void setup() {
-    assertThat("Initialization unsuccessful.", initSuccess, is(true));
-
-    intending(not(isInternal()))
-        .respondWith(new Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null));
+    UAUtils.assertInitSucess(initSuccess);
+    EspressoUtils.cancelInternalIntents();
 
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
   }

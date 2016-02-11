@@ -11,7 +11,7 @@ public class TestConstants {
   //UI Automator Timeouts
   public static final int APP_START_TIMEOUT = 10000;
   public static final int APP_INIT_TIMEOUT = 10000;
-  public static final int OBJ_WAIT_TIMEOUT = 1000;
+  public static final int OBJ_WAIT_TIMEOUT = 3000;
 
   //Table names and related
   public static final String T_HOUSE_DISPLAY_NAME = "Tea houses";

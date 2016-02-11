@@ -83,7 +83,7 @@ public class CrashTables {
 
   @Before
   public void setup() {
-    assertThat("Initialization unsuccessful.", initSuccess, is(true));
+    UAUtils.assertInitSucess(initSuccess);
   }
 
   @Test
@@ -104,6 +104,9 @@ public class CrashTables {
     //CRASH
   }
 
+  /**
+   * This bug is fixed!
+   */
   @Test
   public void crashBy_SIGSEGV() {
     //Open "Hope"
@@ -112,7 +115,8 @@ public class CrashTables {
         .perform(webClick());
 
     while (true) {
-      UiObject2 surveyIcon = mDevice.findObject(By.res(TABLES_PKG_NAME, "menu_edit_row"));
+      UiObject2 surveyIcon = mDevice.wait(
+          Until.findObject(By.res(TABLES_PKG_NAME, "menu_edit_row")), OBJ_WAIT_TIMEOUT);
 
       if (surveyIcon == null) {
         //Click "Follow up..."

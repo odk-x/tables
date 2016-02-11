@@ -1,5 +1,7 @@
 package org.opendatakit.util;
 
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.support.annotation.Nullable;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.model.Atom;
@@ -13,8 +15,11 @@ import android.util.Log;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static android.support.test.espresso.intent.Intents.intending;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.isInternal;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.findElement;
+import static org.hamcrest.Matchers.not;
 
 public class EspressoUtils {
   /**
@@ -60,5 +65,10 @@ public class EspressoUtils {
     }
 
     return wInteraction;
+  }
+
+  public static void cancelInternalIntents() {
+    intending(not(isInternal()))
+        .respondWith(new Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null));
   }
 }

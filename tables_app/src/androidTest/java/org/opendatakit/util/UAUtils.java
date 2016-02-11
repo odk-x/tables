@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.uiautomator.*;
 import org.opendatakit.tables.R;
 
@@ -107,6 +108,10 @@ public class UAUtils {
    */
   public static boolean longPress(UiDevice mDevice, int x, int y) {
     return mDevice.swipe(x, y, x, y, 400);
+  }
+
+  public static void assertInitSucess(boolean initStatus) {
+    ViewMatchers.assertThat("Initialization unsuccessful.", initStatus, is(true));
   }
 
   /**
