@@ -1,7 +1,5 @@
 package org.opendatakit.espresso;
 
-import android.app.Activity;
-import android.app.Instrumentation;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.intent.Intents;
@@ -25,7 +23,6 @@ import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.intended;
-import static android.support.test.espresso.intent.Intents.intending;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
@@ -56,7 +53,7 @@ public class TablePrefTest {
   @Before
   public void setup() {
     UAUtils.assertInitSucess(initSuccess);
-    EspressoUtils.cancelInternalIntents();
+    EspressoUtils.cancelExternalIntents();
 
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
   }

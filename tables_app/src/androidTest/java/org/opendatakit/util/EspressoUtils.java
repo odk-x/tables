@@ -67,7 +67,7 @@ public class EspressoUtils {
     return wInteraction;
   }
 
-  public static void cancelInternalIntents() {
+  public static void cancelExternalIntents() {
     intending(not(isInternal()))
         .respondWith(new Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null));
   }
