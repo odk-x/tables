@@ -2,9 +2,6 @@ package org.opendatakit;
 
 import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.Espresso;
-import android.support.test.espresso.core.deps.guava.primitives.Booleans;
-import android.support.test.espresso.core.deps.guava.util.concurrent.ThreadFactoryBuilder;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -27,8 +24,6 @@ import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.Espresso.onView;
@@ -97,7 +92,7 @@ public class CrashTables {
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
     //Open "Tea houses"
-    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID, T_HOUSE_DISPLAY_NAME)).perform(click());
+    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID)).perform(click());
 
     //go to default view type pref
     onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
@@ -154,7 +149,7 @@ public class CrashTables {
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
     //Open "Tea houses"
-    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID, T_HOUSE_DISPLAY_NAME)).perform(click());
+    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID)).perform(click());
 
     //Open pref
     onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
@@ -176,7 +171,7 @@ public class CrashTables {
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
     //Open "Tea houses"
-    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID, T_HOUSE_DISPLAY_NAME)).perform(click());
+    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID)).perform(click());
 
     //Open "Edit status column color rules"
     onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
@@ -198,7 +193,7 @@ public class CrashTables {
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
     //Open "Tea houses"
-    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID, T_HOUSE_E_DISPLAY_NAME)).perform(click());
+    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
 
     //Open Spreadsheet view
     onView(withId(R.id.top_level_table_menu_select_view)).perform(click());
@@ -242,7 +237,7 @@ public class CrashTables {
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
     //Open "Tea houses"
-    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID, T_HOUSE_DISPLAY_NAME)).perform(click());
+    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID)).perform(click());
 
     //go to choose List View File
     onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
@@ -279,7 +274,7 @@ public class CrashTables {
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
     //Open "Tea houses"
-    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID, T_HOUSE_DISPLAY_NAME)).perform(click());
+    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID)).perform(click());
 
     //Open "Edit status column color rules"
     onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());

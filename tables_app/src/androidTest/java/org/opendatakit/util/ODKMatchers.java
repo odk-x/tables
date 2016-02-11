@@ -27,7 +27,7 @@ public class ODKMatchers {
     };
   }
 
-  public static Matcher<TableNameStruct> withTable(final String tableId, final String displayName) {
+  public static Matcher<TableNameStruct> withTable(final String tableId) {
     return new TypeSafeMatcher<TableNameStruct>() {
       private TableNameStruct tableName;
 
@@ -35,17 +35,13 @@ public class ODKMatchers {
       protected boolean matchesSafely(TableNameStruct item) {
         this.tableName = item;
 
-        return item.getTableId().equals(tableId)
-            && item.getLocalizedDisplayName().equals(displayName);
+        return item.getTableId().equals(tableId);
       }
 
       @Override
       public void describeTo(Description description) {
         description.appendText("Table Id should be: " + tableName.getTableId());
         description.appendText("; Got: " + tableId);
-        description.appendText("; Localized display name should be: "
-            + tableName.getLocalizedDisplayName());
-        description.appendText("; Got: " + displayName);
       }
     };
   }
