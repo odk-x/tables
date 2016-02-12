@@ -57,13 +57,16 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
       // Run through the Tables app an infinite number of times to get a
       // crash
       int numOfTimesToRun = 1;
+      int numOfMsToSleep = 0;
       for (int i = 0; i < numOfTimesToRun; i ++)
       {
          boolean found = false;
          Atom<ElementReference> elementFound =  findElement(Locator.ID, "launch-button");
          while (!found) {
+
             found = true;
             try {
+               Thread.sleep(numOfMsToSleep);
                onWebView()
                    // Find the input element by ID
                    .withElement(findElement(Locator.ID, "launch-button"))
@@ -80,6 +83,7 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
          while (!found) {
             found = true;
             try {
+               Thread.sleep(numOfMsToSleep);
                // Find View Tea Houses button
                onWebView().withElement(findElement(Locator.ID, "view-houses"))
                    // Click the button
@@ -96,6 +100,7 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
          while (!found) {
             found = true;
             try {
+               Thread.sleep(numOfMsToSleep);
                onWebView().withElement(findElement(Locator.ID, "72c8186a-8141-4b06-a764-a9029c021b20"))
                    // Simulate a click via javascript
                    .perform(webClick());
@@ -111,6 +116,7 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
          while (!found) {
             found = true;
             try {
+               Thread.sleep(numOfMsToSleep);
                // Find the response element by ID
                onWebView().withElement(findElement(Locator.ID, "FIELD_16"))
                    // Could also be id FIELD_16
@@ -128,6 +134,9 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
          Espresso.pressBack();
          Espresso.pressBack();
          Espresso.pressBack();
+
+         i++;
+         System.out.println("ITERS: Number of iterations = " + i);
       }
 
    }
