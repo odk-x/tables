@@ -15,15 +15,13 @@
  */
 package org.opendatakit.tables.activities;
 
+import android.os.Bundle;
+import android.os.RemoteException;
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.tables.utils.Constants;
-
-import android.os.Bundle;
-import android.os.RemoteException;
 
 /**
  * This class is the base for any Activity that will display information about
@@ -32,10 +30,10 @@ import android.os.RemoteException;
  * @author sudar.sam@gmail.com
  *
  */
-public abstract class AbsTableActivity extends AbsBaseActivity {
+public abstract class AbsTableWebActivity extends AbsBaseWebActivity {
   
   private static final String TAG = 
-      AbsTableActivity.class.getSimpleName();
+      AbsTableWebActivity.class.getSimpleName();
   
   private String mTableId;
   private OrderedColumns mColumnDefinitions;

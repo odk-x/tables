@@ -217,18 +217,14 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
   }
 
   @Override
-  public void onPostResume() {
-    super.onPostResume();
-    Tables.getInstance().establishDatabaseConnectionListener(this);
-  }
-
-  @Override
   public void databaseAvailable() {
+    super.databaseAvailable();
     this.mImportButton.setEnabled(Tables.getInstance().getDatabase() != null);
   }
 
   @Override
   public void databaseUnavailable() {
+    super.databaseUnavailable();
     this.mImportButton.setEnabled(Tables.getInstance().getDatabase() != null);
   }
 

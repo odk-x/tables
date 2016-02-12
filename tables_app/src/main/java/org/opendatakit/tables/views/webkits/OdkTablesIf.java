@@ -39,6 +39,10 @@ public class OdkTablesIf {
     weakControl = new WeakReference<OdkTables>(odkTables);
   }
 
+  public boolean isInactive() {
+    return (weakControl.get() == null) || weakControl.get().isInactive();
+  }
+
   /**
    * Open the table with the given id.
    *
@@ -55,6 +59,7 @@ public class OdkTablesIf {
    */
   @android.webkit.JavascriptInterface
   public boolean openTable(String tableId, String whereClause, String[] selectionArgs) {
+    if (isInactive()) return false;
     // TODO: convert to element keys
     return weakControl.get().helperOpenTable(tableId, whereClause, selectionArgs, null, null, null,
         null);
@@ -81,6 +86,7 @@ public class OdkTablesIf {
   @android.webkit.JavascriptInterface
   public boolean openTableToListView(String tableId, String whereClause, String[] selectionArgs,
       String relativePath) {
+    if (isInactive()) return false;
     return weakControl.get().helperOpenTableWithFile(tableId, relativePath, whereClause,
         selectionArgs, null, null, null, null);
   }
@@ -105,6 +111,7 @@ public class OdkTablesIf {
   @android.webkit.JavascriptInterface
   public boolean openTableToMapView(String tableId, String whereClause, String[] selectionArgs,
       String relativePath) {
+    if (isInactive()) return false;
     return weakControl.get().helperOpenTableToMapView(tableId, relativePath, whereClause,
         selectionArgs, null, null, null, null);
   }
@@ -127,18 +134,9 @@ public class OdkTablesIf {
   @android.webkit.JavascriptInterface
   public boolean openTableToSpreadsheetView(String tableId, String whereClause,
       String[] selectionArgs) {
+    if (isInactive()) return false;
     return weakControl.get().helperOpenTableToSpreadsheetView(tableId, whereClause, selectionArgs,
         null, null, null, null);
-  }
-
-  /**
-   * Get the table ids of all the tables in the database.
-   * 
-   * @return a stringified json array of the table ids
-   */
-  @android.webkit.JavascriptInterface
-  public String getAllTableIds() {
-    return weakControl.get().getAllTableIds();
   }
 
   /**
@@ -152,6 +150,7 @@ public class OdkTablesIf {
    */
   @android.webkit.JavascriptInterface
   public boolean launchHTML(String relativePath) {
+    if (isInactive()) return false;
     return weakControl.get().launchHTML(relativePath);
   }
 
@@ -173,6 +172,7 @@ public class OdkTablesIf {
    */
   @android.webkit.JavascriptInterface
   public boolean openDetailView(String tableId, String rowId, String relativePath) {
+    if (isInactive()) return false;
     return weakControl.get().openDetailViewWithFile(tableId, rowId, relativePath);
   }
 
@@ -188,6 +188,7 @@ public class OdkTablesIf {
    */
   @android.webkit.JavascriptInterface
   public boolean addRowWithCollectDefault(String tableId) {
+    if (isInactive()) return false;
     return this.addRowWithCollect(tableId, null, null, null, null);
   }
 
@@ -205,16 +206,15 @@ public class OdkTablesIf {
    * @param formVersion
    * @param formRootElement
    * @param jsonMap
-   *          a JSON map of element key to value, as retrieved by
-   *          {@link #getElementKey(String, String)}. The map can then be
-   *          converted to a String using JSON.stringify() and passed to this
-   *          method. A null value will not prepopulate any values.
+   *          a stringify'd JSON map of element key to value.
+   *          A null value will not prepopulate any values.
    * @return true if the activity was launched, false if something went wrong
    * @deprecated
    */
   @android.webkit.JavascriptInterface
   public boolean addRowWithCollect(String tableId, String formId, String formVersion,
       String formRootElement, String jsonMap) {
+    if (isInactive()) return false;
     try {
       return weakControl.get().helperAddRowWithCollect(tableId, formId, formVersion, formRootElement,
           jsonMap);
@@ -239,6 +239,7 @@ public class OdkTablesIf {
    */
   @android.webkit.JavascriptInterface
   public boolean editRowWithCollectDefault(String tableId, String rowId) {
+    if (isInactive()) return false;
     return this.editRowWithCollect(tableId, rowId, null, null, null);
   }
 
@@ -259,6 +260,7 @@ public class OdkTablesIf {
   @android.webkit.JavascriptInterface
   public boolean editRowWithCollect(String tableId, String rowId, String formId,
       String formVersion, String formRootElement) {
+    if (isInactive()) return false;
     try {
       return weakControl.get().helperEditRowWithCollect(tableId, rowId, formId, formVersion,
           formRootElement);
@@ -282,6 +284,7 @@ public class OdkTablesIf {
    */
   @android.webkit.JavascriptInterface
   public boolean editRowWithSurveyDefault(String tableId, String rowId) {
+    if (isInactive()) return false;
     return editRowWithSurvey(tableId, rowId, null, null);
   }
 
@@ -298,6 +301,7 @@ public class OdkTablesIf {
    */
   @android.webkit.JavascriptInterface
   public boolean editRowWithSurvey(String tableId, String rowId, String formId, String screenPath) {
+    if (isInactive()) return false;
     try {
       return weakControl.get().helperEditRowWithSurvey(tableId, rowId, formId, screenPath);
     } catch (RemoteException e) {
@@ -320,6 +324,7 @@ public class OdkTablesIf {
    */
   @android.webkit.JavascriptInterface
   public boolean addRowWithSurveyDefault(String tableId) {
+    if (isInactive()) return false;
     return this.addRowWithSurvey(tableId, null, null, null);
   }
 
@@ -333,12 +338,13 @@ public class OdkTablesIf {
    *          if null, the default form will be used
    * @param screenPath
    * @param jsonMap
-   *          a stringified json object matching element key to the value to
-   *          prepopulate in the new row
+   *          a stringify'd json map of elementKey -to- value pairs used to initialize
+   *          those elementKey values in the new row (or their session variable values).
    * @return true if the activity was launched, false if something went wrong
    */
   @android.webkit.JavascriptInterface
   public boolean addRowWithSurvey(String tableId, String formId, String screenPath, String jsonMap) {
+    if (isInactive()) return false;
     try {
       return weakControl.get().helperAddRowWithSurvey(tableId, formId, screenPath, jsonMap);
     } catch (RemoteException e) {
@@ -347,62 +353,6 @@ public class OdkTablesIf {
       WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
       Toast.makeText(weakControl.get().mActivity, R.string.error_accessing_database, Toast.LENGTH_LONG).show();
       return false;
-    }
-  }
-
-  /**
-   * Return the element key for the column with the given element path.
-   * 
-   * @param tableId
-   * @param elementPath
-   * @return the element key for the column, or null if a table cannot be found
-   *         with the existing tableId.
-   */
-  @android.webkit.JavascriptInterface
-  public String getElementKey(String tableId, String elementPath) {
-    return weakControl.get().getElementKey(tableId, elementPath);
-  }
-
-  /**
-   * Get the display name for the given column.
-   * 
-   * @param tableId
-   * @param elementPath
-   * @return the display name for the given column
-   */
-  @android.webkit.JavascriptInterface
-  public String getColumnDisplayName(String tableId, String elementPath) {
-    try {
-      return weakControl.get().getColumnDisplayName(tableId, elementPath);
-    } catch (RemoteException e) {
-      String appName = weakControl.get().retrieveAppName();
-      WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
-      Toast.makeText(weakControl.get().mActivity, R.string.error_accessing_database, Toast.LENGTH_LONG).show();
-      return elementPath;
-    }
-  }
-
-  /**
-   * Retrieve the display name for the given table.
-   * <p>
-   * If the display name has been localized, it returns the json representation
-   * of the display name.
-   * 
-   * @param tableId
-   * @return the display name for the table, in stringified json form if the
-   *         name has been internationalized
-   */
-  @android.webkit.JavascriptInterface
-  public String getTableDisplayName(String tableId) {
-    try {
-      return weakControl.get().getTableDisplayName(tableId);
-    } catch (RemoteException e) {
-      String appName = weakControl.get().retrieveAppName();
-      WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
-      Toast.makeText(weakControl.get().mActivity, R.string.error_accessing_database, Toast.LENGTH_LONG).show();
-      return tableId;
     }
   }
 }

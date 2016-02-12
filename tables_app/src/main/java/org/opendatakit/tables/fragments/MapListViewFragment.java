@@ -19,7 +19,7 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 
 import android.os.Bundle;
-import android.webkit.WebView;
+import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
  * The list view that is displayed in a map.
@@ -43,25 +43,20 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   protected int mSelectedItemIndex;
   protected static final int INVALID_INDEX = -1;
 
-  int retrieveSelectedItemIndexFromBundle(Bundle bundle) {
-    if (bundle != null && bundle.containsKey(INTENT_KEY_SELECTED_INDEX)) {
-      return bundle.getInt(INTENT_KEY_SELECTED_INDEX);
-    } else {
-      return INVALID_INDEX;
-    }
-  }
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     // AppName may not be available...
-    this.mSelectedItemIndex = this.retrieveSelectedItemIndexFromBundle(savedInstanceState);
+    if ( savedInstanceState != null ) {
+      this.mSelectedItemIndex = savedInstanceState.containsKey(INTENT_KEY_SELECTED_INDEX) ?
+          savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX) : -1;
+    }
   }
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    outState.putInt(INTENT_KEY_SELECTED_INDEX, this.mSelectedItemIndex);
+    outState.putInt(INTENT_KEY_SELECTED_INDEX, mSelectedItemIndex);
   }
 
   /**
@@ -69,13 +64,10 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
    */
   void resetView() {
     WebLogger.getLogger(getAppName()).d(TAG, "[resetView]");
-    if (this.getFileName() == null) {
-      // don't need to do anything, as the view won't be getting updated.
-      return;
-    }
-    WebView currentView = (WebView) this.getView().findViewById(R.id.webkit);
+
+    OdkTablesWebView currentView = (OdkTablesWebView) this.getView().findViewById(R.id.webkit);
     // Just reload the page.
-    currentView.reload();
+    currentView.reloadPage();
   }
 
   /**

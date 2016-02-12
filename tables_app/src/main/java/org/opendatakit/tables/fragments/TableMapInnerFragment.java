@@ -176,58 +176,21 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onActivityCreated]");
-  }
-
-  @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
     AbsBaseActivity activity = (AbsBaseActivity) getActivity();
     WebLogger.getLogger(activity.getAppName()).d(TAG, "[onViewCreated]");
     clearAndInitializeMap();
-    if ( !Tables.getInstance().isMocked() ) {
-      if (savedInstanceState != null) {
-        savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
-        getMap().moveCamera(
-            CameraUpdateFactory.newLatLngZoom(
-                new LatLng(savedInstanceState.getDouble(SAVE_TARGET_LAT), savedInstanceState
-                    .getDouble(SAVE_TARGET_LONG)), savedInstanceState.getFloat(SAVE_ZOOM)));
-      }
-      getMap().setMyLocationEnabled(true);
-      getMap().setOnMapLongClickListener(getOnMapLongClickListener());
-      getMap().setOnMapClickListener(getOnMapClickListener());
+    if (savedInstanceState != null) {
+      savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
+      getMap().moveCamera(
+          CameraUpdateFactory.newLatLngZoom(
+              new LatLng(savedInstanceState.getDouble(SAVE_TARGET_LAT), savedInstanceState
+                  .getDouble(SAVE_TARGET_LONG)), savedInstanceState.getFloat(SAVE_ZOOM)));
     }
-  }
-
-  @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    AbsBaseActivity aactivity = (AbsBaseActivity) activity;
-    WebLogger.getLogger(aactivity.getAppName()).d(TAG, "[onAttach]");
-  }
-
-  @Override
-  public void onDetach() {
-    super.onDetach();
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onDetach]");
-  }
-
-  @Override
-  public void onStart() {
-    super.onStart();
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onStart]");
-  }
-
-  @Override
-  public void onStop() {
-    super.onStop();
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onStop]");
+    getMap().setMyLocationEnabled(true);
+    getMap().setOnMapLongClickListener(getOnMapLongClickListener());
+    getMap().setOnMapClickListener(getOnMapClickListener());
   }
 
   /** Re-initializes the map, including the markers. 
@@ -257,25 +220,6 @@ public class TableMapInnerFragment extends MapFragment {
     mMarkerIds.clear();
     mVisibleMarkers.clear();
     mCurrentMarker = null;
-  }
-
-  @Override
-  public void onPause() {
-    super.onPause();
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onPause]");
-  }
-
-  @Override
-  public void onResume() {
-    super.onResume();
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onResume]");
-  }
-
-  @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    return super.onCreateView(inflater, container, savedInstanceState);
   }
 
   /**
@@ -331,17 +275,6 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   /**
-   * Get the {@link UserTable} that this view is displaying.
-   * 
-   * @return
-   */
-  UserTable retrieveUserTable() {
-    TableDisplayActivity activity = (TableDisplayActivity) this.getActivity();
-    UserTable result = activity.getUserTable();
-    return result;
-  }
-
-  /**
    * Sets the location markers based off of the columns set in the table
    * properties.
    */
@@ -366,53 +299,54 @@ public class TableMapInnerFragment extends MapFragment {
       return;
     }
 
-    UserTable table = this.retrieveUserTable();
+    UserTable table = activity.getUserTable();
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    // Try to find the map columns in the store.
-    ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
-    ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
 
-    // Find the locations from entries in the table.
-    LatLng firstLocation = null;
+    if ( table != null && orderedDefns != null ) {
+      // Try to find the map columns in the store.
+      ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
+      ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
 
-    // Go through each row and create a marker at the specified location.
-    for (int i = 0; i < table.getNumberOfRows(); i++) {
-      Row row = table.getRowAtIndex(i);
-      String latitudeString = row.getRawDataOrMetadataByElementKey(latitudeColumn.getElementKey());
-      String longitudeString = row
-          .getRawDataOrMetadataByElementKey(longitudeColumn.getElementKey());
-      if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
-          || longitudeString.length() == 0) {
-        continue;
-      }
+      // Find the locations from entries in the table.
+      LatLng firstLocation = null;
 
-      // Create a LatLng from the latitude and longitude strings.
-      LatLng location = parseLocationFromString(latitudeColumn, latitudeString, longitudeColumn,
-          longitudeString);
-      if (location == null) {
-        continue;
-      }
-      if (firstLocation == null) {
-        firstLocation = location;
-      }
+      // Go through each row and create a marker at the specified location.
+      for (int i = 0; i < table.getNumberOfRows(); i++) {
+        Row row = table.getRowAtIndex(i);
+        String latitudeString = row.getRawDataOrMetadataByElementKey(latitudeColumn.getElementKey());
+        String longitudeString = row.getRawDataOrMetadataByElementKey(longitudeColumn.getElementKey());
+        if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
+            || longitudeString.length() == 0) {
+          continue;
+        }
 
-      if ( !isMocked ) {
-        Marker marker = getMap().addMarker(
-            new MarkerOptions().position(location).draggable(false)
-                .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
-        mMarkerIds.put(marker, i);
-        if (mCurrentIndex == i) {
-          WebLogger.getLogger(activity.getAppName()).d(TAG, "[setMarkers] selecting marker: " + i);
-          selectMarker(marker);
+        // Create a LatLng from the latitude and longitude strings.
+        LatLng location = parseLocationFromString(latitudeColumn, latitudeString, longitudeColumn,
+            longitudeString);
+        if (location == null) {
+          continue;
+        }
+        if (firstLocation == null) {
+          firstLocation = location;
+        }
+
+        if (!isMocked) {
+          Marker marker = getMap().addMarker(new MarkerOptions().position(location).draggable(false)
+              .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
+          mMarkerIds.put(marker, i);
+          if (mCurrentIndex == i) {
+            WebLogger.getLogger(activity.getAppName()).d(TAG, "[setMarkers] selecting marker: " + i);
+            selectMarker(marker);
+          }
         }
       }
-    }
 
-    if (firstLocation != null) {
-      if ( !isMocked ) {
-        getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
-        getMap().setOnMarkerClickListener(getOnMarkerClickListener());
+      if (firstLocation != null) {
+        if (!isMocked) {
+          getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
+          getMap().setOnMarkerClickListener(getOnMarkerClickListener());
+        }
       }
     }
   }
@@ -429,9 +363,9 @@ public class TableMapInnerFragment extends MapFragment {
   private float getHueForRow(int index) {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
-    UserTable table = this.retrieveUserTable();
+    UserTable table = activity.getUserTable();
     // Create a guide depending on the color group.
-    if (mColorGroup != null) {
+    if (table != null && mColorGroup != null) {
       ColorGuide guide = mColorGroup.getColorGuide(activity.getColumnDefinitions(),
           table.getRowAtIndex(index));
       // Based on if the guide matched or not, grab the hue.

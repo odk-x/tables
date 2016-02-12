@@ -24,6 +24,7 @@ import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.database.service.OdkDbHandle;
 
 import android.os.RemoteException;
+import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.application.Tables;
 
 /**
@@ -37,13 +38,43 @@ public class PossibleTableViewTypes {
   
   private boolean mSpreadsheetIsValid;
   private boolean mListIsValid;
+  private String mListFileName;
   private boolean mMapIsValid;
+  private String mMapListFileName;
+
+  private TableDisplayActivity.ViewFragmentType mDefaultViewType;
+  private String mDetailFileName;
 
   public PossibleTableViewTypes(String appName, OdkDbHandle db, String tableId, OrderedColumns orderedDefns) throws RemoteException {
-    this.mSpreadsheetIsValid = true; // always
-    this.mListIsValid = (null != TableUtil.get().getListViewFilename(Tables.getInstance(), appName, db, tableId));
-    this.mMapIsValid = (null != TableUtil.get().getMapListViewFilename(Tables.getInstance(), appName, db, tableId)) &&
-        orderedDefns.mapViewIsPossible();
+    TableViewType defaultViewType = TableUtil.get().getDefaultViewType(Tables.getInstance(),
+        appName, db, tableId);
+    if ( defaultViewType != null ) {
+      switch (defaultViewType) {
+      case SPREADSHEET:
+        mDefaultViewType = TableDisplayActivity.ViewFragmentType.SPREADSHEET;
+        break;
+      case MAP:
+        mDefaultViewType = TableDisplayActivity.ViewFragmentType.MAP;
+        break;
+      case LIST:
+        mDefaultViewType = TableDisplayActivity.ViewFragmentType.LIST;
+        break;
+      default:
+        mDefaultViewType = TableDisplayActivity.ViewFragmentType.SPREADSHEET;
+      }
+    } else {
+      mDefaultViewType = TableDisplayActivity.ViewFragmentType.SPREADSHEET;
+    }
+
+    mSpreadsheetIsValid = true; // always
+    mListFileName = TableUtil.get().getListViewFilename(Tables.getInstance(), appName, db, tableId);
+    mListIsValid = (null != mListFileName);
+    mMapListFileName = TableUtil.get().getMapListViewFilename(Tables.getInstance(), appName, db,
+        tableId);
+    mMapIsValid = (null != mMapListFileName) && orderedDefns.mapViewIsPossible();
+
+    mDetailFileName = TableUtil.get().getDetailViewFilename(Tables.getInstance(), appName, db,
+        tableId);
   }
   
   /**
@@ -65,7 +96,35 @@ public class PossibleTableViewTypes {
     }
     return result;
   }
-  
+
+  /**
+   * @return the default view type for this table
+   */
+  public TableDisplayActivity.ViewFragmentType getDefaultViewType() {
+    return mDefaultViewType;
+  }
+
+  /**
+   * @return The default list view filename
+   */
+  public String getDefaultListViewFileName() {
+    return mListFileName;
+  }
+
+  /**
+   * @return the default map list view filename
+   */
+  public String getDefaultMapListViewFileName() {
+    return mMapListFileName;
+  }
+
+  /**
+   * @return the default detail view filename
+   */
+  public String getDefaultDetailFileName() {
+    return mDetailFileName;
+  }
+
   /**
    * 
    * @return true if the table can be viewed as a spreadsheet

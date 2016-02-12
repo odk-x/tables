@@ -87,11 +87,20 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
-    
-    Tables.getInstance().establishDatabaseConnectionListener(this);
-  
   }
-  
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    ((Tables) getApplication()).establishDoNotFireDatabaseConnectionListener(this);
+  }
+
+  @Override
+  protected void onPostResume() {
+    super.onPostResume();
+    ((Tables) getApplication()).fireDatabaseConnectionListener();
+  }
+
   @Override
   public String getAppName() {
     return appName;

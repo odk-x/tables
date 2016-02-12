@@ -18,14 +18,19 @@ package org.opendatakit.tables.activities;
 import java.util.Iterator;
 import java.util.List;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.common.android.listener.DatabaseConnectionListener;
+import org.opendatakit.common.android.utilities.DependencyChecker;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
 import org.opendatakit.database.service.TableHealthStatus;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
@@ -72,6 +77,12 @@ public abstract class AbsBaseActivity extends BaseActivity {
         mConflictTables = savedInstanceState.getBundle(Constants.IntentKeys.CONFLICT_TABLES);
       }
     }
+
+    DependencyChecker dc = new DependencyChecker(this);
+    boolean dependable = dc.checkDependencies();
+    if (!dependable) { // dependencies missing
+      return;
+    }
   }
   
   
@@ -88,6 +99,18 @@ public abstract class AbsBaseActivity extends BaseActivity {
     if ( mConflictTables != null && !mConflictTables.isEmpty() ) {
       outState.putBundle(Constants.IntentKeys.CONFLICT_TABLES, mConflictTables);
     }
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    ((Tables) getApplication()).establishDoNotFireDatabaseConnectionListener(this);
+  }
+
+  @Override
+  public void onPostResume() {
+    super.onPostResume();
+    ((Tables) getApplication()).fireDatabaseConnectionListener();
   }
 
   public String getActionTableId() {
@@ -148,9 +171,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
     WebLogger.getLogger(getAppName()).i(this.getClass().getSimpleName(), "scanAllTables -- full table scan completed: " + Long.toString(elapsed) + " ms");
   }
   
-  @Override
-  protected void onPostResume() {
-    super.onPostResume();
+  protected void resolveAnyConflicts() {
     // Hijack the app here, after all screens have been resumed,
     // to ensure that all checkpoints and conflicts have been
     // resolved. If they haven't, we branch to the resolution
@@ -218,9 +239,8 @@ public abstract class AbsBaseActivity extends BaseActivity {
         }, 100);
       }
     }
-
   }
-  
+
   /**
    * Gets the app name from the Intent. If it is not present it returns a
    * default app name.
@@ -253,6 +273,37 @@ public abstract class AbsBaseActivity extends BaseActivity {
     Intent intent = new Intent();
     intent.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
     return intent;
+  }
+
+  @Override
+  public void databaseAvailable() {
+    if ( getAppName() != null ) {
+      resolveAnyConflicts();
+    }
+    FragmentManager mgr = this.getFragmentManager();
+    int idxLast = mgr.getBackStackEntryCount() - 1;
+    if (idxLast >= 0) {
+      FragmentManager.BackStackEntry entry = mgr.getBackStackEntryAt(idxLast);
+      Fragment newFragment = null;
+      newFragment = mgr.findFragmentByTag(entry.getName());
+      if ( newFragment instanceof DatabaseConnectionListener) {
+        ((DatabaseConnectionListener) newFragment).databaseAvailable();
+      }
+    }
+  }
+
+  @Override
+  public void databaseUnavailable() {
+    FragmentManager mgr = this.getFragmentManager();
+    int idxLast = mgr.getBackStackEntryCount() - 1;
+    if (idxLast >= 0) {
+      FragmentManager.BackStackEntry entry = mgr.getBackStackEntryAt(idxLast);
+      Fragment newFragment = null;
+      newFragment = mgr.findFragmentByTag(entry.getName());
+      if ( newFragment instanceof DatabaseConnectionListener ) {
+        ((DatabaseConnectionListener) newFragment).databaseUnavailable();
+      }
+    }
   }
 
 }
