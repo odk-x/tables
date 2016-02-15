@@ -1,5 +1,7 @@
 package org.opendatakit.util;
 
+import android.support.test.espresso.NoMatchingViewException;
+import android.support.test.espresso.ViewAssertion;
 import android.support.test.espresso.matcher.BoundedMatcher;
 import android.view.View;
 import android.widget.ListView;
@@ -42,6 +44,15 @@ public class ODKMatchers {
       public void describeTo(Description description) {
         description.appendText("Table Id should be: " + tableName.getTableId());
         description.appendText("; Got: " + tableId);
+      }
+    };
+  }
+
+  public static ViewAssertion dummyVA() {
+    return new ViewAssertion() {
+      @Override
+      public void check(View view, NoMatchingViewException noView) {
+        //Do nothing
       }
     };
   }

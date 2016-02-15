@@ -27,8 +27,7 @@ import java.io.File;
 
 import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.typeText;
+import static android.support.test.espresso.action.ViewActions.*;
 import static android.support.test.espresso.assertion.ViewAssertions.*;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
 import static android.support.test.espresso.matcher.RootMatchers.isPlatformPopup;
@@ -196,12 +195,8 @@ public class CrashTables {
     //Open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
-    //Open "Tea houses"
+    //Open "Tea houses editable"
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
-
-    //Open Spreadsheet view
-    onView(withId(R.id.top_level_table_menu_select_view)).perform(click());
-    onView(withText(R.string.spreadsheet)).perform(click());
 
     //Long press status column
     UAUtils.longPress(mDevice, 12, 155);
@@ -234,6 +229,8 @@ public class CrashTables {
 
   /**
    * This bug applies to "Detail View File" and "Map List View File" as well
+   *
+   * Interestingly even files within app directory is reported as outside app directory
    */
   @Test
   public void crashBy_fileOutsideAppDirectory() {
@@ -261,7 +258,7 @@ public class CrashTables {
 
     //take advantage of Espresso's wait for idle feature
     //the actual Espresso call doesn't matter
-    onView(withText("dummy")).check(doesNotExist());
+    onView(withText("dummy")).check(ODKMatchers.dummyVA());
 
     //CRASH
   }
@@ -289,5 +286,21 @@ public class CrashTables {
     onView(withId(android.R.id.button1)).perform(click());
 
     //CRASH
+  }
+
+  @Test
+  public void crashBy_spreadsheetContextMenu() {
+    //Open table manager
+    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+
+    //Open "Tea houses editable"
+    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
+
+    //Long press status column
+    UAUtils.longPress(mDevice, 20, 125);
+
+    //Click an item in the context menu
+    //Any item in the context menu triggers the bug, both main table and status table
+    onView(withText("Freeze Column")).perform(click());
   }
 }

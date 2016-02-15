@@ -107,7 +107,7 @@ public class UAUtils {
    * @return
    */
   public static boolean longPress(UiDevice mDevice, int x, int y) {
-    return mDevice.swipe(x, y, x, y, 400);
+    return mDevice.swipe(x, y, x, y, 200);
   }
 
   public static void assertInitSucess(boolean initStatus) {
