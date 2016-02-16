@@ -2,24 +2,26 @@ package org.opendatakit.util;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.support.annotation.Nullable;
+import android.preference.Preference;
+import android.support.test.espresso.DataInteraction;
+import android.support.test.espresso.NoMatchingViewException;
+import android.support.test.espresso.ViewAssertion;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
-import android.support.test.espresso.web.model.Atom;
-import android.support.test.espresso.web.model.ElementReference;
-import android.support.test.espresso.web.model.Evaluation;
 import android.support.test.espresso.web.sugar.Web;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.rule.ActivityTestRule;
-import android.util.Log;
+import android.view.View;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
-import static android.support.test.espresso.intent.Intents.intending;
-import static android.support.test.espresso.intent.matcher.IntentMatchers.isInternal;
+import static android.support.test.espresso.Espresso.*;
+import static android.support.test.espresso.intent.Intents.*;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
+import static android.support.test.espresso.matcher.ViewMatchers.*;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.findElement;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 
 public class EspressoUtils {
   /**
@@ -70,5 +72,60 @@ public class EspressoUtils {
   public static void cancelExternalIntents() {
     intending(not(isInternal()))
         .respondWith(new Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null));
+  }
+
+  public static ViewAssertion dummyVA() {
+    return new ViewAssertion() {
+      @Override
+      public void check(View view, NoMatchingViewException noView) {
+        //Do nothing
+      }
+    };
+  }
+
+  public static DataInteraction getFirstItem() {
+    return onData(anything()).atPosition(0);
+  }
+
+  public static String getPrefSummary(final String key) {
+    final String[] summary = new String[1];
+    final Matcher<String> keyMatcher = is(key);
+
+    onData(new TypeSafeMatcher<Preference>() {
+      @Override
+      protected boolean matchesSafely(Preference item) {
+        boolean match = keyMatcher.matches(item.getKey());
+
+        if (match) {
+          summary[0] = item.getSummary().toString();
+        }
+
+        return match;
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText(" preference with key matching: ");
+        keyMatcher.describeTo(description);
+      }
+    }).check(dummyVA());
+
+    return summary[0];
+  }
+
+  public static int getColor(Matcher<View> matcher, final int x, final int y) {
+    final int[] color = new int[1];
+
+    onView(matcher).check(new ViewAssertion() {
+      @Override
+      public void check(View view, NoMatchingViewException noViewFoundException) {
+        view.setDrawingCacheEnabled(true);
+        view.buildDrawingCache(true);
+
+        color[0] = view.getDrawingCache().getPixel(x, y);
+      }
+    });
+
+    return color[0];
   }
 }

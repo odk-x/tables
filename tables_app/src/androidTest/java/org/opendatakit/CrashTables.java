@@ -11,6 +11,7 @@ import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import org.junit.*;
@@ -28,7 +29,6 @@ import java.io.File;
 import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.*;
-import static android.support.test.espresso.assertion.ViewAssertions.*;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
 import static android.support.test.espresso.matcher.RootMatchers.isPlatformPopup;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
@@ -181,7 +181,7 @@ public class CrashTables {
     onData(withKey(STATUS_COL_COLOR)).perform(click());
 
     //Click on first item (or any item, they all crash)
-    onData(anything()).atPosition(0).perform(click());
+    EspressoUtils.getFirstItem().perform(click());
 
     //CRASH
   }
@@ -258,7 +258,7 @@ public class CrashTables {
 
     //take advantage of Espresso's wait for idle feature
     //the actual Espresso call doesn't matter
-    onView(withText("dummy")).check(ODKMatchers.dummyVA());
+    onView(withText("dummy")).check(EspressoUtils.dummyVA());
 
     //CRASH
   }
@@ -302,5 +302,28 @@ public class CrashTables {
     //Click an item in the context menu
     //Any item in the context menu triggers the bug, both main table and status table
     onView(withText("Freeze Column")).perform(click());
+  }
+
+  @Test
+  public void crashBy_2Finger() {
+    //open table manager
+    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+
+    //click "Tea Houses Editable"
+    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
+
+    //go to table pref
+    onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
+
+    //Create a new color rule and open text color dialog
+    onData(withKey(TABLE_COLOR)).perform(click());
+    onView(withId(R.id.menu_color_rule_list_new)).perform(click());
+    onData(withKey(TABLE_COLOR_TEXT)).perform(click());
+
+    //manipulate color picker with 2 fingers
+    //pinch, drag, flick all work
+    mDevice.wait(Until.findObject(By.clazz(View.class)), OBJ_WAIT_TIMEOUT).pinchOpen(1.0f);
+
+    //CRASH
   }
 }

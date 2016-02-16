@@ -1,13 +1,12 @@
 package org.opendatakit.util;
 
-import android.support.test.espresso.NoMatchingViewException;
-import android.support.test.espresso.ViewAssertion;
 import android.support.test.espresso.matcher.BoundedMatcher;
 import android.view.View;
 import android.widget.ListView;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.tables.utils.TableNameStruct;
 
 public class ODKMatchers {
@@ -48,12 +47,18 @@ public class ODKMatchers {
     };
   }
 
-  public static ViewAssertion dummyVA() {
-    return new ViewAssertion() {
+  public static Matcher<ColorRule> withColorRule(final ColorRule rule) {
+    return new TypeSafeMatcher<ColorRule>() {
       @Override
-      public void check(View view, NoMatchingViewException noView) {
-        //Do nothing
+      protected boolean matchesSafely(ColorRule rule2) {
+        return rule2.equalsWithoutId(rule);
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Expected: " + rule.toString());
       }
     };
   }
+
 }
