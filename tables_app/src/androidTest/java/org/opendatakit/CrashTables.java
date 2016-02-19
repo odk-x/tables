@@ -146,27 +146,31 @@ public class CrashTables {
     }
   }
 
-  @Test
-  public void crashBy_rotateTablePref() throws RemoteException {
-    //Open table manager
-    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
-
-    //Open "Tea houses"
-    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID)).perform(click());
-
-    //Open pref
-    onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
-
-    //Rotate
-    try {
-      mDevice.freezeRotation();
-      mDevice.setOrientationLeft();
-    } finally {
-      mDevice.setOrientationNatural();
-    }
-
-    //CRASH
-  }
+  /**
+   * This has been fixed
+   * TODO: move to somewhere more appropriate
+   */
+  //  @Test
+//  public void crashBy_rotateTablePref() throws RemoteException {
+//    //Open table manager
+//    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+//
+//    //Open "Tea houses"
+//    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID)).perform(click());
+//
+//    //Open pref
+//    onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
+//
+//    //Rotate
+//    try {
+//      mDevice.freezeRotation();
+//      mDevice.setOrientationLeft();
+//    } finally {
+//      mDevice.setOrientationNatural();
+//    }
+//
+//    //CRASH
+//  }
 
   @Test
   public void crashBy_statusColColorRule() {

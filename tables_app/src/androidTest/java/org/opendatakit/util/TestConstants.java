@@ -10,7 +10,7 @@ public class TestConstants {
 
   //UI Automator Timeouts
   public static final int APP_START_TIMEOUT = 10000;
-  public static final int APP_INIT_TIMEOUT = 10000;
+  public static final int APP_INIT_TIMEOUT = 60000;
   public static final int OBJ_WAIT_TIMEOUT = 3000;
 
   //Table names and related
