@@ -52,7 +52,7 @@ public class DefaultViewTypePreference extends ListPreference {
 
   public void setFields(String tableId, OrderedColumns orderedDefns) throws RemoteException {
     
-    TableViewType defaultViewType;
+    TableViewType defaultViewType = null;
     this.mEntryValues = this.mContext.getResources().getTextArray(
       R.array.table_view_types_values);
     

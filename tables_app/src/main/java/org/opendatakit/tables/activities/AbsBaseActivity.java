@@ -59,7 +59,6 @@ public abstract class AbsBaseActivity extends BaseActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
     this.mAppName = retrieveAppNameFromIntent();
     if ( savedInstanceState != null ) {
       if ( savedInstanceState.containsKey(Constants.IntentKeys.ACTION_TABLE_ID) ) {
@@ -77,6 +76,8 @@ public abstract class AbsBaseActivity extends BaseActivity {
         mConflictTables = savedInstanceState.getBundle(Constants.IntentKeys.CONFLICT_TABLES);
       }
     }
+
+    super.onCreate(savedInstanceState);
 
     DependencyChecker dc = new DependencyChecker(this);
     boolean dependable = dc.checkDependencies();
