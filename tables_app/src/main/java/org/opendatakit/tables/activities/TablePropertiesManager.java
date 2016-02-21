@@ -185,11 +185,6 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     displayListViewCat.setTitle(getString(R.string.display_list_view_settings));
     addListViewPreferences(displayListViewCat);
 
-    PreferenceCategory displayGraphViewCat = new PreferenceCategory(this);
-    root.addPreference(displayGraphViewCat);
-    displayGraphViewCat.setTitle(getString(R.string.display_graph_view_settings));
-    addGraphViewPreferences(displayGraphViewCat);
-
     PreferenceCategory displayMapViewCat = new PreferenceCategory(this);
     root.addPreference(displayMapViewCat);
     displayMapViewCat.setTitle(getString(R.string.display_map_view_settings));
@@ -406,31 +401,6 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     });
     prefCat.addPreference(detailViewPref);
 
-  }
-
-  private void addGraphViewPreferences(PreferenceCategory prefCat) {
-    WebLogger.getLogger(appName).d(TAG, "Graph view type was selected");
-    // TODO -- should we really do the graph manager here?
-    Preference graphViewPrefs = new Preference(this);
-    graphViewPrefs.setTitle(getString(R.string.graph_view_manager));
-    graphViewPrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        // Intent selectGraphViewIntent = new
-        // Intent(TablePropertiesManager.this,
-        // GraphManagerActivity.class);
-        // selectGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME,
-        // tp.getAppName());
-        // selectGraphViewIntent.putExtra(
-        // Constants.IntentKeys.TABLE_ID,
-        // tp.getTableId());
-        // startActivity(selectGraphViewIntent);
-        return true;
-      }
-
-    });
-    prefCat.addPreference(graphViewPrefs);
   }
 
   private void addMapViewPreferences(PreferenceCategory prefCat) {

@@ -77,16 +77,6 @@
     </PreferenceCategory>
     
     <PreferenceCategory 
-        android:title="@string/graph_view_settings">
-        
-        <Preference
-            android:key="table_pref_graph_view_manager"
-            android:persistent="false"
-            android:title="@string/graph_view_manager" />
-        
-    </PreferenceCategory>
-    
-    <PreferenceCategory 
         android:title="@string/map_view_settings">
         
         <!-- map list view file -->

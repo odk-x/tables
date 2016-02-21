@@ -6,7 +6,6 @@
         name="table_view_types">
         <item>@string/spreadsheet</item>
         <item>@string/list</item>
-        <item>@string/graph</item>
         <item>@string/map</item>
     </string-array>
 
@@ -16,7 +15,6 @@
         name="table_view_types_values" >
         <item>@string/table_view_types_values_spreadsheet</item>
         <item>@string/table_view_types_values_list</item>
-        <item>@string/table_view_types_values_graph</item>
         <item>@string/table_view_types_values_map</item>
     </string-array>
 
