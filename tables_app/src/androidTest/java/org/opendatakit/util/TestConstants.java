@@ -6,7 +6,7 @@ public class TestConstants {
   public static String SURVEY_PKG_NAME = "org.opendatakit.survey.android";
 
   //Espresso Web
-  public static int WEB_WAIT_TIMEOUT = 5000;
+  public static int WEB_WAIT_TIMEOUT = 6000;
 
   //UI Automator Timeouts
   public static final int APP_START_TIMEOUT = 10000;
@@ -35,6 +35,10 @@ public class TestConstants {
   public static final String COLUMNS_LIST = "table_pref_columns";
   public static final String TABLE_COLOR = "table_pref_table_color_rules";
   public static final String TABLE_COLOR_TEXT = "pref_color_rule_text_color";
+  public static final String TABLE_DISPLAY_NAME = "table_pref_display_name";
+  public static final String TABLE_ID = "table_pref_table_id";
+  public static final String COL_DISPLAY_NAME = "column_pref_display_name";
+  public static final String COL_KEY = "column_pref_element_key";
 
   //Misc.
   public static final String OI_PICK_FILE = "org.openintents.action.PICK_FILE";

@@ -287,12 +287,14 @@ public class ColorRuleTest {
 
     //must re-obtain ColorRuleGroup (a bug?)
     List<ColorRule> newRules = getCRG(type, db, adminColumns).getColorRules();
+
+    //check the size first
     assertThat("Size mismatch", rules.size() == newRules.size(), is(true));
+    onView(withId(android.R.id.list)).check(matches(ODKMatchers.withSize(rules.size())));
 
     //Check both database and ui for rules
     for (int i = 0; i < rules.size(); i++) {
       assertThat(rules.get(i).equalsWithoutId(newRules.get(i)), is(true));
-      onView(withId(android.R.id.list)).check(matches(ODKMatchers.withSize(rules.size())));
       onData(ODKMatchers.withColorRule(rules.get(i))).check(matches(isCompletelyDisplayed()));
     }
   }

@@ -1,7 +1,9 @@
 package org.opendatakit.util;
 
 import android.support.test.espresso.matcher.BoundedMatcher;
+import android.util.Log;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.ListView;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -24,6 +26,21 @@ public class ODKMatchers {
         this.listSize = item.getCount();
 
         return this.listSize == size;
+      }
+    };
+  }
+
+  public static Matcher<View> withUrl(final Matcher<String> url) {
+    return new BoundedMatcher<View, WebView>(WebView.class) {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("with URL: ");
+        url.describeTo(description);
+      }
+
+      @Override
+      protected boolean matchesSafely(WebView item) {
+        return url.matches(item.getUrl());
       }
     };
   }
@@ -60,5 +77,4 @@ public class ODKMatchers {
       }
     };
   }
-
 }
