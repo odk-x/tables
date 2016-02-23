@@ -23,11 +23,11 @@ public class UAUtils {
     //Important!!
     //Run this before Espresso starts an activity
 
-    try {
-      if (mDevice == null) {
-        throw new IllegalArgumentException("mDevice cannot be null");
-      }
+    if (mDevice == null) {
+      throw new IllegalArgumentException("mDevice cannot be null");
+    }
 
+    try {
       startApp(mDevice, TABLES_PKG_NAME);
 
       //find the preference button
@@ -44,9 +44,7 @@ public class UAUtils {
     } catch (Exception e) {
       return false;
     } finally {
-      if (mDevice != null) {
         mDevice.pressHome();
-      }
     }
 
     return true;

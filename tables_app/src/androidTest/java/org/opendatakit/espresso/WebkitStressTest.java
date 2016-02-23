@@ -47,6 +47,8 @@ public class WebkitStressTest {
 
     @Override
     protected void afterActivityLaunched() {
+      super.afterActivityLaunched();
+
       onWebView().forceJavascriptEnabled();
     }
   };

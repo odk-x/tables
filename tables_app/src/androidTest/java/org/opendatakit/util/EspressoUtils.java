@@ -59,6 +59,11 @@ public class EspressoUtils {
       }
 
       if (wInteraction != null) {
+        try {
+          //force a wait, sometimes JS is too slow
+          Thread.sleep(2 * waitTime);
+        } catch (InterruptedException e) {}
+
         return wInteraction;
       }
 
