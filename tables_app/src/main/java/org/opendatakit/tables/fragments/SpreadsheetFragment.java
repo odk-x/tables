@@ -77,7 +77,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   private static final String TAG = SpreadsheetFragment.class.getSimpleName();
 
   private static final int MENU_ITEM_ID_HISTORY_IN = 0;
-  private static final int MENU_ITEM_ID_EDIT_CELL = 1;
+//  private static final int MENU_ITEM_ID_EDIT_CELL = 1;
   private static final int MENU_ITEM_ID_DELETE_ROW = 2;
   private static final int MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY = 3;
   private static final int MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY = 4;
@@ -265,10 +265,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
       openCollectionView(cell);
       return true;
-    case MENU_ITEM_ID_EDIT_CELL:
-      cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
-      openCellEditDialog(cell);
-      return true;
+//    case MENU_ITEM_ID_EDIT_CELL:
+//      cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
+//      openCellEditDialog(cell);
+//      return true;
     case MENU_ITEM_ID_DELETE_ROW:
       cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
       AlertDialog confirmDeleteAlert;
@@ -529,9 +529,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     }
     String viewString = row.getDisplayTextOfData(cd.getType(), cellInfo.elementKey);
     // TODO: display value and use edit icon...
-    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE,
-        getString(R.string.edit_cell, viewString));
-    mi.setIcon(R.drawable.ic_action_edit);
+//    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE,
+//        getString(R.string.edit_cell, viewString));
+//    mi.setIcon(R.drawable.ic_action_edit);
 
     mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE,
         getString(R.string.delete_row));
