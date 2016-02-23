@@ -1,53 +1,39 @@
 package org.opendatakit.espresso;
 
-import android.content.Intent;
-import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.LargeTest;
-import android.util.Log;
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
 
 import java.net.MalformedURLException;
 
-import static android.support.test.espresso.Espresso.onData;
-import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.Espresso.pressBack;
+import static android.support.test.espresso.Espresso.*;
 import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.intended;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
 import static android.support.test.espresso.intent.matcher.UriMatchers.*;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class SurveyInteropTest {
+  private static final int WAIT = 1000;
+
   private Boolean initSuccess = null;
   private UiDevice mDevice;
 
@@ -66,6 +52,8 @@ public class SurveyInteropTest {
 
     @Override
     protected void afterActivityLaunched() {
+      super.afterActivityLaunched();
+
       onWebView().forceJavascriptEnabled();
     }
   };
@@ -77,7 +65,7 @@ public class SurveyInteropTest {
   }
 
   @Test
-  public void intent_addRow() throws MalformedURLException {
+  public void intent_addRow() throws MalformedURLException, InterruptedException {
     //open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
@@ -96,10 +84,13 @@ public class SurveyInteropTest {
             hasPath("/tables/Tea_houses_editable/Tea_houses_editable/")
         ))
     ));
+
+    //Some background tasks are slow (for example ColorRule), force a wait
+    Thread.sleep(WAIT);
   }
 
   @Test
-  public void intent_editRow() {
+  public void intent_editRow() throws InterruptedException {
     //Open "Hope"
     EspressoUtils.delayedFindElement(Locator.ID, HOPE_TAB_ID, WEB_WAIT_TIMEOUT).perform(webClick());
     EspressoUtils.delayedFindElement(Locator.ID, LAUNCH_DEMO_ID, WEB_WAIT_TIMEOUT)
@@ -122,5 +113,8 @@ public class SurveyInteropTest {
             + "/tables/femaleClients/femaleClients/"
             + "#instanceId=906c2b4f-b9d2-4aa1-bbb0-e754d66325ff")
     ));
+
+    //Some background tasks are slow (for example ColorRule), force a wait
+    Thread.sleep(WAIT);
   }
 }
