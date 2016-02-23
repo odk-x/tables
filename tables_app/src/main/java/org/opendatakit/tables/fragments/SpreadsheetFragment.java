@@ -31,7 +31,6 @@ import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.application.Tables;
@@ -259,7 +258,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   @Override
   public boolean onContextItemSelected(MenuItem item) {
     SpreadsheetCell cell;
-    AbsTableActivity activity = (AbsTableActivity) getActivity();
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     switch (item.getItemId()) {
     case MENU_ITEM_ID_HISTORY_IN:
@@ -281,7 +280,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       // OK Action => delete the row
       alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
-          AbsTableActivity activity = (AbsTableActivity) getActivity();
+          TableDisplayActivity activity = (TableDisplayActivity) getActivity();
           try {
             deleteRow(rowId);
             init();
