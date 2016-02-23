@@ -392,4 +392,6 @@
 	
 	<string name="no_table_data">No Data Tables</string>
 	<string name="database_unavailable">Database Unavailable</string>
+
+	<string name="file_not_under_app_dir">File is not located under app directory</string>
 </resources>

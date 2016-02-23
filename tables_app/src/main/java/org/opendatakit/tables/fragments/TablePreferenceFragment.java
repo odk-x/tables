@@ -93,23 +93,38 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       switch (requestCode) {
       case Constants.RequestCodes.CHOOSE_LIST_FILE:
         if ( data != null ) {
-          fullPath = getFullPathFromIntent(data);
-          relativePath = getRelativePathOfFile(fullPath);
-          this.setListViewFileName(relativePath);
+          try {
+            fullPath = getFullPathFromIntent(data);
+            relativePath = getRelativePathOfFile(fullPath);
+            this.setListViewFileName(relativePath);
+          } catch (IllegalArgumentException e) {
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
+            Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir), Toast.LENGTH_LONG).show();
+          }
         }
         break;
       case Constants.RequestCodes.CHOOSE_DETAIL_FILE:
         if ( data != null ) {
-          fullPath = getFullPathFromIntent(data);
-          relativePath = getRelativePathOfFile(fullPath);
-          this.setDetailViewFileName(relativePath);
+          try {
+            fullPath = getFullPathFromIntent(data);
+            relativePath = getRelativePathOfFile(fullPath);
+            this.setDetailViewFileName(relativePath);
+          } catch (IllegalArgumentException e) {
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
+            Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir), Toast.LENGTH_LONG).show();
+          }
         }
         break;
       case Constants.RequestCodes.CHOOSE_MAP_FILE:
         if ( data != null ) {
-          fullPath = getFullPathFromIntent(data);
-          relativePath = getRelativePathOfFile(fullPath);
-          this.setMapListViewFileName(relativePath);
+          try {
+            fullPath = getFullPathFromIntent(data);
+            relativePath = getRelativePathOfFile(fullPath);
+            this.setMapListViewFileName(relativePath);
+          } catch (IllegalArgumentException e) {
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
+            Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir), Toast.LENGTH_LONG).show();
+          }
         }
         break;
       default:
