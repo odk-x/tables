@@ -99,7 +99,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
             this.setListViewFileName(relativePath);
           } catch (IllegalArgumentException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
-            Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir), Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())), Toast.LENGTH_LONG).show();
           }
         }
         break;
@@ -111,7 +111,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
             this.setDetailViewFileName(relativePath);
           } catch (IllegalArgumentException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
-            Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir), Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())), Toast.LENGTH_LONG).show();
           }
         }
         break;
@@ -123,7 +123,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
             this.setMapListViewFileName(relativePath);
           } catch (IllegalArgumentException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
-            Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir), Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())), Toast.LENGTH_LONG).show();
           }
         }
         break;
