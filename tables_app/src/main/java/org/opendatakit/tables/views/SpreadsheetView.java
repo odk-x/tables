@@ -534,6 +534,9 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       CellInfo cellId = null;
       if (view instanceof TabularView) {
         cellId = ((TabularView) view).getCellInfo(x, y);
+        if (cellId == null) {
+          return false;
+        }
       } else {
         WebLogger.getLogger(table.getAppName()).e(TAG, "Unexpected view type!");
       }

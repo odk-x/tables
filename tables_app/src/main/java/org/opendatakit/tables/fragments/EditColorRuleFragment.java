@@ -16,10 +16,10 @@
 package org.opendatakit.tables.fragments;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -219,6 +219,10 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
       String localizedDisplayName = tc.localizedDisplayNames.get(elementKey);
       colorColDisplayNames.add(localizedDisplayName);
     }
+
+    colorColDisplayNames.addAll(Arrays.asList(tc.adminColumns));
+    colorColElementKeys.addAll(Arrays.asList(tc.adminColumns));
+
     mColumnDisplayNames = colorColDisplayNames.toArray(new String[colorColDisplayNames.size()]);
     mColumnElementKeys = colorColElementKeys.toArray(new String[colorColElementKeys.size()]);
   }

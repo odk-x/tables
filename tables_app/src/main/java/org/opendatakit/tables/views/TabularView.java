@@ -413,7 +413,12 @@ class TabularView extends View {
     if (row >= mNumberOfRows) {
       row = mNumberOfRows - 1;
     }
-    CellInfo info = new CellInfo(mElementKeys.get(col), col, row);
+
+    CellInfo info = null;
+    if (col != -1) {
+      info = new CellInfo(mElementKeys.get(col), col, row);
+    }
+
     return info;
   }
 
