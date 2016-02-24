@@ -6,21 +6,21 @@ import android.preference.Preference;
 import android.support.test.espresso.DataInteraction;
 import android.support.test.espresso.NoMatchingViewException;
 import android.support.test.espresso.ViewAssertion;
+import android.support.test.espresso.ViewInteraction;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
-import android.support.test.espresso.matcher.BoundedMatcher;
 import android.support.test.espresso.web.sugar.Web;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.rule.ActivityTestRule;
 import android.view.View;
-import android.webkit.ValueCallback;
-import android.webkit.WebView;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
 import static android.support.test.espresso.Espresso.*;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.*;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
+import static android.support.test.espresso.matcher.RootMatchers.withDecorView;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.findElement;
@@ -34,8 +34,16 @@ public class EspressoUtils {
    * @param id Id of String to retrieve
    * @return Returns the String
    */
+  public static String getString(ActivityTestRule rule, int id, Object... formatArgs) {
+    return rule.getActivity().getResources().getString(id, formatArgs);
+  }
+
   public static String getString(ActivityTestRule rule, int id) {
     return rule.getActivity().getResources().getString(id);
+  }
+
+  public static String getString(IntentsTestRule rule, int id, Object... formatArgs) {
+    return rule.getActivity().getResources().getString(id, formatArgs);
   }
 
   public static String getString(IntentsTestRule rule, int id) {
@@ -135,5 +143,11 @@ public class EspressoUtils {
     });
 
     return color[0];
+  }
+
+  public static ViewInteraction toastMsgMatcher(IntentsTestRule rule, Matcher<String> matcher) {
+    return onView(withText(matcher))
+        .inRoot(withDecorView(not(is(rule.getActivity().getWindow().getDecorView()))))
+        .check(matches(isDisplayed()));
   }
 }

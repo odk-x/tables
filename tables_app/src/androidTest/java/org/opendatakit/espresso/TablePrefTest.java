@@ -9,23 +9,17 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.intent.Intents;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
+import android.support.test.espresso.web.deps.guava.util.concurrent.ThreadFactoryBuilder;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.LargeTest;
-import android.util.Log;
-import android.view.View;
-import org.hamcrest.Matcher;
-import org.hamcrest.core.AllOf;
-import org.hamcrest.core.AnyOf;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.data.ColorRule;
-import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.database.service.OdkDbHandle;
@@ -33,7 +27,6 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.views.SpreadsheetView;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
@@ -43,9 +36,8 @@ import java.io.File;
 
 import static android.support.test.espresso.Espresso.*;
 import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.intent.Intents.intended;
-import static android.support.test.espresso.intent.Intents.intending;
+import static android.support.test.espresso.assertion.ViewAssertions.*;
+import static android.support.test.espresso.intent.Intents.*;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
@@ -229,53 +221,62 @@ public class TablePrefTest {
     }
   }
 
-  //TODO: fixme, need to set list view file first
-//  @Test
-//  public void intents_detailView() {
-//    final String detailViewPath = "/tables/config/tables/Tea_houses/html/Tea_houses_detail.html";
-//
-//    //back up current config
-//    String currFile = getDetailViewFile();
-//
-//    //stub response
-//    intending(hasAction(OI_PICK_FILE)).respondWith(
-//        new Instrumentation.ActivityResult(
-//            Activity.RESULT_OK,
-//            new Intent().setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + detailViewPath)))
-//        )
-//    );
-//
-//    //edit detail view path
-//    onData(withKey(DETAIL_VIEW_FILE)).perform(click());
-//
-//    //go to list view
-//    pressBack();
-//    pressBack();
-//    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
-//    onView(withId(R.id.top_level_table_menu_select_view)).perform(click());
-//    onView(withText("List")).perform(click());
-//
-//    //choose "Tea for All"
-//    EspressoUtils.delayedFindElement(
-//        Locator.ID, "924e548d-667f-4c49-91c0-de2885c0dda1", WEB_WAIT_TIMEOUT).perform(webClick());
-//
-//    try {
-//      //check url
-//      onView(withId(R.id.webkit)).check(matches(ODKMatchers.withUrl(endsWith(detailViewPath))));
-//
-//      //Use sleep to wait for js data population
-//      //will implement idling webview
-//      try {
-//        Thread.sleep(2000);
-//      } catch (Exception e) {}
-//
-//
-//      EspressoUtils.delayedFindElement(Locator.ID, "TITLE", WEB_WAIT_TIMEOUT)
-//          .check(webMatches(getText(), is("Tea for All")));
-//    } finally {
-//      setDetailViewFile(currFile);
-//    }
-//  }
+  @Test
+  public void intents_detailView() {
+    final String detailViewPath = "/tables/config/tables/Tea_houses/html/Tea_houses_detail.html";
+    final String listViewPath = "/tables/config/tables/Tea_houses/html/Tea_houses_list.html";
+
+    //back up current config
+    String currDetailFile = getDetailViewFile();
+    String currListFile = getListViewFile();
+
+    //stub response
+    intending(hasAction(OI_PICK_FILE)).respondWith(
+        new Instrumentation.ActivityResult(
+            Activity.RESULT_OK,
+            new Intent().setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + detailViewPath)))
+        )
+    );
+
+    //edit detail view path
+    onData(withKey(DETAIL_VIEW_FILE)).perform(click());
+
+    intending(hasAction(OI_PICK_FILE)).respondWith(
+        new Instrumentation.ActivityResult(
+            Activity.RESULT_OK,
+            new Intent().setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + listViewPath)))
+        )
+    );
+
+    //edit list view path
+    onData(withKey(LIST_VIEW_FILE)).perform(click());
+
+    //go to list view
+    pressBack();
+    pressBack();
+    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
+    onView(withId(R.id.top_level_table_menu_select_view)).perform(click());
+    onView(withText("List")).perform(click());
+
+    //choose "Tea for All"
+    EspressoUtils.delayedFindElement(
+        Locator.ID, "924e548d-667f-4c49-91c0-de2885c0dda1", WEB_WAIT_TIMEOUT).perform(webClick());
+
+    try {
+      //check url
+      onView(withId(R.id.webkit)).check(matches(ODKMatchers.withUrl(endsWith(detailViewPath))));
+
+      try {
+        Thread.sleep(2000); //need this for older devices
+      } catch (Exception e) {}
+
+      EspressoUtils.delayedFindElement(Locator.ID, "TITLE", WEB_WAIT_TIMEOUT)
+          .check(webMatches(getText(), is("Tea for All")));
+    } finally {
+      setDetailViewFile(currDetailFile);
+      setListViewFile(currListFile);
+    }
+  }
 
   @Test
   public void views_availableViewsOff() {
@@ -324,6 +325,58 @@ public class TablePrefTest {
       //restore
       setListViewFile(currListFile);
       setMapViewFile(currMapFile);
+    }
+  }
+
+  @Test
+  public void display_outOfAppDirViewFile() {
+    //backup
+    String currListFile = getListViewFile();
+
+    try {
+      //stub intent
+      intending(hasAction(OI_PICK_FILE)).respondWith(
+          new Instrumentation.ActivityResult(
+              Activity.RESULT_OK,
+              new Intent().setData(Uri.fromFile(new File("/test.html")))
+          )
+      );
+
+      onData(withKey(LIST_VIEW_FILE)).perform(click());
+
+      //check toast message
+      EspressoUtils.toastMsgMatcher(
+          mActivityRule,
+          is(EspressoUtils.getString(
+              mActivityRule, R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(APP_NAME))
+          )
+      );
+    } finally {
+      //restore
+      setListViewFile(currListFile);
+    }
+  }
+
+  @Test
+  public void display_removeViewFile() {
+    //This feature is not yet implemented
+    //DON'T RUN DON'T RUN DON'T RUN DON'T RUN DON'T RUN
+    //DON'T RUN DON'T RUN DON'T RUN DON'T RUN DON'T RUN
+    //DON'T RUN DON'T RUN DON'T RUN DON'T RUN DON'T RUN
+    if (true) return;
+
+    String currListFile = getListViewFile();
+
+    try {
+      //do something that will empty filename...
+      //TODO: write this after feature gets implemented
+
+      //checks
+      assertThat(
+          "Path not empty on UI", EspressoUtils.getPrefSummary(LIST_VIEW_FILE), isEmptyString());
+      assertThat("Path not empty in db", getListViewFile(), nullValue());
+    } finally {
+      setListViewFile(currListFile);
     }
   }
 
