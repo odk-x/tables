@@ -1,5 +1,6 @@
 package org.opendatakit;
 
+import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -157,5 +158,28 @@ public class CrashTables {
     onView(withId(R.id.top_level_table_menu_add)).perform(click());
 
     //CRASH
+  }
+
+  @Test
+  public void crashBy_rotateTablePrefRound2() throws RemoteException, InterruptedException {
+    //open table manager
+    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+
+    //click "Tea Houses Editable"
+    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
+
+    //go to table pref
+    onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
+
+    //go to "columns"
+    onData(withKey(COLUMNS_LIST)).perform(click());
+
+    mDevice.freezeRotation();
+    mDevice.setOrientationRight();
+    Thread.sleep(1000);
+    mDevice.setOrientationNatural();
+    Thread.sleep(1000);
+
+    mDevice.pressBack();
   }
 }
