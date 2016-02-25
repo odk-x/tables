@@ -10,11 +10,6 @@
         android:layout_height="wrap_content"
         android:checkedButton="@+id/edit_def_form_use_default_collect_form">
       <RadioButton
-        android:id="@+id/edit_def_form_use_default_collect_form"
-        android:layout_width="wrap_content"
-        android:text="@string/use_generated_form"
-        android:layout_height="wrap_content" />
-      <RadioButton
         android:id="@+id/edit_def_form_use_collect_form"
         android:layout_width="wrap_content"
         android:text="@string/use_collect_form"

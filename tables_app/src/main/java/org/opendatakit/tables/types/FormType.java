@@ -69,10 +69,11 @@ public class FormType {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
-    if (formType == null) {
-      return new FormType(context, appName, tableId, CollectFormParameters.constructDefaultCollectFormParameters(
-          context, appName, tableId));
-    }
+    // Not supporting this currently
+//    if (formType == null) {
+//      return new FormType(context, appName, tableId, CollectFormParameters.constructDefaultCollectFormParameters(
+//          context, appName, tableId));
+//    }
     try {
       Type t = Type.valueOf(formType);
       if (t == Type.COLLECT) {

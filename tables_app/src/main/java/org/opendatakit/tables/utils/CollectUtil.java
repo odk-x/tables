@@ -1803,10 +1803,11 @@ public class CollectUtil {
         }
       }
 
-      if (formId == null) {
-        return new CollectFormParameters(false, getDefaultAddRowFormId(tableId), null,
-            DEFAULT_ROOT_ELEMENT, localizedDisplayName);
-      }
+      // Not supporting this currently
+//      if (formId == null) {
+//        return new CollectFormParameters(false, getDefaultAddRowFormId(tableId), null,
+//            DEFAULT_ROOT_ELEMENT, localizedDisplayName);
+//      }
       // Else we know it is custom.
       if (rootElement == null) {
         rootElement = DEFAULT_ROOT_ELEMENT;
