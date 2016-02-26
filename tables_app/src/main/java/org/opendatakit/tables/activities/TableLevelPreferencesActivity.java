@@ -95,13 +95,16 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     FragmentManager fragmentManager = this.getFragmentManager();
     TablePreferenceFragment tablePreferenceFragment =
         this.findTablePreferenceFragment();
-      if (tablePreferenceFragment == null ) {
-        tablePreferenceFragment = this.createTablePreferenceFragment();
-      }
+
+    if (tablePreferenceFragment == null ) {
+      tablePreferenceFragment = this.createTablePreferenceFragment();
+
       fragmentManager.beginTransaction().replace(
-          android.R.id.content,
-          tablePreferenceFragment,
-          Constants.FragmentTags.TABLE_PREFERENCE).commit();
+              android.R.id.content,
+              tablePreferenceFragment,
+              Constants.FragmentTags.TABLE_PREFERENCE)
+              .commit();
+    }
   }
   
   public void showColumnListFragment() {
