@@ -60,6 +60,10 @@ public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
   
   @Override
   public boolean isEnabled(int position) {
+    if (this.mPossibleViewTypes == null) {
+      return false;
+    }
+
     String currentItem = this.mViewTypeValues[position].toString();
     if (currentItem.equals(TableViewType.SPREADSHEET.name())) {
       if (this.mPossibleViewTypes.spreadsheetViewIsPossible()) {

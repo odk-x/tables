@@ -39,6 +39,9 @@ import android.preference.Preference;
 
 public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
+  String mElementKey = null;
+  static String COL_ELEM_KEY = "COLUMN_ELEMENT_KEY";
+
   private static final String TAG =
       ColumnPreferenceFragment.class.getSimpleName();
 
@@ -68,7 +71,10 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
    */
   ColumnDefinition retrieveColumnDefinition() {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
-    String elementKey = activity.getElementKey();
+    String elementKey = mElementKey;
+    if (mElementKey == null) {
+      elementKey = activity.getElementKey();
+    }
     try {
       OrderedColumns orderedDefns = activity.getColumnDefinitions();
       ColumnDefinition result = orderedDefns.find(elementKey);
@@ -85,6 +91,9 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    if (savedInstanceState != null && savedInstanceState.containsKey(COL_ELEM_KEY)) {
+      mElementKey = savedInstanceState.getString(COL_ELEM_KEY);
+    }
     this.addPreferencesFromResource(R.xml.preference_column);
   }
 
@@ -96,6 +105,13 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     } catch (RemoteException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    mElementKey = this.retrieveColumnDefinition().getElementKey();
+    outState.putString(COL_ELEM_KEY, mElementKey);
   }
 
   void initializeAllPreferences() throws RemoteException {

@@ -394,4 +394,5 @@
 	<string name="database_unavailable">Database Unavailable</string>
 
 	<string name="file_not_under_app_dir">File is not located under %1$s directory</string>
+	<string name="no_form_id_specified">Form Id must be specified</string>
 </resources>

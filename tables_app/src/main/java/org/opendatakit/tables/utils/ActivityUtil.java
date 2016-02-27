@@ -23,6 +23,7 @@ import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.types.FormType;
@@ -36,6 +37,7 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.DisplayMetrics;
+import android.widget.Toast;
 
 public class ActivityUtil {
 
@@ -61,7 +63,7 @@ public class ActivityUtil {
       }
 
       Intent intent = CollectUtil.getIntentForOdkCollectEditRow(activity, appName, tableId,
-          orderedDefns, elementKeyToValue, null, null, null, row.getRowId());
+              orderedDefns, elementKeyToValue, null, null, null, row.getRowId());
 
       if (intent != null) {
         CollectUtil.launchCollectToEditRow(activity, intent, row.getRowId());
@@ -72,7 +74,7 @@ public class ActivityUtil {
       SurveyFormParameters params = formType.getSurveyFormParameters();
 
       Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, appName, tableId, params,
-          row.getRowId());
+              row.getRowId());
       if (intent != null) {
         SurveyUtil.launchSurveyToEditRow(activity, tableId, intent, row.getRowId());
       }
@@ -126,6 +128,12 @@ public class ActivityUtil {
   public static void addRow(AbsBaseActivity activity, String appName, String tableId,
       OrderedColumns orderedDefns, Map<String, String> prepopulatedValues) throws RemoteException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
+
+    // If no formId has been specified, show toast and exit
+    if (formType.getFormId() == null) {
+      Toast.makeText(activity, R.string.no_form_id_specified, Toast.LENGTH_LONG).show();
+      return;
+    }
     if (formType.isCollectForm()) {
       WebLogger.getLogger(appName).d(TAG, "[onOptionsItemSelected] using Collect form");
       CollectFormParameters collectFormParameters = formType.getCollectFormParameters();
