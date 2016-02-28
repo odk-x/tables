@@ -178,13 +178,34 @@ public class TablePrefTest {
     mDevice.freezeRotation();
 
     try {
+      //see if this crashes Tables
       mDevice.setOrientationRight();
       Thread.sleep(2000);
     } finally {
       mDevice.setOrientationNatural();
       Thread.sleep(2000);
     }
-  }
+
+    onData(withKey(COLUMNS_LIST)).perform(click());
+    try {
+      //see if this crashes Tables
+      mDevice.setOrientationRight();
+      Thread.sleep(2000);
+    } finally {
+      mDevice.setOrientationNatural();
+      Thread.sleep(2000);
+    }
+    //check that we are still in "Columns"
+    onData(is("House id")).check(matches(isCompletelyDisplayed()));
+    onData(is("State")).check(matches(isCompletelyDisplayed()));
+    onData(is("Region")).check(matches(isCompletelyDisplayed()));
+
+    //see if this crashes tables
+    pressBack();
+    pressBack();
+
+    Thread.sleep(2000);
+}
 
   @Test
   public void intents_listView() {

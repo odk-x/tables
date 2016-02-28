@@ -242,9 +242,22 @@ public class ColorRuleTest {
     }
   }
 
+  /**
+   * This only works when "revert to default" has not been clicked.
+   */
   @Test
-  public void colorRule_addStatusRule() {
-    //TODO: implement this after status color rule is fixed
+  public void colorRule_deleteStatusRule() {
+    onData(withKey(STATUS_COL_COLOR)).perform(click());
+
+    //delete the first rule
+    onData(anything()).atPosition(0).perform(longClick());
+    onView(withText(is(EspressoUtils.getString(mActivityRule, R.string.delete_color_rule)))).perform(click());
+    onView(withId(android.R.id.button1)).perform(click());
+
+    pressBack();
+    onData(withKey(STATUS_COL_COLOR)).perform(click());
+
+    onView(withId(android.R.id.list)).check(matches(ODKMatchers.withSize(4)));
   }
 
   private int pickColor() {

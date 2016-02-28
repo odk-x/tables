@@ -1,6 +1,7 @@
 package org.opendatakit.espresso;
 
 import android.graphics.Rect;
+import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
@@ -17,6 +18,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.types.FormType;
+import org.opendatakit.tables.views.SpreadsheetView;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
@@ -27,8 +31,12 @@ import java.util.List;
 import java.util.Map;
 
 import static android.support.test.espresso.Espresso.*;
+import static android.support.test.espresso.action.ViewActions.clearText;
 import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.action.ViewActions.typeText;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.*;
+import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
@@ -67,11 +75,12 @@ public class SurveyInteropTest {
   @Before
   public void setup() {
     UAUtils.assertInitSucess(initSuccess);
-    EspressoUtils.cancelExternalIntents();
   }
 
   @Test
   public void intent_addRow() throws MalformedURLException, InterruptedException {
+    EspressoUtils.cancelExternalIntents();
+
     //open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
@@ -90,6 +99,8 @@ public class SurveyInteropTest {
 
   @Test
   public void intent_editRow() throws InterruptedException {
+    EspressoUtils.cancelExternalIntents();
+
     //Open "Hope"
     EspressoUtils.delayedFindElement(Locator.ID, HOPE_TAB_ID, WEB_WAIT_TIMEOUT).perform(webClick());
     EspressoUtils.delayedFindElement(Locator.ID, LAUNCH_DEMO_ID, WEB_WAIT_TIMEOUT)
@@ -115,6 +126,8 @@ public class SurveyInteropTest {
 
   @Test
   public void intent_spreadsheetEditRow() throws InterruptedException {
+    EspressoUtils.cancelExternalIntents();
+
     //Open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
@@ -157,6 +170,54 @@ public class SurveyInteropTest {
     ));
 
     Thread.sleep(WAIT);
+  }
+
+  @Test
+  public void crossApp_badFormId() {
+    //Open table manager
+    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+
+    //Open "Tea houses editable"
+    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
+
+    //go to table pref
+    onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
+
+    String currFormId = null;
+    try {
+      currFormId = FormType.constructFormType(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID)
+          .getFormId();
+
+      //change form id to something invalid
+      onData(withKey(DEFAULT_FORM)).perform(click());
+      onView(withId(R.id.edit_form_id))
+          .perform(click())
+          .perform(clearText())
+          .perform(typeText("invalid_form_id"));
+      onView(withId(android.R.id.button1)).perform(click());
+
+      //attempt to add row
+      pressBack();
+      onView(withId(R.id.top_level_table_menu_add)).perform(click());
+
+      //wait for Survey to start
+      mDevice.wait(Until.hasObject(By.pkg(SURVEY_PKG_NAME).depth(0)), APP_START_TIMEOUT);
+      mDevice.wait(Until.findObject(By.text("OK")), APP_INIT_TIMEOUT).click();
+
+      //check that we're back to Tables
+      onView(withClassName(is(SpreadsheetView.class.getName()))).check(matches(isDisplayed()));
+    } catch (RemoteException e) {
+      e.printStackTrace();
+    } finally {
+      try {
+        FormType ft =
+            FormType.constructFormType(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
+        ft.setFormId(currFormId);
+        ft.persist(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
+      } catch (RemoteException e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   private static int getArea(Rect rect) {

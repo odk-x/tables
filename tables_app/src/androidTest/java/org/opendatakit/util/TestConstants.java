@@ -39,6 +39,7 @@ public class TestConstants {
   public static final String TABLE_ID = "table_pref_table_id";
   public static final String COL_DISPLAY_NAME = "column_pref_display_name";
   public static final String COL_KEY = "column_pref_element_key";
+  public static final String DEFAULT_FORM = "table_pref_default_form";
 
   //Misc.
   public static final String OI_PICK_FILE = "org.openintents.action.PICK_FILE";
