@@ -66,6 +66,9 @@ public class CrashTables {
     UAUtils.assertInitSucess(initSuccess);
   }
 
+  /**
+   * This is the same bug as the one we had for "pick view file" in table preferences
+   */
   @Test
   public void crashBy_importCsvOutsideAppDir() {
     //stub intent
