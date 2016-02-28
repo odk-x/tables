@@ -4,13 +4,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.uiautomator.*;
+import android.view.View;
+import android.widget.Button;
 import org.opendatakit.tables.R;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -29,15 +36,33 @@ public class UAUtils {
     try {
       startApp(mDevice, TABLES_PKG_NAME);
 
+      //Wait for initialization
+      String initialization = getString(R.string.configuring_app, getString(R.string.app_name));
+      mDevice.wait(Until.findObject(By.text(initialization)), OBJ_WAIT_TIMEOUT);
+      mDevice.wait(Until.gone(By.text(initialization)), APP_INIT_TIMEOUT);
+
+      //When new table is added, a result dialog is displayed, dismiss it
+      UiObject2 dialog = mDevice.wait(
+          Until.findObject(By.text(getString(R.string.initialization_complete))),
+          OBJ_WAIT_TIMEOUT
+      );
+      if (dialog != null) {
+        mDevice.findObject(By.clazz(Button.class)).click();
+      }
+
       //find the preference button
-      UiObject2 preference = mDevice.wait(Until.findObject(By.res(Pattern.compile(
-          "org.opendatakit.tables:id/menu_web_view_activity_table_manager" + "|"
-              + "org.opendatakit.tables:id/menu_table_manager_preferences"))), APP_INIT_TIMEOUT);
+      UiObject2 preference = mDevice.wait(
+          Until.findObject(By.res(Pattern.compile(
+              "org.opendatakit.tables:id/menu_web_view_activity_table_manager" + "|"
+                  + "org.opendatakit.tables:id/menu_table_manager_preferences"
+          ))),
+          OBJ_WAIT_TIMEOUT
+      );
 
       //from the preference's content description see if custom home screen has been enabled
       if (preference.getContentDescription().equals(getString(R.string.preferences))) {
         preference.click();
-        mDevice.wait(Until.findObject(By.text(InstrumentationRegistry.getTargetContext().getString(R.string.use_index_html))),
+        mDevice.wait(Until.findObject(By.text(getString(R.string.use_index_html))),
             OBJ_WAIT_TIMEOUT).click();
       }
     } catch (Exception e) {
@@ -95,6 +120,10 @@ public class UAUtils {
     return InstrumentationRegistry.getTargetContext().getString(id);
   }
 
+  public static String getString(int id, Object... formatArgs) {
+    return InstrumentationRegistry.getTargetContext().getString(id, formatArgs);
+  }
+
   /**
    * Note: this doesn't work with low x and y values
    *
@@ -111,6 +140,16 @@ public class UAUtils {
     ViewMatchers.assertThat("Initialization unsuccessful.", initStatus, is(true));
   }
 
+  public static void clickSpreadsheetRow(UiDevice mDevice, int row) {
+    Point pt = getSpreadsheetRow(mDevice, row);
+    mDevice.click(pt.x, pt.y);
+  }
+
+  public static void longPressSpreadsheetRow(UiDevice mDevice, int row) {
+    Point pt = getSpreadsheetRow(mDevice, row);
+    longPress(mDevice, pt.x, pt.y);
+  }
+
   /**
    * Uses package manager to find the package name of the device launcher. Usually this package
    * is "com.android.launcher" but can be different at times. This is a generic solution which
@@ -125,5 +164,48 @@ public class UAUtils {
     PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
     ResolveInfo resolveInfo = pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
     return resolveInfo.activityInfo.packageName;
+  }
+
+  private static Point getSpreadsheetRow(UiDevice mDevice, int row) {
+    //Find all views that can potentially be a tabular view
+    List<UiObject2> tabularViews =
+        mDevice.wait(Until.findObjects(By.clazz(View.class)), OBJ_WAIT_TIMEOUT);
+    Map<UiObject2, Rect> bounds = new HashMap<>();
+
+    //Find the relevant tabular views using their area
+    UiObject2 minArea = null; //upper left corner
+    UiObject2 maxArea = null; //main tabular view
+    for (int i = 0; i < tabularViews.size(); i++) {
+      UiObject2 view = tabularViews.get(i);
+
+      //Tabular view is a leaf node
+      if (view.getChildCount() == 0) {
+        bounds.put(view, view.getVisibleBounds());
+
+        if (maxArea == null || getArea(bounds.get(view)) > getArea(bounds.get(maxArea))) {
+          maxArea = view;
+        }
+
+        if (minArea == null || getArea(bounds.get(view)) < getArea(bounds.get(minArea))) {
+          minArea = view;
+        }
+      }
+    }
+
+    if (bounds.size() != 4) {
+      //there should be 4 TabularView
+      throw new IllegalStateException("# of TabularView found: " + bounds.size());
+    }
+
+    int rowHeight = bounds.get(minArea).height();
+
+    return new Point(
+        bounds.get(maxArea).centerX(),
+        rowHeight * row - rowHeight / 2 + bounds.get(maxArea).top
+    );
+  }
+
+  private static int getArea(Rect rect) {
+    return rect.width() * rect.height();
   }
 }

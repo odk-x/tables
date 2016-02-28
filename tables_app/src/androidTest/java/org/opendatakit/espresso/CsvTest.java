@@ -1,7 +1,10 @@
 package org.opendatakit.espresso;
 
+import android.os.RemoteException;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.UiDevice;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.widget.Button;
 import android.widget.EditText;
@@ -9,11 +12,14 @@ import android.widget.Spinner;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
+import org.opendatakit.util.UAUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -29,14 +35,30 @@ import static org.opendatakit.util.TestConstants.*;
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class CsvTest {
+  private Boolean initSuccess = null;
+  private UiDevice mDevice;
+
   private static final String VALID_QUALIFIER = "TEST_VALID";
   private static final String INVALID_QUALIFIER = "TEST_INVALID/";
 
   @Rule
-  public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<>(MainActivity.class);
+  public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
+      MainActivity.class) {
+    @Override
+    protected void beforeActivityLaunched() {
+      super.beforeActivityLaunched();
+
+      if (initSuccess == null) {
+        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        initSuccess = UAUtils.turnOnCustomHome(mDevice);
+      }
+    }
+  };
 
   @Before
   public void setup() {
+    UAUtils.assertInitSucess(initSuccess);
+
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
     onView(withId(R.id.menu_table_manager_export)).perform(click());
   }

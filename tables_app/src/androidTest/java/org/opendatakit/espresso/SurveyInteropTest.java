@@ -134,35 +134,10 @@ public class SurveyInteropTest {
     //Open "Tea houses editable"
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
 
-    //Find all views that can potentially be a tabular view
-    List<UiObject2> tabularViews =
-        mDevice.wait(Until.findObjects(By.clazz(View.class)), OBJ_WAIT_TIMEOUT);
-    Map<UiObject2, Rect> bounds = new HashMap<>();
+    //Click the 3rd row
+    UAUtils.longPressSpreadsheetRow(mDevice, 3);
 
-    //Find the relevant tabular views using their area
-    UiObject2 minArea = null; //upper left corner
-    UiObject2 maxArea = null; //main tabular view
-    for (int i = 0; i < tabularViews.size(); i++) {
-      UiObject2 view = tabularViews.get(i);
-
-      if (view.getChildCount() == 0) {
-        bounds.put(view, view.getVisibleBounds());
-
-        if (maxArea == null || getArea(bounds.get(view)) > getArea(bounds.get(maxArea))) {
-          maxArea = view;
-        }
-        if (minArea == null || getArea(bounds.get(view)) < getArea(bounds.get(minArea))) {
-          minArea = view;
-        }
-      }
-    }
-
-    int rowHeight = bounds.get(minArea).height();
-
-    //Long press the 3rd row
-    UAUtils.longPress(mDevice, bounds.get(maxArea).centerX(), rowHeight * 3 - rowHeight / 2 +
-        bounds.get(maxArea).top);
-
+    //Edit the row
     onView(withText(EspressoUtils.getString(mActivityRule, R.string.edit_row))).perform(click());
 
     intended(ODKMatchers.hasTable(
@@ -218,9 +193,5 @@ public class SurveyInteropTest {
         e.printStackTrace();
       }
     }
-  }
-
-  private static int getArea(Rect rect) {
-    return rect.width() * rect.height();
   }
 }
