@@ -48,6 +48,7 @@ import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.R;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -64,6 +65,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
 import android.provider.BaseColumns;
+
+import android.widget.Toast;
 
 /**
  * Utility methods for using ODK Collect.
@@ -706,8 +709,14 @@ public class CollectUtil {
     ContentResolver resolver = context.getContentResolver();
     Uri uriOfForm;
     if (shouldUpdate) {
-      int count = resolver.update(CONTENT_INSTANCE_URI, values, COLLECT_KEY_INSTANCE_FILE_PATH
-          + "=?", new String[] { instanceFilePath });
+      int count = 0;
+      try {
+        count = resolver.update(CONTENT_INSTANCE_URI, values, COLLECT_KEY_INSTANCE_FILE_PATH
+                + "=?", new String[]{instanceFilePath});
+      } catch (IllegalArgumentException iae) {
+        WebLogger.getLogger(appName).printStackTrace(iae);
+        return null;
+      }
       if (count == 0) {
         uriOfForm = resolver.insert(CONTENT_INSTANCE_URI, values);
       } else {
@@ -888,8 +897,8 @@ public class CollectUtil {
 
     // Now we want to insert the file.
     Uri insertedFormUri = CollectUtil.insertFormIntoCollect(resolver,
-        getAddRowFormFile(appName, tableId).getAbsolutePath(), localizedDisplayName,
-        params.getFormId());
+            getAddRowFormFile(appName, tableId).getAbsolutePath(), localizedDisplayName,
+            params.getFormId());
     if (insertedFormUri == null) {
       WebLogger.getLogger(appName).e(TAG,
           "problem inserting form into collect, return uri was null");
@@ -915,7 +924,7 @@ public class CollectUtil {
       OrderedColumns orderedDefns, CollectFormParameters collectFormParameters,
       Map<String, String> prepopulatedValues) throws RemoteException {
     Intent addRowIntent = getIntentForOdkCollectAddRow(activity, appName, tableId, orderedDefns,
-        collectFormParameters, prepopulatedValues);
+            collectFormParameters, prepopulatedValues);
     if (addRowIntent == null) {
       WebLogger.getLogger(appName).e(TAG, "[addRowWithCollect] intent was null, returning");
       return;
@@ -940,10 +949,10 @@ public class CollectUtil {
       OrderedColumns orderedDefns, String rowId,
       CollectFormParameters collectFormParameters) throws RemoteException {
     Map<String, String> elementKeyToValue = WebViewUtil.getMapOfElementKeyToValue(activity,
-        appName, tableId, orderedDefns, rowId);
+            appName, tableId, orderedDefns, rowId);
     Intent editRowIntent = getIntentForOdkCollectEditRow(activity, appName, tableId, orderedDefns,
-        elementKeyToValue, collectFormParameters.getFormId(),
-        collectFormParameters.getFormVersion(), collectFormParameters.getRootElement(), rowId);
+            elementKeyToValue, collectFormParameters.getFormId(),
+            collectFormParameters.getFormVersion(), collectFormParameters.getRootElement(), rowId);
     if (editRowIntent == null) {
       WebLogger.getLogger(appName).e(TAG, "[editRowWithCollect] intent was null, doing nothing");
     } else {
@@ -1100,11 +1109,17 @@ public class CollectUtil {
     // Note that we aren't storing this in the key value store because it is
     // a very temporary bit of state that would be meaningless if the call
     // and return to/from collect was interrupted.
-    SharedPreferences preferences = activityToAwaitReturn.getSharedPreferences(
-        SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
-    preferences.edit().putString(PREFERENCE_KEY_EDITED_ROW_ID, rowId).commit();
-    activityToAwaitReturn.startActivityForResult(collectEditIntent,
-        Constants.RequestCodes.EDIT_ROW_COLLECT);
+    Context ctxt = activityToAwaitReturn.getApplicationContext();
+
+    if (DependencyChecker.isPackageInstalled(ctxt, collectEditIntent.getPackage())) {
+      SharedPreferences preferences = activityToAwaitReturn.getSharedPreferences(
+              SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
+      preferences.edit().putString(PREFERENCE_KEY_EDITED_ROW_ID, rowId).commit();
+      activityToAwaitReturn.startActivityForResult(collectEditIntent,
+              Constants.RequestCodes.EDIT_ROW_COLLECT);
+    } else {
+      Toast.makeText(ctxt, ctxt.getString(R.string.collect_not_installed), Toast.LENGTH_LONG).show();
+    }
   }
 
   /**
@@ -1126,11 +1141,17 @@ public class CollectUtil {
     // We want to save the id of the table that is going to receive the row
     // that returns from Collect. We'll store it in a SharedPreference so
     // that we can get at it.
-    SharedPreferences preferences = activityToAwaitReturn.getSharedPreferences(
-        SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
-    preferences.edit().putString(PREFERENCE_KEY_TABLE_ID_ADD, tableId).commit();
-    activityToAwaitReturn.startActivityForResult(collectAddIntent,
-        Constants.RequestCodes.ADD_ROW_COLLECT);
+    Context ctxt = activityToAwaitReturn.getApplicationContext();
+
+    if (DependencyChecker.isPackageInstalled(ctxt, collectAddIntent.getPackage())) {
+      SharedPreferences preferences = activityToAwaitReturn.getSharedPreferences(
+              SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
+      preferences.edit().putString(PREFERENCE_KEY_TABLE_ID_ADD, tableId).commit();
+      activityToAwaitReturn.startActivityForResult(collectAddIntent,
+              Constants.RequestCodes.ADD_ROW_COLLECT);
+    } else {
+      Toast.makeText(ctxt, ctxt.getString(R.string.collect_not_installed), Toast.LENGTH_LONG).show();
+    }
   }
 
   /**
