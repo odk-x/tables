@@ -1111,7 +1111,7 @@ public class CollectUtil {
     // and return to/from collect was interrupted.
     Context ctxt = activityToAwaitReturn.getApplicationContext();
 
-    if (DependencyChecker.isPackageInstalled(ctxt, collectEditIntent.getPackage())) {
+    if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.collectAppPkgName)) {
       SharedPreferences preferences = activityToAwaitReturn.getSharedPreferences(
               SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
       preferences.edit().putString(PREFERENCE_KEY_EDITED_ROW_ID, rowId).commit();
@@ -1143,7 +1143,7 @@ public class CollectUtil {
     // that we can get at it.
     Context ctxt = activityToAwaitReturn.getApplicationContext();
 
-    if (DependencyChecker.isPackageInstalled(ctxt, collectAddIntent.getPackage())) {
+    if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.collectAppPkgName)) {
       SharedPreferences preferences = activityToAwaitReturn.getSharedPreferences(
               SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
       preferences.edit().putString(PREFERENCE_KEY_TABLE_ID_ADD, tableId).commit();

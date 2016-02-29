@@ -332,7 +332,7 @@ public class SurveyUtil {
   public static void launchSurveyToAddRow(AbsBaseActivity activityToAwaitReturn, 
       String tableId, Intent surveyAddIntent) {
     Context ctxt = activityToAwaitReturn.getApplicationContext();
-    if (DependencyChecker.isPackageInstalled(ctxt, surveyAddIntent.getPackage())) {
+    if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)) {
       activityToAwaitReturn.setActionTableId(tableId);
       activityToAwaitReturn.startActivityForResult(
               surveyAddIntent,
@@ -416,7 +416,7 @@ public class SurveyUtil {
                                            Intent surveyEditIntent,
                                            String rowId) {
     Context ctxt = activityToAwaitReturn.getApplicationContext();
-    if (DependencyChecker.isPackageInstalled(ctxt, surveyEditIntent.getPackage())){
+    if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)){
       activityToAwaitReturn.setActionTableId(tableId);
       activityToAwaitReturn.startActivityForResult(
               surveyEditIntent,
