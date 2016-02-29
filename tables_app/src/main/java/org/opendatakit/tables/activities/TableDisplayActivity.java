@@ -16,11 +16,7 @@
 package org.opendatakit.tables.activities;
 
 import android.view.*;
-import com.google.android.gms.maps.MapFragment;
-import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.utilities.DependencyChecker;
-import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.views.ODKWebView;
@@ -42,7 +38,6 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.RemoteException;
 import android.widget.Toast;
 

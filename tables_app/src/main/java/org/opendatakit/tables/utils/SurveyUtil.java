@@ -30,6 +30,7 @@ import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.R;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -38,6 +39,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.RemoteException;
+
+import android.widget.Toast;
 
 /**
  * The ODKSurvey analogue to {@see CollectUtil}. Various functions and
@@ -129,7 +132,7 @@ public class SurveyUtil {
                                           SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME));
     intent.setAction(Intent.ACTION_EDIT);
     Uri addUri = getUriForSurveyAddRow(context, appName, tableId, surveyFormParameters, elementNameToValue,
-        context.getContentResolver());
+            context.getContentResolver());
     intent.setData(addUri);
     return intent;
   }
@@ -164,7 +167,7 @@ public class SurveyUtil {
                                           SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME));
     intent.setAction(Intent.ACTION_EDIT);
     Uri editUri = getUriForSurveyEditRow(context, appName, tableId, surveyFormParameters, instanceId,
-        context.getContentResolver());
+            context.getContentResolver());
     intent.setData(editUri);
     return intent;
   }
@@ -328,10 +331,16 @@ public class SurveyUtil {
    */
   public static void launchSurveyToAddRow(AbsBaseActivity activityToAwaitReturn, 
       String tableId, Intent surveyAddIntent) {
-    activityToAwaitReturn.setActionTableId(tableId);
-    activityToAwaitReturn.startActivityForResult(
-        surveyAddIntent,
-        Constants.RequestCodes.ADD_ROW_SURVEY);
+    Context ctxt = activityToAwaitReturn.getApplicationContext();
+    if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)) {
+      activityToAwaitReturn.setActionTableId(tableId);
+      activityToAwaitReturn.startActivityForResult(
+              surveyAddIntent,
+              Constants.RequestCodes.ADD_ROW_SURVEY);
+
+    }  else {
+      Toast.makeText(ctxt, ctxt.getString(R.string.survey_not_installed), Toast.LENGTH_LONG).show();
+    }
   }
 
   /**
@@ -406,10 +415,15 @@ public class SurveyUtil {
                                            String tableId,
                                            Intent surveyEditIntent,
                                            String rowId) {
-    activityToAwaitReturn.setActionTableId(tableId);
-    activityToAwaitReturn.startActivityForResult(
-        surveyEditIntent,
-        Constants.RequestCodes.EDIT_ROW_SURVEY);
+    Context ctxt = activityToAwaitReturn.getApplicationContext();
+    if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)){
+      activityToAwaitReturn.setActionTableId(tableId);
+      activityToAwaitReturn.startActivityForResult(
+              surveyEditIntent,
+              Constants.RequestCodes.EDIT_ROW_SURVEY);
+    } else {
+      Toast.makeText(ctxt, ctxt.getString(R.string.survey_not_installed), Toast.LENGTH_LONG).show();
+    }
   }
 
   /**
