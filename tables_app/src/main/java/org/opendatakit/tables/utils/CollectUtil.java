@@ -1021,6 +1021,12 @@ public class CollectUtil {
     CollectFormParameters formParameters = CollectFormParameters.constructCollectFormParameters(
         context, appName, tableId);
 
+    // User must specify a form id for this to work
+    if (formId == null) {
+      Toast.makeText(context, context.getString(R.string.no_form_id_specified), Toast.LENGTH_LONG).show();
+      return null;
+    }
+
     if (formId != null && !formId.equals("")) {
       formParameters.setFormId(formId);
     }

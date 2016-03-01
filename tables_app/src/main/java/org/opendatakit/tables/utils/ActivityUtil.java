@@ -62,8 +62,13 @@ public class ActivityUtil {
         }
       }
 
+      String formId = null;
+      if (formType != null) {
+        formId = formType.getFormId();
+      }
+
       Intent intent = CollectUtil.getIntentForOdkCollectEditRow(activity, appName, tableId,
-              orderedDefns, elementKeyToValue, null, null, null, row.getRowId());
+              orderedDefns, elementKeyToValue, formId, null, null, row.getRowId());
 
       if (intent != null) {
         CollectUtil.launchCollectToEditRow(activity, intent, row.getRowId());
