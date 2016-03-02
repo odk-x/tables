@@ -67,44 +67,7 @@ public class CrashTables {
     UAUtils.assertInitSucess(initSuccess);
   }
 
-  /**
-   * This is the same bug as the one we had for "pick view file" in table preferences
-   */
-  @Test
-  public void crashBy_importCsvOutsideAppDir() {
-    //stub intent
-    intending(hasAction(OI_PICK_FILE)).respondWith(
-        new Instrumentation.ActivityResult(
-            Activity.RESULT_OK,
-            new Intent().setData(Uri.fromFile(new File("/file")))
-        )
-    );
-
-    //Choose a csv to import
-    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
-    onView(withId(R.id.menu_table_manager_import)).perform(click());
-    onView(withText(R.string.import_choose_csv_file)).perform(click());
-
-    //CRASH
-  }
-
-  /**
-   * This is a variant of the previous "generated form" bug
-   */
-  @Test
-  public void crashBy_editGeneratedForm() {
-    //Open "Tea houses"
-    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
-    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID)).perform(click());
-
-    //Switch to spreadsheet view
-    onView(withId(R.id.top_level_table_menu_select_view)).perform(click());
-    onView(withText("Spreadsheet")).perform(click());
-
-    //Edit row 3
-    UAUtils.longPressSpreadsheetRow(mDevice, 3);
-    onView(withText(EspressoUtils.getString(mActivityRule, R.string.edit_row))).perform(click());
-
-    //CRASH
-  }
+  //
+  // EMPTY! EMPTY! FINALLY! EMPTY!
+  //
 }

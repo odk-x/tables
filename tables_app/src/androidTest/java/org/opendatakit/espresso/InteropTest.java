@@ -45,7 +45,7 @@ import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class SurveyInteropTest {
+public class InteropTest {
   private static final int WAIT = 1000;
 
   private Boolean initSuccess = null;
@@ -184,6 +184,7 @@ public class SurveyInteropTest {
     } catch (RemoteException e) {
       e.printStackTrace();
     } finally {
+      //restore original formId
       try {
         FormType ft =
             FormType.constructFormType(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
@@ -193,5 +194,26 @@ public class SurveyInteropTest {
         e.printStackTrace();
       }
     }
+  }
+
+  @Test
+  public void sameApp_emptyFormId() {
+    //Open "Tea houses"
+    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+    onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID)).perform(click());
+
+    //Switch to spreadsheet view
+    onView(withId(R.id.top_level_table_menu_select_view)).perform(click());
+    onView(withText("Spreadsheet")).perform(click());
+
+    //Edit row 3
+    UAUtils.longPressSpreadsheetRow(mDevice, 3);
+    onView(withText(EspressoUtils.getString(mActivityRule, R.string.edit_row))).perform(click());
+
+    //Check toast
+    EspressoUtils.toastMsgMatcher(
+        mActivityRule,
+        is(EspressoUtils.getString(mActivityRule, R.string.no_form_id_specified))
+    );
   }
 }

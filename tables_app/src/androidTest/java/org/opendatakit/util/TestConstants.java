@@ -12,7 +12,7 @@ public class TestConstants {
   //Timeout for launching an app
   public static final int APP_START_TIMEOUT = 10000;
   //Timeout for "Configuring ..."
-  public static final int APP_INIT_TIMEOUT = 3 * 6000;
+  public static final int APP_INIT_TIMEOUT = 10 * 6000;
   //Timeout for view rendering
   public static final int OBJ_WAIT_TIMEOUT = 3000;
 

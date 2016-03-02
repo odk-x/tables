@@ -1,7 +1,13 @@
 package org.opendatakit.espresso;
 
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.espresso.Espresso;
+import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
@@ -27,6 +33,8 @@ import java.io.FilenameFilter;
 import static android.support.test.espresso.Espresso.*;
 import static android.support.test.espresso.action.ViewActions.*;
 import static android.support.test.espresso.assertion.ViewAssertions.*;
+import static android.support.test.espresso.intent.Intents.intending;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.hasAction;
 import static android.support.test.espresso.matcher.RootMatchers.isPlatformPopup;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
 import static org.hamcrest.Matchers.*;
@@ -42,7 +50,7 @@ public class CsvTest {
   private static final String INVALID_QUALIFIER = "TEST_INVALID/";
 
   @Rule
-  public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
+  public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
       MainActivity.class) {
     @Override
     protected void beforeActivityLaunched() {
@@ -146,7 +154,10 @@ public class CsvTest {
           .check(matches(isCompletelyDisplayed()));
 
       //Check that csv was not exported
-      assertThat(getOutputDirFileCount(), equalTo(fileCount));
+      assertThat(
+          "Csv export produced files in output directory",
+          getOutputDirFileCount(), equalTo(fileCount)
+      );
     } finally {
       String csvDir = ODKFileUtils.getOutputCsvFolder(TableFileUtils.getDefaultAppName())
           + "/Tea_houses.TEST_INVALID";
@@ -158,6 +169,31 @@ public class CsvTest {
         new File(csvDir).delete();
       }
     }
+  }
+
+  @Test
+  public void importCsv_fileOutOfAppDir() {
+    //stub intent
+    intending(hasAction(OI_PICK_FILE)).respondWith(
+        new Instrumentation.ActivityResult(
+            Activity.RESULT_OK,
+            new Intent().setData(Uri.fromFile(new File("/file")))
+        )
+    );
+
+    //go to csv import
+    Espresso.pressBack();
+    Espresso.pressBack();
+    onView(withId(R.id.menu_table_manager_import)).perform(click());
+    onView(withText(R.string.import_choose_csv_file)).perform(click());
+
+    //check toast
+    EspressoUtils.toastMsgMatcher(
+        mActivityRule,
+        is(EspressoUtils.getString(
+            mActivityRule, R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(APP_NAME))
+        )
+    );
   }
 
   private static int getTableCount() {
