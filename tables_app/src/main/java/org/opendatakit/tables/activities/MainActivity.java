@@ -32,7 +32,6 @@ import org.opendatakit.tables.fragments.InitializationFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.fragments.WebFragment;
 import org.opendatakit.tables.logic.TablesToolProperties;
-import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 
@@ -388,50 +387,23 @@ public class MainActivity extends AbsBaseWebActivity implements
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     String tableId = this.getActionTableId();
     if (tableId != null) {
-      try {
-  
-        switch (requestCode) {
+      switch (requestCode) {
         case Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
         case Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER:
           // don't let the user cancel out of these...
           break;
         // For now, we will just refresh the table if something could have
         // changed.
-        case Constants.RequestCodes.ADD_ROW_COLLECT:
-          if (resultCode == Activity.RESULT_OK) {
-            WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result ok, refreshing backing table");
-            CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), tableId,
-                resultCode, data);
-          } else {
-            WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result canceled, not refreshing backing " + "table");
-          }
-          break;
-        case Constants.RequestCodes.EDIT_ROW_COLLECT:
-          if (resultCode == Activity.RESULT_OK) {
-            WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result ok, refreshing backing table");
-            CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), tableId,
-                resultCode, data);
-          } else {
-            WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result canceled, not refreshing backing " + "table");
-          }
-          break;
         case Constants.RequestCodes.ADD_ROW_SURVEY:
         case Constants.RequestCodes.EDIT_ROW_SURVEY:
           if (resultCode == Activity.RESULT_OK) {
             WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result ok, refreshing backing table");
+                    "[onActivityResult] result ok, refreshing backing table");
           } else {
             WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result canceled, refreshing backing table");
+                    "[onActivityResult] result canceled, refreshing backing table");
           }
           break;
-        }
-      } catch (RemoteException e) {
-        WebLogger.getLogger(getAppName()).printStackTrace(e);
       }
     }
     super.onActivityResult(requestCode, resultCode, data);

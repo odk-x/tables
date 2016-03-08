@@ -187,8 +187,6 @@ public class Constants {
     public static final int LAUNCH_WEB_VIEW = 10;
     /** For launching an intent to edit a table's properties. */
     public static final int LAUNCH_TABLE_PREFS = 11;
-    public static final int EDIT_ROW_COLLECT = 12;
-    public static final int ADD_ROW_COLLECT = 13;
     public static final int LAUNCH_COLOR_RULE_LIST = 16;
     public static final int ADD_ROW_SURVEY = 17;
     public static final int EDIT_ROW_SURVEY = 18;

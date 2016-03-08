@@ -43,8 +43,8 @@ import android.os.RemoteException;
 import android.widget.Toast;
 
 /**
- * The ODKSurvey analogue to {@see CollectUtil}. Various functions and
- * utilities necessary to use Survey to interact with ODKTables.
+ * Various functions and utilities necessary
+ * to use Survey to interact with ODKTables.
  *
  * @author sudar.sam@gmail.com
  *
@@ -99,9 +99,7 @@ public class SurveyUtil {
   }
 
   /**
-   * Acquire an intent that will be set up to add a row using Survey. As with
-   * {@see CollectUtil#getIntentForOdkCollectAddRow(Context, String, String, org.opendatakit.tables.utils.CollectUtil.CollectFormParameters, Map)}
-   * , it
+   * Acquire an intent that will be set up to add a row using Survey. It
    * should eventually be able to prepopulate the row with the values in
    * elementKeyToValue. However! Much of this is still unimplemented.
    *

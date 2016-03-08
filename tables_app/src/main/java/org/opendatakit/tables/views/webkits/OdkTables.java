@@ -33,7 +33,6 @@ import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.*;
-import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
@@ -358,105 +357,6 @@ public class OdkTables {
   }
 
   /**
-   * Add a row with collect.
-   * <p>
-   * The check for null on formId is to try and minimize the amount of
-   * similarly-named methods in this class, which makes it hard to maintain.
-   *
-   * @param tableId
-   * @param formId
-   *          if this is null, it is assumed the caller is not specifying a
-   *          specific form, and instead the default form parameters are tried
-   *          to be constructed.
-   * @param formVersion
-   * @param formRootElement
-   * @param jsonMap
-   *          a json string of values to prepopulate the form with. a null value
-   *          won't prepopulate any values.
-   * @return true if the launch succeeded, else false
-   * @throws RemoteException 
-   */
-  public boolean helperAddRowWithCollect(String tableId, String formId, String formVersion,
-      String formRootElement, String jsonMap) throws RemoteException {
-    String appName = mActivity.getAppName();
-    if (!getTableIds().contains(tableId)) {
-      WebLogger.getLogger(appName).e(TAG,
-          "table [" + tableId + "] could not be found. " + "returning.");
-      return false;
-    }
-
-    OrderedColumns orderedDefns;
-    if (this.mCachedOrderedDefns.containsKey(tableId)) {
-      orderedDefns = this.mCachedOrderedDefns.get(tableId);
-    } else {
-      OdkDbHandle db = null;
-      try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        orderedDefns = retrieveColumnDefinitions(db, tableId);
-      } finally {
-        if (db != null) {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
-        }
-      }
-    }
-
-    Map<String, String> map = null;
-    if (jsonMap != null) {
-      map = WebViewUtil.getMapFromJson(appName, jsonMap);
-      if (map == null) {
-        WebLogger.getLogger(appName).e(TAG, "couldn't parse jsonString: " + jsonMap);
-        return false;
-      }
-    }
-    CollectFormParameters formParameters = CollectFormParameters.constructCollectFormParameters(
-        mActivity, appName, tableId);
-    if (formId != null) {
-      formParameters.setFormId(formId);
-      if (formVersion != null) {
-        formParameters.setFormVersion(formVersion);
-      }
-      if (formRootElement != null) {
-        formParameters.setRootElement(formRootElement);
-      }
-    }
-    this.prepopulateRowAndLaunchCollect(tableId, orderedDefns, formParameters, map);
-    return true;
-  }
-
-  /**
-   * It prepopulates the form as it needs based on the query (or the
-   * elKeyToValueToPrepopulate parameter) and launches the form.
-   *
-   * @param tableId
-   * @param orderedDefns
-   * @param params
-   * @param elKeyToValueToPrepopulate
-   *          a map of element key to value that will prepopulate the Collect
-   *          form for the new add row. Must be a map of column element key to
-   *          value. If this parameter is null, it prepopulates based on the
-   *          searchString, if there is one. If this value is not null, it
-   *          ignores the queryString and uses only the map.
-   * @throws RemoteException
-   */
-  private void prepopulateRowAndLaunchCollect(String tableId,
-      OrderedColumns orderedDefns, CollectFormParameters params,
-      Map<String, String> elKeyToValueToPrepopulate) throws RemoteException {
-    String appName = mActivity.getAppName();
-    Intent addRowIntent;
-    if (elKeyToValueToPrepopulate == null) {
-      // The prepopulated values we need to get from the query string.
-      addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(this.mActivity, appName,
-          tableId, orderedDefns, params);
-    } else {
-      // We've received a map to prepopulate with.
-      addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(this.mActivity, appName,
-          tableId, orderedDefns, params, elKeyToValueToPrepopulate);
-    }
-    // Now just launch the intent to add the row.
-    CollectUtil.launchCollectToAddRow(this.mActivity, addRowIntent, tableId);
-  }
-
-  /**
    * Launch survey to edit the row.
    *
    * @param tableId
@@ -485,73 +385,4 @@ public class OdkTables {
         surveyFormParameters);
     return true;
   }
-
-  /**
-   * Edit the given row with Collect. Returns true if things went well, or false
-   * if something went wrong.
-   * <p>
-   * formId is checked for null--if it is, it tries to use the default form. If
-   * not null, it uses that form.
-   *
-   * @param tableId
-   * @param rowId
-   * @param formId
-   * @param formVersion
-   * @param formRootElement
-   * @return
-   * @throws RemoteException 
-   */
-  public boolean helperEditRowWithCollect(String tableId, String rowId, String formId,
-      String formVersion, String formRootElement) throws RemoteException {
-    String appName = mActivity.getAppName();
-    if (!getTableIds().contains(tableId)) {
-      WebLogger.getLogger(appName).e(TAG,
-          "table [" + tableId + "] could not be found. " + "returning.");
-      return false;
-    }
-    CollectFormParameters formParameters = null;
-
-    OrderedColumns orderedDefns;
-    if (this.mCachedOrderedDefns.containsKey(tableId)) {
-      orderedDefns = this.mCachedOrderedDefns.get(tableId);
-    } else {
-      OdkDbHandle db = null;
-      try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        orderedDefns = retrieveColumnDefinitions(db, tableId);
-      } finally {
-        if (db != null) {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
-        }
-      }
-    }
-
-    if (formId == null) {
-      // Then we want to construct the form parameters using default
-      // values.
-      formParameters = CollectFormParameters.constructCollectFormParameters(this.mActivity,
-          appName, tableId);
-      formId = formParameters.getFormId();
-      formVersion = formParameters.getFormVersion();
-      formRootElement = formParameters.getRootElement();
-    } else {
-      String localizedDisplayName;
-      OdkDbHandle db = null;
-      try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
-      } finally {
-        if (db != null) {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
-        }
-      }
-
-      formParameters = new CollectFormParameters(true, formId, formVersion, formRootElement,
-          localizedDisplayName);
-    }
-    CollectUtil.editRowWithCollect(this.mActivity, appName, tableId, orderedDefns, rowId,
-        formParameters);
-    return true;
-  }
-
 }
