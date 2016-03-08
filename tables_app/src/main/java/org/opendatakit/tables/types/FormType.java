@@ -20,7 +20,6 @@ import org.opendatakit.common.android.utilities.KeyValueStoreUtils;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import android.content.Context;
@@ -42,50 +41,18 @@ public class FormType {
   public static final String KEY_FORM_TYPE = "FormType.formType";
 
   /*
-   * The two things that define a form in the system.
+   * Currently only a Survey form is valid.
    */
   public enum Type {
-    COLLECT, SURVEY
+    SURVEY
   };
 
   private Type type;
-  private CollectFormParameters mCollectParams;
   private SurveyFormParameters mSurveyParams;
 
   public static FormType constructFormType(Context context, String appName, String tableId) throws RemoteException {
-    String formType;
-    OdkDbHandle db = null;
-    try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      List<KeyValueStoreEntry> kvsList =  Tables.getInstance().getDatabase()
-              .getDBTableMetadata(appName, db, tableId, FormType.KVS_PARTITION, FormType.KVS_ASPECT, FormType.KEY_FORM_TYPE );
-      if ( kvsList.size() != 1 ) {
-        formType = null;
-      } else {
-        formType = KeyValueStoreUtils.getString(appName, kvsList.get(0));
-      }
-    } finally {
-      if ( db != null ) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
-      }
-    }
-    // Not supporting this currently
-//    if (formType == null) {
-//      return new FormType(context, appName, tableId, CollectFormParameters.constructDefaultCollectFormParameters(
-//          context, appName, tableId));
-//    }
-    try {
-      Type t = Type.valueOf(formType);
-      if (t == Type.COLLECT) {
-        return new FormType(context, appName, tableId, CollectFormParameters.constructCollectFormParameters(
-                context, appName, tableId));
-      }
-      return new FormType(context, appName, tableId, SurveyFormParameters.constructSurveyFormParameters(
-          context, appName, tableId));
-    } catch (Exception e) {
-      return new FormType(context, appName, tableId, CollectFormParameters.constructCollectFormParameters(
-          context, appName, tableId));
-    }
+    return new FormType(context, appName, tableId, SurveyFormParameters.constructSurveyFormParameters(
+            context, appName, tableId));
   }
 
   public void persist(Context context, String appName, String tableId) throws RemoteException {
@@ -99,21 +66,12 @@ public class FormType {
 
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       // don't use a transaction, but ensure that if we are transitioning to
-      // the collect type (or updating it), that we update its settings first.
-      // ditto survey.
-      if ( type == Type.COLLECT ) {
-        this.mCollectParams.persist(appName, db, tableId);
-      } else {
-        this.mSurveyParams.persist(appName, db, tableId);
-      }
+      // the survey type (or updating it), that we update its settings first.
+      this.mSurveyParams.persist(appName, db, tableId);
       Tables.getInstance().getDatabase().replaceDBTableMetadata(appName, db, entry);
       // and once we have transitioned, then we alter the settings
       // of the form type we are no longer using.
-      if ( type == Type.COLLECT ) {
-        this.mSurveyParams.persist(appName, db, tableId);
-      } else {
-        this.mCollectParams.persist(appName, db, tableId);
-      }
+      this.mSurveyParams.persist(appName, db, tableId);
     } finally {
       if ( db != null ) {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);
@@ -121,90 +79,17 @@ public class FormType {
     }
   }
 
-  public FormType(Context context, String appName, String tableId, CollectFormParameters params) throws RemoteException {
-    this.type = Type.COLLECT;
-    this.mCollectParams = params;
-    this.mSurveyParams = SurveyFormParameters.constructSurveyFormParameters(context, appName, tableId);
-  }
-
   public FormType(Context context, String appName, String tableId, SurveyFormParameters params) throws RemoteException {
     this.type = Type.SURVEY;
     this.mSurveyParams = params;
-    this.mCollectParams = CollectFormParameters.constructCollectFormParameters(
-        context, appName, tableId);
-  }
-
-  public boolean isCollectForm() {
-    return (type == Type.COLLECT);
-  }
-
-  public void setIsCollectForm(boolean isCollectForm) {
-    if (isCollectForm) {
-      type = Type.COLLECT;
-    } else {
-      type = Type.SURVEY;
-    }
   }
 
   public String getFormId() {
-    if (type == Type.COLLECT) {
-      return this.mCollectParams.getFormId();
-    } else {
-      return this.mSurveyParams.getFormId();
-    }
+    return this.mSurveyParams.getFormId();
   }
 
   public void setFormId(String formId) {
-    if (type == Type.COLLECT) {
-      this.mCollectParams.setFormId(formId);
-    } else {
-      this.mSurveyParams.setFormId(formId);
-    }
-  }
-
-  /**
-   * Returns true if the form represents a default form.
-   *
-   * @return
-   */
-  public boolean isCustom() {
-    if (type == Type.COLLECT) {
-      return this.mCollectParams.isCustom();
-    } else {
-      return this.mSurveyParams.isUserDefined();
-    }
-  }
-
-  public void setIsCustom(boolean isCustom) {
-    if (type == Type.COLLECT) {
-      this.mCollectParams.setIsCustom(isCustom);
-    } else {
-      this.mSurveyParams.setIsUserDefined(isCustom);
-    }
-  }
-
-  public String getFormRootElement() {
-    if (type == Type.COLLECT) {
-      return this.mCollectParams.getRootElement();
-    } else {
-      throw new IllegalStateException("Unexpected attempt to retrieve FormRootElement");
-    }
-  }
-
-  public void setFormRootElement(String formRootElement) {
-    if (type == Type.COLLECT) {
-      this.mCollectParams.setRootElement(formRootElement);
-    } else {
-      throw new IllegalStateException("Unexpected attempt to retrieve FormRootElement");
-    }
-  }
-
-  public CollectFormParameters getCollectFormParameters() {
-    if (type == Type.COLLECT) {
-      return this.mCollectParams;
-    } else {
-      throw new IllegalStateException("Unexpected attempt to retrieve CollectFormParameters");
-    }
+    this.mSurveyParams.setFormId(formId);
   }
 
   public SurveyFormParameters getSurveyFormParameters() {

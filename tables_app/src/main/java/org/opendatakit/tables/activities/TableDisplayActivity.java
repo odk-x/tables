@@ -27,7 +27,6 @@ import org.opendatakit.tables.data.PossibleTableViewTypes;
 import org.opendatakit.tables.fragments.*;
 import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
 import org.opendatakit.tables.utils.ActivityUtil;
-import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
@@ -410,45 +409,19 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    try {
-      // for most returns, we just refresh the data set and redraw the page
-      // for others, we need to take more intensive action
-      switch (requestCode) {
-      case Constants.RequestCodes.ADD_ROW_COLLECT:
-        if (resultCode == Activity.RESULT_OK) {
-          WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result ok, refreshing backing table");
-          CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), getTableId(),
-              resultCode, data);
-        } else {
-          WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result canceled, not refreshing backing " + "table");
-        }
-        break;
-      case Constants.RequestCodes.EDIT_ROW_COLLECT:
-        if (resultCode == Activity.RESULT_OK) {
-          WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result ok, refreshing backing table");
-          CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), getTableId(),
-              resultCode, data);
-        } else {
-          WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result canceled, not refreshing backing " + "table");
-        }
-        break;
+    // for most returns, we just refresh the data set and redraw the page
+    // for others, we need to take more intensive action
+    switch (requestCode) {
       case Constants.RequestCodes.ADD_ROW_SURVEY:
       case Constants.RequestCodes.EDIT_ROW_SURVEY:
         if (resultCode == Activity.RESULT_OK) {
           WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result ok, refreshing backing table");
+                  "[onActivityResult] result ok, refreshing backing table");
         } else {
           WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result canceled, refreshing backing table");
+                  "[onActivityResult] result canceled, refreshing backing table");
         }
         break;
-      }
-    } catch ( RemoteException e ) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
 
     super.onActivityResult(requestCode, resultCode, data);
