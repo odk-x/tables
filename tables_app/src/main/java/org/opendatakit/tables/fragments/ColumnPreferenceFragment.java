@@ -160,7 +160,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
   private void initializeElementName() {
     EditTextPreference pref = this
-        .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
+        .findEditTextPreference(Constants.PreferenceKeys.Column.ELEMENT_NAME);
     pref.setSummary(this.retrieveColumnDefinition().getElementName());
   }
 

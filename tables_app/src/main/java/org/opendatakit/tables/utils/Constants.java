@@ -157,6 +157,7 @@ public class Constants {
     public static class Column {
       public static final String DISPLAY_NAME = "column_pref_display_name";
       public static final String ELEMENT_KEY = "column_pref_element_key";
+      public static final String ELEMENT_NAME = "column_pref_element_name";
       public static final String TYPE = "column_pref_column_type";
       public static final String WIDTH = "column_pref_column_width";
       public static final String COLOR_RULES = "column_pref_color_rules";
