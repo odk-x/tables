@@ -23,7 +23,10 @@ import org.opendatakit.common.android.views.ExecutorContext;
 import org.opendatakit.common.android.views.ExecutorProcessor;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.fragments.MapListViewFragment;
+import org.opendatakit.tables.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,14 +38,22 @@ import java.util.Map;
  */
 public class TableDataExecutorProcessor extends ExecutorProcessor {
 
+  private AbsBaseWebActivity mActivity;
+
+  protected static final String ROW_COLORS = "rowColors";
+  protected static final String STATUS_COLORS = "statusColors";
+  protected static final String COLUMN_COLORS = "columnColors";
+  protected static final String MAP_INDEX = "mapIndex";
+
   enum colorRuleType {
     TABLE,
     COLUMN,
     STATUS
   };
 
-  public TableDataExecutorProcessor(ExecutorContext context) {
+  public TableDataExecutorProcessor(ExecutorContext context, AbsBaseWebActivity activity) {
     super(context);
+    this.mActivity = activity;
   }
 
   @Override
@@ -76,10 +87,17 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
       e.printStackTrace();
     }
 
-    metadata.put("rowColors", rowColors);
-    metadata.put("statusColors", statusColors);
-    metadata.put("columnColors", colColors);
+    metadata.put(ROW_COLORS, rowColors);
+    metadata.put(STATUS_COLORS, statusColors);
+    metadata.put(COLUMN_COLORS, colColors);
 
+    if (mActivity != null) {
+      MapListViewFragment mlvFragment = (MapListViewFragment) mActivity.getFragmentManager().findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+      if (mlvFragment != null && mlvFragment.isVisible()) {
+        int mapIndex = mlvFragment.getIndexOfSelectedItem();
+        metadata.put(MAP_INDEX, mapIndex);
+      }
+    }
   }
 
   private void constructRowColorObjects(OdkDbHandle db, UserTable userTable, String[] adminCols, ArrayList<RowColorObject>colors, colorRuleType crType, String elementKey) throws RemoteException {
