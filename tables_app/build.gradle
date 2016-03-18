@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId(groupId + tablesName)
-        minSdkVersion(minVersion) // changed from minVersion for UiAutomator
+        minSdkVersion(minVersion)
         targetSdkVersion(targetVersion)
         versionCode(releaseVersionCode)
         versionName(versionCodeName)
@@ -80,13 +80,7 @@ dependencies {
                 version: (useLatestCommon ? latestVersion : commonSnapshot), ext: 'aar')
     }
 
-    if (playServicesPath.exists() && gradle.useLocal) { // Local project is favoured
-        compile project(playServicesName)
-    } else {
-        compile(group: groupId, name: playServicesArtifactName,
-                version: (useLatestPlayServices ? latestVersion : playServicesSnapshot), ext: 'aar')
-    }
-
+    compile 'com.google.android.gms:play-services:6.5.87'
     compile 'joda-time:joda-time:2.2'
 
     // Testing-only dependencies
