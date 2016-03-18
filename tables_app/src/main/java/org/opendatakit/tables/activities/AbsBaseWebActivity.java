@@ -470,7 +470,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
   }
 
   @Override public ExecutorProcessor newExecutorProcessor(ExecutorContext context) {
-    return new TableDataExecutorProcessor(context);
+    return new TableDataExecutorProcessor(context, this);
   }
 
   @Override public void registerDatabaseConnectionBackgroundListener(
