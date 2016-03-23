@@ -129,6 +129,7 @@ public class Constants {
     public static final String TABLE_PREFERENCE = "tagTablePreference";
     public static final String COLUMN_PREFERENCE = "tagColumnPreference";
     public static final String COLOR_RULE_LIST = "tagColorRuleList";
+    public static final String STATUS_COLOR_RULE_LIST = "tagStatusColorRuleList";
     public static final String EDIT_COLOR_RULE = "tagEditColorRule";
   }
 

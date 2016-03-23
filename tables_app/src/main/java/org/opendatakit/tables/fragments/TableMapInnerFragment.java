@@ -18,34 +18,27 @@ package org.opendatakit.tables.fragments;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.opendatakit.aggregate.odktables.rest.ElementDataType;
-import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.data.ColorGuide;
+import org.opendatakit.common.android.data.ColorGuideGroup;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.activities.TablePropertiesManager;
 import org.opendatakit.tables.application.Tables;
 
-import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -128,6 +121,7 @@ public class TableMapInnerFragment extends MapFragment {
 
   /** Used for coloring markers. */
   private ColorRuleGroup mColorGroup;
+  private ColorGuideGroup mColorGuideGroup;
 
   /** the latitide elementKey to use for plotting */
   private String mLatitudeElementKey;
@@ -261,11 +255,10 @@ public class TableMapInnerFragment extends MapFragment {
         mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), activity.getAppName(),
             db, activity.getTableId(), adminColumns);
       }
-      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_COLUMN)) {
-        if (colorRuleInfo.colorElementKey != null) {
-          mColorGroup = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(), activity.getAppName(),
-              db, activity.getTableId(), colorRuleInfo.colorElementKey, adminColumns);
-        }
+
+      if (mColorGroup != null) {
+        UserTable userTableForColor = activity.getUserTable();
+        mColorGuideGroup = new ColorGuideGroup(mColorGroup, userTableForColor);
       }
     } finally {
       if ( db != null ) {
@@ -365,9 +358,8 @@ public class TableMapInnerFragment extends MapFragment {
 
     UserTable table = activity.getUserTable();
     // Create a guide depending on the color group.
-    if (table != null && mColorGroup != null) {
-      ColorGuide guide = mColorGroup.getColorGuide(activity.getColumnDefinitions(),
-          table.getRowAtIndex(index));
+    if (table != null && mColorGuideGroup != null) {
+      ColorGuide guide = mColorGuideGroup.getColorGuideForRowIndex(index);
       // Based on if the guide matched or not, grab the hue.
       if (guide != null) {
         float[] hsv = new float[3];

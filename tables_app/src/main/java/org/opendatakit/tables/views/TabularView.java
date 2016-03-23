@@ -19,8 +19,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import org.opendatakit.common.android.data.ColorGuide;
+import org.opendatakit.common.android.data.ColorGuideGroup;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.Row;
@@ -103,11 +106,13 @@ class TabularView extends View {
    * the table. This will be responsible for coloring the cells of a column.
    */
   private Map<String, ColorRuleGroup> mColumnColorRules;
+  private Map<String, ColorGuideGroup> mColumnColorGuideGroup;
   /**
    * The {@link ColorRuleGroup} object for the table. This will be responsible
    * for things like determining row color.
    */
   private ColorRuleGroup mRowColorRuleGroup;
+  private ColorGuideGroup mRowColorGuideGroup;
 
   // trying to get the dimensions of the screen
   private final DisplayMetrics metrics;
@@ -345,7 +350,25 @@ class TabularView extends View {
       this.mNumberOfRows = this.mTable.getNumberOfRows();
     }
     this.mColumnColorRules = elementKeyToColorRuleGroup;
+
     this.mRowColorRuleGroup = rowColorRuleGroup;
+
+    // Initialized the ColorGuideGroups
+    if (mTable != null) {
+      this.mRowColorGuideGroup = new ColorGuideGroup(mRowColorRuleGroup, mTable.getUserTable());
+
+      Set<String> keys = elementKeyToColorRuleGroup.keySet();
+      for(String key: keys){
+        ColorRuleGroup crg = elementKeyToColorRuleGroup.get(key);
+        if (crg != null) {
+          if (this.mColumnColorGuideGroup == null) {
+            this.mColumnColorGuideGroup = new TreeMap<String, ColorGuideGroup>();
+          }
+          this.mColumnColorGuideGroup.put(key, new ColorGuideGroup(crg, mTable.getUserTable()));
+        }
+      }
+    }
+
     rowHeight = fontSize + ROW_HEIGHT_PADDING;
     highlightedCellInfo = null;
     textPaint = new Paint();
@@ -642,7 +665,8 @@ class TabularView extends View {
           || this.type == TableLayoutType.MAIN_DATA) {
         // these are the only cases (below) where this value is used...
         theRow = this.mTable.getRowAtIndex(i);
-        rowGuide = mRowColorRuleGroup.getColorGuide(this.mTable.getColumnDefinitions(), theRow);
+        //rowGuide = mRowColorRuleGroup.getColorGuide(this.mTable.getColumnDefinitions(), theRow);
+        rowGuide = mRowColorGuideGroup.getColorGuideForRowId(theRow.getRowId());
       }
 
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
@@ -672,7 +696,8 @@ class TabularView extends View {
             foregroundColor = rowGuide.getForeground();
             backgroundColor = rowGuide.getBackground();
           }
-          ColorGuide columnGuide = mColumnColorRules.get(this.mElementKeys.get(j)).getColorGuide(this.mTable.getColumnDefinitions(), theRow);
+          //ColorGuide columnGuide = mColumnColorRules.get(this.mElementKeys.get(j)).getColorGuide(this.mTable.getColumnDefinitions(), theRow);
+          ColorGuide columnGuide = mColumnColorGuideGroup.get(this.mElementKeys.get(j)).getColorGuideForRowId(theRow.getRowId());
           // Override the role rule if a column rule matched.
           if (columnGuide != null) {
             foregroundColor = columnGuide.getForeground();

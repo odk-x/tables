@@ -15,7 +15,7 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.fragments.StatusColorRuleListFragment;
 import org.opendatakit.tables.fragments.ColorRuleListFragment;
 import org.opendatakit.tables.fragments.ColumnListFragment;
 import org.opendatakit.tables.fragments.ColumnPreferenceFragment;
@@ -47,7 +47,8 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     TABLE_PREFERENCE,
     COLUMN_LIST,
     COLUMN_PRFERENCE,
-    COLOR_RULE_LIST;
+    COLOR_RULE_LIST,
+    STATUS_COLOR_RULE_LIST;
   }
       
   FragmentType mCurrentFragmentType;
@@ -83,6 +84,12 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
             this.getIntent().getExtras());
       this.showColorRuleListFragment(elementKey, colorRuleGroupType, false);
       break;
+      case STATUS_COLOR_RULE_LIST:
+        ColorRuleGroup.Type statusColorRuleGroupType =
+                IntentUtil.retrieveColorRuleTypeFromBundle(
+                        this.getIntent().getExtras());
+        this.showStatusColorRuleListFragment(statusColorRuleGroupType, false);
+        break;
     default:
       throw new IllegalArgumentException(
           "Unrecognized fragment type: " +
@@ -135,20 +142,20 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
       String elementKey,
       int rulePosition) {
     this.helperShowEditColorRuleFragment(
-        false,
-        colorRuleGroupType,
-        elementKey,
-        rulePosition);
+            false,
+            colorRuleGroupType,
+            elementKey,
+            rulePosition);
   }
   
   public void showEditColorRuleFragmentForNewRule(
       ColorRuleGroup.Type colorRuleGroupType,
       String elementKey) {
     this.helperShowEditColorRuleFragment(
-        true,
-        colorRuleGroupType,
-        elementKey,
-        EditColorRuleFragment.INVALID_RULE_POSITION);
+            true,
+            colorRuleGroupType,
+            elementKey,
+            EditColorRuleFragment.INVALID_RULE_POSITION);
   }
   
   private void helperShowEditColorRuleFragment(
@@ -177,6 +184,34 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
         Constants.FragmentTags.EDIT_COLOR_RULE)
       .addToBackStack(null)
       .commit();
+  }
+
+  public void showStatusColorRuleListFragment(
+          ColorRuleGroup.Type colorRuleGroupType) {
+    this.showStatusColorRuleListFragment(colorRuleGroupType, true);
+  }
+
+  public void showStatusColorRuleListFragment(
+          ColorRuleGroup.Type colorRuleGroupType,
+          boolean addToBackStack) {
+    this.mCurrentFragmentType = FragmentType.STATUS_COLOR_RULE_LIST;
+    StatusColorRuleListFragment statusColorRuleListFragment =
+            this.findStatusColorRuleListFragment();
+    if (statusColorRuleListFragment == null) {
+      statusColorRuleListFragment =
+              this.createStatusColorRuleListFragment(colorRuleGroupType);
+    }
+    FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentTransaction fragmentTransaction =
+            fragmentManager.beginTransaction();
+    fragmentTransaction.replace(
+            android.R.id.content,
+            statusColorRuleListFragment,
+            Constants.FragmentTags.STATUS_COLOR_RULE_LIST);
+    if (addToBackStack) {
+      fragmentTransaction.addToBackStack(null);
+    }
+    fragmentTransaction.commit();
   }
   
   /**
@@ -219,6 +254,13 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
   
   TablePreferenceFragment createTablePreferenceFragment() {
     TablePreferenceFragment result = new TablePreferenceFragment();
+    return result;
+  }
+
+  StatusColorRuleListFragment createStatusColorRuleListFragment(
+          ColorRuleGroup.Type colorRuleGroupType) {
+    StatusColorRuleListFragment result =
+            StatusColorRuleListFragment.newInstance(colorRuleGroupType);
     return result;
   }
   
@@ -307,7 +349,20 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
             Constants.FragmentTags.COLUMN_PREFERENCE);
     return result;
   }
-  
+
+  /**
+   * Find the {@link StatusColorRuleListFragment} associated with this activity or null if
+   * one does not exist.
+   * @return
+   */
+  StatusColorRuleListFragment findStatusColorRuleListFragment() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    StatusColorRuleListFragment result = (StatusColorRuleListFragment)
+            fragmentManager.findFragmentByTag(
+                    Constants.FragmentTags.STATUS_COLOR_RULE_LIST);
+    return result;
+  }
+
   /**
    * Find the {@link ColorRuleListFragment} associated with this activity or null if
    * one does not exist.

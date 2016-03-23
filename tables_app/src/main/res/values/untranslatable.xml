@@ -16,6 +16,5 @@
 	<string translatable="false" name="color_rule_type_values_none">none</string>
 	<string translatable="false" name="color_rule_type_values_table">table</string>
 	<string translatable="false" name="color_rule_type_values_status">status</string>
-	<string translatable="false" name="color_rule_type_values_selectable">selectable</string>
 
 </resources>
