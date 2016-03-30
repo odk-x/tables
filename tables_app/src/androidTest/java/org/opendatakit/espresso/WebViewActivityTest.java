@@ -56,23 +56,27 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 
       // Run through the Tables app an infinite number of times to get a
       // crash
-      int numOfTimesToRun = 1;
-      for (int i = 0; i < numOfTimesToRun; i ++)
+      int numOfTimesToRun = 400;
+      int numOfMsToSleep = 0;
+      for (int i = 0; i < numOfTimesToRun; i++)
       {
          boolean found = false;
          Atom<ElementReference> elementFound =  findElement(Locator.ID, "launch-button");
          while (!found) {
             found = true;
             try {
+               Thread.sleep(numOfMsToSleep);
                onWebView()
                    // Find the input element by ID
                    .withElement(findElement(Locator.ID, "launch-button"))
                        // Launch into teahouses
                    .perform(webClick());
-            } catch (Exception e) {
-               e.printStackTrace();
+            } catch (RuntimeException e) {
+               //e.printStackTrace();
                System.out.println("Failed to find the launch button");
                found = false;
+            } catch (InterruptedException ie) {
+               System.out.println("Error with thread sleep");
             }
          }
 
@@ -80,14 +84,17 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
          while (!found) {
             found = true;
             try {
+               Thread.sleep(numOfMsToSleep);
                // Find View Tea Houses button
                onWebView().withElement(findElement(Locator.ID, "view-houses"))
                    // Click the button
                    .perform(webClick());
-            } catch (Exception e) {
-               e.printStackTrace();
+            } catch (RuntimeException e) {
+               //e.printStackTrace();
                System.out.println("Failed to find the View Tea Houses button");
                found = false;
+            } catch (InterruptedException ie) {
+               System.out.println("Error with thread sleep");
             }
          }
 
@@ -96,13 +103,16 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
          while (!found) {
             found = true;
             try {
+               Thread.sleep(numOfMsToSleep);
                onWebView().withElement(findElement(Locator.ID, "72c8186a-8141-4b06-a764-a9029c021b20"))
                    // Simulate a click via javascript
                    .perform(webClick());
-            } catch (Exception e) {
-               e.printStackTrace();
+            } catch (RuntimeException e) {
+               //e.printStackTrace();
                System.out.println("Failed to find li");
                found = false;
+            } catch (InterruptedException ie) {
+               System.out.println("Error with thread sleep");
             }
          }
 
@@ -111,15 +121,18 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
          while (!found) {
             found = true;
             try {
+               Thread.sleep(numOfMsToSleep);
                // Find the response element by ID
                onWebView().withElement(findElement(Locator.ID, "FIELD_16"))
                    // Could also be id FIELD_16
                    // Verify that the response page contains the entered text
                    .perform(webClick());
-            } catch (Exception e) {
-               e.printStackTrace();
+            } catch (RuntimeException e) {
+               //e.printStackTrace();
                System.out.println("Failed to find the Teas button on detail view");
                found = false;
+            } catch (InterruptedException ie) {
+               System.out.println("Error with thread sleep");
             }
          }
 
@@ -128,6 +141,8 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
          Espresso.pressBack();
          Espresso.pressBack();
          Espresso.pressBack();
+
+         System.out.println("Number of iterations = " + i);
       }
 
    }
