@@ -43,7 +43,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
-import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
+//import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -183,7 +183,7 @@ public class TableMapInnerFragment extends MapFragment {
                   .getDouble(SAVE_TARGET_LONG)), savedInstanceState.getFloat(SAVE_ZOOM)));
     }
     getMap().setMyLocationEnabled(true);
-    getMap().setOnMapLongClickListener(getOnMapLongClickListener());
+    //getMap().setOnMapLongClickListener(getOnMapLongClickListener());
     getMap().setOnMapClickListener(getOnMapClickListener());
   }
 
@@ -435,45 +435,45 @@ public class TableMapInnerFragment extends MapFragment {
   /**
    * On a long click, add a row to the data table at the position clicked.
    */
-  private OnMapLongClickListener getOnMapLongClickListener() {
-    return new OnMapLongClickListener() {
-      @Override
-      public void onMapLongClick(LatLng location) {
-        TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-
-        // Create a mapping from the lat and long columns to the
-        // values in the location.
-        Map<String, String> elementNameToValue = new HashMap<String, String>();
-
-        OrderedColumns orderedDefns = activity.getColumnDefinitions();
-        for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
-          elementNameToValue.put(cd.getElementName(), "");
-        }
-        {
-          ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
-          elementNameToValue.put(mLatitudeElementKey, Double.toString(location.latitude));
-        }
-
-        {
-          ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
-          elementNameToValue.put(mLongitudeElementKey, Double.toString(location.longitude));
-        }
-        // To store the mapping in a bundle, we need to put it in string list.
-        ArrayList<String> bundleStrings = new ArrayList<String>();
-        for (String key : elementNameToValue.keySet()) {
-          bundleStrings.add(key);
-          bundleStrings.add(elementNameToValue.get(key));
-        }
-        // Bundle it all up for the fragment.
-        Bundle b = new Bundle();
-        b.putStringArrayList(LocationDialogFragment.ELEMENT_NAME_TO_VALUE_KEY, bundleStrings);
-        b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
-        LocationDialogFragment dialog = new LocationDialogFragment();
-        dialog.setArguments(b);
-        dialog.show(getFragmentManager(), "LocationDialogFragment");
-      }
-    };
-  }
+//  private OnMapLongClickListener getOnMapLongClickListener() {
+//    return new OnMapLongClickListener() {
+//      @Override
+//      public void onMapLongClick(LatLng location) {
+//        TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+//
+//        // Create a mapping from the lat and long columns to the
+//        // values in the location.
+//        Map<String, String> elementNameToValue = new HashMap<String, String>();
+//
+//        OrderedColumns orderedDefns = activity.getColumnDefinitions();
+//        for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
+//          elementNameToValue.put(cd.getElementName(), "");
+//        }
+//        {
+//          ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
+//          elementNameToValue.put(mLatitudeElementKey, Double.toString(location.latitude));
+//        }
+//
+//        {
+//          ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
+//          elementNameToValue.put(mLongitudeElementKey, Double.toString(location.longitude));
+//        }
+//        // To store the mapping in a bundle, we need to put it in string list.
+//        ArrayList<String> bundleStrings = new ArrayList<String>();
+//        for (String key : elementNameToValue.keySet()) {
+//          bundleStrings.add(key);
+//          bundleStrings.add(elementNameToValue.get(key));
+//        }
+//        // Bundle it all up for the fragment.
+//        Bundle b = new Bundle();
+//        b.putStringArrayList(LocationDialogFragment.ELEMENT_NAME_TO_VALUE_KEY, bundleStrings);
+//        b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
+//        LocationDialogFragment dialog = new LocationDialogFragment();
+//        dialog.setArguments(b);
+//        dialog.show(getFragmentManager(), "LocationDialogFragment");
+//      }
+//    };
+//  }
 
   /**
    * When a marker is clicked, set the index of the list fragment, and then show
