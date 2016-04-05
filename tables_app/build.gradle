@@ -29,13 +29,28 @@ android {
         testApplicationId(groupId + tablesName + testNameSuffix)
         testInstrumentationRunner(instrumentationRunner)
     }
-	
+
+    productFlavors {
+        demo {
+        }
+
+        master {
+        }
+
+        snapshot {
+        }
+
+        uitests {
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled(minify)
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
         debug {
+            debuggable(true)
             testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
         }
     }
@@ -60,7 +75,6 @@ configurations.all {
     cacheDynamicVersionsFor(0, 'seconds')
     cacheChangingModulesFor(0, 'seconds')
   }
-  transitive = true
 }
 
 dependencies {
@@ -69,15 +83,27 @@ dependencies {
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         compile project(libraryProjectName)
     } else {
-        compile(group: groupId, name: libraryArtifactName,
-                version: (useLatestLibrary ? latestVersion : librarySnapshot), ext: 'aar')
+        demoCompile(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
+                version: latestVersion, ext: 'aar')
+        masterCompile(group: groupId, name: libraryDemoArtifactName, classifier: masterRelease,
+                version: latestVersion, ext: 'aar')
+        snapshotCompile(group: groupId, name: libraryDemoArtifactName, classifier: snapshotRelease,
+                version: latestVersion, ext: 'aar')
+        uitestCompile(group: groupId, name: libraryDemoArtifactName, classifier: uitestRelease,
+                version: latestVersion, ext: 'aar')
     }
 
     if (commonProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         compile project(commonProjectName)
     } else {
-        compile(group: groupId, name: commonArtifactName,
-                version: (useLatestCommon ? latestVersion : commonSnapshot), ext: 'aar')
+        demoCompile(group: groupId, name: commonDemoArtifactName, classifier: demoRelease,
+                version: latestVersion, ext: 'aar')
+        masterCompile(group: groupId, name: commonDemoArtifactName, classifier: masterRelease,
+                version: latestVersion, ext: 'aar')
+        snapshotCompile(group: groupId, name: commonDemoArtifactName, classifier: snapshotRelease,
+                version: latestVersion, ext: 'aar')
+        uitestCompile(group: groupId, name: commonDemoArtifactName, classifier: uitestRelease,
+                version: latestVersion, ext: 'aar')
     }
 
     compile 'com.google.android.gms:play-services:' + gpsVersion
