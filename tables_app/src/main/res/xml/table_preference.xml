@@ -55,7 +55,7 @@
         <Preference
             android:key="table_pref_status_column_color_rules"
             android:persistent="false"
-            android:title="@string/edit_status_column_color_rules" />
+            android:title="@string/show_status_column_color_rules" />
         
         <!-- Individual columns -->
         

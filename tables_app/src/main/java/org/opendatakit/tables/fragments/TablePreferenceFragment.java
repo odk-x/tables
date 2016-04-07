@@ -34,6 +34,7 @@ import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.preferences.FileSelectorPreference;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.PreferenceUtil;
+import org.opendatakit.common.android.application.CommonApplication;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -207,7 +208,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       this.initializeDefaultViewType();
       this.initializeTableColorRules();
       this.initializeStatusColorRules();
-      this.initializeMapColorRule();
+      this.initializeMapColorRule(db);
       this.initializeDetailFile(db);
       this.initializeListFile(db);
       this.initializeMapListFile(db);
@@ -279,7 +280,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     FileSelectorPreference listPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.LIST_FILE);
     listPref.setFields(this, Constants.RequestCodes.CHOOSE_LIST_FILE,
-        ((AbsBaseActivity) getActivity()).getAppName());
+            ((AbsBaseActivity) getActivity()).getAppName());
     listPref.setSummary(TableUtil.get().getListViewFilename(Tables.getInstance(), getAppName(), db, getTableId()));
   }
 
@@ -290,7 +291,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         ((AbsBaseActivity) getActivity()).getAppName());
     String mapListViewFileName = TableUtil.get().getMapListViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
     WebLogger.getLogger(getAppName()).d(TAG,
-        "[initializeMapListFile] file is: " + mapListViewFileName);
+            "[initializeMapListFile] file is: " + mapListViewFileName);
     mapListPref.setSummary(mapListViewFileName);
   }
 
@@ -311,16 +312,85 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       public boolean onPreferenceClick(Preference preference) {
         // pop in the list of columns.
         TableLevelPreferencesActivity activity = (TableLevelPreferencesActivity) getActivity();
-        activity.showColorRuleListFragment(null, ColorRuleGroup.Type.STATUS_COLUMN);
+        activity.showStatusColorRuleListFragment(ColorRuleGroup.Type.STATUS_COLUMN);
         return false;
       }
     });
   }
 
-  private void initializeMapColorRule() {
+  private void initializeMapColorRule(OdkDbHandle db) throws RemoteException {
     ListPreference mapColorPref = this
-        .findListPreference(Constants.PreferenceKeys.Table.MAP_COLOR_RULE);
-    // TODO:
+            .findListPreference(Constants.PreferenceKeys.Table.MAP_COLOR_RULE);
+
+    TableUtil.MapViewColorRuleInfo mvcri =
+            TableUtil.get().getMapListViewColorRuleInfo(Tables.getInstance(), getAppName(),
+                    db, getTableId());
+
+    String initColorType = null;
+
+    if (mvcri != null && mvcri.colorType != null){
+      if (mvcri.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
+        initColorType = getString(R.string.color_rule_type_values_status);
+      } else if (mvcri.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
+        initColorType = getString(R.string.color_rule_type_values_table);
+      } else {
+        initColorType = getString(R.string.color_rule_type_values_none);
+      }
+
+      mapColorPref.setValue(initColorType);
+    }
+
+    // Set color rule for map view
+		mapColorPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        WebLogger.getLogger(getAppName()).e(TAG,
+                "[onPreferenceChange] for map color rule preference. Pref is: " + newValue);
+        OdkDbHandle db = null;
+        String colorRuleType = null;
+        try {
+          String selectedValue = newValue.toString();
+
+          if (selectedValue == null) {
+            return false;
+          }
+
+          // Support for selectable color rules seems to have been removed
+          // This should just be taken out of Tables for now
+          String colorElementKey = null;
+          if (selectedValue.equals(getString(R.string.color_rule_type_values_status))) {
+            colorRuleType = LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS;
+          } else if (selectedValue.equals(getString(R.string.color_rule_type_values_table))) {
+            colorRuleType = LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE;
+          } else {
+            colorRuleType = LocalKeyValueStoreConstants.Map.COLOR_TYPE_NONE;
+          }
+
+          db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+          TableUtil.MapViewColorRuleInfo mvcri = new TableUtil.MapViewColorRuleInfo(colorRuleType, null);
+          TableUtil.get().setMapListViewColorRuleInfo(Tables.getInstance(), getAppName(), db, getTableId(), mvcri);
+          return true;
+
+        } catch (RemoteException re) {
+          WebLogger.getLogger(getAppName()).e(TAG,
+                  "[onPreferenceChange] for map color rule preference. RemoteException : ");
+          re.printStackTrace();
+          return false;
+        } finally {
+          if (db != null) {
+            try {
+              Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+            } catch (RemoteException re) {
+              WebLogger.getLogger(getAppName()).e(TAG,
+                      "[onPreferenceChange] for map color rule preference. " +
+                              "RemoteException while closing db: ");
+              re.printStackTrace();
+            }
+          }
+        }
+      }
+    });
   }
 
   private void initializeColumns() {

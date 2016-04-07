@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId(groupId + tablesName)
-        minSdkVersion(minVersion)
+        minSdkVersion(18) // changed from minVersion for UiAutomator
         targetSdkVersion(targetVersion)
         versionCode(releaseVersionCode)
         versionName(versionCodeName)
@@ -29,13 +29,43 @@ android {
         testApplicationId(groupId + tablesName + testNameSuffix)
         testInstrumentationRunner(instrumentationRunner)
     }
-	
+
+    productFlavors {
+        demo {
+        }
+
+        master {
+        }
+
+        snapshot {
+        }
+
+        uitest {
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (shouldSign) {
+                storeFile file(signStoreFilePath)
+                storePassword signStorePass
+                keyAlias signKeyAlias
+                keyPassword signKeyPass
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled(minify)
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+
+            if (shouldSign) {
+                signingConfig signingConfigs.release
+            }
         }
         debug {
+            debuggable(true)
             testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
         }
     }
@@ -60,7 +90,6 @@ configurations.all {
     cacheDynamicVersionsFor(0, 'seconds')
     cacheChangingModulesFor(0, 'seconds')
   }
-  transitive = true
 }
 
 dependencies {
@@ -69,18 +98,30 @@ dependencies {
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         compile project(libraryProjectName)
     } else {
-        compile(group: groupId, name: libraryArtifactName,
-                version: (useLatestLibrary ? latestVersion : librarySnapshot), ext: 'aar')
+        demoCompile(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
+                version: latestVersion, ext: 'aar')
+        masterCompile(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
+                version: latestVersion, ext: 'aar')
+        snapshotCompile(group: groupId, name: librarySnapshotArtifactName,
+                classifier: snapshotRelease, version: latestVersion, ext: 'aar')
+        uitestCompile(group: groupId, name: librarySnapshotArtifactName,
+                      classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
     if (commonProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         compile project(commonProjectName)
     } else {
-        compile(group: groupId, name: commonArtifactName,
-                version: (useLatestCommon ? latestVersion : commonSnapshot), ext: 'aar')
+        demoCompile(group: groupId, name: commonDemoArtifactName, classifier: demoRelease,
+                version: latestVersion, ext: 'aar')
+        masterCompile(group: groupId, name: commonDemoArtifactName, classifier: demoRelease,
+                version: latestVersion, ext: 'aar')
+        snapshotCompile(group: groupId, name: commonSnapshotArtifactName,
+                classifier: snapshotRelease, version: latestVersion, ext: 'aar')
+        uitestCompile(group: groupId, name: commonSnapshotArtifactName,
+                      classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
-    compile 'com.google.android.gms:play-services:6.5.87'
+    compile 'com.google.android.gms:play-services:' + gpsVersion
     compile 'joda-time:joda-time:2.2'
 
     // Testing-only dependencies
@@ -89,5 +130,4 @@ dependencies {
     androidTestCompile 'com.android.support.test:runner:0.4.1'
     androidTestCompile 'com.android.support.test:rules:0.4.1'
     androidTestCompile 'com.android.support.test.espresso:espresso-web:2.2.1'
-    androidTestCompile 'com.android.support.test.espresso:espresso-intents:2.2.1'
 }

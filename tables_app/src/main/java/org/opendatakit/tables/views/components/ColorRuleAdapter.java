@@ -141,16 +141,7 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
     // The radio button is meaningless here, so get it off the screen.
     final RadioButton radioButton = (RadioButton) row.findViewById(R.id.radio_button);
     radioButton.setVisibility(View.GONE);
-    // And now the settings icon.
-    final ImageView editView = (ImageView) row.findViewById(R.id.row_options);
-    final View holderView = row;
-    editView.setOnClickListener(new OnClickListener() {
 
-      @Override
-      public void onClick(View v) {
-        holderView.showContextMenu();
-      }
-    });
     return row;
   }
 }

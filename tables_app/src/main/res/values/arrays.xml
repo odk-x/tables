@@ -23,7 +23,6 @@
         <item>@string/none</item>
         <item>@string/table_color_rules</item>
         <item>@string/status_column_color_rules</item>
-        <item>@string/selectable_column_color_rules</item>
     </string-array>
 
     <string-array
@@ -31,7 +30,6 @@
         <item>@string/color_rule_type_values_none</item>
         <item>@string/color_rule_type_values_table</item>
         <item>@string/color_rule_type_values_status</item>
-        <item>@string/color_rule_type_values_selectable</item>
     </string-array>
 
 </resources>

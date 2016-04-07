@@ -137,6 +137,10 @@ public class SpreadsheetUserTable {
     return table.getRowAtIndex(index);
   }
 
+  public UserTable getUserTable() {
+    return fragment.getUserTable();
+  }
+
   // ///////////////////////////////////////////////////////////////////////////
   // Whether or not we have a frozen column...
 

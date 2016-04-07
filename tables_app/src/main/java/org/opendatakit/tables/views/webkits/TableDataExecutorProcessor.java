@@ -16,6 +16,7 @@ package org.opendatakit.tables.views.webkits;
 
 import android.os.RemoteException;
 import org.opendatakit.common.android.data.ColorGuide;
+import org.opendatakit.common.android.data.ColorGuideGroup;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.RowColorObject;
 import org.opendatakit.common.android.data.UserTable;
@@ -117,13 +118,17 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
       return;
     }
 
+    ColorGuideGroup cgg = new ColorGuideGroup(crg, userTable);
+
     // Loop through the rows
     for (int i = 0; i < userTable.getNumberOfRows(); i++) {
-      ColorGuide tcg = crg.getColorGuide(userTable.getColumnDefinitions(), userTable.getRowAtIndex(i));
+      ColorGuide tcg = cgg.getColorGuideForRowIndex(i);
 
       if (tcg != null) {
-        String hexFgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getForeground());
-        String hexBgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getBackground());
+        //String hexFgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getForeground());
+        String hexFgString = String.format("#%06X", (0xFFFFFF & tcg.getForeground()));
+        //String hexBgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getBackground());
+        String hexBgString = String.format("#%06X", (0xFFFFFF & tcg.getBackground()));
         RowColorObject rco = new RowColorObject(userTable.getRowAtIndex(i).getRowId(), i, hexFgString, hexBgString);
         colors.add(rco);
       }
