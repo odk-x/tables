@@ -26,6 +26,7 @@ import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
+import org.opendatakit.util.DisableAnimationsRule;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -48,6 +49,8 @@ public class CsvTest {
 
   private static final String VALID_QUALIFIER = "TEST_VALID";
   private static final String INVALID_QUALIFIER = "TEST_INVALID/";
+
+  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(

@@ -12,6 +12,7 @@ import android.view.View;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.ColorRule;
@@ -25,6 +26,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
+import org.opendatakit.util.DisableAnimationsRule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +52,8 @@ public class ColorRuleTest {
   private final String tableId = T_HOUSE_E_TABLE_ID;
   private final String elementKeyName = "House id";
   private final String elementKeyId = "House_id";
+
+  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(

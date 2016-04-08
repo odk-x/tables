@@ -11,12 +11,14 @@ import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.LargeTest;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.UAUtils;
+import org.opendatakit.util.DisableAnimationsRule;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
@@ -31,6 +33,8 @@ import static org.opendatakit.util.TestConstants.*;
 public class WebkitStressTest {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
+
+  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(

@@ -14,6 +14,7 @@ import android.test.suitebuilder.annotation.LargeTest;
 import android.view.View;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.R;
@@ -24,6 +25,7 @@ import org.opendatakit.tables.views.SpreadsheetView;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
+import org.opendatakit.util.DisableAnimationsRule;
 
 import java.net.MalformedURLException;
 import java.util.HashMap;
@@ -50,6 +52,8 @@ public class InteropTest {
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;
+
+  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(

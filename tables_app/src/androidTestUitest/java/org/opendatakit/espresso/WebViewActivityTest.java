@@ -13,9 +13,11 @@ import android.test.suitebuilder.annotation.LargeTest;
 import android.webkit.WebView;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.util.DisableAnimationsRule;
 
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.findElement;
@@ -27,7 +29,10 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
  * The sample has a simple layout which contains a single {@link WebView}. The HTML page displays
  * a form with an input tag and buttons to submit the form.
  */
-@LargeTest @RunWith(AndroidJUnit4.class) public class WebViewActivityTest {
+@LargeTest
+@RunWith(AndroidJUnit4.class)
+public class WebViewActivityTest {
+   @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
    /**
     * A JUnit {@link Rule @Rule} to launch your activity under test. This is a replacement

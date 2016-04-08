@@ -18,6 +18,7 @@ import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.LargeTest;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -31,6 +32,7 @@ import org.opendatakit.tables.views.SpreadsheetView;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
+import org.opendatakit.util.DisableAnimationsRule;
 
 import java.io.File;
 
@@ -52,6 +54,8 @@ import static org.opendatakit.util.TestConstants.*;
 public class TablePrefTest {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
+
+  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(

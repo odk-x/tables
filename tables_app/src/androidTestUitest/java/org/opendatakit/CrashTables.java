@@ -23,6 +23,7 @@ import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
+import org.opendatakit.util.DisableAnimationsRule;
 
 import java.io.File;
 
@@ -40,6 +41,8 @@ import static org.opendatakit.util.TestConstants.*;
 public class CrashTables {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
+
+  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
