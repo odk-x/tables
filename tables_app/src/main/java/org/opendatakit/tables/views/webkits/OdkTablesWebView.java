@@ -1,6 +1,7 @@
 package org.opendatakit.tables.views.webkits;
 
 import android.content.Context;
+import android.os.Looper;
 import android.util.AttributeSet;
 import org.opendatakit.common.android.activities.IOdkDataActivity;
 import org.opendatakit.common.android.views.ODKWebView;
@@ -43,13 +44,23 @@ public class OdkTablesWebView extends ODKWebView {
     }
 
     log.i(t, "loadPage: current loadPageUrl: " + getLoadPageUrl());
-    String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(
+    final String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(
         hasPageFrameworkFinishedLoading() && getLoadPageUrl() != null );
 
     if ( baseUrl != null ) {
       resetLoadPageStatus(baseUrl);
 
-      loadUrl(baseUrl);
+      // Ensure that this is run on the UI thread
+      if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
+        post(new Runnable() {
+          public void run() {
+            loadUrl(baseUrl);
+          }
+        });
+      } else {
+        loadUrl(baseUrl);
+      }
+
     } else if ( hasPageFrameworkFinishedLoading() ) {
       log.w(t, "loadPage: framework was loaded -- but no URL -- don't load anything!");
     } else {
@@ -60,13 +71,23 @@ public class OdkTablesWebView extends ODKWebView {
 
   @Override public void reloadPage() {
     log.i(t, "reloadPage: current loadPageUrl: " + getLoadPageUrl());
-    String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(false);
+    final String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(false);
 
     if ( baseUrl != null ) {
       if ( hasPageFrameworkFinishedLoading() || !baseUrl.equals(getLoadPageUrl()) ) {
         resetLoadPageStatus(baseUrl);
         log.i(t, "reloadPage: full reload: " + baseUrl);
-        loadUrl(baseUrl);
+
+        // Ensure that this is run on the UI thread
+        if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
+          post(new Runnable() {
+            public void run() {
+              loadUrl(baseUrl);
+            }
+          });
+        } else {
+          loadUrl(baseUrl);
+        }
       } else {
         log.w(t, "reloadPage: framework in process of loading -- ignoring request!");
       }
