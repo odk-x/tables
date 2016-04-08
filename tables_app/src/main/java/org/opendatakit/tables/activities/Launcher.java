@@ -25,6 +25,7 @@ import org.opendatakit.common.android.provider.TablesProviderAPI;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class Launcher extends BaseActivity {
 
     this.mAppName = IntentUtil.retrieveAppNameFromBundle(extras);
     if (this.mAppName == null) {
-      this.mAppName = "tables";
+      this.mAppName = TableFileUtils.getDefaultAppName();
     }
 
     Uri uri = intent.getData();
