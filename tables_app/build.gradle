@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId(groupId + tablesName)
-        minSdkVersion(18) // changed from minVersion for UiAutomator
+        minSdkVersion(minVersion)
         targetSdkVersion(targetVersion)
         versionCode(releaseVersionCode)
         versionName(versionCodeName)
@@ -41,6 +41,7 @@ android {
         }
 
         uitest {
+            minSdkVersion(uitestMinSDK)
         }
     }
 
