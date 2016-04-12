@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId(groupId + tablesName)
-        minSdkVersion(minVersion)
+        minSdkVersion(18)
         targetSdkVersion(targetVersion)
         versionCode(releaseVersionCode)
         versionName(versionCodeName)
@@ -41,7 +41,7 @@ android {
         }
 
         uitest {
-            minSdkVersion(uitestMinSDK)
+            minSdkVersion 18
         }
     }
 
@@ -123,6 +123,7 @@ dependencies {
     }
 
     compile 'com.android.support:support-annotations:23.1.0'
+    compile 'com.android.support:support-v4:23.1.0'
     compile 'com.google.android.gms:play-services:' + gpsVersion
     compile 'joda-time:joda-time:2.2'
 
@@ -133,6 +134,7 @@ dependencies {
     androidTestCompile 'com.android.support.test.espresso:espresso-intents:2.2.1'
     androidTestCompile 'com.android.support.test.espresso:espresso-web:2.2.1'
     androidTestCompile 'com.android.support:support-annotations:23.1.0'
+    androidTestCompile 'com.android.support:support-v4:23.1.0'
 
     //for UI Automator
     androidTestUitestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.1'

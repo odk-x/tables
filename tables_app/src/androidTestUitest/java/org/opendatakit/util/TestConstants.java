@@ -46,5 +46,5 @@ public class TestConstants {
 
   //Misc.
   public static final String OI_PICK_FILE = "org.openintents.action.PICK_FILE";
-  public static final String APP_NAME = "tables";
+  public static final String APP_NAME = "default";
 }

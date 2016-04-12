@@ -5,7 +5,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.0.0'
+        classpath 'com.android.tools.build:gradle:1.5.0'
     }
 }
 
@@ -34,7 +34,7 @@ task grantAnimationPermission(type: Exec, dependsOn: 'installDebug') {
 }
 
 tasks.whenTaskAdded { task ->
-    if (task.name.startsWith('connectedUitestDebugAndroidTest')) {
+    if (task.name.startsWith('connected')) {
         task.dependsOn grantAnimationPermission
     }
 }

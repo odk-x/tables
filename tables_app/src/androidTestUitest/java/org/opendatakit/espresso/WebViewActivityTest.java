@@ -32,7 +32,7 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class WebViewActivityTest {
-   @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+//   @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
    /**
     * A JUnit {@link Rule @Rule} to launch your activity under test. This is a replacement
@@ -61,7 +61,7 @@ public class WebViewActivityTest {
 
       // Run through the Tables app an infinite number of times to get a
       // crash
-      int numOfTimesToRun = 400;
+      int numOfTimesToRun = 1;
       int numOfMsToSleep = 0;
       for (int i = 0; i < numOfTimesToRun; i++)
       {

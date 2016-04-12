@@ -55,7 +55,7 @@ public class TablePrefTest {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
 
-  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+//  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
