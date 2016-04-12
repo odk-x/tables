@@ -141,7 +141,7 @@ dependencies {
     androidTestUitestCompile 'org.hamcrest:hamcrest-integration:1.3'
 }
 
-task grantAnimationPermission(type: Exec, dependsOn: 'installDebug') {
+task grantAnimationPermission(type: Exec, dependsOn: 'installUitestDebug') {
     commandLine "adb shell pm grant org.opendatakit.tables android.permission.SET_ANIMATION_SCALE"
             .split(' ')
 }
