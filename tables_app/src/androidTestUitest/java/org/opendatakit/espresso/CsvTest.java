@@ -50,7 +50,7 @@ public class CsvTest {
   private static final String VALID_QUALIFIER = "TEST_VALID";
   private static final String INVALID_QUALIFIER = "TEST_INVALID/";
 
-//  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(

@@ -55,7 +55,7 @@ public class TablePrefTest {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
 
-//  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
@@ -248,8 +248,10 @@ public class TablePrefTest {
 
   @Test
   public void intents_detailView() {
-    final String detailViewPath = "/tables/config/tables/Tea_houses/html/Tea_houses_detail.html";
-    final String listViewPath = "/tables/config/tables/Tea_houses/html/Tea_houses_list.html";
+    final String detailViewPath =
+        APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_detail.html";
+    final String listViewPath =
+        APP_NAME + "/tables/config/tables/Tea_houses/html/Tea_houses_list.html";
 
     //back up current config
     String currDetailFile = getDetailViewFile();

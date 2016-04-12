@@ -53,7 +53,7 @@ public class ColorRuleTest {
   private final String elementKeyName = "House id";
   private final String elementKeyId = "House_id";
 
-//  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(

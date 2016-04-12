@@ -32,7 +32,7 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class WebViewActivityTest {
-//   @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+   @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
    /**
     * A JUnit {@link Rule @Rule} to launch your activity under test. This is a replacement
