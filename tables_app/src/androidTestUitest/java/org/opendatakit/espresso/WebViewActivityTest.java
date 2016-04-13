@@ -61,7 +61,7 @@ public class WebViewActivityTest {
 
       // Run through the Tables app an infinite number of times to get a
       // crash
-      int numOfTimesToRun = 1;
+      int numOfTimesToRun = 0;
       int numOfMsToSleep = 0;
       for (int i = 0; i < numOfTimesToRun; i++)
       {
