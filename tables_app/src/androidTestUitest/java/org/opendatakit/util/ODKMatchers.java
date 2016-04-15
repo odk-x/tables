@@ -17,6 +17,7 @@ import static android.support.test.espresso.intent.matcher.IntentMatchers.toPack
 import static android.support.test.espresso.intent.matcher.UriMatchers.hasHost;
 import static android.support.test.espresso.intent.matcher.UriMatchers.hasPath;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.opendatakit.util.TestConstants.APP_NAME;
 import static org.opendatakit.util.TestConstants.SURVEY_PKG_NAME;
 
 public class ODKMatchers {
@@ -90,7 +91,7 @@ public class ODKMatchers {
       final String instanceId) {
     String scheme = "content://";
     String host = "org.opendatakit.common.android.provider.forms";
-    String path = "/tables/" + tableId + "/" + formId + "/";
+    String path = "/" + APP_NAME + "/" + tableId + "/" + formId + "/";
 
     Matcher<Intent> partial = allOf(
         hasAction("android.intent.action.EDIT"),

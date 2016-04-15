@@ -9,7 +9,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.intent.Intents;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
-import android.support.test.espresso.web.deps.guava.util.concurrent.ThreadFactoryBuilder;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
@@ -55,7 +54,8 @@ public class TablePrefTest {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
 
-  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+  @ClassRule
+  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
@@ -213,7 +213,7 @@ public class TablePrefTest {
 
   @Test
   public void intents_listView() {
-    final String listViewPath = "/tables/config/tables/Tea_houses/html/Tea_houses_list.html";
+    final String listViewPath = APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_list.html";
 
     //backup current config
     String currFile = getListViewFile();
@@ -251,7 +251,7 @@ public class TablePrefTest {
     final String detailViewPath =
         APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_detail.html";
     final String listViewPath =
-        APP_NAME + "/tables/config/tables/Tea_houses/html/Tea_houses_list.html";
+        APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_list.html";
 
     //back up current config
     String currDetailFile = getDetailViewFile();
@@ -380,29 +380,6 @@ public class TablePrefTest {
       );
     } finally {
       //restore
-      setListViewFile(currListFile);
-    }
-  }
-
-  @Test
-  public void display_removeViewFile() {
-    //This feature is not yet implemented
-    //DON'T RUN DON'T RUN DON'T RUN DON'T RUN DON'T RUN
-    //DON'T RUN DON'T RUN DON'T RUN DON'T RUN DON'T RUN
-    //DON'T RUN DON'T RUN DON'T RUN DON'T RUN DON'T RUN
-    if (true) return;
-
-    String currListFile = getListViewFile();
-
-    try {
-      //do something that will empty filename...
-      //TODO: write this after feature gets implemented
-
-      //checks
-      assertThat(
-          "Path not empty on UI", EspressoUtils.getPrefSummary(LIST_VIEW_FILE), isEmptyString());
-      assertThat("Path not empty in db", getListViewFile(), nullValue());
-    } finally {
       setListViewFile(currListFile);
     }
   }

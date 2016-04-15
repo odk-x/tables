@@ -34,7 +34,8 @@ public class WebkitStressTest {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
 
-  @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+  @ClassRule
+  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   @Rule
   public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(

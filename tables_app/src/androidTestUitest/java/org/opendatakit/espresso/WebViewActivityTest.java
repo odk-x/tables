@@ -2,12 +2,14 @@ package org.opendatakit.espresso;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.web.model.Atom;
 import android.support.test.espresso.web.model.ElementReference;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.UiDevice;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.webkit.WebView;
@@ -18,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.util.DisableAnimationsRule;
+import org.opendatakit.util.UAUtils;
 
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.findElement;
@@ -32,28 +35,37 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class WebViewActivityTest {
-   @ClassRule public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+   private Boolean initSuccess = null;
+   private UiDevice mDevice;
 
-   /**
-    * A JUnit {@link Rule @Rule} to launch your activity under test. This is a replacement
-    * for {@link ActivityInstrumentationTestCase2}.
-    * <p>
-    * Rules are interceptors which are executed for each test method and will run before
-    * any of your setup code in the {@link Before @Before} method.
-    * <p>
-    * {@link ActivityTestRule} will create and launch of the activity for you and also expose
-    * the activity under test. To get a reference to the activity you can use
-    * the {@link ActivityTestRule#getActivity()} method.
-    */
-   @Rule public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
+   @ClassRule
+   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
+   @Rule
+   public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
        MainActivity.class, false, false) {
-      @Override protected void afterActivityLaunched() {
-         // Technically we do not need to do this - WebViewActivity has javascript turned on.
-         // Other WebViews in your app may have javascript turned off, however since the only way
-         // to automate WebViews is through javascript, it must be enabled.
+      @Override
+      protected void beforeActivityLaunched() {
+         super.beforeActivityLaunched();
+
+         if (initSuccess == null) {
+            mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+            initSuccess = UAUtils.turnOnCustomHome(mDevice);
+         }
+      }
+
+      @Override
+      protected void afterActivityLaunched() {
+         super.afterActivityLaunched();
+
          onWebView().forceJavascriptEnabled();
       }
    };
+
+   @Before
+   public void setup() {
+      UAUtils.assertInitSucess(initSuccess);
+   }
 
    @Test public void infiniteTestToReplicateSigabrt() {
       // Lazily launch the Activity with a custom start Intent per test
@@ -61,7 +73,7 @@ public class WebViewActivityTest {
 
       // Run through the Tables app an infinite number of times to get a
       // crash
-      int numOfTimesToRun = 0;
+      int numOfTimesToRun = 5;
       int numOfMsToSleep = 0;
       for (int i = 0; i < numOfTimesToRun; i++)
       {
