@@ -213,7 +213,8 @@ public class TablePrefTest {
 
   @Test
   public void intents_listView() {
-    final String listViewPath = APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_list.html";
+    final String listViewPath =
+        "/" + APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_list.html";
 
     //backup current config
     String currFile = getListViewFile();
@@ -249,9 +250,9 @@ public class TablePrefTest {
   @Test
   public void intents_detailView() {
     final String detailViewPath =
-        APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_detail.html";
+        "/" + APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_detail.html";
     final String listViewPath =
-        APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_list.html";
+        "/" + APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_list.html";
 
     //back up current config
     String currDetailFile = getDetailViewFile();
