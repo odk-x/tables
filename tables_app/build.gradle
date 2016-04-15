@@ -142,7 +142,7 @@ dependencies {
 }
 
 //These are used to disable animations when running UI tests
-task grantAnimationPermission(type: Exec, dependsOn: 'assembleDebug') {
+task grantAnimationPermission(type: Exec, dependsOn: 'installUitestDebug') {
     commandLine "adb shell pm grant org.opendatakit.tables android.permission.SET_ANIMATION_SCALE"
             .split(' ')
 }
