@@ -43,7 +43,7 @@ public class WebViewActivityTest {
 
    @Rule
    public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
-       MainActivity.class, false, false) {
+       MainActivity.class, false, true) {
       @Override
       protected void beforeActivityLaunched() {
          super.beforeActivityLaunched();
@@ -68,12 +68,9 @@ public class WebViewActivityTest {
    }
 
    @Test public void infiniteTestToReplicateSigabrt() {
-      // Lazily launch the Activity with a custom start Intent per test
-      mActivityRule.launchActivity(withWebFormIntent());
-
       // Run through the Tables app an infinite number of times to get a
       // crash
-      int numOfTimesToRun = 5;
+      int numOfTimesToRun = 400;
       int numOfMsToSleep = 0;
       for (int i = 0; i < numOfTimesToRun; i++)
       {
@@ -161,18 +158,5 @@ public class WebViewActivityTest {
 
          System.out.println("Number of iterations = " + i);
       }
-
    }
-
-   /**
-    * @return start {@link Intent} for the simple web form URL.
-    */
-   private static Intent withWebFormIntent() {
-
-      Intent intent = new Intent();
-      intent.setComponent(new ComponentName("org.opendatakit.tables.android",
-          "org.opendatakit.tables.android.activities.Launcher"));
-      return intent;
-   }
-
 }
