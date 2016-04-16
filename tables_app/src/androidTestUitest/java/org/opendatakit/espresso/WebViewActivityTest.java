@@ -68,6 +68,8 @@ public class WebViewActivityTest {
    }
 
    @Test public void infiniteTestToReplicateSigabrt() {
+      if (true) return;
+
       // Run through the Tables app an infinite number of times to get a
       // crash
       int numOfTimesToRun = 400;
