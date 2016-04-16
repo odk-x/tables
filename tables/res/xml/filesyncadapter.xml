@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-
-<sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
-	android:contentAuthority="org.opendatakit.tables.android.provider.files"
-	android:accountType="com.google"
-	android:userVisible="true"
-	/>

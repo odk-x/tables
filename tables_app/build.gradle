@@ -1,0 +1,134 @@
+/**************************************************************************************************
+                                        GRADLE CONFIG
+ *************************************************************************************************/
+
+if ((new File(gradle.local)).exists()) {
+    apply from: gradle.local
+} else {
+    apply from: gradle.remote
+}
+
+applicationScripts.each {
+    apply from: it
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    // The following are set in the common.gradle file
+    compileSdkVersion(compileVersion)
+    buildToolsVersion(buildTools)
+
+    defaultConfig {
+        applicationId(groupId + tablesName)
+        minSdkVersion(minVersion)
+        targetSdkVersion(targetVersion)
+        versionCode(releaseVersionCode)
+        versionName(versionCodeName)
+
+        testApplicationId(groupId + tablesName + testNameSuffix)
+        testInstrumentationRunner(instrumentationRunner)
+    }
+
+    productFlavors {
+        demo {
+        }
+
+        master {
+        }
+
+        snapshot {
+        }
+
+        uitest {
+            minSdkVersion(uitestMinSDK)
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (shouldSign) {
+                storeFile file(signStoreFilePath)
+                storePassword signStorePass
+                keyAlias signKeyAlias
+                keyPassword signKeyPass
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled(minify)
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+
+            if (shouldSign) {
+                signingConfig signingConfigs.release
+            }
+        }
+        debug {
+            debuggable(true)
+            testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
+        }
+    }
+
+    packagingOptions { // Pick first occurrence of any files that cause conflicts, as defined in common.gradle
+        packageList.each {
+            pickFirst it
+        }
+
+        exclude('META-INF/maven/com.google.guava/guava/pom.properties')
+        exclude ('META-INF/maven/com.google.guava/guava/pom.xml')
+    }
+
+    compileOptions {
+      sourceCompatibility javaVersion
+      targetCompatibility javaVersion
+    }
+}
+
+configurations.all {
+  resolutionStrategy {
+    cacheDynamicVersionsFor(0, 'seconds')
+    cacheChangingModulesFor(0, 'seconds')
+  }
+}
+
+dependencies {
+    compile fileTree(include: '*.jar', dir: 'libs')
+
+    if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
+        compile project(libraryProjectName)
+    } else {
+        demoCompile(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
+                version: latestVersion, ext: 'aar')
+        masterCompile(group: groupId, name: libraryDemoArtifactName, classifier: demoRelease,
+                version: latestVersion, ext: 'aar')
+        snapshotCompile(group: groupId, name: librarySnapshotArtifactName,
+                classifier: snapshotRelease, version: latestVersion, ext: 'aar')
+        uitestCompile(group: groupId, name: librarySnapshotArtifactName,
+                      classifier: snapshotRelease, version: latestVersion, ext: 'aar')
+    }
+
+    if (commonProjectPath.exists() && gradle.useLocal) { // Local project is favoured
+        compile project(commonProjectName)
+    } else {
+        demoCompile(group: groupId, name: commonDemoArtifactName, classifier: demoRelease,
+                version: latestVersion, ext: 'aar')
+        masterCompile(group: groupId, name: commonDemoArtifactName, classifier: demoRelease,
+                version: latestVersion, ext: 'aar')
+        snapshotCompile(group: groupId, name: commonSnapshotArtifactName,
+                classifier: snapshotRelease, version: latestVersion, ext: 'aar')
+        uitestCompile(group: groupId, name: commonSnapshotArtifactName,
+                      classifier: snapshotRelease, version: latestVersion, ext: 'aar')
+    }
+
+    compile 'com.google.android.gms:play-services:' + gpsVersion
+    compile 'joda-time:joda-time:2.2'
+
+    // Testing-only dependencies
+    androidTestUitestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.1'
+    androidTestCompile 'com.android.support:support-annotations:23.1.0'
+    androidTestCompile 'com.android.support.test:runner:0.4.1'
+    androidTestCompile 'com.android.support.test:rules:0.4.1'
+    androidTestCompile 'com.android.support.test.espresso:espresso-web:2.2.1'
+}
