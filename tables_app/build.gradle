@@ -41,7 +41,7 @@ android {
         }
 
         uitest {
-            minSdkVersion 18
+            minSdkVersion(uitestMinSDK)
         }
     }
 
