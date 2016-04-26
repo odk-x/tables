@@ -23,7 +23,7 @@ android {
         applicationId(groupId + tablesName)
         minSdkVersion(18) // changed from minVersion for UiAutomator
         targetSdkVersion(targetVersion)
-        versionCode(releaseVersionCode)
+        versionCode(190)
         versionName(versionCodeName)
 
         testApplicationId(groupId + tablesName + testNameSuffix)
