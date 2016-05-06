@@ -24,7 +24,6 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
