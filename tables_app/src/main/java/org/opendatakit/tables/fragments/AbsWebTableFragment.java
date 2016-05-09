@@ -31,7 +31,7 @@ import org.opendatakit.common.android.views.OdkData;
 import org.opendatakit.common.android.views.ExecutorContext;
 import org.opendatakit.common.android.views.ExecutorProcessor;
 import org.opendatakit.common.android.views.ICallbackFragment;
-import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
@@ -255,7 +255,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   }
 
   @Override
-  public OdkDbInterface getDatabase() {
+  public OdkDbSerializedInterface getDatabase() {
     return ((CommonApplication) this.getActivity().getApplication()).getDatabase();
   }
 
