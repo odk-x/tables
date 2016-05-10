@@ -21,6 +21,7 @@ import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.IInitResumeActivity;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
+import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.UrlUtils;
@@ -31,7 +32,6 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.InitializationFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.fragments.WebFragment;
-import org.opendatakit.tables.logic.TablesToolProperties;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 
@@ -45,7 +45,6 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -167,8 +166,8 @@ public class MainActivity extends AbsBaseWebActivity implements
    * @return
    */
   protected File getHomeScreen(Bundle savedInstanceState) {
-    PropertiesSingleton props = TablesToolProperties.get(this, mAppName);
-    Boolean setting = props.getBooleanProperty(TablesToolProperties.KEY_USE_HOME_SCREEN);
+    PropertiesSingleton props = CommonToolProperties.get(this, mAppName);
+    Boolean setting = props.getBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN);
     String relativeFileName = 
         IntentUtil.retrieveFileNameFromSavedStateOrArguments(savedInstanceState, this.getIntent().getExtras());
     
@@ -185,7 +184,7 @@ public class MainActivity extends AbsBaseWebActivity implements
     } else {
       if ( setting == true && relativeFileName == null ) {
         // the home screen doesn't exist but we are requesting to show it -- clear the setting
-        props.setBooleanProperty(TablesToolProperties.KEY_USE_HOME_SCREEN, false);
+        props.setBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN, false);
         props.writeProperties();
       }
       return null;
@@ -348,7 +347,10 @@ public class MainActivity extends AbsBaseWebActivity implements
       swapScreens(ScreenType.ABOUT_SCREEN);
       return true;
     case R.id.menu_table_manager_preferences:
-      Intent preferenceIntent = new Intent(this, DisplayPrefsActivity.class);
+      Intent preferenceIntent = new Intent();
+      preferenceIntent.setComponent(new ComponentName(IntentConsts.AppProperties.APPLICATION_NAME,
+          IntentConsts.AppProperties.ACTIVITY_NAME));
+      preferenceIntent.setAction(Intent.ACTION_DEFAULT);
       preferenceIntent.putExtras(bundle);
       this.startActivityForResult(preferenceIntent, Constants.RequestCodes.LAUNCH_DISPLAY_PREFS);
       return true;
