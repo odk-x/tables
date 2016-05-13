@@ -182,7 +182,7 @@ public class MainActivity extends AbsBaseWebActivity implements
          userHomeScreen.exists() && userHomeScreen.isFile()) {
       return userHomeScreen;
     } else {
-      if ( setting == true && relativeFileName == null ) {
+      if ( (setting == null || setting == Boolean.TRUE) && relativeFileName == null ) {
         // the home screen doesn't exist but we are requesting to show it -- clear the setting
         props.setBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN, false);
         props.writeProperties();
