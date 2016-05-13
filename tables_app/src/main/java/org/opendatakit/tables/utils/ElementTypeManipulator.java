@@ -42,7 +42,7 @@ public class ElementTypeManipulator {
       public abstract String getDbValue();
   }
 
-  public interface ITypeManipulatorFragment {
+  public interface ITypeManipulatorFragment<T> {
     public String   getElementTypeDisplayLabel();
     public String   getCollectType();
     /* 
@@ -129,7 +129,7 @@ public class ElementTypeManipulator {
       }
 
      */
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue, Class<T> clazz);
+    public T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue, Class<T> clazz);
     
     /*
      * InputScreenUtil
@@ -153,19 +153,20 @@ public class ElementTypeManipulator {
     public InputView getInputView(AbsBaseActivity context, DataUtil du, String value);
   }
   
-  private HashMap<String, ITypeManipulatorFragment> renderers = new HashMap<String, ITypeManipulatorFragment>();
+  private HashMap<String, ITypeManipulatorFragment<?> > renderers = new HashMap<String,
+      ITypeManipulatorFragment<?> >();
   
-  public void addTypeManipulatorFragment(String type, ITypeManipulatorFragment frag) {
+  public void addTypeManipulatorFragment(String type, ITypeManipulatorFragment<?> frag) {
     renderers.put(type,  frag);
   }
   
-  public ITypeManipulatorFragment getSpecialRenderer(ElementType type) {
+  public ITypeManipulatorFragment<?> getSpecialRenderer(ElementType type) {
     ITypeManipulatorFragment r = renderers.get(type.getElementType());
     return r;
   }
   
-  public ITypeManipulatorFragment getDefaultRenderer(ElementType type) {
-    ITypeManipulatorFragment r = getSpecialRenderer(type);
+  public ITypeManipulatorFragment<?> getDefaultRenderer(ElementType type) {
+    ITypeManipulatorFragment<?> r = getSpecialRenderer(type);
     if ( r == null ) {
       r = ElementTypeManipulatorFactory.getCustomManipulatorFragment(type);
       renderers.put(type.getElementType(), r);

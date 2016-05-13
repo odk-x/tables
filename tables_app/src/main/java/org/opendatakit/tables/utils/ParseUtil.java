@@ -31,7 +31,7 @@ public class ParseUtil {
         return input;
       }
       ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(appName);
-      ITypeManipulatorFragment r = m.getDefaultRenderer(cd.getType());
+      ITypeManipulatorFragment<?> r = m.getDefaultRenderer(cd.getType());
 
       return r.verifyValidityAndNormalizeValue(du, choices, input);
   }
