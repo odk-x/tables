@@ -31,9 +31,6 @@ public class Tables extends CommonApplication {
 
   @Override
   public void onCreate() {
-    if (singleton == null) {
-      PropertiesSingleton.setToolStartedProperty(this.getBaseContext(), this.getToolName());
-    }
     singleton = this;
 
     super.onCreate();
