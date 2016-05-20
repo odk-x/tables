@@ -35,7 +35,7 @@ import org.opendatakit.tables.utils.InputScreenUtil.TimeInputView;
 
 public class ElementTypeManipulatorFactory {
 
-  private static class DateManipulator implements ITypeManipulatorFragment {
+  private static class DateManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
     
@@ -79,8 +79,8 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Object parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Object> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
           "DATE parsing not implemented!");
@@ -92,7 +92,7 @@ public class ElementTypeManipulatorFactory {
     }
   }
 
-  private static class DateTimeManipulator implements ITypeManipulatorFragment {
+  private static class DateTimeManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
     
@@ -136,8 +136,8 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Object parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Object> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
           "DATETIME parsing not implemented!");
@@ -150,7 +150,7 @@ public class ElementTypeManipulatorFactory {
   }
 
 
-  private static class TimeManipulator implements ITypeManipulatorFragment {
+  private static class TimeManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
     
@@ -194,8 +194,8 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Object parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Object> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
           "TIME parsing not implemented!");
@@ -207,7 +207,7 @@ public class ElementTypeManipulatorFactory {
     }
   }
 
-  private static class DateRangeManipulator implements ITypeManipulatorFragment {
+  private static class DateRangeManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
     
@@ -251,8 +251,8 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Object parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Object> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
           "DATE_RANGE parsing not implemented!");
@@ -264,7 +264,7 @@ public class ElementTypeManipulatorFactory {
     }
   }
 
-  private static class IntegerManipulator implements ITypeManipulatorFragment {
+  private static class IntegerManipulator implements ITypeManipulatorFragment<Integer> {
 
     ElementType type;
     
@@ -308,14 +308,15 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Integer parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>>
+        displayChoicesList, String inValue,
+        Class<Integer> clazz) {
       // TODO: verify against choices list
       if ( inValue == null ) {
         return null;
       }
       int integerValue = Integer.parseInt(inValue);
-      return (T) Integer.valueOf(integerValue);
+      return (Integer) Integer.valueOf(integerValue);
     }
 
     @Override
@@ -324,7 +325,7 @@ public class ElementTypeManipulatorFactory {
     }
   }
 
-  private static class NumberManipulator implements ITypeManipulatorFragment {
+  private static class NumberManipulator implements ITypeManipulatorFragment<Double> {
 
     ElementType type;
     
@@ -368,14 +369,14 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Double parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Double> clazz) {
       // TODO: verify against choices list
       if ( inValue == null ) {
         return null;
       }
       double numberValue = Double.parseDouble(inValue);
-      return (T) Double.valueOf(numberValue);
+      return (Double) Double.valueOf(numberValue);
     }
 
     @Override
@@ -384,7 +385,7 @@ public class ElementTypeManipulatorFactory {
     }
   }
 
-  private static class BoolManipulator implements ITypeManipulatorFragment {
+  private static class BoolManipulator implements ITypeManipulatorFragment<Integer> {
 
     ElementType type;
     
@@ -444,17 +445,17 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Integer parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Integer> clazz) {
       // TODO: verify against choices list
       if ( inValue == null ) {
         return null;
       }
       if ( inValue.equalsIgnoreCase("true") ) {
-        return (T) Integer.valueOf(1);
+        return (Integer) Integer.valueOf(1);
       }
       if ( inValue.equalsIgnoreCase("false") ) {
-        return (T) Integer.valueOf(0);
+        return (Integer) Integer.valueOf(0);
       }
       throw new IllegalArgumentException("invalid boolean value: " + inValue);
     }
@@ -465,7 +466,7 @@ public class ElementTypeManipulatorFactory {
     }
   }
 
-  private static class StringManipulator implements ITypeManipulatorFragment {
+  private static class StringManipulator implements ITypeManipulatorFragment<String> {
 
     ElementType type;
     
@@ -509,10 +510,10 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public String parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<String> clazz) {
       // TODO: verify against choices list
-      return (T) inValue;
+      return (String) inValue;
     }
 
     @Override
@@ -521,7 +522,7 @@ public class ElementTypeManipulatorFactory {
     }
   }
 
-  private static class ObjectManipulator implements ITypeManipulatorFragment {
+  private static class ObjectManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
     
@@ -556,8 +557,8 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Object parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Object> clazz) {
       throw new UnsupportedOperationException("this should not be called");
     }
 

@@ -223,8 +223,7 @@ public class InitializationFragment extends Fragment implements InitializationLi
 
     } else {
 
-      ProgressDialogFragment f = ProgressDialogFragment
-          .newInstance(getId(), mAlertTitle, mAlertMsg);
+      ProgressDialogFragment f = ProgressDialogFragment.newInstance(mAlertTitle, mAlertMsg);
 
       mDialogState = DialogState.Progress;
       if ( mPendingDialogState != mDialogState ) {
