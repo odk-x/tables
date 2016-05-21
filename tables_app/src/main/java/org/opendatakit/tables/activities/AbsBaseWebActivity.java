@@ -20,7 +20,7 @@ import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.views.ExecutorContext;
 import org.opendatakit.common.android.views.ExecutorProcessor;
 import org.opendatakit.common.android.views.ODKWebView;
-import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.database.OdkDbSerializedInterface;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
 
@@ -478,7 +478,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
     mIOdkDataDatabaseListener = listener;
   }
 
-  @Override public OdkDbInterface getDatabase() {
+  @Override public OdkDbSerializedInterface getDatabase() {
     return ((CommonApplication) getApplication()).getDatabase();
   }
 

@@ -165,22 +165,29 @@ public class WebViewUtil {
       // This means all is well, and we can parse the value.
       ElementType columnType = colDefn.getType();
       ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(appName);
-      org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment r = m
-          .getDefaultRenderer(columnType);
       ElementDataType type = columnType.getDataType();
 
       if (type == ElementDataType.integer) {
+        ElementTypeManipulator.ITypeManipulatorFragment<Integer> r;
+        r = (ElementTypeManipulator.ITypeManipulatorFragment<Integer>) m.getDefaultRenderer(columnType);
         contentValues.put(contentValuesKey,
-            (Integer) r.parseStringValue(du, choices, rawValue, Integer.class));
+            r.parseStringValue(du, choices, rawValue, Integer.class));
       } else if (type == ElementDataType.number) {
+        ElementTypeManipulator.ITypeManipulatorFragment<Double> r;
+        r = (ElementTypeManipulator.ITypeManipulatorFragment<Double>) m.getDefaultRenderer(columnType);
         contentValues.put(contentValuesKey,
-            (Double) r.parseStringValue(du, choices, rawValue, Double.class));
+            r.parseStringValue(du, choices, rawValue, Double.class));
       } else if (type == ElementDataType.bool) {
+        ElementTypeManipulator.ITypeManipulatorFragment<Integer> r;
+        r = (ElementTypeManipulator.ITypeManipulatorFragment<Integer>) m.getDefaultRenderer(columnType);
         contentValues.put(contentValuesKey,
-            (Boolean) r.parseStringValue(du, choices, rawValue, Boolean.class));
+            (r.parseStringValue(du, choices, rawValue, Integer.class) == 0)
+                ? Boolean.FALSE : Boolean.TRUE );
       } else {
+        ElementTypeManipulator.ITypeManipulatorFragment<String> r;
+        r = (ElementTypeManipulator.ITypeManipulatorFragment<String>) m.getDefaultRenderer(columnType);
         contentValues.put(contentValuesKey,
-            (String) r.parseStringValue(du, choices, rawValue, String.class));
+            r.parseStringValue(du, choices, rawValue, String.class));
       }
       return true;
     }
