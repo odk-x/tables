@@ -5,6 +5,6 @@
 	    android:id="@+id/context_menu_delete_color_rule"
 	    android:title="@string/delete_color_rule" 
 	    android:showAsAction="always"
-	    android:icon="@drawable/ic_action_discard" />
+	    android:icon="@drawable/ic_action_content_discard" />
     
 </menu>
