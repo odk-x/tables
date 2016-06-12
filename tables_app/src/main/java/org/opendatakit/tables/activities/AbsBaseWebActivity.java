@@ -135,23 +135,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
   public String getActiveUser() {
     PropertiesSingleton props = CommonToolProperties.get(this, getAppName());
 
-    final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
-        getTableId(), getInstanceId(),
-        props.getProperty(CommonToolProperties.KEY_USERNAME),
-        props.getProperty(CommonToolProperties.KEY_ACCOUNT));
-
-    String name = mPropertyManager.getSingularProperty(PropertyManager.EMAIL, cb);
-    if (name == null || name.length() == 0) {
-      name = mPropertyManager.getSingularProperty(PropertyManager.USERNAME, cb);
-      if (name != null && name.length() != 0) {
-        name = "username:" + name;
-      } else {
-        name = null;
-      }
-    } else {
-      name = "mailto:" + name;
-    }
-    return name;
+    return props.getActiveUser();
   }
 
   @Override
@@ -160,6 +144,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
 
     final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
         getTableId(), getInstanceId(),
+        props.getActiveUser(), props.getLocale(),
         props.getProperty(CommonToolProperties.KEY_USERNAME),
         props.getProperty(CommonToolProperties.KEY_ACCOUNT));
 
@@ -299,6 +284,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
 
         final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
             getTableId(), getInstanceId(),
+            props.getActiveUser(), props.getLocale(),
             props.getProperty(CommonToolProperties.KEY_USERNAME),
             props.getProperty(CommonToolProperties.KEY_ACCOUNT));
 

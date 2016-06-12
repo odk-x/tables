@@ -5,7 +5,7 @@
         android:id="@+id/menu_edit_row"
         android:title="@string/edit_row"
         android:showAsAction="always"
-        android:icon="@drawable/ic_action_edit" />
+        android:icon="@drawable/ic_mode_edit_black_24dp" />
     
 
 </menu>

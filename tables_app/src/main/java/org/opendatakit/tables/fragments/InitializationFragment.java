@@ -289,7 +289,7 @@ public class InitializationFragment extends Fragment implements InitializationLi
    * set to true, the activity will exit when the user clicks "ok".
    *
    * @param title
-   * @param message
+   * @param shouldExit
    */
   private void createAlertDialog(String title, String message) {
     mAlertMsg = message;
