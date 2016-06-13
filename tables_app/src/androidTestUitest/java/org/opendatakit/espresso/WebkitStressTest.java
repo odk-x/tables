@@ -9,6 +9,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.LargeTest;
+import android.webkit.WebView;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.ClassRule;
@@ -92,7 +93,7 @@ public class WebkitStressTest {
       }
 
       //Wait for Survey to start
-      mDevice.wait(Until.findObject(By.res(SURVEY_PKG_NAME, "webkit")), APP_INIT_TIMEOUT);
+      mDevice.wait(Until.findObject(By.clazz(WebView.class)), APP_INIT_TIMEOUT);
 
       //Wait 10 secs for webpage to load
       try {
@@ -102,6 +103,7 @@ public class WebkitStressTest {
 
       //Go back to Tables
       mDevice.pressBack();
+      mDevice.wait(Until.findObject(By.text("Ignore Changes")), OBJ_WAIT_TIMEOUT).click();
     }
   }
 }

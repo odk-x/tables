@@ -47,4 +47,8 @@ public class TestConstants {
   //Misc.
   public static final String OI_PICK_FILE = "org.openintents.action.PICK_FILE";
   public static final String APP_NAME = "default";
+
+  //ODK Services menu
+  public static final String TABLES_SPECIFIC_SETTINGS = "Tables-specific Settings";
+  public static final String CUSTOM_HOME = "Use custom home screen";
 }

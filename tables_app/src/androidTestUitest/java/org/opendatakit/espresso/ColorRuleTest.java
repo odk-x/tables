@@ -8,7 +8,9 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.test.suitebuilder.annotation.LargeTest;
+import android.util.Log;
 import android.view.View;
+import android.widget.ScrollView;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Rule;
@@ -257,7 +259,7 @@ public class ColorRuleTest {
     int color = EspressoUtils.getColor(colorPickerMatcher, 11, 317);
 
     //obtain bounds of color picker
-    Rect bounds = mDevice.findObject(By.clazz(View.class)).getVisibleBounds();
+    Rect bounds = mDevice.findObject(By.clazz(ScrollView.class)).getVisibleBounds();
     //center coordinate of "OK" button is hard coded in ColorRulesDialog.java
     mDevice.click(74 + bounds.left, 336 + bounds.top);
 

@@ -10,6 +10,7 @@ import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.uiautomator.*;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import org.opendatakit.tables.R;
@@ -62,7 +63,9 @@ public class UAUtils {
       //from the preference's content description see if custom home screen has been enabled
       if (preference.getContentDescription().equals(getString(R.string.preferences))) {
         preference.click();
-        mDevice.wait(Until.findObject(By.text(getString(R.string.use_index_html))),
+        mDevice.wait(Until.findObject(By.text(TABLES_SPECIFIC_SETTINGS)),
+            OBJ_WAIT_TIMEOUT).click();
+        mDevice.wait(Until.findObject(By.text(CUSTOM_HOME)),
             OBJ_WAIT_TIMEOUT).click();
       }
     } catch (Exception e) {
@@ -168,10 +171,11 @@ public class UAUtils {
 
   private static Point getSpreadsheetRow(UiDevice mDevice, int row) {
     //Find all views that can potentially be a tabular view
-    List<UiObject2> tabularViews =
-        mDevice.wait(Until.findObjects(By.clazz(View.class)), OBJ_WAIT_TIMEOUT);
-    Map<UiObject2, Rect> bounds = new HashMap<>();
+    UiObject2 contentView =
+        mDevice.wait(Until.findObject(By.res("android:id/content")), OBJ_WAIT_TIMEOUT);
+    List<UiObject2> tabularViews = contentView.findObjects(By.clazz(View.class));
 
+    Map<UiObject2, Rect> bounds = new HashMap<>();
     //Find the relevant tabular views using their area
     UiObject2 minArea = null; //upper left corner
     UiObject2 maxArea = null; //main tabular view
