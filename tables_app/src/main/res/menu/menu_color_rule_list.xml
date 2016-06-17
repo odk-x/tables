@@ -5,13 +5,13 @@
         android:id="@+id/menu_color_rule_list_new"
         android:title="@string/add_color_rule"
         android:showAsAction="always"
-        android:icon="@drawable/ic_action_new" />
+        android:icon="@drawable/ic_add_black_24dp" />
     
     <item
         android:id="@+id/menu_color_rule_list_revert"
         android:title="@string/delete_changes_to_color_rules"
         android:showAsAction="always"
-        android:icon="@drawable/ic_action_discard" />
+        android:icon="@drawable/ic_action_content_discard" />
     
 
 </menu>

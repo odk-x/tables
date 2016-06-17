@@ -525,7 +525,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     Row row = spreadsheetTable.getRowAtIndex(cellInfo.rowId);
     if (this.hasGroupBys()) {
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN, ContextMenu.NONE, "View Collection");
-      mi.setIcon(R.drawable.view);
+      mi.setIcon(R.drawable.ic_view_headline_black_24dp);
     }
     String viewString = row.getDisplayTextOfData(cd.getType(), cellInfo.elementKey);
     // TODO: display value and use edit icon...
@@ -535,10 +535,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
     mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE,
         getString(R.string.delete_row));
-    mi.setIcon(R.drawable.ic_action_discard);
+    mi.setIcon(R.drawable.ic_action_content_discard);
     mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE,
         getString(R.string.edit_row));
-    mi.setIcon(R.drawable.ic_action_edit);
+    mi.setIcon(R.drawable.ic_mode_edit_black_24dp);
 
     // check a join association with this column; add a join... option if
     // it is applicable.
@@ -557,7 +557,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     if (joinColumns != null && joinColumns.size() != 0) {
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_JOIN_TABLE, ContextMenu.NONE,
           getString(R.string.open_join_table));
-      mi.setIcon(R.drawable.ic_action_search);
+      mi.setIcon(R.drawable.ic_search_black_24dp);
     }
   }
 
