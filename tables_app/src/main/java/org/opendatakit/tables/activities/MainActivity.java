@@ -15,7 +15,20 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.File;
+import android.app.ActionBar;
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentManager.BackStackEntry;
+import android.app.FragmentTransaction;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.Toast;
 
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.IInitResumeActivity;
@@ -35,20 +48,7 @@ import org.opendatakit.tables.fragments.WebFragment;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 
-import android.app.ActionBar;
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentManager.BackStackEntry;
-import android.app.FragmentTransaction;
-import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.widget.Toast;
+import java.io.File;
 
 /**
  * The main activity for ODK Tables. It serves primarily as a holder for
@@ -81,9 +81,22 @@ public class MainActivity extends AbsBaseWebActivity implements
       FragmentManager mgr = this.getFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
       if ( newFragment != null && webFileToDisplay != null) {
-        String filename = ODKFileUtils.asRelativePath(mAppName, webFileToDisplay);
+        // Split off query parameter if it exists
+        String [] webFileStrs = checkForQueryParameter(webFileToDisplay);
+        String filename = null;
+        if (webFileStrs.length > 1) {
+          File webFile = new File(webFileStrs[0]);
+          filename = ODKFileUtils.asRelativePath(mAppName, webFile);
+        } else {
+          filename = ODKFileUtils.asRelativePath(mAppName, webFileToDisplay);
+        }
+
         if ( filename != null ) {
-          return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
+          if (webFileStrs.length > 1) {
+            return UrlUtils.getAsWebViewUri(this, getAppName(), filename.concat("?").concat(webFileStrs[1]));
+          } else {
+            return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
+          }
         }
       }
     }
@@ -170,16 +183,24 @@ public class MainActivity extends AbsBaseWebActivity implements
     Boolean setting = props.getBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN);
     String relativeFileName = 
         IntentUtil.retrieveFileNameFromSavedStateOrArguments(savedInstanceState, this.getIntent().getExtras());
-    
+
     File userHomeScreen = null;
     if ( relativeFileName != null ) {
       userHomeScreen = ODKFileUtils.asAppFile(mAppName, relativeFileName);
     } else {
       userHomeScreen = new File(ODKFileUtils.getTablesHomeScreenFile(this.mAppName));
     }
-    if (((relativeFileName != null) || 
-         (setting == null ? false : setting)) &&
-         userHomeScreen.exists() && userHomeScreen.isFile()) {
+
+    // Make sure that query parameters are still passed through
+    String [] userHomeScreenUrlParts = checkForQueryParameter(userHomeScreen);
+    File userHomeScreenFile = userHomeScreen;
+    if (userHomeScreenUrlParts.length > 1) {
+      userHomeScreenFile = new File(userHomeScreenUrlParts[0]);
+    }
+
+    if ((relativeFileName != null) ||
+        (setting == null ? false : setting) ||
+        (userHomeScreenFile.exists() && userHomeScreenFile.isFile())) {
       return userHomeScreen;
     } else {
       if ( (setting == null || setting == Boolean.TRUE) && relativeFileName == null ) {
@@ -189,6 +210,12 @@ public class MainActivity extends AbsBaseWebActivity implements
       }
       return null;
     }
+  }
+
+  private String[] checkForQueryParameter(File webFile) {
+    String webFileToDisplayPath = webFile.getPath();
+    String [] webFileStrs = webFileToDisplayPath.split("[?]", 2);
+    return webFileStrs;
   }
 
   private void popBackStack() {
