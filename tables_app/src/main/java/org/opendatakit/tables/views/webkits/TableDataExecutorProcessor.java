@@ -129,7 +129,7 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
         String hexFgString = String.format("#%06X", (0xFFFFFF & tcg.getForeground()));
         //String hexBgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getBackground());
         String hexBgString = String.format("#%06X", (0xFFFFFF & tcg.getBackground()));
-        RowColorObject rco = new RowColorObject(userTable.getRowAtIndex(i).getRowId(), i, hexFgString, hexBgString);
+        RowColorObject rco = new RowColorObject(userTable.getRowId(i), i, hexFgString, hexBgString);
         colors.add(rco);
       }
     }

@@ -224,7 +224,8 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
             this.getTableId(), getColumnDefinitions(), sqlQueryStruct.whereClause,
             (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs,
             (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
-            sqlQueryStruct.having, sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
+            sqlQueryStruct.having, new String[] { sqlQueryStruct.orderByElementKey },
+            new String[] { sqlQueryStruct.orderByDirection });
         mUserTable = result;
       } catch (RemoteException e) {
         // TODO Auto-generated catch block

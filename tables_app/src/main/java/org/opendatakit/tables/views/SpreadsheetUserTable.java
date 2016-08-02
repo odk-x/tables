@@ -23,10 +23,10 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
@@ -129,7 +129,7 @@ public class SpreadsheetUserTable {
     return table.getNumberOfRows();
   }
 
-  public Row getRowAtIndex(int index) {
+  public OdkDbRow getRowAtIndex(int index) {
     UserTable table = fragment.getUserTable();
     if ( table == null ) {
       return null;
@@ -163,7 +163,7 @@ public class SpreadsheetUserTable {
 
   public static class SpreadsheetCell {
     public int rowNum; // of the row
-    public Row row; // the row
+    public OdkDbRow row; // the row
     public String elementKey; // of the column
     public String displayText;
     public String value;
@@ -176,8 +176,9 @@ public class SpreadsheetUserTable {
     cell.elementKey = cellInfo.elementKey;
     OrderedColumns orderedDefns = getColumnDefinitions();
     ColumnDefinition cd = orderedDefns.find(cellInfo.elementKey);
-    cell.displayText = cell.row.getDisplayTextOfData(cd.getType(), cellInfo.elementKey);
-    cell.value = cell.row.getRawDataOrMetadataByElementKey(cellInfo.elementKey);
+    cell.displayText = getUserTable()
+        .getDisplayTextOfData(cellInfo.rowId, cd.getType(), cellInfo.elementKey);
+    cell.value = cell.row.getDataByKey(cellInfo.elementKey);
     return cell;
   }
 

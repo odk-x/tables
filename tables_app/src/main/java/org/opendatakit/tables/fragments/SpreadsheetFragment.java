@@ -24,12 +24,13 @@ import java.util.TimeZone;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.JoinColumn;
-import org.opendatakit.common.android.data.Row;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
@@ -211,7 +212,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           s.append(", ");
         }
         first = false;
-        String value = cell.row.getRawDataOrMetadataByElementKey(groupByColumn);
+        String value = cell.row.getDataByKey(groupByColumn);
         if (value == null) {
           s.append(groupByColumn).append(" IS NULL");
         } else {
@@ -273,7 +274,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
       AlertDialog confirmDeleteAlert;
       // Prompt an alert box
-      final String rowId = cell.row.getRowId();
+      final String rowId = cell.row.getDataByKey(DataTableColumns.ID);
       AlertDialog.Builder alert = new AlertDialog.Builder(activity);
       alert.setTitle(getString(R.string.confirm_delete_row)).setMessage(
           getString(R.string.are_you_sure_delete_row, rowId));
@@ -522,12 +523,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     menu.setHeaderTitle(localizedDisplayName);
 
     MenuItem mi;
-    Row row = spreadsheetTable.getRowAtIndex(cellInfo.rowId);
+    OdkDbRow row = spreadsheetTable.getRowAtIndex(cellInfo.rowId);
     if (this.hasGroupBys()) {
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN, ContextMenu.NONE, "View Collection");
       mi.setIcon(R.drawable.ic_view_headline_black_24dp);
     }
-    String viewString = row.getDisplayTextOfData(cd.getType(), cellInfo.elementKey);
+    String viewString = spreadsheetTable.getUserTable()
+        .getDisplayTextOfData(cellInfo.rowId, cd.getType(), cellInfo.elementKey);
     // TODO: display value and use edit icon...
 //    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE,
 //        getString(R.string.edit_cell, viewString));
@@ -676,7 +678,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     
               Tables.getInstance().getDatabase().updateRowWithId(getAppName(), db,
                   getTableId(),
-                  getColumnDefinitions(), values, cell.row.getRowId());
+                  getColumnDefinitions(), values, cell.row.getDataByKey(DataTableColumns.ID));
             } finally {
               if (db != null) {
                 Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);

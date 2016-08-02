@@ -27,7 +27,6 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
@@ -306,9 +305,10 @@ public class TableMapInnerFragment extends MapFragment {
 
       // Go through each row and create a marker at the specified location.
       for (int i = 0; i < table.getNumberOfRows(); i++) {
-        Row row = table.getRowAtIndex(i);
-        String latitudeString = row.getRawDataOrMetadataByElementKey(latitudeColumn.getElementKey());
-        String longitudeString = row.getRawDataOrMetadataByElementKey(longitudeColumn.getElementKey());
+        String latitudeString = table
+            .getRawDataOrMetadataByElementKey(i, latitudeColumn.getElementKey());
+        String longitudeString = table
+            .getRawDataOrMetadataByElementKey(i, longitudeColumn.getElementKey());
         if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
             || longitudeString.length() == 0) {
           continue;

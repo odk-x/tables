@@ -21,8 +21,9 @@ import java.util.Map;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.Row;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
@@ -53,7 +54,7 @@ public class ActivityUtil {
    * @throws RemoteException
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, Row row) throws RemoteException {
+      OrderedColumns orderedDefns, OdkDbRow row) throws RemoteException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit
@@ -65,9 +66,9 @@ public class ActivityUtil {
     SurveyFormParameters params = formType.getSurveyFormParameters();
 
     Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, appName, tableId, params,
-              row.getRowId());
+              row.getDataByKey(DataTableColumns.ID));
     if (intent != null) {
-      SurveyUtil.launchSurveyToEditRow(activity, tableId, intent, row.getRowId());
+      SurveyUtil.launchSurveyToEditRow(activity, tableId, intent, row.getDataByKey(DataTableColumns.ID));
     }
   }
 
