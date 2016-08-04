@@ -26,6 +26,7 @@ import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorGuideGroup;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
 
 import android.content.Context;
@@ -668,7 +669,7 @@ class TabularView extends View {
         theRow = this.mTable.getRowAtIndex(theRowIndex);
         //rowGuide = mRowColorRuleGroup.getColorGuide(this.mTable.getColumnDefinitions(), theRow);
         rowGuide = mRowColorGuideGroup
-            .getColorGuideForRowId(this.mTable.getUserTable().getRowId(theRowIndex));
+            .getColorGuideForRowId(theRow.getDataByKey(DataTableColumns.ID));
       }
 
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
@@ -681,7 +682,7 @@ class TabularView extends View {
         } else if (this.type == TableLayoutType.INDEX_DATA || this.type == TableLayoutType.MAIN_DATA) {
 
           ColumnDefinition cd = this.mTable.getColumnByIndex(userDataIndex[j]);
-          datum = this.mTable.getUserTable()
+          datum = this.mTable.getCachedUserTable()
               .getDisplayTextOfData(theRowIndex, cd.getType(), cd.getElementKey());
         } else {
           WebLogger.getLogger(this.mTable.getAppName()).e(TAG,
@@ -701,7 +702,7 @@ class TabularView extends View {
           }
           //ColorGuide columnGuide = mColumnColorRules.get(this.mElementKeys.get(j)).getColorGuide(this.mTable.getColumnDefinitions(), theRow);
           ColorGuide columnGuide = mColumnColorGuideGroup.get(this.mElementKeys.get(j))
-              .getColorGuideForRowId(mTable.getUserTable().getRowId(theRowIndex));
+              .getColorGuideForRowId(theRow.getDataByKey(DataTableColumns.ID));
           // Override the role rule if a column rule matched.
           if (columnGuide != null) {
             foregroundColor = columnGuide.getForeground();

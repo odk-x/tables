@@ -36,6 +36,7 @@ import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
 
@@ -279,13 +280,14 @@ public class WebViewUtil {
           "query returned no rows for tableId: " + tableId + " and rowId: " + rowId);
     }
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
+    OdkDbRow requestedRow = userTable.getRowAtIndex(0);
     List<String> userDefinedElementKeys = orderedDefns.getRetentionColumnNames();
     List<String> adminElementKeys = Arrays.asList(adminColumns);
     List<String> allElementKeys = new ArrayList<String>();
     allElementKeys.addAll(userDefinedElementKeys);
     allElementKeys.addAll(adminElementKeys);
     for (String elementKey : allElementKeys) {
-      elementKeyToValue.put(elementKey, userTable.getRawDataOrMetadataByElementKey(0, elementKey));
+      elementKeyToValue.put(elementKey, requestedRow.getDataByKey(elementKey));
     }
     return elementKeyToValue;
   }

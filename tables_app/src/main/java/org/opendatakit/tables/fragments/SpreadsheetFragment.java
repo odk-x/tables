@@ -523,13 +523,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     menu.setHeaderTitle(localizedDisplayName);
 
     MenuItem mi;
-    OdkDbRow row = spreadsheetTable.getRowAtIndex(cellInfo.rowId);
     if (this.hasGroupBys()) {
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN, ContextMenu.NONE, "View Collection");
       mi.setIcon(R.drawable.ic_view_headline_black_24dp);
     }
-    String viewString = spreadsheetTable.getUserTable()
-        .getDisplayTextOfData(cellInfo.rowId, cd.getType(), cellInfo.elementKey);
     // TODO: display value and use edit icon...
 //    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE,
 //        getString(R.string.edit_cell, viewString));

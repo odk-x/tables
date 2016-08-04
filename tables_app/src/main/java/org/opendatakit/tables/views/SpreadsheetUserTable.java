@@ -50,15 +50,16 @@ public class SpreadsheetUserTable {
   private final String[] spreadsheetIndexToElementKey;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
   private final Map<String, ArrayList<Map<String,Object>>> elementKeyToDisplayChoicesList;
+  UserTable userTable;
 
   public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws RemoteException {
     this.fragment = frag;
 
-    // UserTable table = frag.getUserTable();
     ArrayList<String> colOrder;
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(frag.getAppName());
+      userTable = getUserTable();
       indexColumnElementKey = TableUtil.get().getIndexColumn(Tables.getInstance(), getAppName(), db, getTableId());
       colOrder = TableUtil.get().getColumnOrder(Tables.getInstance(), frag.getAppName(), db, frag.getTableId(),
               frag.getColumnDefinitions());
@@ -141,6 +142,10 @@ public class SpreadsheetUserTable {
     return fragment.getUserTable();
   }
 
+  public UserTable getCachedUserTable() {
+    return userTable;
+  }
+
   // ///////////////////////////////////////////////////////////////////////////
   // Whether or not we have a frozen column...
 
@@ -171,12 +176,14 @@ public class SpreadsheetUserTable {
 
   public SpreadsheetCell getSpreadsheetCell(Context context, CellInfo cellInfo) {
     SpreadsheetCell cell = new SpreadsheetCell();
+    userTable = getUserTable();
     cell.rowNum = cellInfo.rowId;
-    cell.row = getRowAtIndex(cellInfo.rowId);
+    cell.row = userTable.getRowAtIndex(cellInfo.rowId);
     cell.elementKey = cellInfo.elementKey;
     OrderedColumns orderedDefns = getColumnDefinitions();
     ColumnDefinition cd = orderedDefns.find(cellInfo.elementKey);
-    cell.displayText = getUserTable()
+    getTableId();
+    cell.displayText = userTable
         .getDisplayTextOfData(cellInfo.rowId, cd.getType(), cellInfo.elementKey);
     cell.value = cell.row.getDataByKey(cellInfo.elementKey);
     return cell;
