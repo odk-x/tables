@@ -233,7 +233,8 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
             (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
             sqlQueryStruct.having,
             (sqlQueryStruct.orderByElementKey == null) ? emptyArray : new String[] { sqlQueryStruct.orderByElementKey },
-            (sqlQueryStruct.orderByDirection == null) ? emptyArray : new String[] { sqlQueryStruct.orderByDirection });
+            (sqlQueryStruct.orderByDirection == null) ? emptyArray : new String[] {
+                sqlQueryStruct.orderByDirection }, null, null);
         mUserTable = result;
       } catch (RemoteException e) {
         // TODO Auto-generated catch block
