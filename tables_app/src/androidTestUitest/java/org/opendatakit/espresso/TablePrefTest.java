@@ -85,6 +85,9 @@ public class TablePrefTest {
 
     //open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+    try {
+      Thread.sleep(3000);
+    } catch (Exception e) {}
 
     //click "Tea Houses Editable"
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
