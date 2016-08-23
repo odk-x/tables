@@ -18,6 +18,7 @@ package org.opendatakit.tables.fragments;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -30,10 +31,8 @@ import org.opendatakit.tables.utils.ElementTypeManipulator;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
 import org.opendatakit.tables.utils.PreferenceUtil;
-import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 
@@ -102,7 +101,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     super.onResume();
     try {
       this.initializeAllPreferences();
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
   }
@@ -114,7 +113,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     outState.putString(COL_ELEM_KEY, mElementKey);
   }
 
-  void initializeAllPreferences() throws RemoteException {
+  void initializeAllPreferences() throws ServicesAvailabilityException {
     this.initializeColumnType();
     this.initializeColumnWidth();
     this.initializeDisplayName();
@@ -123,7 +122,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     this.initializeColorRule();
   }
 
-  private void initializeDisplayName() throws RemoteException {
+  private void initializeDisplayName() throws ServicesAvailabilityException {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
 
@@ -164,7 +163,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     pref.setSummary(this.retrieveColumnDefinition().getElementName());
   }
 
-  private void initializeColumnWidth() throws RemoteException {
+  private void initializeColumnWidth() throws ServicesAvailabilityException {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
     final String appName = activity.getAppName();
     final EditTextPreference pref =

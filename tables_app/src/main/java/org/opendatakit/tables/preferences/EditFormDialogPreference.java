@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.preferences;
 
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
@@ -22,7 +23,6 @@ import org.opendatakit.tables.types.FormType;
 
 import android.app.Activity;
 import android.content.Context;
-import android.os.RemoteException;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -65,9 +65,9 @@ public class EditFormDialogPreference extends DialogPreference {
    * Retrieve the {@link FormType} for the table.
    * 
    * @return
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  FormType retrieveFormType() throws RemoteException {
+  FormType retrieveFormType() throws ServicesAvailabilityException {
     AbsTableActivity tableActivity = (AbsTableActivity) getContext();
     return FormType.constructFormType(tableActivity, tableActivity.getAppName(),
         tableActivity.getTableId());
@@ -86,7 +86,7 @@ public class EditFormDialogPreference extends DialogPreference {
 
     try {
       this.mFormType = retrieveFormType();
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(tableActivity.getAppName()).printStackTrace(e);
       Toast.makeText(getContext(), getContext().getString(R.string.unable_to_retrieve_form_type),
               Toast.LENGTH_LONG).show();
@@ -109,7 +109,7 @@ public class EditFormDialogPreference extends DialogPreference {
 
       try {
         this.mFormType.persist(tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(tableActivity.getAppName()).printStackTrace(e);
         Toast.makeText(getContext(), getContext().getString(R.string.unable_to_save_db_changes),
                 Toast.LENGTH_LONG).show();

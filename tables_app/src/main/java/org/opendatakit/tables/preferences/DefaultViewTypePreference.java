@@ -19,6 +19,7 @@ import java.util.Arrays;
 
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
@@ -29,7 +30,6 @@ import org.opendatakit.tables.views.components.TableViewTypeAdapter;
 
 import android.app.AlertDialog.Builder;
 import android.content.Context;
-import android.os.RemoteException;
 import android.preference.ListPreference;
 import android.util.AttributeSet;
 import android.widget.ListAdapter;
@@ -50,7 +50,8 @@ public class DefaultViewTypePreference extends ListPreference {
     this.mAppName = activity.getAppName();
   }
 
-  public void setFields(String tableId, OrderedColumns orderedDefns) throws RemoteException {
+  public void setFields(String tableId, OrderedColumns orderedDefns) throws
+      ServicesAvailabilityException {
     
     TableViewType defaultViewType = null;
     this.mEntryValues = this.mContext.getResources().getTextArray(

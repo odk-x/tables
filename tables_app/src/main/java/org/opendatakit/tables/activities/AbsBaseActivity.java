@@ -23,6 +23,7 @@ import android.app.FragmentManager;
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.application.CommonApplication;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.utilities.DependencyChecker;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -39,7 +40,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.RemoteException;
 import android.widget.Toast;
 
 /**
@@ -155,13 +155,13 @@ public abstract class AbsBaseActivity extends BaseActivity {
       }
       mCheckpointTables = checkpointTables;
       mConflictTables = conflictTables;
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     } finally {
       if ( db != null ) {
         try {
           app.getDatabase().closeDatabase(mAppName, db);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           WebLogger.getLogger(getAppName()).e(this.getClass().getSimpleName(),"Unable to close database");
         }

@@ -15,12 +15,11 @@
  */
 package org.opendatakit.tables.utils;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbRow;
@@ -35,7 +34,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.util.DisplayMetrics;
 import android.widget.Toast;
 
@@ -51,10 +49,10 @@ public class ActivityUtil {
    * @param tableId
    * @param orderedDefns
    * @param row
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, OdkDbRow row) throws RemoteException {
+      OrderedColumns orderedDefns, OdkDbRow row) throws ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit
@@ -78,10 +76,10 @@ public class ActivityUtil {
    * @param activity
    *          the activity that should await the return
    * @param rowId
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, String rowId) throws RemoteException {
+      OrderedColumns orderedDefns, String rowId) throws ServicesAvailabilityException {
       WebLogger.getLogger(appName).d(TAG, "[editRow] using survey form");
       SurveyFormParameters surveyFormParameters = SurveyFormParameters
           .constructSurveyFormParameters(activity, appName, tableId);
@@ -110,10 +108,11 @@ public class ActivityUtil {
    * @param prepopulatedValues
    *          a map of elementKey to value with which the new row should be
    *          prepopulated.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
   public static void addRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, Map<String, String> prepopulatedValues) throws RemoteException {
+      OrderedColumns orderedDefns, Map<String, String> prepopulatedValues) throws
+      ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit

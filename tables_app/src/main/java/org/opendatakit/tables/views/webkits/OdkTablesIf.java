@@ -15,8 +15,8 @@
  */
 package org.opendatakit.tables.views.webkits;
 
-import android.os.RemoteException;
 import android.widget.Toast;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 
@@ -207,7 +207,7 @@ public class OdkTablesIf {
     if (isInactive()) return false;
     try {
       return weakControl.get().helperEditRowWithSurvey(tableId, rowId, formId, screenPath);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       String appName = weakControl.get().retrieveAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
@@ -250,7 +250,7 @@ public class OdkTablesIf {
     if (isInactive()) return false;
     try {
       return weakControl.get().helperAddRowWithSurvey(tableId, formId, screenPath, jsonMap);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       String appName = weakControl.get().retrieveAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());

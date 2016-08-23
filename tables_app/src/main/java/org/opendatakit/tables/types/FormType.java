@@ -16,6 +16,7 @@
 package org.opendatakit.tables.types;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.KeyValueStoreUtils;
 import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
@@ -23,9 +24,6 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import android.content.Context;
-import android.os.RemoteException;
-
-import java.util.List;
 
 /**
  * Definition of the form data type.
@@ -50,12 +48,13 @@ public class FormType {
   private Type type;
   private SurveyFormParameters mSurveyParams;
 
-  public static FormType constructFormType(Context context, String appName, String tableId) throws RemoteException {
+  public static FormType constructFormType(Context context, String appName, String tableId) throws
+      ServicesAvailabilityException {
     return new FormType(context, appName, tableId, SurveyFormParameters.constructSurveyFormParameters(
             context, appName, tableId));
   }
 
-  public void persist(Context context, String appName, String tableId) throws RemoteException {
+  public void persist(Context context, String appName, String tableId) throws ServicesAvailabilityException {
     OdkDbHandle db = null;
     try {
       KeyValueStoreEntry entry = KeyValueStoreUtils.buildEntry(tableId,
@@ -79,7 +78,7 @@ public class FormType {
     }
   }
 
-  public FormType(Context context, String appName, String tableId, SurveyFormParameters params) throws RemoteException {
+  public FormType(Context context, String appName, String tableId, SurveyFormParameters params) {
     this.type = Type.SURVEY;
     this.mSurveyParams = params;
   }

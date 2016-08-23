@@ -19,18 +19,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.TimeZone;
 
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.JoinColumn;
+import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
@@ -53,7 +53,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -113,7 +112,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       } else {
         return this.buildSpreadsheetView();
       }
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       WebLogger.getLogger(getAppName()).e(TAG,
           "Error while constructing spreadsheet view: " + e.toString());
@@ -137,40 +136,40 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
    * Build a {@link SpreadsheetView} view to display.
    *
    * @return
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  SpreadsheetView buildSpreadsheetView() throws RemoteException {
+  SpreadsheetView buildSpreadsheetView() throws ServicesAvailabilityException {
     return new SpreadsheetView((TableDisplayActivity) this.getActivity(), this, spreadsheetTable);
   }
 
-  void addGroupByColumn(ColumnDefinition cd) throws RemoteException {
+  void addGroupByColumn(ColumnDefinition cd) {
     try {
       TableUtil.get().atomicAddGroupByColumn(Tables.getInstance(), getAppName(), getTableId(), cd.getElementKey());
-    } catch ( RemoteException e ) {
+    } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to add column to Group By list", Toast.LENGTH_LONG).show();
     }
   }
 
-  void removeGroupByColumn(ColumnDefinition cd) throws RemoteException {
+  void removeGroupByColumn(ColumnDefinition cd) {
     try {
       TableUtil.get().atomicRemoveGroupByColumn(Tables.getInstance(), getAppName(), getTableId(), cd.getElementKey());
-    } catch ( RemoteException e ) {
+    } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to remove column from Group By list", Toast.LENGTH_LONG).show();
     }
   }
 
-  void setColumnAsSort(ColumnDefinition cd) throws RemoteException {
+  void setColumnAsSort(ColumnDefinition cd) {
     try {
       TableUtil.get().atomicSetSortColumn(Tables.getInstance(), getAppName(), getTableId(), (cd == null) ? null : cd.getElementKey());
-    } catch ( RemoteException e ) {
+    } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to set Sort Column", Toast.LENGTH_LONG).show();
     }
   }
 
-  void setColumnAsIndexedCol(ColumnDefinition cd) throws RemoteException {
+  void setColumnAsIndexedCol(ColumnDefinition cd) {
     try {
       TableUtil.get().atomicSetIndexColumn(Tables.getInstance(), getAppName(), getTableId(), (cd == null) ? null : cd.getElementKey());
-    } catch ( RemoteException e ) {
+    } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to set Index Column", Toast.LENGTH_LONG).show();
     }
   }
@@ -238,12 +237,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     dialog.show();
   }
 
-  private void init() throws RemoteException {
+  private void init() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     activity.refreshDataAndDisplayFragment();
   }
 
-  private void deleteRow(String rowId) throws RemoteException {
+  private void deleteRow(String rowId) throws ServicesAvailabilityException,
+      ActionNotAuthorizedException {
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
@@ -285,7 +285,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           try {
             deleteRow(rowId);
             init();
-          } catch (RemoteException e) {
+          } catch (ActionNotAuthorizedException e) {
+            WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+            WebLogger.getLogger(activity.getAppName()).e(TAG, "Not authorized for action while "
+                + "accessing database");
+            Toast.makeText(activity, "Not authorized for action while accessing database", Toast.LENGTH_LONG).show();
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
             WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
             Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
@@ -310,7 +315,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       try {
         ActivityUtil.editRow(activity, activity.getAppName(), activity.getTableId(),
             activity.getColumnDefinitions(), cell.row);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
         WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
         Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
@@ -327,7 +332,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         joinColumns = ColumnUtil.get().getJoins(Tables.getInstance(), getAppName(), db, getTableId(), cd.getElementKey());
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
         WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
         Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
@@ -336,7 +341,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
         if (db != null) {
           try {
             Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
             WebLogger.getLogger(activity.getAppName()).e(TAG, "Error closing database");
             Toast.makeText(activity, "Error closing database", Toast.LENGTH_LONG).show();
@@ -388,7 +393,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
             joinedColTableDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(), 
                 db, tableId,
                 elementKey);
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
             WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
             Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
@@ -396,7 +401,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
             if (db != null) {
               try {
                 Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-              } catch (RemoteException e) {
+              } catch (ServicesAvailabilityException e) {
                 WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
                 WebLogger.getLogger(activity.getAppName()).e(TAG, "Error closing database");
                 Toast.makeText(activity, "Error closing database", Toast.LENGTH_LONG).show();
@@ -419,67 +424,31 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       }
       return true;
     case MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY:
-      try {
         addGroupByColumn(spreadsheetTable
             .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
         init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
       return true;
     case MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY:
-      try {
         removeGroupByColumn(spreadsheetTable
             .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
         init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
       return true;
     case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-      try {
-        setColumnAsSort(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
-        init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
+      setColumnAsSort(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
+      init();
       return true;
     case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
-      try {
-        setColumnAsSort(null);
-        init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
+      setColumnAsSort(null);
+      init();
       return true;
     case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-      try {
-        setColumnAsIndexedCol(spreadsheetTable
+      setColumnAsIndexedCol(spreadsheetTable
             .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
-        init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
+      init();
       return true;
     case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
-      try {
-        setColumnAsIndexedCol(null);
-        init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
+      setColumnAsIndexedCol(null);
+      init();
       return true;
     case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
       String elementKey = this.mLastHeaderCellMenued.elementKey;
@@ -504,7 +473,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   }
 
   @Override
-  public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo) throws RemoteException {
+  public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo) throws ServicesAvailabilityException {
     this.mLastDataCellMenued = cellInfo;
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
     String localizedDisplayName;
@@ -571,7 +540,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   }
 
   @Override
-  public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo) throws RemoteException {
+  public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo) throws ServicesAvailabilityException {
     this.mLastHeaderCellMenued = cellInfo;
 
     String sortColumn;
@@ -639,7 +608,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       try {
         cevTemp = CellValueView
             .getCellEditView(Tables.getInstance(), getActivity(), getAppName(), getTableId(), cd, cell.value);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         WebLogger.getLogger(getAppName()).e(TAG,  "Unable to access database");
         return;
@@ -683,7 +652,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
             }
   
             init();
-          } catch (RemoteException e) {
+          } catch (ActionNotAuthorizedException e) {
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
+            WebLogger.getLogger(getAppName()).e(TAG, "Action not authorized while accessing "
+                + "database");
+            Toast.makeText(CellEditDialog.this.getContext(), "Action not authorized while accessing database", Toast.LENGTH_LONG).show();
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName()).e(TAG, "Error while accessing database");
             Toast.makeText(CellEditDialog.this.getContext(), "Error while accessing database", Toast.LENGTH_LONG).show();
