@@ -139,6 +139,9 @@ public class InteropTest {
 
     //Open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+    try {
+      Thread.sleep(TABLE_MGR_TIMEOUT);
+    } catch (Exception e) {}
 
     //Open "Tea houses editable"
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
