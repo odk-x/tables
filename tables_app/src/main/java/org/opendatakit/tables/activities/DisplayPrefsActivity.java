@@ -18,24 +18,17 @@ package org.opendatakit.tables.activities;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.RemoteException;
-import android.preference.CheckBoxPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.widget.Toast;
 import org.opendatakit.common.android.activities.BasePreferenceActivity;
-import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.IntentUtil;
-
-import java.io.File;
 
 public class DisplayPrefsActivity extends BasePreferenceActivity {
 
@@ -65,7 +58,7 @@ public class DisplayPrefsActivity extends BasePreferenceActivity {
       // was called from controller so it is table specific
       try {
         customPreferences();
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(DisplayPrefsActivity.this, "Unable to access database", Toast.LENGTH_LONG).show();
       }
@@ -85,7 +78,7 @@ public class DisplayPrefsActivity extends BasePreferenceActivity {
   }
 
   // set a custom font size for this table that overrides the general font size
-  private void customPreferences() throws RemoteException {
+  private void customPreferences() throws ServicesAvailabilityException {
     PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
 
     String localizedDisplayName;

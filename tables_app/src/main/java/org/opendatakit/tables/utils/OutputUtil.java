@@ -16,11 +16,11 @@
 package org.opendatakit.tables.utils;
 
 import android.content.Context;
-import android.os.RemoteException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.TableUtil;
@@ -88,9 +88,9 @@ public class OutputUtil {
    *
    * @return
    * @throws JsonProcessingException 
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  private static String getStringForControlObject(Context context, String appName) throws JsonProcessingException, RemoteException {
+  private static String getStringForControlObject(Context context, String appName) throws JsonProcessingException, ServicesAvailabilityException {
     Map<String, Object> controlMap = new HashMap<String, Object>();
     Map<String, String> tableIdToDisplayName = new HashMap<String, String>();
     Map<String, Map<String, Object>> tableIdToControlTable = new HashMap<String, Map<String, Object>>();
@@ -135,10 +135,10 @@ public class OutputUtil {
    * @param appName
    * @param tableId
    * @return
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
   public static Map<String, Object> getMapForControlTable(String appName, OdkDbHandle db,
-      String tableId) throws RemoteException {
+      String tableId) throws ServicesAvailabilityException {
     Map<String, Object> controlTable = new HashMap<String, Object>();
     Map<String, String> pathToKey = new HashMap<String, String>();
     OrderedColumns orderedDefns;
@@ -177,10 +177,10 @@ public class OutputUtil {
    *
    * @param context
    * @param appName
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    * @throws JsonProcessingException 
    */
-  public static void writeControlObject(Context context, String appName) throws JsonProcessingException, RemoteException {
+  public static void writeControlObject(Context context, String appName) throws JsonProcessingException, ServicesAvailabilityException {
     String controlString = getStringForControlObject(context, appName);
     String fileName = ODKFileUtils.getTablesDebugObjectFolder(appName) + File.separator
         + CONTROL_FILE_NAME;

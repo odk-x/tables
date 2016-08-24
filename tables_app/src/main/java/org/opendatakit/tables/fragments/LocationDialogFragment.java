@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
@@ -29,7 +30,6 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.widget.Toast;
 
 /**
@@ -71,7 +71,7 @@ public class LocationDialogFragment extends DialogFragment {
                     activity.getTableId(),
                     activity.getColumnDefinitions(),
                     mapping);
-              } catch (RemoteException e) {
+              } catch (ServicesAvailabilityException e) {
                 WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
                 Toast.makeText(activity, "Unable to add row", Toast.LENGTH_LONG).show();
               }

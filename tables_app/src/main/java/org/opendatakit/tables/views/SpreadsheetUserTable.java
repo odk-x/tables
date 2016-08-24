@@ -23,6 +23,7 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.database.service.OdkDbHandle;
@@ -31,7 +32,6 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
 import android.content.Context;
-import android.os.RemoteException;
 
 /**
  * Wrapper class for UserTable that presents the table in the way that the
@@ -52,7 +52,7 @@ public class SpreadsheetUserTable {
   private final Map<String, ArrayList<Map<String,Object>>> elementKeyToDisplayChoicesList;
   UserTable userTable;
 
-  public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws RemoteException {
+  public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws ServicesAvailabilityException {
     this.fragment = frag;
 
     ArrayList<String> colOrder;
@@ -107,17 +107,18 @@ public class SpreadsheetUserTable {
     return elementKeyToDisplayChoicesList.get(elementKey);
   }
 
-  public ColorRuleGroup getColumnColorRuleGroup(OdkDbHandle db, String elementKey, String[] adminColumns) throws RemoteException {
+  public ColorRuleGroup getColumnColorRuleGroup(OdkDbHandle db, String elementKey, String[] adminColumns) throws
+      ServicesAvailabilityException {
     return ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(),
         getAppName(), db, getTableId(), elementKey, adminColumns);
   }
 
-  public ColorRuleGroup getStatusColumnRuleGroup(OdkDbHandle db, String[] adminColumns) throws RemoteException {
+  public ColorRuleGroup getStatusColumnRuleGroup(OdkDbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
     return ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(),
         getAppName(), db, getTableId(), adminColumns);
   }
 
-  public ColorRuleGroup getTableColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws RemoteException {
+  public ColorRuleGroup getTableColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
     return ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(),
         getAppName(), db, getTableId(), adminColumns);
   }

@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
@@ -30,7 +31,6 @@ import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
 import org.opendatakit.tables.views.components.LockableScrollView;
 
 import android.content.Context;
-import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -89,7 +89,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
   private CellInfo lastHighlightedCellId;
 
-  public SpreadsheetView(Context context, Controller controller, SpreadsheetUserTable table) throws RemoteException {
+  public SpreadsheetView(Context context, Controller controller, SpreadsheetUserTable table) throws
+      ServicesAvailabilityException {
     super(context);
     this.context = context;
     this.controller = controller;
@@ -477,7 +478,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   public void onCreateMainDataContextMenu(ContextMenu menu) {
     try {
       controller.prepDataCellOccm(menu, lastHighlightedCellId);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG,
@@ -490,7 +491,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   public void onCreateIndexDataContextMenu(ContextMenu menu) {
     try {
       controller.prepDataCellOccm(menu, lastHighlightedCellId);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG,
@@ -503,7 +504,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   public void onCreateHeaderContextMenu(ContextMenu menu) {
     try {
       controller.prepHeaderCellOccm(menu, lastHighlightedCellId);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG,
@@ -570,13 +571,13 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     public void headerCellClicked(CellInfo cellId);
 
-    public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws RemoteException;
+    public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
     public void openHeaderContextMenu(View view);
 
     public void dataCellClicked(CellInfo cellId);
 
-    public void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws RemoteException;
+    public void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
     public void openDataContextMenu(View view);
   }
@@ -589,9 +590,9 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * consider if you need to be accessing column widths.
    *
    * @return
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  public int[] getColumnWidths(OdkDbHandle db) throws RemoteException {
+  public int[] getColumnWidths(OdkDbHandle db) throws ServicesAvailabilityException {
     // So what we want to do is go through and get the column widths for each
     // column. A problem here is that there is no caching, and if you have a
     // lot of columns you're really working the gut of the database.

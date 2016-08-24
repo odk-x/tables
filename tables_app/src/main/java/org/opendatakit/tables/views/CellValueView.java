@@ -20,11 +20,11 @@ import java.util.Map;
 
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.database.service.OdkDbHandle;
 
 import android.content.Context;
-import android.os.RemoteException;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -32,7 +32,8 @@ import android.widget.Spinner;
 
 public class CellValueView {
 
-  public static CellEditView getCellEditView(CommonApplication app, Context context, String appName, String tableId, ColumnDefinition cd, String value) throws RemoteException {
+  public static CellEditView getCellEditView(CommonApplication app, Context context, String appName, String tableId, ColumnDefinition cd, String value) throws
+      ServicesAvailabilityException {
 
     OdkDbHandle db = null;
     try {

@@ -15,19 +15,14 @@
  */
 package org.opendatakit.tables.utils;
 
-import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.KeyValueStoreEntry;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.content.Context;
-import android.os.RemoteException;
 import android.widget.Toast;
-
-import java.util.List;
 
 /**
  * 
@@ -54,7 +49,7 @@ public class PreferenceUtil {
 
     try {
       TableUtil.get().atomicSetDefaultViewType(Tables.getInstance(), appName, tableId, viewType);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       Toast.makeText(context, "Unable to change default view type", Toast.LENGTH_LONG).show();
     }
   }
@@ -68,11 +63,11 @@ public class PreferenceUtil {
    * @param tableId
    * @param elementKey
    * @return
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public static int getColumnWidth(
       Context context, String appName, String tableId,
-      String elementKey) throws RemoteException {
+      String elementKey) throws ServicesAvailabilityException {
     Integer result = null;
     OdkDbHandle db = null;
     try {
@@ -95,7 +90,7 @@ public class PreferenceUtil {
 
     try {
       ColumnUtil.get().atomicSetColumnWidth(Tables.getInstance(), appName, tableId, elementKey, newColumnWidth);
-    } catch ( RemoteException e ) {
+    } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(context, "Unable to change Column Width", Toast.LENGTH_LONG).show();
     }
   }

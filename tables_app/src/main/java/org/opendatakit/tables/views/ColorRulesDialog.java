@@ -21,6 +21,7 @@ import java.util.List;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRule.RuleType;
 import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
@@ -30,7 +31,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -153,7 +153,7 @@ public class ColorRulesDialog extends Dialog {
         // clicked out of
         try {
           persistRows();
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
         } finally {
           // set the colRules to null so that we have to reload if they
@@ -308,7 +308,7 @@ public class ColorRulesDialog extends Dialog {
    * Ok, in the reimagining I'm just replacing the rows, but I do still need
    * to catch the no op case.
    */
-  private void persistRows() throws RemoteException {
+  private void persistRows() throws ServicesAvailabilityException {
     List<ColorRule> rulesToPersist = new ArrayList<ColorRule>();
     for (int i = 0; i < colRules.size(); i++) {
       if (colRules.get(i).getOperator() != ColorRule.RuleType.NO_OP) {

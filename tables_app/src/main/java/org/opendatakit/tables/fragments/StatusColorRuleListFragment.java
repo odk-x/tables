@@ -18,6 +18,7 @@ package org.opendatakit.tables.fragments;
 import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
@@ -30,7 +31,6 @@ import org.opendatakit.tables.views.components.ColorRuleAdapter;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -96,14 +96,14 @@ public class StatusColorRuleListFragment extends ListFragment {
 
       tc = TableUtil.get().getTableColumns(Tables.getInstance(), getAppName(), db, getTableId());
       this.mColorRuleGroup = this.retrieveColorRuleGroup(db, tc.adminColumns);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       throw new IllegalStateException("Unable to access database");
     } finally {
       if ( db != null ) {
         try {
           Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           WebLogger.getLogger(getAppName()).e(TAG, "Error while initializing color rule list");
           Toast.makeText(getActivity(), "Error while initializing color rule list", Toast.LENGTH_LONG).show();
@@ -159,7 +159,7 @@ public class StatusColorRuleListFragment extends ListFragment {
     return result.getTableId();
   }
 
-  ColorRuleGroup retrieveColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws RemoteException {
+  ColorRuleGroup retrieveColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
     ColorRuleGroup result = null;
     switch (type) {

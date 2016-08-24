@@ -21,7 +21,6 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -29,6 +28,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.views.ODKWebView;
@@ -236,14 +236,14 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
             (sqlQueryStruct.orderByDirection == null) ? emptyArray : new String[] {
                 sqlQueryStruct.orderByDirection }, null, null);
         mUserTable = result;
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
       } finally {
         if ( db != null ) {
           try {
             Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             // ignore
             e.printStackTrace();
           }
@@ -386,7 +386,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
       try {
         ActivityUtil.addRow(this, this.getAppName(), this.getTableId(), this.getColumnDefinitions(),
             null);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       }
@@ -408,7 +408,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
       try {
         ActivityUtil.editRow(this, this.getAppName(), this.getTableId(), this.getColumnDefinitions(),
           rowId);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       }
@@ -441,12 +441,12 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
       // verify that the data table doesn't contain checkpoints...
       // always refresh, as table properties may have done something
       refreshDataAndDisplayFragment();
-    } catch ( RemoteException e ) {
+    } catch ( IllegalStateException e ) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
   }
 
-  public void refreshDataAndDisplayFragment() throws RemoteException {
+  public void refreshDataAndDisplayFragment() {
     WebLogger.getLogger(getAppName()).d(TAG, "[refreshDataAndDisplayFragment]");
     // drop cached table, if any...
     mUserTable = null;
@@ -480,7 +480,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         mPossibleTableViewTypes = new PossibleTableViewTypes(getAppName(), db, getTableId(),
             getColumnDefinitions());
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         WebLogger.getLogger(getAppName()).e(TAG,
             "[databaseAvailable] unable to access database");
@@ -489,7 +489,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
         if (db != null) {
           try {
             Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName()).e(TAG,
                 "[databaseAvailable] unable to access database");
