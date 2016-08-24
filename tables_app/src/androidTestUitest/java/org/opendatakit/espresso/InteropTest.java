@@ -17,6 +17,7 @@ import org.junit.Rule;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.application.Tables;
@@ -189,7 +190,7 @@ public class InteropTest {
 
       //check that we're back to Tables
       onView(withClassName(is(SpreadsheetView.class.getName()))).check(matches(isDisplayed()));
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     } finally {
       //restore original formId
@@ -198,7 +199,7 @@ public class InteropTest {
             FormType.constructFormType(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
         ft.setFormId(currFormId);
         ft.persist(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         e.printStackTrace();
       }
     }
