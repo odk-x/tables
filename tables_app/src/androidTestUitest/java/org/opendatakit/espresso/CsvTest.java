@@ -73,7 +73,7 @@ public class CsvTest {
 
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
     try {
-      Thread.sleep(3000);
+      Thread.sleep(TABLE_MGR_TIMEOUT);
     } catch (Exception e) {}
 
     onView(withId(R.id.menu_table_manager_export)).perform(click());

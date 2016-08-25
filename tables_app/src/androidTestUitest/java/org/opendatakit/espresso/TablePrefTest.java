@@ -20,6 +20,7 @@ import org.junit.Rule;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.database.service.OdkDbHandle;
@@ -86,7 +87,7 @@ public class TablePrefTest {
     //open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
     try {
-      Thread.sleep(3000);
+      Thread.sleep(TABLE_MGR_TIMEOUT);
     } catch (Exception e) {}
 
     //click "Tea Houses Editable"
@@ -398,7 +399,7 @@ public class TablePrefTest {
       db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
       file = TableUtil.get()
           .getListViewFilename(Tables.getInstance(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
 
       //if RemoteException is thrown, file is guaranteed to be null
@@ -407,7 +408,7 @@ public class TablePrefTest {
       if (db != null) {
         try {
           Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
       }
@@ -424,7 +425,7 @@ public class TablePrefTest {
       db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
       file = TableUtil.get()
           .getDetailViewFilename(Tables.getInstance(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
 
       //if RemoteException is thrown, file is guaranteed to be null
@@ -433,7 +434,7 @@ public class TablePrefTest {
       if (db != null) {
         try {
           Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
       }
@@ -450,7 +451,7 @@ public class TablePrefTest {
       db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
       file = TableUtil.get()
           .getMapListViewFilename(Tables.getInstance(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
 
       //if RemoteException is thrown, file is guaranteed to be null
@@ -459,7 +460,7 @@ public class TablePrefTest {
       if (db != null) {
         try {
           Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
       }
@@ -472,7 +473,7 @@ public class TablePrefTest {
     try {
       TableUtil.get().atomicSetListViewFilename(
           Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     }
   }
@@ -481,7 +482,7 @@ public class TablePrefTest {
     try {
       TableUtil.get().atomicSetDetailViewFilename(
           Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     }
   }
@@ -490,7 +491,7 @@ public class TablePrefTest {
     try {
       TableUtil.get().atomicSetMapListViewFilename(
           Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     }
   }
