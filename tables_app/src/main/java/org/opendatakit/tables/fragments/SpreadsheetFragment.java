@@ -26,10 +26,7 @@ import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.DataUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -477,12 +474,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     this.mLastDataCellMenued = cellInfo;
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
     String localizedDisplayName;
+    Boolean isLocked;
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
           db, getTableId(),
           cd.getElementKey());
+      isLocked = TableUtil.get().isTableLocked(Tables.getInstance(), getAppName(), db, getTableId());
     } finally {
       if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
@@ -501,12 +500,21 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 //        getString(R.string.edit_cell, viewString));
 //    mi.setIcon(R.drawable.ic_action_edit);
 
-    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE,
-        getString(R.string.delete_row));
-    mi.setIcon(R.drawable.ic_action_content_discard);
-    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE,
-        getString(R.string.edit_row));
-    mi.setIcon(R.drawable.ic_mode_edit_black_24dp);
+    String lockedAccess = spreadsheetTable.getRowAtIndex(cellInfo.rowId)
+            .getDataByKey(DataTableColumns.EFFECTIVE_ACCESS_LOCKED);
+    String unlockedAccess = spreadsheetTable.getRowAtIndex(cellInfo.rowId)
+        .getDataByKey(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED);
+
+    String access = (isLocked) ? lockedAccess : unlockedAccess;
+
+    if ( access.contains("d") ) {
+      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE, getString(R.string.delete_row));
+      mi.setIcon(R.drawable.ic_action_content_discard);
+    }
+    if ( access.contains("w") ) {
+      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE, getString(R.string.edit_row));
+      mi.setIcon(R.drawable.ic_mode_edit_black_24dp);
+    }
 
     // check a join association with this column; add a join... option if
     // it is applicable.
