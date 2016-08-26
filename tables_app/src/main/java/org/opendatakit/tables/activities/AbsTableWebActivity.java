@@ -16,10 +16,10 @@
 package org.opendatakit.tables.activities;
 
 import android.os.Bundle;
-import android.os.RemoteException;
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
 
@@ -70,18 +70,18 @@ public abstract class AbsTableWebActivity extends AbsBaseWebActivity {
         try {
           db = app.getDatabase().openDatabase(getAppName());
           mColumnDefinitions = app.getDatabase().getUserDefinedColumns(getAppName(), db, getTableId());
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to access database.");
           WebLogger.getLogger(getAppName()).printStackTrace(e);
-          throw new IllegalStateException("unable to access database");
+          throw new IllegalStateException("this should re-bind database layer " + e.toString());
         } finally {
           if (db != null) {
             try {
               app.getDatabase().closeDatabase(getAppName(), db);
-            } catch (RemoteException e) {
+            } catch (ServicesAvailabilityException e) {
               WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to close database.");
               WebLogger.getLogger(getAppName()).printStackTrace(e);
-              throw new IllegalStateException("unable to close database");
+              throw new IllegalStateException("this should re-bind database layer " + e.toString());
             }
           }
         }

@@ -18,12 +18,11 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.IntentConsts;
 import org.opendatakit.common.android.application.CommonApplication;
 import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.tables.utils.Constants;
 
 import android.os.Bundle;
-import android.os.RemoteException;
 
 /**
  * This class is the base for any Activity that will display information about
@@ -72,18 +71,18 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
         try {
           db = app.getDatabase().openDatabase(getAppName());
           mColumnDefinitions = app.getDatabase().getUserDefinedColumns(getAppName(), db, getTableId());
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to access database.");
           WebLogger.getLogger(getAppName()).printStackTrace(e);
-          throw new IllegalStateException("unable to access database");
+          throw new IllegalStateException("database went down -- handle this! " + e.toString());
         } finally {
           if (db != null) {
             try {
               app.getDatabase().closeDatabase(getAppName(), db);
-            } catch (RemoteException e) {
+            } catch (ServicesAvailabilityException e) {
               WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to close database.");
               WebLogger.getLogger(getAppName()).printStackTrace(e);
-              throw new IllegalStateException("unable to close database");
+              throw new IllegalStateException("database went down -- handle this! " + e.toString());
             }
           }
         }

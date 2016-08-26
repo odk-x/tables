@@ -29,26 +29,17 @@ import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.Row;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ColumnUtil;
 import org.opendatakit.common.android.utilities.DataUtil;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.UrlUtils;
 import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.tables.application.Tables;
 
-import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
-import android.os.Build;
-import android.os.RemoteException;
-import android.webkit.ConsoleMessage;
-import android.webkit.WebChromeClient;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -124,12 +115,13 @@ public class WebViewUtil {
    * @param rawValue
    * @param contentValues
    * @return false if the data was invalid for the given type
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public static boolean addValueToContentValues(Context context, String appName, String tableId,
       DataUtil du,
       // TableProperties tp,
-      ColumnDefinition colDefn, String rawValue, ContentValues contentValues) throws RemoteException {
+      ColumnDefinition colDefn, String rawValue, ContentValues contentValues) throws
+      ServicesAvailabilityException {
     // the value we're going to key things against in the database.
     String contentValuesKey = colDefn.getElementKey();
     if (rawValue == null) {
@@ -204,10 +196,10 @@ public class WebViewUtil {
    * @param orderedDefns
    * @param elementKeyToValue
    * @return
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public static ContentValues getContentValuesFromMap(Context context, String appName,
-      String tableId, OrderedColumns orderedDefns, Map<String, String> elementKeyToValue) throws RemoteException {
+      String tableId, OrderedColumns orderedDefns, Map<String, String> elementKeyToValue) throws ServicesAvailabilityException {
     // Note that we're not currently
     // going to handle complex types or those that map to a json value. We
     // could, but we'd probably have to have a known entity do the conversions
@@ -252,10 +244,10 @@ public class WebViewUtil {
    * @param orderedDefns
    * @param rowId
    * @return
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public static Map<String, String> getMapOfElementKeyToValue(Context context, String appName,
-      String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
+      String tableId, OrderedColumns orderedDefns, String rowId) throws ServicesAvailabilityException {
     String[] adminColumns = null;
     UserTable userTable = null;
 
@@ -280,14 +272,14 @@ public class WebViewUtil {
           "query returned no rows for tableId: " + tableId + " and rowId: " + rowId);
     }
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
-    Row requestedRow = userTable.getRowAtIndex(0);
+    OdkDbRow requestedRow = userTable.getRowAtIndex(0);
     List<String> userDefinedElementKeys = orderedDefns.getRetentionColumnNames();
     List<String> adminElementKeys = Arrays.asList(adminColumns);
     List<String> allElementKeys = new ArrayList<String>();
     allElementKeys.addAll(userDefinedElementKeys);
     allElementKeys.addAll(adminElementKeys);
     for (String elementKey : allElementKeys) {
-      elementKeyToValue.put(elementKey, requestedRow.getRawDataOrMetadataByElementKey(elementKey));
+      elementKeyToValue.put(elementKey, requestedRow.getDataByKey(elementKey));
     }
     return elementKeyToValue;
   }

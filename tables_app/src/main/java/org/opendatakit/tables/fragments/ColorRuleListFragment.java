@@ -21,7 +21,7 @@ import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ColorRuleUtil;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.common.android.utilities.WebLogger;
@@ -37,7 +37,6 @@ import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -124,14 +123,14 @@ public class ColorRuleListFragment extends ListFragment {
 
       tc = TableUtil.get().getTableColumns(Tables.getInstance(), getAppName(), db, getTableId());
       this.mColorRuleGroup = this.retrieveColorRuleGroup(db, tc.adminColumns);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       throw new IllegalStateException("Unable to access database");
     } finally {
       if ( db != null ) {
         try {
           Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           WebLogger.getLogger(getAppName()).e(TAG, "Error while initializing color rule list");
           Toast.makeText(getActivity(), "Error while initializing color rule list", Toast.LENGTH_LONG).show();
@@ -210,7 +209,7 @@ public class ColorRuleListFragment extends ListFragment {
             public void onClick(DialogInterface dialog, int which) {
               try {
                 revertToDefaults();
-              } catch (RemoteException e) {
+              } catch (ServicesAvailabilityException e) {
                 WebLogger.getLogger(getAppName()).printStackTrace(e);
                 WebLogger.getLogger(getAppName()).e(TAG, "Error while restoring color rules");
                 Toast.makeText(getActivity(), "Error while restoring color rules", Toast.LENGTH_LONG).show();
@@ -273,7 +272,7 @@ public class ColorRuleListFragment extends ListFragment {
           mColorRuleGroup.getColorRules().remove(position);
           try {
             mColorRuleGroup.saveRuleList(Tables.getInstance());
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName()).e(TAG, "Error while saving color rules");
             Toast.makeText(getActivity(), "Error while saving color rules", Toast.LENGTH_LONG).show();
@@ -301,9 +300,9 @@ public class ColorRuleListFragment extends ListFragment {
   
   /**
    * Wipe the current rules and revert to the defaults for the given type.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  private void revertToDefaults() throws RemoteException {
+  private void revertToDefaults() throws ServicesAvailabilityException {
     TableLevelPreferencesActivity activity =
         this.retrieveTableLevelPreferencesActivity();
     final String appName = activity.getAppName();
@@ -351,7 +350,7 @@ public class ColorRuleListFragment extends ListFragment {
     return result.getTableId();
   }
   
-  ColorRuleGroup retrieveColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws RemoteException {
+  ColorRuleGroup retrieveColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
     ColorRuleGroup result = null;
     switch (type) {

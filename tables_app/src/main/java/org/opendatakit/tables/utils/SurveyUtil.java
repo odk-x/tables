@@ -23,7 +23,7 @@ import java.util.UUID;
 
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
-import org.opendatakit.common.android.provider.FormsColumns;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.provider.FormsProviderAPI;
 import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.KeyValueStoreEntry;
@@ -32,13 +32,11 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.R;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.RemoteException;
 
 import android.widget.Toast;
 
@@ -500,10 +498,10 @@ public class SurveyUtil {
      * @param appName
      * @param tableId
      * @return
-     * @throws RemoteException
+     * @throws ServicesAvailabilityException
      */
     public static SurveyFormParameters constructSurveyFormParameters(
-        Context context, String appName, String tableId) throws RemoteException {
+        Context context, String appName, String tableId) throws ServicesAvailabilityException {
       String formId;
       OdkDbHandle db = null;
       try {
@@ -527,7 +525,7 @@ public class SurveyUtil {
       return new SurveyFormParameters(true, formId, null);
     }
 
-    public void persist(String appName, OdkDbHandle db, String tableId) throws RemoteException {
+    public void persist(String appName, OdkDbHandle db, String tableId) throws ServicesAvailabilityException {
       KeyValueStoreEntry entry = KeyValueStoreUtils.buildEntry(tableId,
               SurveyUtil.KVS_PARTITION,
               SurveyUtil.KVS_ASPECT,

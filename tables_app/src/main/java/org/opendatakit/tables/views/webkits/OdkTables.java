@@ -15,15 +15,10 @@
  */
 package org.opendatakit.tables.views.webkits;
 
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.RemoteException;
-import org.json.JSONArray;
 import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.WebLogger;
 import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.database.service.OdkDbHandle;
@@ -60,7 +55,6 @@ public class OdkTables {
    *
    * @param activity
    *          the activity that will be holding the view
-   * @throws RemoteException 
    */
   public OdkTables(AbsBaseActivity activity, ODKWebView webView, String defaultTableId) {
     this.mActivity = activity;
@@ -72,7 +66,7 @@ public class OdkTables {
     return (mWebView.get() == null) || mWebView.get().isInactive();
   }
 
-  private List<String> getTableIds() throws RemoteException {
+  private List<String> getTableIds() throws ServicesAvailabilityException {
     if ( mTableIds == null ) {
       String appName = mActivity.getAppName();
       OdkDbHandle db = null;
@@ -93,10 +87,10 @@ public class OdkTables {
    * 
    * @param tableId
    * @return
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
   synchronized OrderedColumns retrieveColumnDefinitions(OdkDbHandle db,
-      String tableId) throws RemoteException {
+      String tableId) throws  ServicesAvailabilityException {
 
     OrderedColumns answer = this.mCachedOrderedDefns.get(tableId);
     if (answer != null) {
@@ -322,10 +316,10 @@ public class OdkTables {
    * @param screenPath
    * @param jsonMap
    * @return true if the launch succeeded, false if something went wrong
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
   public boolean helperAddRowWithSurvey(String tableId, String formId, String screenPath,
-      String jsonMap) throws RemoteException {
+      String jsonMap) throws ServicesAvailabilityException {
     String appName = mActivity.getAppName();
     // does this "to receive add" call make sense with survey? unclear.
     if (!getTableIds().contains(tableId)) {
@@ -364,10 +358,10 @@ public class OdkTables {
    * @param formId
    * @param screenPath
    * @return true if the edit was launched successfully, else false
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
   public boolean helperEditRowWithSurvey(String tableId, String rowId, String formId,
-      String screenPath) throws RemoteException {
+      String screenPath) throws ServicesAvailabilityException {
     String appName = mActivity.getAppName();
     if (!getTableIds().contains(tableId)) {
       WebLogger.getLogger(appName).e(TAG,
