@@ -474,14 +474,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     this.mLastDataCellMenued = cellInfo;
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
     String localizedDisplayName;
-    Boolean isLocked;
     OdkDbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
           db, getTableId(),
           cd.getElementKey());
-      isLocked = TableUtil.get().isTableLocked(Tables.getInstance(), getAppName(), db, getTableId());
     } finally {
       if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
@@ -500,12 +498,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 //        getString(R.string.edit_cell, viewString));
 //    mi.setIcon(R.drawable.ic_action_edit);
 
-    String lockedAccess = spreadsheetTable.getRowAtIndex(cellInfo.rowId)
-            .getDataByKey(DataTableColumns.EFFECTIVE_ACCESS_LOCKED);
-    String unlockedAccess = spreadsheetTable.getRowAtIndex(cellInfo.rowId)
-        .getDataByKey(DataTableColumns.EFFECTIVE_ACCESS_UNLOCKED);
-
-    String access = (isLocked) ? lockedAccess : unlockedAccess;
+    String access = spreadsheetTable.getRowAtIndex(cellInfo.rowId)
+            .getDataByKey(DataTableColumns.EFFECTIVE_ACCESS);
 
     if ( access.contains("d") ) {
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE, getString(R.string.delete_row));
