@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.TableUtil;
 import org.opendatakit.database.service.OdkDbHandle;
 import org.opendatakit.tables.R;
@@ -75,7 +76,7 @@ public class ColorRuleTest {
         adminColumns =
             TableUtil.get().getTableColumns(Tables.getInstance(), APP_NAME, db, tableId)
                 .adminColumns;
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         e.printStackTrace();
       }
     }
@@ -86,7 +87,7 @@ public class ColorRuleTest {
 
       try {
         Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         e.printStackTrace();
       }
     }
@@ -99,6 +100,9 @@ public class ColorRuleTest {
 
     //open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+    try {
+      Thread.sleep(TABLE_MGR_TIMEOUT);
+    } catch (Exception e) {}
 
     //click "Tea Houses Editable"
     onData(ODKMatchers.withTable(tableId)).perform(click());
@@ -124,7 +128,7 @@ public class ColorRuleTest {
       newRules.add(addColorRule(false, true, true));
 
       CRGCheck(newRules, ColorRuleGroup.Type.TABLE);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     } finally {
       if (currentRules != null) {
@@ -132,7 +136,7 @@ public class ColorRuleTest {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
           crg.saveRuleList(Tables.getInstance());
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
       }
@@ -162,7 +166,7 @@ public class ColorRuleTest {
       onView(withId(R.id.menu_color_rule_list_revert)).perform(click());
       onView(withId(android.R.id.button1)).perform(click());
       CRGCheck(new ArrayList<ColorRule>(), ColorRuleGroup.Type.TABLE);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     } finally {
       if (currentRules != null) {
@@ -170,7 +174,7 @@ public class ColorRuleTest {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
           crg.saveRuleList(Tables.getInstance());
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
       }
@@ -194,7 +198,7 @@ public class ColorRuleTest {
       newRules.add(addColorRule(true, true, true));
 
       CRGCheck(newRules, ColorRuleGroup.Type.COLUMN);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     } finally {
       if (currentRules != null) {
@@ -202,7 +206,7 @@ public class ColorRuleTest {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
           crg.saveRuleList(Tables.getInstance());
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
       }
@@ -234,7 +238,7 @@ public class ColorRuleTest {
       onView(withId(R.id.menu_color_rule_list_revert)).perform(click());
       onView(withId(android.R.id.button1)).perform(click());
       CRGCheck(new ArrayList<ColorRule>(), ColorRuleGroup.Type.COLUMN);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     } finally {
       if (currentRules != null) {
@@ -242,7 +246,7 @@ public class ColorRuleTest {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
           crg.saveRuleList(Tables.getInstance());
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
       }
@@ -266,7 +270,7 @@ public class ColorRuleTest {
     return color;
   }
 
-  private List<ColorRule> emptyCRG(ColorRuleGroup.Type type) throws RemoteException {
+  private List<ColorRule> emptyCRG(ColorRuleGroup.Type type) throws ServicesAvailabilityException {
     ColorRuleGroup crg = getCRG(type, db, adminColumns);
 
     List<ColorRule> rules = new ArrayList<>();
@@ -283,7 +287,7 @@ public class ColorRuleTest {
     return rules;
   }
 
-  private void CRGCheck(List<ColorRule> rules, ColorRuleGroup.Type type) throws RemoteException {
+  private void CRGCheck(List<ColorRule> rules, ColorRuleGroup.Type type) throws ServicesAvailabilityException {
     //Make sure we are in color rule edit window
     onView(withId(R.id.menu_color_rule_list_new)).check(matches(isCompletelyDisplayed()));
 
@@ -302,7 +306,7 @@ public class ColorRuleTest {
   }
 
   private ColorRuleGroup getCRG(ColorRuleGroup.Type type, OdkDbHandle db, String[] adminColumns)
-      throws RemoteException {
+      throws ServicesAvailabilityException {
     if (type == ColorRuleGroup.Type.TABLE) {
       return ColorRuleGroup.getTableColorRuleGroup(
           Tables.getInstance(), APP_NAME, db, tableId, adminColumns

@@ -14,7 +14,9 @@
 
 package org.opendatakit.tables.views.webkits;
 
-import android.os.RemoteException;
+import android.database.sqlite.SQLiteException;
+import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -78,7 +80,7 @@ public interface ExecutorDataIf {
                         String[] groupBy, String having, String orderByElementKey, String orderByDirection,
                         boolean includeKeyValueStoreMap,
                         String callbackJSON, String transId, Boolean leaveTransactionOpen)
-            throws RemoteException;
+            throws ServicesAvailabilityException, SQLiteException;
 
 
     /**
@@ -97,7 +99,7 @@ public interface ExecutorDataIf {
      */
     public String rawQuery(String sqlCommand, String[] sqlBindParams,
                            String callbackJSON, String transId, Boolean leaveTransactionOpen)
-            throws RemoteException;
+            throws ServicesAvailabilityException, SQLiteException;
 
 
     /**
@@ -117,7 +119,7 @@ public interface ExecutorDataIf {
      */
     public String updateRow(String tableId, String stringifiedJSON, String rowId,
                             String callbackJSON, String transId, Boolean leaveTransactionOpen)
-            throws RemoteException;
+            throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
 
     /**
@@ -137,7 +139,7 @@ public interface ExecutorDataIf {
      */
     public String deleteRow(String tableId, String stringifiedJSON, String rowId,
                             String callbackJSON, String transId, Boolean leaveTransactionOpen)
-            throws RemoteException;
+            throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
 
     /**
@@ -157,7 +159,7 @@ public interface ExecutorDataIf {
      */
     public String addRow(String tableId, String stringifiedJSON, String rowId,
                          String callbackJSON, String transId, Boolean leaveTransactionOpen)
-            throws RemoteException;
+            throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
 
 
@@ -178,7 +180,7 @@ public interface ExecutorDataIf {
      */
     public String addCheckpoint(String tableId, String stringifiedJSON, String rowId,
                                 String callbackJSON, String transId, Boolean leaveTransactionOpen)
-            throws RemoteException;
+            throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
 
     /**
@@ -198,7 +200,7 @@ public interface ExecutorDataIf {
      */
     public String saveCheckpointAsIncomplete(String tableId, String stringifiedJSON, String rowId,
                                              String callbackJSON, String transId, Boolean leaveTransactionOpen)
-            throws RemoteException;
+            throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
 
     /**
@@ -218,7 +220,7 @@ public interface ExecutorDataIf {
      */
     public String saveCheckpointAsComplete(String tableId, String stringifiedJSON, String rowId,
                                            String callbackJSON, String transId, Boolean leaveTransactionOpen)
-            throws RemoteException;
+            throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
     /**
      * Delete last checkpoint.  Checkpoints accumulate; this removes the most recent one, leaving earlier ones.
@@ -236,17 +238,5 @@ public interface ExecutorDataIf {
      */
     public String deleteLastCheckpoint (String tableId, String rowId,
                                         String callbackJSON, String transId, Boolean leaveTransactionOpen)
-            throws RemoteException;
-
-    /**
-     * Close transaction
-     *
-     * @param transId the id of an open transaction.
-     * @param commitTransaction true if the transaction should be committed; false if it should be rolled back.
-     * @param callbackJSON The JSON object used by the JS layer to recover the callback function
-     *                     that can process the response
-     * @return see description in class header
-     */
-    public String closeTransaction(String transId, boolean commitTransaction, String callbackJSON)
-            throws RemoteException;
+            throws ServicesAvailabilityException, ActionNotAuthorizedException;
 }

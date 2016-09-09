@@ -72,6 +72,10 @@ public class CsvTest {
     UAUtils.assertInitSucess(initSuccess);
 
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+    try {
+      Thread.sleep(TABLE_MGR_TIMEOUT);
+    } catch (Exception e) {}
+
     onView(withId(R.id.menu_table_manager_export)).perform(click());
   }
 

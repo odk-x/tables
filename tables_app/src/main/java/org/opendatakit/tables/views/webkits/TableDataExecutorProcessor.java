@@ -14,12 +14,12 @@
 
 package org.opendatakit.tables.views.webkits;
 
-import android.os.RemoteException;
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorGuideGroup;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.RowColorObject;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.views.ExecutorContext;
 import org.opendatakit.common.android.views.ExecutorProcessor;
 import org.opendatakit.database.service.KeyValueStoreEntry;
@@ -84,7 +84,7 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
         }
       }
 
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     }
 
@@ -101,7 +101,8 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
     }
   }
 
-  private void constructRowColorObjects(OdkDbHandle db, UserTable userTable, String[] adminCols, ArrayList<RowColorObject>colors, colorRuleType crType, String elementKey) throws RemoteException {
+  private void constructRowColorObjects(OdkDbHandle db, UserTable userTable, String[] adminCols, ArrayList<RowColorObject>colors, colorRuleType crType, String elementKey) throws
+      ServicesAvailabilityException {
     // Should reuse this code for column and status color rules
 
     ColorRuleGroup crg = null;
@@ -129,7 +130,7 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
         String hexFgString = String.format("#%06X", (0xFFFFFF & tcg.getForeground()));
         //String hexBgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getBackground());
         String hexBgString = String.format("#%06X", (0xFFFFFF & tcg.getBackground()));
-        RowColorObject rco = new RowColorObject(userTable.getRowAtIndex(i).getRowId(), i, hexFgString, hexBgString);
+        RowColorObject rco = new RowColorObject(userTable.getRowId(i), i, hexFgString, hexBgString);
         colors.add(rco);
       }
     }

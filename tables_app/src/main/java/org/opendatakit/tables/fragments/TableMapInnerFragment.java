@@ -27,9 +27,10 @@ import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
 import org.opendatakit.common.android.data.OrderedColumns;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.Row;
+import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.*;
 import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.service.OdkDbRow;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -37,13 +38,11 @@ import org.opendatakit.tables.application.Tables;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
-//import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -188,7 +187,7 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   /** Re-initializes the map, including the markers. 
-   * @throws RemoteException */
+   **/
   public void clearAndInitializeMap() {
     AbsBaseActivity activity = (AbsBaseActivity) getActivity();
     WebLogger.getLogger(activity.getAppName()).d(TAG, "[clearAndInitializeMap]");
@@ -198,7 +197,7 @@ public class TableMapInnerFragment extends MapFragment {
     try {
       resetColorProperties();
       setMarkers();
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
       WebLogger.getLogger(activity.getAppName()).e(TAG, "Unable to access database");
     }
@@ -218,17 +217,17 @@ public class TableMapInnerFragment extends MapFragment {
 
   /**
    * Sets up the color properties used for color rules.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  public void resetColorProperties() throws RemoteException {
+  public void resetColorProperties() throws ServicesAvailabilityException {
     findColorGroupAndDbConfiguration();
   }
 
   /**
    * Finds the color group that will be needed when making color rules.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  private void findColorGroupAndDbConfiguration() throws RemoteException {
+  private void findColorGroupAndDbConfiguration() throws ServicesAvailabilityException {
     // Grab the color group
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
@@ -271,7 +270,7 @@ public class TableMapInnerFragment extends MapFragment {
    * Sets the location markers based off of the columns set in the table
    * properties.
    */
-  private void setMarkers() throws RemoteException {
+  private void setMarkers() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     boolean isMocked = Tables.getInstance().isMocked();
@@ -306,9 +305,9 @@ public class TableMapInnerFragment extends MapFragment {
 
       // Go through each row and create a marker at the specified location.
       for (int i = 0; i < table.getNumberOfRows(); i++) {
-        Row row = table.getRowAtIndex(i);
-        String latitudeString = row.getRawDataOrMetadataByElementKey(latitudeColumn.getElementKey());
-        String longitudeString = row.getRawDataOrMetadataByElementKey(longitudeColumn.getElementKey());
+        OdkDbRow row = table.getRowAtIndex(i);
+        String latitudeString = row.getDataByKey(latitudeColumn.getElementKey());
+        String longitudeString = row.getDataByKey(longitudeColumn.getElementKey());
         if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
             || longitudeString.length() == 0) {
           continue;
@@ -371,7 +370,7 @@ public class TableMapInnerFragment extends MapFragment {
     return DEFAULT_MARKER_HUE;
   }
 
-  private String getLatitudeElementKey(OdkDbHandle dbHandle) throws RemoteException {
+  private String getLatitudeElementKey(OdkDbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
@@ -380,7 +379,7 @@ public class TableMapInnerFragment extends MapFragment {
     return latitudeElementKey;
   }
 
-  private String getLongitudeElementKey(OdkDbHandle dbHandle) throws RemoteException {
+  private String getLongitudeElementKey(OdkDbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     String longitudeElementKey =

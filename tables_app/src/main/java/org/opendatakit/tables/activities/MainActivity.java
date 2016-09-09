@@ -61,6 +61,7 @@ public class MainActivity extends AbsBaseWebActivity implements
 
   private static final String TAG = "MainActivity";
   private static final String CURRENT_FRAGMENT = "currentFragment";
+  private static final String QUERY_START_PARAM = "?";
 
   @Override
   public ODKWebView getWebKitView() {
@@ -93,7 +94,7 @@ public class MainActivity extends AbsBaseWebActivity implements
 
         if ( filename != null ) {
           if (webFileStrs.length > 1) {
-            return UrlUtils.getAsWebViewUri(this, getAppName(), filename.concat("?").concat(webFileStrs[1]));
+            return UrlUtils.getAsWebViewUri(this, getAppName(), filename.concat(QUERY_START_PARAM).concat(webFileStrs[1]));
           } else {
             return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
           }
@@ -214,7 +215,7 @@ public class MainActivity extends AbsBaseWebActivity implements
 
   private String[] checkForQueryParameter(File webFile) {
     String webFileToDisplayPath = webFile.getPath();
-    String [] webFileStrs = webFileToDisplayPath.split("[?]", 2);
+    String [] webFileStrs = webFileToDisplayPath.split("[" + QUERY_START_PARAM + "]", 2);
     return webFileStrs;
   }
 

@@ -26,7 +26,7 @@ import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorGuideGroup;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.Row;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.WebLogger;
 
 import android.content.Context;
@@ -36,6 +36,7 @@ import android.graphics.Paint;
 import android.util.DisplayMetrics;
 import android.view.ContextMenu;
 import android.view.View;
+import org.opendatakit.database.service.OdkDbRow;
 
 /**
  * A view that draws a single table. A single table is essentially a grid of of
@@ -657,16 +658,18 @@ class TabularView extends View {
     // drawing the cells
     int y = topTopmost;
     for (int i = topmost; i < bottommost + 1; i++) {
-      Row theRow = null;
+      OdkDbRow theRow = null;
+      int theRowIndex = i;
 
       // we only need to fetch this once for a given row...
       ColorGuide rowGuide = null;
       if (this.type == TableLayoutType.STATUS_DATA || this.type == TableLayoutType.INDEX_DATA
           || this.type == TableLayoutType.MAIN_DATA) {
         // these are the only cases (below) where this value is used...
-        theRow = this.mTable.getRowAtIndex(i);
+        theRow = this.mTable.getRowAtIndex(theRowIndex);
         //rowGuide = mRowColorRuleGroup.getColorGuide(this.mTable.getColumnDefinitions(), theRow);
-        rowGuide = mRowColorGuideGroup.getColorGuideForRowId(theRow.getRowId());
+        rowGuide = mRowColorGuideGroup
+            .getColorGuideForRowId(theRow.getDataByKey(DataTableColumns.ID));
       }
 
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
@@ -679,7 +682,8 @@ class TabularView extends View {
         } else if (this.type == TableLayoutType.INDEX_DATA || this.type == TableLayoutType.MAIN_DATA) {
 
           ColumnDefinition cd = this.mTable.getColumnByIndex(userDataIndex[j]);
-          datum = theRow.getDisplayTextOfData(cd.getType(), cd.getElementKey());
+          datum = this.mTable.getCachedUserTable()
+              .getDisplayTextOfData(theRowIndex, cd.getType(), cd.getElementKey());
         } else {
           WebLogger.getLogger(this.mTable.getAppName()).e(TAG,
               "unrecognized table type: " + this.type.name());
@@ -697,7 +701,8 @@ class TabularView extends View {
             backgroundColor = rowGuide.getBackground();
           }
           //ColorGuide columnGuide = mColumnColorRules.get(this.mElementKeys.get(j)).getColorGuide(this.mTable.getColumnDefinitions(), theRow);
-          ColorGuide columnGuide = mColumnColorGuideGroup.get(this.mElementKeys.get(j)).getColorGuideForRowId(theRow.getRowId());
+          ColorGuide columnGuide = mColumnColorGuideGroup.get(this.mElementKeys.get(j))
+              .getColorGuideForRowId(theRow.getDataByKey(DataTableColumns.ID));
           // Override the role rule if a column rule matched.
           if (columnGuide != null) {
             foregroundColor = columnGuide.getForeground();
