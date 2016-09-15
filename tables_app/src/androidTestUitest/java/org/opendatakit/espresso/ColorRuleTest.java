@@ -20,8 +20,8 @@ import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.data.utilities.TableUtil;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.application.Tables;
@@ -49,7 +49,7 @@ public class ColorRuleTest {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
 
-  private OdkDbHandle db;
+  private DbHandle db;
   private String[] adminColumns;
 
   private final String tableId = T_HOUSE_E_TABLE_ID;
@@ -96,7 +96,7 @@ public class ColorRuleTest {
   @Before
   public void setup() {
     UAUtils.assertInitSucess(initSuccess);
-    assertThat("Failed to obtain db", db, notNullValue(OdkDbHandle.class));
+    assertThat("Failed to obtain db", db, notNullValue(DbHandle.class));
 
     //open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
@@ -305,7 +305,7 @@ public class ColorRuleTest {
     }
   }
 
-  private ColorRuleGroup getCRG(ColorRuleGroup.Type type, OdkDbHandle db, String[] adminColumns)
+  private ColorRuleGroup getCRG(ColorRuleGroup.Type type, DbHandle db, String[] adminColumns)
       throws ServicesAvailabilityException {
     if (type == ColorRuleGroup.Type.TABLE) {
       return ColorRuleGroup.getTableColorRuleGroup(

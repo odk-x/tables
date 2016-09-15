@@ -19,12 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.data.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.LocalizationUtils;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 
@@ -74,7 +74,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
     optionValues.clear();
     ArrayList<Map<String, Object>> choices;
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
@@ -109,7 +109,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
         if (textObj instanceof String) {
           return (String) textObj;
         }
-        return ODKDataUtils.getLocalizedDisplayName((Map<String, Object>) textObj);
+        return LocalizationUtils.getLocalizedDisplayName((Map<String, Object>) textObj);
       }
     }
     return "";

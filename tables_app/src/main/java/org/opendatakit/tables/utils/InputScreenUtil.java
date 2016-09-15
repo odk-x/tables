@@ -19,8 +19,8 @@ import java.util.ArrayList;
 
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.utilities.DateUtils;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulator.InputView;
@@ -38,14 +38,14 @@ public class InputScreenUtil {
 
     public InputScreenUtil(AbsBaseActivity context) {
         this.context = context;
-//        du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());;
+//        du = new DateUtils(Locale.ENGLISH, TimeZone.getDefault());;
     }
 
-    public InputView getInputView(ColumnDefinition cd, DataUtil du) {
+    public InputView getInputView(ColumnDefinition cd, DateUtils du) {
         return getInputView(cd, du, null);
     }
 
-    public InputView getInputView(ColumnDefinition cd, DataUtil du, String value) {
+    public InputView getInputView(ColumnDefinition cd, DateUtils du, String value) {
       ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(context.getAppName());
       ITypeManipulatorFragment r = m.getDefaultRenderer(cd.getType());
       return r.getInputView(context, du, value);
@@ -55,7 +55,7 @@ public class InputScreenUtil {
 
         private final EditText field;
 
-        public GeneralInputView(Context context, DataUtil du, String value) {
+        public GeneralInputView(Context context, DateUtils du, String value) {
             super(context, du);
             value = (value == null) ? "" : value;
             field = new EditText(context);
@@ -76,7 +76,7 @@ public class InputScreenUtil {
 
         private final EditText field;
 
-        public DateInputView(Context context, DataUtil du, String value) {
+        public DateInputView(Context context, DateUtils du, String value) {
             super(context, du);
             field = new EditText(context);
             if (value != null) {
@@ -110,7 +110,7 @@ public class InputScreenUtil {
 
         private final EditText field;
 
-        public DateTimeInputView(Context context, DataUtil du, String value) {
+        public DateTimeInputView(Context context, DateUtils du, String value) {
             super(context, du);
             field = new EditText(context);
             if (value != null) {
@@ -145,7 +145,7 @@ public class InputScreenUtil {
 
         private final EditText field;
 
-        public TimeInputView(Context context, DataUtil du, String value) {
+        public TimeInputView(Context context, DateUtils du, String value) {
             super(context, du);
             field = new EditText(context);
             if (value != null) {
@@ -180,7 +180,7 @@ public class InputScreenUtil {
 
         private final EditText field;
 
-        public DateRangeInputView(Context context, DataUtil du, String value) {
+        public DateRangeInputView(Context context, DateUtils du, String value) {
             super(context, du);
             field = new EditText(context);
             if (value != null) {
@@ -211,7 +211,7 @@ public class InputScreenUtil {
         private final ArrayAdapter<String> adapter;
         private final String originalValue;
 
-        public McOptionsInputView(Context context, DataUtil du, ArrayList<String> arrayList,
+        public McOptionsInputView(Context context, DateUtils du, ArrayList<String> arrayList,
                 String value) {
             super(context, du);
             originalValue = value;

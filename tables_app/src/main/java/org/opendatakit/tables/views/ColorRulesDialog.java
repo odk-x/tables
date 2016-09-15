@@ -22,7 +22,7 @@ import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRule.RuleType;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 

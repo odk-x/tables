@@ -15,16 +15,16 @@
  */
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.data.utilities.TableUtil;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -87,7 +87,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     }
     
     String appName = baseActivity.getAppName();
-    OdkDbHandle db = null;
+    DbHandle db = null;
 
     List<TableNameStruct> tableNameStructs = new ArrayList<TableNameStruct>();
 
@@ -196,7 +196,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           // treat delete as a local removal -- not a server side deletion
-          OdkDbHandle db = null;
+          DbHandle db = null;
           try {
             try {
               db = Tables.getInstance().getDatabase().openDatabase(appName);

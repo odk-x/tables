@@ -15,12 +15,12 @@
  */
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.CsvUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.common.android.utilities.CsvUtil.ExportListener;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.activities.ExportCSVActivity;
 import org.opendatakit.tables.application.Tables;
 
@@ -51,7 +51,7 @@ public class ExportTask
     protected Boolean doInBackground(ExportRequest... exportRequests) {
         ExportRequest request = exportRequests[0];
         CsvUtil cu = new CsvUtil(Tables.getInstance(), appName);
-        OdkDbHandle db = null;
+        DbHandle db = null;
         try {
           String tableId = request.getTableId();
           db = Tables.getInstance().getDatabase().openDatabase(appName);

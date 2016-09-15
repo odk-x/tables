@@ -17,9 +17,9 @@ package org.opendatakit.tables.types;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.KeyValueStoreUtils;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.utilities.KeyValueStoreUtils;
+import org.opendatakit.common.android.database.data.KeyValueStoreEntry;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
@@ -55,7 +55,7 @@ public class FormType {
   }
 
   public void persist(Context context, String appName, String tableId) throws ServicesAvailabilityException {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       KeyValueStoreEntry entry = KeyValueStoreUtils.buildEntry(tableId,
               FormType.KVS_PARTITION,

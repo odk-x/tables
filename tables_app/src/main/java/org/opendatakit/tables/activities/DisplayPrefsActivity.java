@@ -23,9 +23,9 @@ import android.preference.PreferenceScreen;
 import android.widget.Toast;
 import org.opendatakit.common.android.activities.BasePreferenceActivity;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.data.utilities.TableUtil;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -82,7 +82,7 @@ public class DisplayPrefsActivity extends BasePreferenceActivity {
     PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
 
     String localizedDisplayName;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);

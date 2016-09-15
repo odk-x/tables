@@ -23,7 +23,7 @@ import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 

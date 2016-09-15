@@ -18,11 +18,11 @@ package org.opendatakit.tables.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.data.utilities.TableUtil;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
@@ -96,7 +96,7 @@ public class ColumnListFragment extends ListFragment {
     String appName = activity.getAppName();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     TableUtil.TableColumns tc = null;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       tc = TableUtil.get().getTableColumns(Tables.getInstance(), appName, db, activity.getTableId());

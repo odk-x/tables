@@ -18,7 +18,7 @@ import android.widget.Spinner;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
+import org.opendatakit.common.android.data.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.application.Tables;

@@ -17,9 +17,9 @@ package org.opendatakit.tables.activities;
 
 import java.io.File;
 
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.tasks.ImportRequest;

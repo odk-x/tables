@@ -17,7 +17,7 @@ package org.opendatakit.tables.views.webkits;
 
 import android.widget.Toast;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.tables.R;
 
 import java.lang.ref.WeakReference;

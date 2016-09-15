@@ -21,10 +21,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
+import org.opendatakit.common.android.data.utilities.ColumnUtil;
+import org.opendatakit.common.android.data.utilities.TableUtil;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
@@ -111,7 +114,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // if a custom font size is defined in the KeyValueStore, use that
     // if not, use the general font size defined in preferences
     String appName = table.getAppName();
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
@@ -592,7 +595,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * @return
    * @throws ServicesAvailabilityException
    */
-  public int[] getColumnWidths(OdkDbHandle db) throws ServicesAvailabilityException {
+  public int[] getColumnWidths(DbHandle db) throws ServicesAvailabilityException {
     // So what we want to do is go through and get the column widths for each
     // column. A problem here is that there is no caching, and if you have a
     // lot of columns you're really working the gut of the database.
@@ -601,7 +604,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     String appName = table.getAppName();
 
     Map<String, Integer> colWidths =
-            ColumnUtil.get().getColumnWidths(Tables.getInstance(), appName, db, table.getTableId(), table.getColumnDefinitions());
+            ColumnUtil
+                .get().getColumnWidths(Tables.getInstance(), appName, db, table.getTableId(), table.getColumnDefinitions());
 
     for (int i = 0; i < numberOfDisplayColumns; i++) {
       ColumnDefinition cd = table.getColumnByIndex(i);

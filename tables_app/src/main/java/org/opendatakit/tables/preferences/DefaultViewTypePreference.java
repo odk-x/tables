@@ -17,11 +17,11 @@ package org.opendatakit.tables.preferences;
 
 import java.util.Arrays;
 
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.data.utilities.TableUtil;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.application.Tables;
@@ -57,7 +57,7 @@ public class DefaultViewTypePreference extends ListPreference {
     this.mEntryValues = this.mContext.getResources().getTextArray(
       R.array.table_view_types_values);
     
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(mAppName);
       this.mPossibleViewTypes = new PossibleTableViewTypes(mAppName, db, tableId, orderedDefns);

@@ -21,10 +21,10 @@ import java.util.Arrays;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.data.utilities.ColumnUtil;
+import org.opendatakit.common.android.data.utilities.TableUtil;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
@@ -145,7 +145,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   @Override
   public void onResume() {
     super.onResume();
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       this.initializeStateRequiringContext(db);
@@ -169,7 +169,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
    * Set up the objects that require a context.
    * @throws ServicesAvailabilityException
    */
-  private void initializeStateRequiringContext(OdkDbHandle db) throws ServicesAvailabilityException {
+  private void initializeStateRequiringContext(DbHandle db) throws ServicesAvailabilityException {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
 
     // 1) First fill in the color rule group and list.
@@ -227,7 +227,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     mColumnElementKeys = colorColElementKeys.toArray(new String[colorColElementKeys.size()]);
   }
 
-  private void initializeAllPreferences(OdkDbHandle db) throws ServicesAvailabilityException {
+  private void initializeAllPreferences(DbHandle db) throws ServicesAvailabilityException {
     // We have several things to do here. First we'll initialize all the
     // individual preferences.
     this.initializeColumns(db);
@@ -249,7 +249,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     return this.mRulePosition == INVALID_RULE_POSITION;
   }
 
-  private void initializeColumns(OdkDbHandle db) throws ServicesAvailabilityException {
+  private void initializeColumns(DbHandle db) throws ServicesAvailabilityException {
     final ListPreference pref = this
         .findListPreference(Constants.PreferenceKeys.ColorRule.ELEMENT_KEY);
     // And now we have to consider that we don't display this at all.
@@ -275,7 +275,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
             "onPreferenceChance callback invoked for value: " + newValue);
         mElementKey = (String) newValue;
         String localizedDisplayName = null;
-        OdkDbHandle db = null;
+        DbHandle db = null;
         try {
           db = Tables.getInstance().getDatabase().openDatabase(getAppName());
           localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),

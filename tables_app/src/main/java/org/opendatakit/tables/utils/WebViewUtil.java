@@ -26,16 +26,16 @@ import java.util.TimeZone;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.UserTable;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.common.android.data.utilities.ColumnUtil;
+import org.opendatakit.common.android.utilities.DateUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.data.Row;
 import org.opendatakit.tables.application.Tables;
 
 import android.content.ContentValues;
@@ -118,7 +118,7 @@ public class WebViewUtil {
    * @throws ServicesAvailabilityException
    */
   public static boolean addValueToContentValues(Context context, String appName, String tableId,
-      DataUtil du,
+      DateUtils du,
       // TableProperties tp,
       ColumnDefinition colDefn, String rawValue, ContentValues contentValues) throws
       ServicesAvailabilityException {
@@ -132,7 +132,7 @@ public class WebViewUtil {
     } else {
       // we have to validate it -- get the choices list, if any
       ArrayList<Map<String, Object>> choices;
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
         choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
@@ -210,7 +210,7 @@ public class WebViewUtil {
     // TODO: respect locale and timezone. Getting this structure from other
     // places it is used.
 
-    DataUtil dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
+    DateUtils dataUtil = new DateUtils(Locale.ENGLISH, TimeZone.getDefault());
     for (Map.Entry<String, String> entry : elementKeyToValue.entrySet()) {
       String elementKey = entry.getKey();
       String rawValue = entry.getValue();
@@ -252,7 +252,7 @@ public class WebViewUtil {
     UserTable userTable = null;
 
     {
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
 
@@ -272,7 +272,7 @@ public class WebViewUtil {
           "query returned no rows for tableId: " + tableId + " and rowId: " + rowId);
     }
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
-    OdkDbRow requestedRow = userTable.getRowAtIndex(0);
+    Row requestedRow = userTable.getRowAtIndex(0);
     List<String> userDefinedElementKeys = orderedDefns.getRetentionColumnNames();
     List<String> adminElementKeys = Arrays.asList(adminColumns);
     List<String> allElementKeys = new ArrayList<String>();

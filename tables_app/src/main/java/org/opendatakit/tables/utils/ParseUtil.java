@@ -18,13 +18,13 @@ package org.opendatakit.tables.utils;
 import java.util.ArrayList;
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.utilities.DateUtils;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 
 public class ParseUtil {
 
-  public static String validifyValue(String appName, DataUtil du, ArrayList<Map<String,Object>> choices, ColumnDefinition cd, String input) {
+  public static String validifyValue(String appName, DateUtils du, ArrayList<Map<String,Object>> choices, ColumnDefinition cd, String input) {
       if ( input == null ) {
         // TODO: should we check for required values?
         // null values are always accepted (???)

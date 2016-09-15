@@ -30,15 +30,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.activities.IInitResumeActivity;
 import org.opendatakit.common.android.fragment.AboutMenuFragment;
 import org.opendatakit.common.android.listener.DatabaseConnectionListener;
 import org.opendatakit.common.android.logic.CommonToolProperties;
 import org.opendatakit.common.android.logic.PropertiesSingleton;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.webkitserver.utilities.UrlUtils;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.common.android.views.ODKWebView;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;

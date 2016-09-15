@@ -22,8 +22,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.data.utilities.TableUtil;
+import org.opendatakit.common.android.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
@@ -392,7 +392,7 @@ public class TablePrefTest {
   }
 
   private static String getListViewFile() {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     String file = null;
 
     try{
@@ -418,7 +418,7 @@ public class TablePrefTest {
   }
 
   private static String getDetailViewFile() {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     String file = null;
 
     try{
@@ -444,7 +444,7 @@ public class TablePrefTest {
   }
 
   private static String getMapViewFile() {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     String file = null;
 
     try{

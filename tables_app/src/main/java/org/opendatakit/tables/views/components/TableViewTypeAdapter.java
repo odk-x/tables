@@ -16,7 +16,7 @@
 package org.opendatakit.tables.views.components;
 
 import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 
 import android.content.Context;

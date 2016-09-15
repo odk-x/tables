@@ -17,11 +17,11 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 import java.util.ArrayList;
 
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.provider.TablesProviderAPI;
-import org.opendatakit.common.android.utilities.ODKCursorUtils;
+import org.opendatakit.common.android.database.utilities.CursorUtils;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
@@ -125,10 +125,10 @@ public class AndroidShortcuts extends BaseActivity {
           c.moveToPosition(-1);
           while (c.moveToNext()) {
             String tableName = app.getName() + " > "
-                + ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
+                + CursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
             uri = Uri.withAppendedPath(
                 Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
-                ODKCursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
+                CursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
             choices.add(new Choice(R.drawable.tables_table, tableIcon, uri, tableName, appName));
           }
         }

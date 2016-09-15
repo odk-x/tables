@@ -16,12 +16,12 @@
 package org.opendatakit.tables.activities;
 
 import android.os.Bundle;
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.common.android.database.service.DbHandle;
 
 /**
  * This class is the base for any Activity that will display information about
@@ -66,7 +66,7 @@ public abstract class AbsTableWebActivity extends AbsBaseWebActivity {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] building mColumnDefinitions.");
       CommonApplication app = (CommonApplication) getApplication();
       if ( app.getDatabase() != null ) {
-        OdkDbHandle db = null;
+        DbHandle db = null;
         try {
           db = app.getDatabase().openDatabase(getAppName());
           mColumnDefinitions = app.getDatabase().getUserDefinedColumns(getAppName(), db, getTableId());

@@ -28,9 +28,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.service.AidlDbInterface;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.robolectric.Robolectric;
@@ -52,11 +52,11 @@ public class AbsTableActivityTest {
     CommonApplication.setMocked();
     TestCaseUtils.setExternalStorageMounted();
 
-    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+    AidlDbInterface stubIf = mock(AidlDbInterface.class);
 
     try {
-      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
-      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      DbHandle hNoTransaction = new DbHandle("noTrans");
+      DbHandle hTransaction = new DbHandle("trans");
       doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
       doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
   
@@ -65,8 +65,8 @@ public class AbsTableActivityTest {
       tableIds.add(tableId);
       OrderedColumns orderedColumns = new OrderedColumns( AbsTableActivityStub.DEFAULT_APP_NAME, AbsTableActivityStub.DEFAULT_TABLE_ID, new ArrayList<Column>());
 
-      doReturn(tableIds).when(stubIf).getAllTableIds( eq(AbsTableActivityStub.DEFAULT_APP_NAME), any(OdkDbHandle.class));
-      doReturn(orderedColumns).when(stubIf).getUserDefinedColumns( eq(AbsTableActivityStub.DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(AbsTableActivityStub.DEFAULT_TABLE_ID));
+      doReturn(tableIds).when(stubIf).getAllTableIds( eq(AbsTableActivityStub.DEFAULT_APP_NAME), any(DbHandle.class));
+      doReturn(orderedColumns).when(stubIf).getUserDefinedColumns( eq(AbsTableActivityStub.DEFAULT_APP_NAME), any(DbHandle.class), eq(AbsTableActivityStub.DEFAULT_TABLE_ID));
     } catch ( RemoteException e ) {
       // ignore?
     }

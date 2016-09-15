@@ -19,7 +19,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
-import org.opendatakit.IntentConsts;
+import org.opendatakit.common.android.logic.IntentConsts;
 import org.opendatakit.common.android.activities.BaseActivity;
 import org.opendatakit.common.android.provider.TablesProviderAPI;
 import org.opendatakit.common.android.utilities.ODKFileUtils;

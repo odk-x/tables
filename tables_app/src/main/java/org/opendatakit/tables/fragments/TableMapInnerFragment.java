@@ -24,13 +24,16 @@ import java.util.Set;
 import org.opendatakit.common.android.data.ColorGuide;
 import org.opendatakit.common.android.data.ColorGuideGroup;
 import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.utilities.TableUtil;
+import org.opendatakit.common.android.database.LocalKeyValueStoreConstants;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.UserTable;
 import org.opendatakit.common.android.exception.ServicesAvailabilityException;
+import org.opendatakit.common.android.logging.WebLogger;
 import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.data.Row;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -231,7 +234,7 @@ public class TableMapInnerFragment extends MapFragment {
     // Grab the color group
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(activity.getAppName());
       
@@ -305,7 +308,7 @@ public class TableMapInnerFragment extends MapFragment {
 
       // Go through each row and create a marker at the specified location.
       for (int i = 0; i < table.getNumberOfRows(); i++) {
-        OdkDbRow row = table.getRowAtIndex(i);
+        Row row = table.getRowAtIndex(i);
         String latitudeString = row.getDataByKey(latitudeColumn.getElementKey());
         String longitudeString = row.getDataByKey(longitudeColumn.getElementKey());
         if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
@@ -370,7 +373,7 @@ public class TableMapInnerFragment extends MapFragment {
     return DEFAULT_MARKER_HUE;
   }
 
-  private String getLatitudeElementKey(OdkDbHandle dbHandle) throws ServicesAvailabilityException {
+  private String getLatitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
@@ -379,7 +382,7 @@ public class TableMapInnerFragment extends MapFragment {
     return latitudeElementKey;
   }
 
-  private String getLongitudeElementKey(OdkDbHandle dbHandle) throws ServicesAvailabilityException {
+  private String getLongitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     String longitudeElementKey =
