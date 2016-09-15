@@ -227,7 +227,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(this.getIntent().getExtras());
         String[] emptyArray = {};
-        UserTable result = Tables.getInstance().getDatabase().rawSqlQuery(this.getAppName(), db,
+        UserTable result = Tables.getInstance().getDatabase().simpleQuery(this.getAppName(), db,
             this.getTableId(), getColumnDefinitions(), sqlQueryStruct.whereClause,
             (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs,
             (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
