@@ -26,16 +26,16 @@ import java.util.TimeZone;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.common.android.database.data.ColumnDefinition;
-import org.opendatakit.common.android.database.data.OrderedColumns;
-import org.opendatakit.common.android.database.data.UserTable;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.data.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.DateUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.logging.WebLogger;
-import org.opendatakit.common.android.database.service.DbHandle;
-import org.opendatakit.common.android.database.data.Row;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.utilities.DateUtils;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.data.Row;
 import org.opendatakit.tables.application.Tables;
 
 import android.content.ContentValues;

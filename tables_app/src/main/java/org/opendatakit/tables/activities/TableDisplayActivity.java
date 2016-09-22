@@ -27,12 +27,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import org.opendatakit.common.android.database.data.UserTable;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.webkitserver.utilities.UrlUtils;
-import org.opendatakit.common.android.logging.WebLogger;
-import org.opendatakit.common.android.views.ODKWebView;
-import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.webkitserver.utilities.UrlUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.views.ODKWebView;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;

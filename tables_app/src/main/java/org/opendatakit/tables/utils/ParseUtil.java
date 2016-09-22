@@ -18,8 +18,8 @@ package org.opendatakit.tables.utils;
 import java.util.ArrayList;
 import java.util.Map;
 
-import org.opendatakit.common.android.database.data.ColumnDefinition;
-import org.opendatakit.common.android.utilities.DateUtils;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.utilities.DateUtils;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 
 public class ParseUtil {

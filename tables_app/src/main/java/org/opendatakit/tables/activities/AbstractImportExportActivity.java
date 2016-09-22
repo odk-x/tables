@@ -15,8 +15,8 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.activities.BaseActivity;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 
 import android.app.AlertDialog;

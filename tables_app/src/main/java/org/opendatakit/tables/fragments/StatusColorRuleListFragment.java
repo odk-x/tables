@@ -17,11 +17,11 @@ package org.opendatakit.tables.fragments;
 
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.data.utilities.TableUtil;
-import org.opendatakit.common.android.logging.WebLogger;
-import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;

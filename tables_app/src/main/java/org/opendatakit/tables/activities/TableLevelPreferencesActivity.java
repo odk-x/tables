@@ -14,7 +14,7 @@
 
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.tables.fragments.StatusColorRuleListFragment;
 import org.opendatakit.tables.fragments.ColorRuleListFragment;
 import org.opendatakit.tables.fragments.ColumnListFragment;

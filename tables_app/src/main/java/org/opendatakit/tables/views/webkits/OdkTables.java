@@ -17,11 +17,11 @@ package org.opendatakit.tables.views.webkits;
 
 import android.content.Intent;
 import android.os.Bundle;
-import org.opendatakit.common.android.database.data.OrderedColumns;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.logging.WebLogger;
-import org.opendatakit.common.android.views.ODKWebView;
-import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.views.ODKWebView;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;

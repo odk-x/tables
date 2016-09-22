@@ -19,8 +19,8 @@ import java.util.ArrayList;
 
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
-import org.opendatakit.common.android.database.data.ColumnDefinition;
-import org.opendatakit.common.android.utilities.DateUtils;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.utilities.DateUtils;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulator.InputView;

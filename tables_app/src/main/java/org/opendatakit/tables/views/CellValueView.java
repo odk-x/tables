@@ -18,11 +18,11 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 import java.util.Map;
 
-import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.database.data.ColumnDefinition;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.data.utilities.ColumnUtil;
-import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.application.CommonApplication;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.database.service.DbHandle;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;

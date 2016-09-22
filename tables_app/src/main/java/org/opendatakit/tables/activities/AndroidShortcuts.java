@@ -17,12 +17,12 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 import java.util.ArrayList;
 
-import org.opendatakit.common.android.logic.IntentConsts;
-import org.opendatakit.common.android.activities.BaseActivity;
-import org.opendatakit.common.android.provider.TableDefinitionsColumns;
-import org.opendatakit.common.android.provider.TablesProviderAPI;
-import org.opendatakit.common.android.database.utilities.CursorUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.provider.TableDefinitionsColumns;
+import org.opendatakit.provider.TablesProviderAPI;
+import org.opendatakit.database.utilities.CursorUtils;
+import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
