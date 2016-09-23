@@ -3,7 +3,7 @@ package org.opendatakit.util;
 public class TestConstants {
   //Package names
   public static String TABLES_PKG_NAME = "org.opendatakit.tables";
-  public static String SURVEY_PKG_NAME = "org.opendatakit.survey.android";
+  public static String SURVEY_PKG_NAME = "org.opendatakit.survey";
 
   //Espresso Web
   public static int WEB_WAIT_TIMEOUT = 6000;

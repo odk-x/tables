@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.dependencies.DependencyChecker;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -76,9 +77,9 @@ public class SurveyUtil {
   private static final String INSTANCE_UUID_PREFIX = "uuid:";
 
   /** Survey's package name as declared in the manifest. */
-  private static final String SURVEY_PACKAGE_NAME = "org.opendatakit.survey.android";
+  private static final String SURVEY_PACKAGE_NAME = IntentConsts.Survey.SURVEY_PACKAGE_NAME;
   /** The full path to Survey's main menu activity. */
-  private static final String SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME = "org.opendatakit.survey.android.activities.SplashScreenActivity";
+  private static final String SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME = IntentConsts.Survey.SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME;
 
   /**
    * Returns Android's content scheme, with ://, ready for prepending to an
@@ -257,7 +258,7 @@ public class SurveyUtil {
                                            Map<String, String> elementNameToValue) {
     // We're operating for the moment under the assumption that Survey expects
     // a uri like the following:
-    // content://org.opendatakit.survey.android.provider.FormProvider/
+    // content://org.opendatakit.survey.provider.FormProvider/
     // appname/formId/#.
     // # is a url frame and it accepts query parameters as in a URL. Pertinent
     // ones include those specified in SurveyFormParameters. Of particular note
