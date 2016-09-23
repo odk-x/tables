@@ -15,10 +15,10 @@
  */
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.CsvUtil;
-import org.opendatakit.common.android.logging.WebLogger;
-import org.opendatakit.common.android.utilities.CsvUtil.ImportListener;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.utilities.CsvUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.utilities.CsvUtil.ImportListener;
 import org.opendatakit.tables.activities.ImportCSVActivity;
 import org.opendatakit.tables.application.Tables;
 

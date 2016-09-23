@@ -17,11 +17,11 @@ package org.opendatakit.tables.preferences;
 
 import java.util.Arrays;
 
-import org.opendatakit.common.android.database.data.OrderedColumns;
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.data.utilities.TableUtil;
-import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.data.TableViewType;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.application.Tables;

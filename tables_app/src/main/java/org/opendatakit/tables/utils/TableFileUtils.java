@@ -16,7 +16,7 @@
 package org.opendatakit.tables.utils;
 
 import android.util.Log;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.utilities.ODKFileUtils;
 
 /**
  * This is a general place for utils regarding odktables files. These are files

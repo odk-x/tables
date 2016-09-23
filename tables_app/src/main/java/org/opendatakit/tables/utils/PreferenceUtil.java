@@ -15,12 +15,12 @@
  */
 package org.opendatakit.tables.utils;
 
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.data.utilities.ColumnUtil;
-import org.opendatakit.common.android.data.utilities.TableUtil;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.data.TableViewType;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.utilities.*;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.application.Tables;
 
 import android.content.Context;

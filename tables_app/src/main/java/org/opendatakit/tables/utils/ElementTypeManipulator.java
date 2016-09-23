@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.common.android.utilities.DateUtils;
+import org.opendatakit.utilities.DateUtils;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 
 import android.content.Context;

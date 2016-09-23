@@ -20,12 +20,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.opendatakit.common.android.logic.IntentConsts;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.data.utilities.TableUtil;
-import org.opendatakit.common.android.logging.WebLogger;
-import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.tasks.ExportRequest;

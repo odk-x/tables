@@ -14,16 +14,16 @@
 
 package org.opendatakit.tables.views.webkits;
 
-import org.opendatakit.common.android.data.ColorGuide;
-import org.opendatakit.common.android.data.ColorGuideGroup;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.RowColorObject;
-import org.opendatakit.common.android.database.data.UserTable;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.views.ExecutorContext;
-import org.opendatakit.common.android.views.ExecutorProcessor;
-import org.opendatakit.common.android.database.data.KeyValueStoreEntry;
-import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.data.ColorGuide;
+import org.opendatakit.data.ColorGuideGroup;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.RowColorObject;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.views.ExecutorContext;
+import org.opendatakit.views.ExecutorProcessor;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.MapListViewFragment;

@@ -15,12 +15,12 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.logic.IntentConsts;
-import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.database.data.OrderedColumns;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.logging.WebLogger;
-import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.application.CommonApplication;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 
 import android.os.Bundle;
 

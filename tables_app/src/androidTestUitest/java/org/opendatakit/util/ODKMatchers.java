@@ -8,7 +8,7 @@ import android.widget.ListView;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.opendatakit.common.android.data.ColorRule;
+import org.opendatakit.data.ColorRule;
 import org.opendatakit.tables.utils.TableNameStruct;
 
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasAction;
@@ -90,7 +90,7 @@ public class ODKMatchers {
   public static Matcher<Intent> hasTable(final String tableId, final String formId,
       final String instanceId) {
     String scheme = "content://";
-    String host = "org.opendatakit.common.android.provider.forms";
+    String host = "org.opendatakit.provider.forms";
     String path = "/" + APP_NAME + "/" + tableId + "/" + formId + "/";
 
     Matcher<Intent> partial = allOf(

@@ -20,10 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.common.android.data.ColorRule;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.logging.WebLogger;
+import org.opendatakit.data.ColorRule;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 
