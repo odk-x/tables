@@ -133,6 +133,9 @@ dependencies {
     compile 'com.google.android.gms:play-services:' + gpsVersion
     compile 'joda-time:joda-time:2.2'
 
+	androidTestCompile 'joda-time:joda-time:2.2'
+ 	testCompile 'joda-time:joda-time:2.2'
+ 
     //for Espresso
     androidTestUitestCompile 'com.android.support.test:runner:0.4.1'
     androidTestUitestCompile 'com.android.support.test:rules:0.4.1'
@@ -142,7 +145,7 @@ dependencies {
     androidTestUitestCompile 'com.android.support:support-annotations:23.1.0'
     androidTestUitestCompile 'com.android.support:support-v4:23.1.0'
 
-    //for UI Automator
+	//for UI Automator
     androidTestUitestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.1'
     androidTestUitestCompile 'org.hamcrest:hamcrest-integration:1.3'
 }
