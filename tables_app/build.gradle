@@ -133,8 +133,9 @@ dependencies {
     compile 'com.google.android.gms:play-services:' + gpsVersion
     compile 'joda-time:joda-time:2.2'
 
-	androidTestCompile 'joda-time:joda-time:2.2'
- 	testCompile 'joda-time:joda-time:2.2'
+    testCompile 'joda-time:joda-time:2.2'
+    androidTestCompile 'joda-time:joda-time:2.2'
+    androidTestUiTestCompile 'joda-time:joda-time:2.2'
  
     //for Espresso
     androidTestUitestCompile 'com.android.support.test:runner:0.4.1'
