@@ -67,7 +67,7 @@ public class FormType {
       // don't use a transaction, but ensure that if we are transitioning to
       // the survey type (or updating it), that we update its settings first.
       this.mSurveyParams.persist(appName, db, tableId);
-      Tables.getInstance().getDatabase().replaceDBTableMetadata(appName, db, entry);
+      Tables.getInstance().getDatabase().replaceTableMetadata(appName, db, entry);
       // and once we have transitioned, then we alter the settings
       // of the form type we are no longer using.
       this.mSurveyParams.persist(appName, db, tableId);

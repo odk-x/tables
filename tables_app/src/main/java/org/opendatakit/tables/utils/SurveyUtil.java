@@ -511,7 +511,7 @@ public class SurveyUtil {
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
         List<KeyValueStoreEntry> kvsList = Tables.getInstance().getDatabase()
-            .getDBTableMetadata(appName, db, tableId, SurveyUtil.KVS_PARTITION,
+            .getTableMetadata(appName, db, tableId, SurveyUtil.KVS_PARTITION,
                 SurveyUtil.KVS_ASPECT, SurveyUtil.KEY_FORM_ID, null).getEntries();
         if (kvsList.size() != 1) {
           formId = null;
@@ -537,7 +537,7 @@ public class SurveyUtil {
               SurveyUtil.KEY_FORM_ID,
               ElementDataType.string, this.isUserDefined() ? this.mFormId : null);
 
-      Tables.getInstance().getDatabase().replaceDBTableMetadata(appName, db, entry);
+      Tables.getInstance().getDatabase().replaceTableMetadata(appName, db, entry);
     }
   }
 

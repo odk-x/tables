@@ -200,7 +200,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
           try {
             try {
               db = Tables.getInstance().getDatabase().openDatabase(appName);
-              Tables.getInstance().getDatabase().deleteDBTableAndAllData(appName, db, tableIdOfSelectedItem);
+              Tables.getInstance().getDatabase().deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
             } finally {
               if (db != null) {
                 Tables.getInstance().getDatabase().closeDatabase(appName, db);
