@@ -510,9 +510,10 @@ public class SurveyUtil {
       DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
-        List<KeyValueStoreEntry> kvsList =  Tables.getInstance().getDatabase()
-                .getDBTableMetadata(appName, db, tableId, SurveyUtil.KVS_PARTITION, SurveyUtil.KVS_ASPECT, SurveyUtil.KEY_FORM_ID );
-        if ( kvsList.size() != 1 ) {
+        List<KeyValueStoreEntry> kvsList = Tables.getInstance().getDatabase()
+            .getDBTableMetadata(appName, db, tableId, SurveyUtil.KVS_PARTITION,
+                SurveyUtil.KVS_ASPECT, SurveyUtil.KEY_FORM_ID, null).getEntries();
+        if (kvsList.size() != 1) {
           formId = null;
         } else {
           formId = KeyValueStoreUtils.getString(appName, kvsList.get(0));
