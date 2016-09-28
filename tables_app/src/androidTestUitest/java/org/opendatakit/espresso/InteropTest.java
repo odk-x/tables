@@ -1,17 +1,13 @@
 package org.opendatakit.espresso;
 
-import android.graphics.Rect;
-import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.LargeTest;
-import android.view.View;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.ClassRule;
@@ -29,9 +25,6 @@ import org.opendatakit.util.UAUtils;
 import org.opendatakit.util.DisableAnimationsRule;
 
 import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static android.support.test.espresso.Espresso.*;
 import static android.support.test.espresso.action.ViewActions.clearText;
@@ -86,12 +79,7 @@ public class InteropTest {
   @Test
   public void intent_addRow() throws MalformedURLException, InterruptedException {
     EspressoUtils.cancelExternalIntents();
-
-    //open table manager
-    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
-    try {
-      Thread.sleep(3000);
-    } catch (Exception e) {}
+    EspressoUtils.openTableManagerFromCustomHome();
 
     //click "Tea Houses Editable"
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
@@ -140,7 +128,7 @@ public class InteropTest {
     //Open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
     try {
-      Thread.sleep(TABLE_MGR_TIMEOUT);
+      Thread.sleep(TABLE_MGR_WAIT);
     } catch (Exception e) {}
 
     //Open "Tea houses editable"

@@ -1,14 +1,12 @@
 package org.opendatakit.espresso;
 
 import android.graphics.Rect;
-import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.test.suitebuilder.annotation.LargeTest;
-import android.util.Log;
 import android.view.View;
 import android.widget.ScrollView;
 import org.hamcrest.Matcher;
@@ -98,11 +96,7 @@ public class ColorRuleTest {
     UAUtils.assertInitSucess(initSuccess);
     assertThat("Failed to obtain db", db, notNullValue(DbHandle.class));
 
-    //open table manager
-    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
-    try {
-      Thread.sleep(TABLE_MGR_TIMEOUT);
-    } catch (Exception e) {}
+    EspressoUtils.openTableManagerFromCustomHome();
 
     //click "Tea Houses Editable"
     onData(ODKMatchers.withTable(tableId)).perform(click());
