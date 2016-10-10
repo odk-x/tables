@@ -4,11 +4,9 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
-import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -18,10 +16,8 @@ import android.widget.Spinner;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
@@ -70,12 +66,7 @@ public class CsvTest {
   @Before
   public void setup() {
     UAUtils.assertInitSucess(initSuccess);
-
-    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
-    try {
-      Thread.sleep(TABLE_MGR_TIMEOUT);
-    } catch (Exception e) {}
-
+    EspressoUtils.openTableManagerFromCustomHome();
     onView(withId(R.id.menu_table_manager_export)).perform(click());
   }
 

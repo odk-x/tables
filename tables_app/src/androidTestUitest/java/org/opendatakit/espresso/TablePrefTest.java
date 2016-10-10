@@ -11,9 +11,7 @@ import android.support.test.espresso.intent.Intents;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.LargeTest;
 import org.junit.Before;
 import org.junit.Rule;
@@ -83,12 +81,7 @@ public class TablePrefTest {
   public void setup() {
     UAUtils.assertInitSucess(initSuccess);
     EspressoUtils.cancelExternalIntents();
-
-    //open table manager
-    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
-    try {
-      Thread.sleep(TABLE_MGR_TIMEOUT);
-    } catch (Exception e) {}
+    EspressoUtils.openTableManagerFromCustomHome();
 
     //click "Tea Houses Editable"
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
