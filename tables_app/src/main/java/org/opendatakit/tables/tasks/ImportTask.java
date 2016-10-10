@@ -18,7 +18,7 @@ package org.opendatakit.tables.tasks;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.utilities.CsvUtil;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.utilities.CsvUtil.ImportListener;
+import org.opendatakit.listener.ImportListener;
 import org.opendatakit.tables.activities.ImportCSVActivity;
 import org.opendatakit.tables.application.Tables;
 

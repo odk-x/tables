@@ -19,7 +19,7 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.utilities.CsvUtil;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.utilities.CsvUtil.ExportListener;
+import org.opendatakit.listener.ExportListener;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.activities.ExportCSVActivity;
 import org.opendatakit.tables.application.Tables;
