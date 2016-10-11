@@ -77,6 +77,13 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     updateTableIdList();
   }
 
+  @Override
+  public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    this.setHasOptionsMenu(true);
+    this.registerForContextMenu(this.getListView());
+  }
+
   /**
    * Refresh the list of tables that is being displayed by the fragment.
    */
