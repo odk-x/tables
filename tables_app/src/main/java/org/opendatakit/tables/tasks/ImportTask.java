@@ -15,8 +15,10 @@
  */
 package org.opendatakit.tables.tasks;
 
+import org.opendatakit.builder.CsvUtilSupervisor;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.utilities.CsvUtil;
+import org.opendatakit.builder.CsvUtil;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.listener.ImportListener;
 import org.opendatakit.tables.activities.ImportCSVActivity;
@@ -46,7 +48,11 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 	@Override
 	protected Boolean doInBackground(ImportRequest... importRequests) {
 		ImportRequest request = importRequests[0];
-		CsvUtil cu = new CsvUtil(Tables.getInstance(), appName);
+		CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
+			@Override public UserDbInterface getDatabase() {
+				return Tables.getInstance().getDatabase();
+			}
+		}, appName);
 		  try {
         return cu.importSeparable(this, request.getTableId(),
              request.getFileQualifier(), request.getCreateTable());

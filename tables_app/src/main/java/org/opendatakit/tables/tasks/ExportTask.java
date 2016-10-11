@@ -15,9 +15,11 @@
  */
 package org.opendatakit.tables.tasks;
 
+import org.opendatakit.builder.CsvUtilSupervisor;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.utilities.CsvUtil;
+import org.opendatakit.builder.CsvUtil;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.listener.ExportListener;
 import org.opendatakit.database.service.DbHandle;
@@ -50,7 +52,11 @@ public class ExportTask
 
     protected Boolean doInBackground(ExportRequest... exportRequests) {
         ExportRequest request = exportRequests[0];
-        CsvUtil cu = new CsvUtil(Tables.getInstance(), appName);
+        CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
+           @Override public UserDbInterface getDatabase() {
+              return Tables.getInstance().getDatabase();
+           }
+        }, appName);
         DbHandle db = null;
         try {
           String tableId = request.getTableId();
