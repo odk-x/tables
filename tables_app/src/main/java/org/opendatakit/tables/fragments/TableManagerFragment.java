@@ -15,16 +15,16 @@
  */
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.listener.DatabaseConnectionListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -77,6 +77,13 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     updateTableIdList();
   }
 
+  @Override
+  public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    this.setHasOptionsMenu(true);
+    this.registerForContextMenu(this.getListView());
+  }
+
   /**
    * Refresh the list of tables that is being displayed by the fragment.
    */
@@ -87,7 +94,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     }
     
     String appName = baseActivity.getAppName();
-    OdkDbHandle db = null;
+    DbHandle db = null;
 
     List<TableNameStruct> tableNameStructs = new ArrayList<TableNameStruct>();
 
@@ -196,11 +203,11 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           // treat delete as a local removal -- not a server side deletion
-          OdkDbHandle db = null;
+          DbHandle db = null;
           try {
             try {
               db = Tables.getInstance().getDatabase().openDatabase(appName);
-              Tables.getInstance().getDatabase().deleteDBTableAndAllData(appName, db, tableIdOfSelectedItem);
+              Tables.getInstance().getDatabase().deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
             } finally {
               if (db != null) {
                 Tables.getInstance().getDatabase().closeDatabase(appName, db);

@@ -15,8 +15,8 @@
  */
 package org.opendatakit.tables.utils;
 
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants.IntentKeys;

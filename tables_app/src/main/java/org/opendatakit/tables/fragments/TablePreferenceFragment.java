@@ -17,11 +17,14 @@ package org.opendatakit.tables.fragments;
 
 import java.io.File;
 
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.TableViewType;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.LocalKeyValueStoreConstants;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.utilities.*;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
@@ -186,7 +189,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * @throws ServicesAvailabilityException
    */
   protected void initializeAllPreferences() throws ServicesAvailabilityException {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
 
@@ -208,7 +211,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     }
   }
 
-  private void initializeDisplayNamePreference(OdkDbHandle db) throws ServicesAvailabilityException {
+  private void initializeDisplayNamePreference(DbHandle db) throws ServicesAvailabilityException {
     EditTextPreference displayPref = this
         .findEditTextPreference(Constants.PreferenceKeys.Table.DISPLAY_NAME);
 
@@ -264,7 +267,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     });
   }
 
-  private void initializeListFile(OdkDbHandle db) throws ServicesAvailabilityException {
+  private void initializeListFile(DbHandle db) throws ServicesAvailabilityException {
     FileSelectorPreference listPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.LIST_FILE);
     listPref.setFields(this, Constants.RequestCodes.CHOOSE_LIST_FILE,
@@ -272,18 +275,19 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     listPref.setSummary(TableUtil.get().getListViewFilename(Tables.getInstance(), getAppName(), db, getTableId()));
   }
 
-  private void initializeMapListFile(OdkDbHandle db) throws ServicesAvailabilityException {
+  private void initializeMapListFile(DbHandle db) throws ServicesAvailabilityException {
     FileSelectorPreference mapListPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.MAP_LIST_FILE);
     mapListPref.setFields(this, Constants.RequestCodes.CHOOSE_MAP_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    String mapListViewFileName = TableUtil.get().getMapListViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
+    String mapListViewFileName = TableUtil
+        .get().getMapListViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
     WebLogger.getLogger(getAppName()).d(TAG,
             "[initializeMapListFile] file is: " + mapListViewFileName);
     mapListPref.setSummary(mapListViewFileName);
   }
 
-  private void initializeDetailFile(OdkDbHandle db) throws ServicesAvailabilityException {
+  private void initializeDetailFile(DbHandle db) throws ServicesAvailabilityException {
     FileSelectorPreference detailPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.DETAIL_FILE);
     detailPref.setFields(this, Constants.RequestCodes.CHOOSE_DETAIL_FILE,
@@ -306,7 +310,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     });
   }
 
-  private void initializeMapColorRule(OdkDbHandle db) throws ServicesAvailabilityException {
+  private void initializeMapColorRule(DbHandle db) throws ServicesAvailabilityException {
     ListPreference mapColorPref = this
             .findListPreference(Constants.PreferenceKeys.Table.MAP_COLOR_RULE);
 
@@ -335,7 +339,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         WebLogger.getLogger(getAppName()).e(TAG,
                 "[onPreferenceChange] for map color rule preference. Pref is: " + newValue);
-        OdkDbHandle db = null;
+        DbHandle db = null;
         String colorRuleType = null;
         try {
           String selectedValue = newValue.toString();

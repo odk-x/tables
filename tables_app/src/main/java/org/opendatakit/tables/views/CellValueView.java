@@ -18,11 +18,11 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 import java.util.Map;
 
-import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.application.CommonApplication;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.database.service.DbHandle;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;
@@ -35,7 +35,7 @@ public class CellValueView {
   public static CellEditView getCellEditView(CommonApplication app, Context context, String appName, String tableId, ColumnDefinition cd, String value) throws
       ServicesAvailabilityException {
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = app.getDatabase().openDatabase(appName);
       ArrayList<Map<String,Object>> displayChoices = (ArrayList<Map<String, Object>>) 

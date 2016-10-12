@@ -1,14 +1,12 @@
 package org.opendatakit.espresso;
 
 import android.graphics.Rect;
-import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.test.suitebuilder.annotation.LargeTest;
-import android.util.Log;
 import android.view.View;
 import android.widget.ScrollView;
 import org.hamcrest.Matcher;
@@ -17,11 +15,11 @@ import org.junit.Rule;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.data.ColorRule;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.ColorRule;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.application.Tables;
@@ -49,7 +47,7 @@ public class ColorRuleTest {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
 
-  private OdkDbHandle db;
+  private DbHandle db;
   private String[] adminColumns;
 
   private final String tableId = T_HOUSE_E_TABLE_ID;
@@ -96,13 +94,9 @@ public class ColorRuleTest {
   @Before
   public void setup() {
     UAUtils.assertInitSucess(initSuccess);
-    assertThat("Failed to obtain db", db, notNullValue(OdkDbHandle.class));
+    assertThat("Failed to obtain db", db, notNullValue(DbHandle.class));
 
-    //open table manager
-    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
-    try {
-      Thread.sleep(TABLE_MGR_TIMEOUT);
-    } catch (Exception e) {}
+    EspressoUtils.openTableManagerFromCustomHome();
 
     //click "Tea Houses Editable"
     onData(ODKMatchers.withTable(tableId)).perform(click());
@@ -305,7 +299,7 @@ public class ColorRuleTest {
     }
   }
 
-  private ColorRuleGroup getCRG(ColorRuleGroup.Type type, OdkDbHandle db, String[] adminColumns)
+  private ColorRuleGroup getCRG(ColorRuleGroup.Type type, DbHandle db, String[] adminColumns)
       throws ServicesAvailabilityException {
     if (type == ColorRuleGroup.Type.TABLE) {
       return ColorRuleGroup.getTableColorRuleGroup(

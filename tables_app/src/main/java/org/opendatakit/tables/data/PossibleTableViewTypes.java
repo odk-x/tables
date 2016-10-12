@@ -18,11 +18,11 @@ package org.opendatakit.tables.data;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.data.TableViewType;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
 
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.application.Tables;
@@ -45,7 +45,7 @@ public class PossibleTableViewTypes {
   private TableDisplayActivity.ViewFragmentType mDefaultViewType;
   private String mDetailFileName;
 
-  public PossibleTableViewTypes(String appName, OdkDbHandle db, String tableId, OrderedColumns orderedDefns) throws
+  public PossibleTableViewTypes(String appName, DbHandle db, String tableId, OrderedColumns orderedDefns) throws
       ServicesAvailabilityException {
     TableViewType defaultViewType = TableUtil.get().getDefaultViewType(Tables.getInstance(),
         appName, db, tableId);

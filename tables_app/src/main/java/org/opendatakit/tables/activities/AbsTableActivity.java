@@ -15,12 +15,12 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.application.CommonApplication;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 
 import android.os.Bundle;
 
@@ -67,7 +67,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] building mColumnDefinitions.");
       CommonApplication app = (CommonApplication) getApplication();
       if ( app.getDatabase() != null ) {
-        OdkDbHandle db = null;
+        DbHandle db = null;
         try {
           db = app.getDatabase().openDatabase(getAppName());
           mColumnDefinitions = app.getDatabase().getUserDefinedColumns(getAppName(), db, getTableId());

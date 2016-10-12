@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.common.android.utilities.DataUtil;
+import org.opendatakit.utilities.DateUtils;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 
 import android.content.Context;
@@ -29,9 +29,9 @@ import android.widget.LinearLayout;
 public class ElementTypeManipulator {
   public static abstract class InputView extends LinearLayout {
 
-     protected final DataUtil du;
+     protected final DateUtils du;
      
-      public InputView(Context context, DataUtil du) {
+      public InputView(Context context, DateUtils du) {
           super(context);
           this.du = du;
           setOrientation(LinearLayout.VERTICAL);
@@ -46,7 +46,7 @@ public class ElementTypeManipulator {
     public String   getElementTypeDisplayLabel();
     public String   getCollectType();
     /* 
-     * DataUtil:
+     * DateUtils:
         if ( cp.getColumnType() == ColumnType.DATE ) {
             return formatLongDateTimeForUser(parseDateTimeFromDb(value));
         } else if ( cp.getColumnType() == ColumnType.DATETIME ) {
@@ -63,10 +63,10 @@ public class ElementTypeManipulator {
 
      * 
      */
-    public String formatForCollect(DataUtil dataUtil, String databaseValue);
+    public String formatForCollect(DateUtils dataUtil, String databaseValue);
     public Class<?> getDatabaseType();
     /*
-     * DataUtil:
+     * DateUtils:
         if ( cp.getColumnType() == ColumnType.DATE ) {
             return validifyDateValue(input);
         } else if ( cp.getColumnType() == ColumnType.DATETIME ) {
@@ -88,9 +88,9 @@ public class ElementTypeManipulator {
         }
 
      */
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue);
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue);
     /*
-     * DataUtil:
+     * DateUtils:
      *        
       if (columnType == ColumnType.DATE) {
         throw new UnsupportedOperationException(
@@ -129,7 +129,7 @@ public class ElementTypeManipulator {
       }
 
      */
-    public T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue, Class<T> clazz);
+    public T parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue, Class<T> clazz);
     
     /*
      * InputScreenUtil
@@ -150,7 +150,7 @@ public class ElementTypeManipulator {
         }
 
      */
-    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value);
+    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value);
   }
   
   private HashMap<String, ITypeManipulatorFragment<?> > renderers = new HashMap<String,

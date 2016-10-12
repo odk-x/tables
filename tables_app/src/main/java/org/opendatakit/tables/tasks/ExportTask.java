@@ -15,12 +15,14 @@
  */
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.CsvUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.CsvUtil.ExportListener;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.builder.CsvUtilSupervisor;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.builder.CsvUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.listener.ExportListener;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.activities.ExportCSVActivity;
 import org.opendatakit.tables.application.Tables;
 
@@ -50,8 +52,12 @@ public class ExportTask
 
     protected Boolean doInBackground(ExportRequest... exportRequests) {
         ExportRequest request = exportRequests[0];
-        CsvUtil cu = new CsvUtil(Tables.getInstance(), appName);
-        OdkDbHandle db = null;
+        CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
+           @Override public UserDbInterface getDatabase() {
+              return Tables.getInstance().getDatabase();
+           }
+        }, appName);
+        DbHandle db = null;
         try {
           String tableId = request.getTableId();
           db = Tables.getInstance().getDatabase().openDatabase(appName);

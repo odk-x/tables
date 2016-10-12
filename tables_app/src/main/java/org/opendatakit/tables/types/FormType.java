@@ -16,10 +16,10 @@
 package org.opendatakit.tables.types;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.KeyValueStoreUtils;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.database.utilities.KeyValueStoreUtils;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
@@ -55,7 +55,7 @@ public class FormType {
   }
 
   public void persist(Context context, String appName, String tableId) throws ServicesAvailabilityException {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       KeyValueStoreEntry entry = KeyValueStoreUtils.buildEntry(tableId,
               FormType.KVS_PARTITION,
@@ -67,7 +67,7 @@ public class FormType {
       // don't use a transaction, but ensure that if we are transitioning to
       // the survey type (or updating it), that we update its settings first.
       this.mSurveyParams.persist(appName, db, tableId);
-      Tables.getInstance().getDatabase().replaceDBTableMetadata(appName, db, entry);
+      Tables.getInstance().getDatabase().replaceTableMetadata(appName, db, entry);
       // and once we have transitioned, then we alter the settings
       // of the form type we are no longer using.
       this.mSurveyParams.persist(appName, db, tableId);

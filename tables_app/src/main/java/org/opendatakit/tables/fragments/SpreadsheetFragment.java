@@ -21,13 +21,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.JoinColumn;
-import org.opendatakit.common.android.exception.ActionNotAuthorizedException;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.data.JoinColumn;
+import org.opendatakit.exception.ActionNotAuthorizedException;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.utilities.*;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
@@ -241,7 +244,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
   private void deleteRow(String rowId) throws ServicesAvailabilityException,
       ActionNotAuthorizedException {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       Tables.getInstance().getDatabase().deleteRowWithId(getAppName(), db, getTableId(),
@@ -325,10 +328,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
       // Get the JoinColumn.
       ArrayList<JoinColumn> joinColumns;
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-        joinColumns = ColumnUtil.get().getJoins(Tables.getInstance(), getAppName(), db, getTableId(), cd.getElementKey());
+        joinColumns = ColumnUtil
+            .get().getJoins(Tables.getInstance(), getAppName(), db, getTableId(), cd.getElementKey());
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
         WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
@@ -474,7 +478,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     this.mLastDataCellMenued = cellInfo;
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
     String localizedDisplayName;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
@@ -548,7 +552,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     String sortColumn;
     String indexColumn;
     ArrayList<String> groupByColumns;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       sortColumn = TableUtil.get().getSortColumn(Tables.getInstance(), getAppName(), db, getTableId());
@@ -599,12 +603,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
     private final SpreadsheetCell cell;
     private final CellValueView.CellEditView cev;
-    private DataUtil dataUtil;
+    private DateUtils dataUtil;
 
     public CellEditDialog(SpreadsheetCell cell) {
       super(getActivity());
       this.cell = cell;
-      this.dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
+      this.dataUtil = new DateUtils(Locale.ENGLISH, TimeZone.getDefault());
       ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
       CellValueView.CellEditView cevTemp = null;
       try {
@@ -626,7 +630,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       setButton.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-          OdkDbHandle db = null;
+          DbHandle db = null;
           try {
             try {
               db = Tables.getInstance().getDatabase().openDatabase(getAppName());

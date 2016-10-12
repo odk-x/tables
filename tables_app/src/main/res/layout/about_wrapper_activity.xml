@@ -6,7 +6,7 @@
     
     <fragment
         android:tag="foreground"
-        android:name="org.opendatakit.common.android.fragment.AboutMenuFragment"
+        android:name="org.opendatakit.fragment.AboutMenuFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="visible" />

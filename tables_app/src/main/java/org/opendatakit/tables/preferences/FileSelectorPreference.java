@@ -19,7 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 
 import android.app.Activity;

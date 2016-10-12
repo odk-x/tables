@@ -11,19 +11,17 @@ import android.support.test.espresso.intent.Intents;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.LargeTest;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
@@ -83,12 +81,7 @@ public class TablePrefTest {
   public void setup() {
     UAUtils.assertInitSucess(initSuccess);
     EspressoUtils.cancelExternalIntents();
-
-    //open table manager
-    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
-    try {
-      Thread.sleep(TABLE_MGR_TIMEOUT);
-    } catch (Exception e) {}
+    EspressoUtils.openTableManagerFromCustomHome();
 
     //click "Tea Houses Editable"
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
@@ -392,7 +385,7 @@ public class TablePrefTest {
   }
 
   private static String getListViewFile() {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     String file = null;
 
     try{
@@ -418,7 +411,7 @@ public class TablePrefTest {
   }
 
   private static String getDetailViewFile() {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     String file = null;
 
     try{
@@ -444,7 +437,7 @@ public class TablePrefTest {
   }
 
   private static String getMapViewFile() {
-    OdkDbHandle db = null;
+    DbHandle db = null;
     String file = null;
 
     try{

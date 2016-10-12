@@ -17,11 +17,11 @@ package org.opendatakit.tables.views.webkits;
 
 import android.content.Intent;
 import android.os.Bundle;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.ODKWebView;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.views.ODKWebView;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -69,7 +69,7 @@ public class OdkTables {
   private List<String> getTableIds() throws ServicesAvailabilityException {
     if ( mTableIds == null ) {
       String appName = mActivity.getAppName();
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
         mTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
@@ -89,7 +89,7 @@ public class OdkTables {
    * @return
    * @throws ServicesAvailabilityException
    */
-  synchronized OrderedColumns retrieveColumnDefinitions(OdkDbHandle db,
+  synchronized OrderedColumns retrieveColumnDefinitions(DbHandle db,
       String tableId) throws  ServicesAvailabilityException {
 
     OrderedColumns answer = this.mCachedOrderedDefns.get(tableId);

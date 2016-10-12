@@ -3,20 +3,20 @@ package org.opendatakit.util;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.preference.Preference;
-import android.support.test.espresso.DataInteraction;
-import android.support.test.espresso.NoMatchingViewException;
-import android.support.test.espresso.ViewAssertion;
-import android.support.test.espresso.ViewInteraction;
+import android.support.test.espresso.*;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.sugar.Web;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.rule.ActivityTestRule;
+import android.util.Log;
 import android.view.View;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.opendatakit.tables.R;
 
 import static android.support.test.espresso.Espresso.*;
+import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.*;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
@@ -90,13 +90,26 @@ public class EspressoUtils {
         .respondWith(new Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null));
   }
 
-  public static ViewAssertion dummyVA() {
+  public static ViewAssertion dummyViewAssertion() {
     return new ViewAssertion() {
       @Override
       public void check(View view, NoMatchingViewException noView) {
         //Do nothing
       }
     };
+  }
+
+  public static boolean viewExists(Matcher<View> view) {
+    final boolean[] exists = new boolean[1];
+
+    onView(view).check(new ViewAssertion() {
+      @Override
+      public void check(View view, NoMatchingViewException noViewFoundException) {
+        exists[0] = noViewFoundException == null;
+      }
+    });
+
+    return exists[0];
   }
 
   public static DataInteraction getFirstItem() {
@@ -124,7 +137,7 @@ public class EspressoUtils {
         description.appendText(" preference with key matching: ");
         keyMatcher.describeTo(description);
       }
-    }).check(dummyVA());
+    }).check(dummyViewAssertion());
 
     return summary[0];
   }
@@ -149,5 +162,25 @@ public class EspressoUtils {
     return onView(withText(matcher))
         .inRoot(withDecorView(not(is(rule.getActivity().getWindow().getDecorView()))))
         .check(matches(isDisplayed()));
+  }
+
+  public static void openTableManagerFromCustomHome()
+  {
+    if (!viewExists(withId(R.id.menu_web_view_activity_table_manager))) {
+      throw new IllegalStateException("Not on custom home!");
+    }
+
+    int count = 0;
+    int limit = 5;
+
+    do {
+      onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
+
+      try {
+        Thread.sleep(TestConstants.TABLE_MGR_WAIT);
+      } catch (Exception e) {
+        // ignore
+      }
+    } while (viewExists(withId(R.id.menu_web_view_activity_table_manager)) && (++count < limit));
   }
 }

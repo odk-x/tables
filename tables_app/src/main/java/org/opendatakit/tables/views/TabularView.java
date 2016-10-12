@@ -22,12 +22,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.opendatakit.common.android.data.ColorGuide;
-import org.opendatakit.common.android.data.ColorGuideGroup;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.data.ColorGuide;
+import org.opendatakit.data.ColorGuideGroup;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.logging.WebLogger;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -36,7 +36,7 @@ import android.graphics.Paint;
 import android.util.DisplayMetrics;
 import android.view.ContextMenu;
 import android.view.View;
-import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.database.data.Row;
 
 /**
  * A view that draws a single table. A single table is essentially a grid of of
@@ -658,7 +658,7 @@ class TabularView extends View {
     // drawing the cells
     int y = topTopmost;
     for (int i = topmost; i < bottommost + 1; i++) {
-      OdkDbRow theRow = null;
+      Row theRow = null;
       int theRowIndex = i;
 
       // we only need to fetch this once for a given row...

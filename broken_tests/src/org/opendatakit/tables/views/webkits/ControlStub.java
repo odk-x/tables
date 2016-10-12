@@ -16,7 +16,7 @@ package org.opendatakit.tables.views.webkits;
 
 import java.util.Map;
 
-import org.opendatakit.common.android.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.OrderedColumns;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 
 import android.content.ContentValues;

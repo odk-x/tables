@@ -80,7 +80,7 @@ public class Constants {
     /**
      * Key to the where clause if this list view is to be opened with a more
      * complex query than permissible by the simple query object. Must conform
-     * to the expectations of rawSqlQuery() AIDL.
+     * to the expectations of simpleQuery() AIDL.
      */
     public static final String SQL_WHERE = "sqlWhereClause";
     /**

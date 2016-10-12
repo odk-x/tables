@@ -15,8 +15,8 @@
  */
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.listener.DatabaseConnectionListener;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
 

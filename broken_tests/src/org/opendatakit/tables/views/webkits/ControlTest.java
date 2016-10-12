@@ -36,9 +36,9 @@ import org.mockito.Matchers;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.service.AidlDbInterface;
 import org.opendatakit.database.service.TableHealthInfo;
 import org.opendatakit.database.service.TableHealthStatus;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
@@ -84,18 +84,18 @@ public class ControlTest {
     CommonApplication.setMocked();
     TestCaseUtils.setExternalStorageMounted();
 
-    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+    AidlDbInterface stubIf = mock(AidlDbInterface.class);
     
     try {
-      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
-      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      DbHandle hNoTransaction = new DbHandle("noTrans");
+      DbHandle hTransaction = new DbHandle("trans");
       doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
       doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
 
       String tableId = PRESENT_TABLE_ID;
       List<String> tableIds = new ArrayList<String>();
       tableIds.add(tableId);
-      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class));
 
       List<Column> columns = new ArrayList<Column>();
       columns.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
@@ -105,12 +105,12 @@ public class ControlTest {
       columns.add(new Column(TestConstants.ElementKeys.NUMBER_COLUMN, TestConstants.ElementKeys.NUMBER_COLUMN,
           ElementDataType.number.name(), "[]"));
       OrderedColumns orderedColumns = new OrderedColumns(TestConstants.TABLES_DEFAULT_APP_NAME, tableId, columns);
-      doReturn(orderedColumns).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId));
+      doReturn(orderedColumns).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId));
       List<TableHealthInfo> statuses = new ArrayList<TableHealthInfo>();
       TableHealthInfo thi = new TableHealthInfo(tableId, TableHealthStatus.TABLE_HEALTH_IS_CLEAN);
       statuses.add(thi);
       
-      doReturn(statuses).when(stubIf).getTableHealthStatuses(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      doReturn(statuses).when(stubIf).getTableHealthStatuses(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class));
 
     } catch (RemoteException e) {
       // ignore?
@@ -252,7 +252,7 @@ public class ControlTest {
       this.control.updateRow(PRESENT_TABLE_ID, validMapString, rowId);
       verify(Tables.getInstance().getDatabase(), times(1)).updateDataInExistingDBTableWithId(
           any(String.class),
-          any(OdkDbHandle.class),
+          any(DbHandle.class),
           eq(PRESENT_TABLE_ID),
           Matchers.any(OrderedColumns.class),
           eq(contentValues),
@@ -262,7 +262,7 @@ public class ControlTest {
       String returnedRowId = control.addRow(PRESENT_TABLE_ID, validMapString);
       verify(Tables.getInstance().getDatabase(), times(1)).insertDataIntoExistingDBTableWithId(
           any(String.class),
-          any(OdkDbHandle.class),
+          any(DbHandle.class),
           eq(PRESENT_TABLE_ID),
           Matchers.any(OrderedColumns.class),
           eq(contentValues),

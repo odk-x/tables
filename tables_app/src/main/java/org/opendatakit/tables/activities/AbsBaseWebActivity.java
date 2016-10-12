@@ -5,22 +5,22 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import org.json.JSONObject;
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.application.AppAwareApplication;
-import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
-import org.opendatakit.common.android.logic.CommonToolProperties;
-import org.opendatakit.common.android.logic.DynamicPropertiesCallback;
-import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.logic.PropertyManager;
-import org.opendatakit.common.android.utilities.AndroidUtils;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.ExecutorContext;
-import org.opendatakit.common.android.views.ExecutorProcessor;
-import org.opendatakit.common.android.views.ODKWebView;
-import org.opendatakit.database.OdkDbSerializedInterface;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.application.AppAwareApplication;
+import org.opendatakit.application.CommonApplication;
+import org.opendatakit.listener.DatabaseConnectionListener;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.DynamicPropertiesCallback;
+import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.properties.PropertyManager;
+import org.opendatakit.webkitserver.utilities.SerializationUtils;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.webkitserver.utilities.UrlUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.views.ExecutorContext;
+import org.opendatakit.views.ExecutorProcessor;
+import org.opendatakit.views.ODKWebView;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
 
@@ -288,7 +288,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
             props.getProperty(CommonToolProperties.KEY_USERNAME),
             props.getProperty(CommonToolProperties.KEY_ACCOUNT));
 
-        b = AndroidUtils.convertToBundle(valueMap, new AndroidUtils.MacroStringExpander() {
+        b = SerializationUtils.convertToBundle(valueMap, new SerializationUtils.MacroStringExpander() {
 
           @Override
           public String expandString(String value) {
@@ -348,7 +348,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
       try {
         String jsonObject = null;
         Bundle b = (intent == null) ? null : intent.getExtras();
-        JSONObject val = (b == null) ? null : AndroidUtils.convertFromBundle(getAppName(), b);
+        JSONObject val = (b == null) ? null : SerializationUtils.convertFromBundle(getAppName(), b);
         JSONObject jsonValue = new JSONObject();
         jsonValue.put("status", resultCode);
         if ( val != null ) {
@@ -464,7 +464,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
     mIOdkDataDatabaseListener = listener;
   }
 
-  @Override public OdkDbSerializedInterface getDatabase() {
+  @Override public UserDbInterface getDatabase() {
     return ((CommonApplication) getApplication()).getDatabase();
   }
 

@@ -19,16 +19,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.activities.BasePreferenceActivity;
-import org.opendatakit.common.android.activities.IAppAwareActivity;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
-import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.LocalKeyValueStoreConstants;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.activities.BasePreferenceActivity;
+import org.opendatakit.activities.IAppAwareActivity;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.data.TableViewType;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.listener.DatabaseConnectionListener;
+import org.opendatakit.utilities.*;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -102,10 +105,11 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
 
   private void createFromDatabase() {
     String localizedDisplayName;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
+      localizedDisplayName = TableUtil
+          .get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
@@ -138,7 +142,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     genCat.setTitle(getString(R.string.general_settings));
 
     String rawDisplayName;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       rawDisplayName = TableUtil.get().getRawDisplayName(Tables.getInstance(), appName, db, tableId);
@@ -214,7 +218,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     // viewTypePref.setValue(String.valueOf(settings.getViewType()));
 
     TableViewType type;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       type = TableUtil.get().getDefaultViewType(Tables.getInstance(), appName, db, tableId);
@@ -474,7 +478,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     public boolean onPreferenceChange(Preference preference, Object newValue) {
       String localizedDisplayName;
       try {
-        localizedDisplayName = ODKDataUtils.getLocalizedDisplayName(
+        localizedDisplayName = LocalizationUtils.getLocalizedDisplayName(
                 TableUtil.get().atomicSetRawDisplayName(Tables.getInstance(), appName, tableId, (String) newValue));
       } catch ( ServicesAvailabilityException e ) {
         Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
@@ -491,7 +495,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
 //  private final class ColorRuleColumnChangeListener implements OnPreferenceChangeListener {
 //    @Override
 //    public boolean onPreferenceChange(Preference preference, Object newValue) {
-//      OdkDbHandle db = null;
+//      DbHandle db = null;
 //      try {
 //        db = Tables.getInstance().getDatabase().openDatabase(appName);
 //        TableUtil.get().setMapListViewColorRuleInfo(Tables.getInstance(), getAppName(), db, tableId,
@@ -524,7 +528,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
 //
 //    @Override
 //    public boolean onPreferenceChange(Preference preference, Object newValue) {
-//      OdkDbHandle db = null;
+//      DbHandle db = null;
 //      try {
 //        String colorType = (String) newValue;
 //        TableUtil.MapViewColorRuleInfo info = null;

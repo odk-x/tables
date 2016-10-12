@@ -20,14 +20,14 @@ import java.util.List;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.activities.BaseActivity;
-import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
-import org.opendatakit.common.android.utilities.DependencyChecker;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.application.CommonApplication;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.listener.DatabaseConnectionListener;
+import org.opendatakit.dependencies.DependencyChecker;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
 import org.opendatakit.database.service.TableHealthStatus;
 import org.opendatakit.tables.R;
@@ -127,7 +127,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
     WebLogger.getLogger(getAppName()).i(this.getClass().getSimpleName(), "scanAllTables -- searching for conflicts and checkpoints ");
     
     CommonApplication app = (CommonApplication) getApplication();
-    OdkDbHandle db = null;
+    DbHandle db = null;
 
     if ( app.getDatabase() == null ) {
       return;
