@@ -19,13 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ColorRule;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.ColorRuleUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.ColorRule;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.ColorRuleUtil;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
@@ -117,7 +117,7 @@ public class ColorRuleListFragment extends ListFragment {
     super.onActivityCreated(savedInstanceState);
     this.setHasOptionsMenu(true);
     TableUtil.TableColumns tc = null;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
 
@@ -350,7 +350,7 @@ public class ColorRuleListFragment extends ListFragment {
     return result.getTableId();
   }
   
-  ColorRuleGroup retrieveColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
+  ColorRuleGroup retrieveColorRuleGroup(DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
     ColorRuleGroup result = null;
     switch (type) {

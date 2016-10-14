@@ -30,9 +30,9 @@ import org.junit.runner.RunWith;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.service.AidlDbInterface;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
@@ -82,20 +82,20 @@ public class WebViewUtilsTest {
     columns.add(new Column(elementKey,elementKey,columnType.toString(), "[]"));
     OrderedColumns orderedDefns = new OrderedColumns(TestConstants.TABLES_DEFAULT_APP_NAME, tableId, columns);
     
-    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+    AidlDbInterface stubIf = mock(AidlDbInterface.class);
 
     try {
-      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
-      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      DbHandle hNoTransaction = new DbHandle("noTrans");
+      DbHandle hTransaction = new DbHandle("trans");
       doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
       doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
       
       ArrayList<String> tableIds = new ArrayList<String>();
       tableIds.add(tableId);
-      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class));
       
       
-      doReturn(orderedDefns).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId));
+      doReturn(orderedDefns).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId));
 
     } catch (RemoteException e) {
       // ignore?

@@ -1,7 +1,7 @@
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.activities.IOdkCommonActivity;
-import org.opendatakit.common.android.activities.IOdkDataActivity;
+import org.opendatakit.activities.IOdkCommonActivity;
+import org.opendatakit.activities.IOdkDataActivity;
 
 /**
  * @author mitchellsundt@gmail.com

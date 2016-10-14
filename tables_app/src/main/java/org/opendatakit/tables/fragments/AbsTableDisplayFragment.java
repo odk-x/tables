@@ -15,8 +15,8 @@
  */
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 
 import android.app.Activity;

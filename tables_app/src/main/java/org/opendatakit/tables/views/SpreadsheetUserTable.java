@@ -19,15 +19,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.data.Row;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
@@ -56,7 +56,7 @@ public class SpreadsheetUserTable {
     this.fragment = frag;
 
     ArrayList<String> colOrder;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(frag.getAppName());
       userTable = getUserTable();
@@ -107,18 +107,18 @@ public class SpreadsheetUserTable {
     return elementKeyToDisplayChoicesList.get(elementKey);
   }
 
-  public ColorRuleGroup getColumnColorRuleGroup(OdkDbHandle db, String elementKey, String[] adminColumns) throws
+  public ColorRuleGroup getColumnColorRuleGroup(DbHandle db, String elementKey, String[] adminColumns) throws
       ServicesAvailabilityException {
     return ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(),
         getAppName(), db, getTableId(), elementKey, adminColumns);
   }
 
-  public ColorRuleGroup getStatusColumnRuleGroup(OdkDbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
+  public ColorRuleGroup getStatusColumnRuleGroup(DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
     return ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(),
         getAppName(), db, getTableId(), adminColumns);
   }
 
-  public ColorRuleGroup getTableColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
+  public ColorRuleGroup getTableColorRuleGroup(DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
     return ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(),
         getAppName(), db, getTableId(), adminColumns);
   }
@@ -131,7 +131,7 @@ public class SpreadsheetUserTable {
     return table.getNumberOfRows();
   }
 
-  public OdkDbRow getRowAtIndex(int index) {
+  public Row getRowAtIndex(int index) {
     UserTable table = fragment.getUserTable();
     if ( table == null ) {
       return null;
@@ -169,7 +169,7 @@ public class SpreadsheetUserTable {
 
   public static class SpreadsheetCell {
     public int rowNum; // of the row
-    public OdkDbRow row; // the row
+    public Row row; // the row
     public String elementKey; // of the column
     public String displayText;
     public String value;

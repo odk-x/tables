@@ -3,7 +3,7 @@ package org.opendatakit.util;
 public class TestConstants {
   //Package names
   public static String TABLES_PKG_NAME = "org.opendatakit.tables";
-  public static String SURVEY_PKG_NAME = "org.opendatakit.survey.android";
+  public static String SURVEY_PKG_NAME = "org.opendatakit.survey";
 
   //Espresso Web
   public static int WEB_WAIT_TIMEOUT = 6000;
@@ -16,7 +16,7 @@ public class TestConstants {
   //Timeout for view rendering
   public static final int OBJ_WAIT_TIMEOUT = 3000;
   //Timeout for opening table manager
-  public static final int TABLE_MGR_TIMEOUT = 10 * 1000;
+  public static final int TABLE_MGR_WAIT = 10 * 1000;
 
   //Table names and related
   public static final String T_HOUSE_DISPLAY_NAME = "Tea Houses";

@@ -18,11 +18,11 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.data.ColorRule;
-import org.opendatakit.common.android.data.ColorRule.RuleType;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.data.ColorRule;
+import org.opendatakit.data.ColorRule.RuleType;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 

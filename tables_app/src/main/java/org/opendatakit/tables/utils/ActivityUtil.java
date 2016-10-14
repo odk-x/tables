@@ -17,12 +17,12 @@ package org.opendatakit.tables.utils;
 
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbRow;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.data.Row;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
@@ -52,7 +52,7 @@ public class ActivityUtil {
    * @throws ServicesAvailabilityException
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, OdkDbRow row) throws ServicesAvailabilityException {
+      OrderedColumns orderedDefns, Row row) throws ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit

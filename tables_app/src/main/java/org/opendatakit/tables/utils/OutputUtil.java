@@ -18,14 +18,14 @@ package org.opendatakit.tables.utils;
 import android.content.Context;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.CharEncoding;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.application.Tables;
 
 import java.io.File;
@@ -95,7 +95,7 @@ public class OutputUtil {
     Map<String, String> tableIdToDisplayName = new HashMap<String, String>();
     Map<String, Map<String, Object>> tableIdToControlTable = new HashMap<String, Map<String, Object>>();
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       List<String> tableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
@@ -137,7 +137,7 @@ public class OutputUtil {
    * @return
    * @throws ServicesAvailabilityException
    */
-  public static Map<String, Object> getMapForControlTable(String appName, OdkDbHandle db,
+  public static Map<String, Object> getMapForControlTable(String appName, DbHandle db,
       String tableId) throws ServicesAvailabilityException {
     Map<String, Object> controlTable = new HashMap<String, Object>();
     Map<String, String> pathToKey = new HashMap<String, String>();

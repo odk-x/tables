@@ -27,12 +27,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.exception.ServicesAvailabilityException;
-import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.ODKWebView;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.webkitserver.utilities.UrlUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.views.ODKWebView;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
@@ -222,12 +222,12 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
    */
   public UserTable getUserTable() {
     if ( mUserTable == null ) {
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(this.getIntent().getExtras());
         String[] emptyArray = {};
-        UserTable result = Tables.getInstance().getDatabase().rawSqlQuery(this.getAppName(), db,
+        UserTable result = Tables.getInstance().getDatabase().simpleQuery(this.getAppName(), db,
             this.getTableId(), getColumnDefinitions(), sqlQueryStruct.whereClause,
             (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs,
             (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
@@ -475,7 +475,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
   private void possiblySupplyDefaults() {
 
     if ( mPossibleTableViewTypes == null && Tables.getInstance().getDatabase() != null ) {
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         mPossibleTableViewTypes = new PossibleTableViewTypes(getAppName(), db, getTableId(),

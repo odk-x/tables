@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.data.ColumnDefinition;
+import org.opendatakit.common.android.database.data.UserTable;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.utils.SQLQueryStruct;

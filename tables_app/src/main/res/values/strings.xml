@@ -387,7 +387,7 @@
 	<string name="initializing">Initializing &#8230;</string>
 	
 	<string name="configuring_app">Configuring %1$s</string>
-	<string name="sync_not_found">ODK Sync is not installed</string>
+	<string name="sync_not_found">ODK Services is not installed</string>
 	
 	<string name="no_table_data">No Data Tables</string>
 	<string name="database_unavailable">Database Unavailable</string>

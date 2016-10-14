@@ -15,7 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 
 import android.os.Bundle;
