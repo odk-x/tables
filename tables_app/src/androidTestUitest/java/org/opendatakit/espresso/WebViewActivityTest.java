@@ -1,7 +1,5 @@
 package org.opendatakit.espresso;
 
-import android.content.ComponentName;
-import android.content.Intent;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.web.model.Atom;
@@ -10,12 +8,12 @@ import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
-import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.webkit.WebView;
+
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.MainActivity;
@@ -120,7 +118,7 @@ public class WebViewActivityTest {
             found = true;
             try {
                Thread.sleep(numOfMsToSleep);
-               onWebView().withElement(findElement(Locator.ID, "72c8186a-8141-4b06-a764-a9029c021b20"))
+               onWebView().withElement(findElement(Locator.ID, "t3"))
                    // Simulate a click via javascript
                    .perform(webClick());
             } catch (RuntimeException e) {
@@ -132,14 +130,14 @@ public class WebViewActivityTest {
             }
          }
 
-         elementFound =  findElement(Locator.ID, "FIELD_16");
+         elementFound =  findElement(Locator.ID, "tea_button");
          found = false;
          while (!found) {
             found = true;
             try {
                Thread.sleep(numOfMsToSleep);
                // Find the response element by ID
-               onWebView().withElement(findElement(Locator.ID, "FIELD_16"))
+               onWebView().withElement(findElement(Locator.ID, "tea_button"))
                    // Could also be id FIELD_16
                    // Verify that the response page contains the entered text
                    .perform(webClick());
