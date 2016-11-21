@@ -15,28 +15,6 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.File;
-
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.activities.IInitResumeActivity;
-import org.opendatakit.common.android.fragment.AboutMenuFragment;
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
-import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.DependencyChecker;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.ODKWebView;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.fragments.InitializationFragment;
-import org.opendatakit.tables.fragments.TableManagerFragment;
-import org.opendatakit.tables.fragments.WebFragment;
-import org.opendatakit.tables.logic.TablesToolProperties;
-import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.IntentUtil;
-
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
@@ -47,11 +25,30 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
+
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.activities.IInitResumeActivity;
+import org.opendatakit.fragment.AboutMenuFragment;
+import org.opendatakit.listener.DatabaseConnectionListener;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.webkitserver.utilities.UrlUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.views.ODKWebView;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.fragments.InitializationFragment;
+import org.opendatakit.tables.fragments.TableManagerFragment;
+import org.opendatakit.tables.fragments.WebFragment;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
+
+import java.io.File;
 
 /**
  * The main activity for ODK Tables. It serves primarily as a holder for
@@ -64,6 +61,7 @@ public class MainActivity extends AbsBaseWebActivity implements
 
   private static final String TAG = "MainActivity";
   private static final String CURRENT_FRAGMENT = "currentFragment";
+  private static final String QUERY_START_PARAM = "?";
 
   @Override
   public ODKWebView getWebKitView() {
@@ -84,9 +82,22 @@ public class MainActivity extends AbsBaseWebActivity implements
       FragmentManager mgr = this.getFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
       if ( newFragment != null && webFileToDisplay != null) {
-        String filename = ODKFileUtils.asRelativePath(mAppName, webFileToDisplay);
+        // Split off query parameter if it exists
+        String [] webFileStrs = checkForQueryParameter(webFileToDisplay);
+        String filename = null;
+        if (webFileStrs.length > 1) {
+          File webFile = new File(webFileStrs[0]);
+          filename = ODKFileUtils.asRelativePath(mAppName, webFile);
+        } else {
+          filename = ODKFileUtils.asRelativePath(mAppName, webFileToDisplay);
+        }
+
         if ( filename != null ) {
-          return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
+          if (webFileStrs.length > 1) {
+            return UrlUtils.getAsWebViewUri(this, getAppName(), filename.concat(QUERY_START_PARAM).concat(webFileStrs[1]));
+          } else {
+            return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
+          }
         }
       }
     }
@@ -169,29 +180,43 @@ public class MainActivity extends AbsBaseWebActivity implements
    * @return
    */
   protected File getHomeScreen(Bundle savedInstanceState) {
-    PropertiesSingleton props = TablesToolProperties.get(this, mAppName);
-    Boolean setting = props.getBooleanProperty(TablesToolProperties.KEY_USE_HOME_SCREEN);
+    PropertiesSingleton props = CommonToolProperties.get(this, mAppName);
+    Boolean setting = props.getBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN);
     String relativeFileName = 
         IntentUtil.retrieveFileNameFromSavedStateOrArguments(savedInstanceState, this.getIntent().getExtras());
-    
+
     File userHomeScreen = null;
     if ( relativeFileName != null ) {
       userHomeScreen = ODKFileUtils.asAppFile(mAppName, relativeFileName);
     } else {
       userHomeScreen = new File(ODKFileUtils.getTablesHomeScreenFile(this.mAppName));
     }
-    if (((relativeFileName != null) || 
-         (setting == null ? false : setting)) &&
-         userHomeScreen.exists() && userHomeScreen.isFile()) {
+
+    // Make sure that query parameters are still passed through
+    String [] userHomeScreenUrlParts = checkForQueryParameter(userHomeScreen);
+    File userHomeScreenFile = userHomeScreen;
+    if (userHomeScreenUrlParts.length > 1) {
+      userHomeScreenFile = new File(userHomeScreenUrlParts[0]);
+    }
+
+    if ((relativeFileName != null) ||
+        (setting == null ? false : setting) ||
+        (userHomeScreenFile.exists() && userHomeScreenFile.isFile())) {
       return userHomeScreen;
     } else {
-      if ( setting == true && relativeFileName == null ) {
+      if ( (setting == null || setting == Boolean.TRUE) && relativeFileName == null ) {
         // the home screen doesn't exist but we are requesting to show it -- clear the setting
-        props.setBooleanProperty(TablesToolProperties.KEY_USE_HOME_SCREEN, false);
+        props.setBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN, false);
         props.writeProperties();
       }
       return null;
     }
+  }
+
+  private String[] checkForQueryParameter(File webFile) {
+    String webFileToDisplayPath = webFile.getPath();
+    String [] webFileStrs = webFileToDisplayPath.split("[" + QUERY_START_PARAM + "]", 2);
+    return webFileStrs;
   }
 
   private void popBackStack() {
@@ -350,7 +375,10 @@ public class MainActivity extends AbsBaseWebActivity implements
       swapScreens(ScreenType.ABOUT_SCREEN);
       return true;
     case R.id.menu_table_manager_preferences:
-      Intent preferenceIntent = new Intent(this, DisplayPrefsActivity.class);
+      Intent preferenceIntent = new Intent();
+      preferenceIntent.setComponent(new ComponentName(IntentConsts.AppProperties.APPLICATION_NAME,
+          IntentConsts.AppProperties.ACTIVITY_NAME));
+      preferenceIntent.setAction(Intent.ACTION_DEFAULT);
       preferenceIntent.putExtras(bundle);
       this.startActivityForResult(preferenceIntent, Constants.RequestCodes.LAUNCH_DISPLAY_PREFS);
       return true;
@@ -389,50 +417,23 @@ public class MainActivity extends AbsBaseWebActivity implements
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     String tableId = this.getActionTableId();
     if (tableId != null) {
-      try {
-  
-        switch (requestCode) {
+      switch (requestCode) {
         case Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
         case Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER:
           // don't let the user cancel out of these...
           break;
         // For now, we will just refresh the table if something could have
         // changed.
-        case Constants.RequestCodes.ADD_ROW_COLLECT:
-          if (resultCode == Activity.RESULT_OK) {
-            WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result ok, refreshing backing table");
-            CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), tableId,
-                resultCode, data);
-          } else {
-            WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result canceled, not refreshing backing " + "table");
-          }
-          break;
-        case Constants.RequestCodes.EDIT_ROW_COLLECT:
-          if (resultCode == Activity.RESULT_OK) {
-            WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result ok, refreshing backing table");
-            CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), tableId,
-                resultCode, data);
-          } else {
-            WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result canceled, not refreshing backing " + "table");
-          }
-          break;
         case Constants.RequestCodes.ADD_ROW_SURVEY:
         case Constants.RequestCodes.EDIT_ROW_SURVEY:
           if (resultCode == Activity.RESULT_OK) {
             WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result ok, refreshing backing table");
+                    "[onActivityResult] result ok, refreshing backing table");
           } else {
             WebLogger.getLogger(getAppName()).d(TAG,
-                "[onActivityResult] result canceled, refreshing backing table");
+                    "[onActivityResult] result canceled, refreshing backing table");
           }
           break;
-        }
-      } catch (RemoteException e) {
-        WebLogger.getLogger(getAppName()).printStackTrace(e);
       }
     }
     super.onActivityResult(requestCode, resultCode, data);

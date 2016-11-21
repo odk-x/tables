@@ -19,19 +19,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.Row;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.data.Row;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
 import android.content.Context;
-import android.os.RemoteException;
 
 /**
  * Wrapper class for UserTable that presents the table in the way that the
@@ -50,15 +50,16 @@ public class SpreadsheetUserTable {
   private final String[] spreadsheetIndexToElementKey;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
   private final Map<String, ArrayList<Map<String,Object>>> elementKeyToDisplayChoicesList;
+  UserTable userTable;
 
-  public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws RemoteException {
+  public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws ServicesAvailabilityException {
     this.fragment = frag;
 
-    // UserTable table = frag.getUserTable();
     ArrayList<String> colOrder;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(frag.getAppName());
+      userTable = getUserTable();
       indexColumnElementKey = TableUtil.get().getIndexColumn(Tables.getInstance(), getAppName(), db, getTableId());
       colOrder = TableUtil.get().getColumnOrder(Tables.getInstance(), frag.getAppName(), db, frag.getTableId(),
               frag.getColumnDefinitions());
@@ -106,17 +107,18 @@ public class SpreadsheetUserTable {
     return elementKeyToDisplayChoicesList.get(elementKey);
   }
 
-  public ColorRuleGroup getColumnColorRuleGroup(OdkDbHandle db, String elementKey, String[] adminColumns) throws RemoteException {
+  public ColorRuleGroup getColumnColorRuleGroup(DbHandle db, String elementKey, String[] adminColumns) throws
+      ServicesAvailabilityException {
     return ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(),
         getAppName(), db, getTableId(), elementKey, adminColumns);
   }
 
-  public ColorRuleGroup getStatusColumnRuleGroup(OdkDbHandle db, String[] adminColumns) throws RemoteException {
+  public ColorRuleGroup getStatusColumnRuleGroup(DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
     return ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(),
         getAppName(), db, getTableId(), adminColumns);
   }
 
-  public ColorRuleGroup getTableColorRuleGroup(OdkDbHandle db, String[] adminColumns) throws RemoteException {
+  public ColorRuleGroup getTableColorRuleGroup(DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
     return ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(),
         getAppName(), db, getTableId(), adminColumns);
   }
@@ -135,6 +137,14 @@ public class SpreadsheetUserTable {
       return null;
     }
     return table.getRowAtIndex(index);
+  }
+
+  public UserTable getUserTable() {
+    return fragment.getUserTable();
+  }
+
+  public UserTable getCachedUserTable() {
+    return userTable;
   }
 
   // ///////////////////////////////////////////////////////////////////////////
@@ -167,13 +177,16 @@ public class SpreadsheetUserTable {
 
   public SpreadsheetCell getSpreadsheetCell(Context context, CellInfo cellInfo) {
     SpreadsheetCell cell = new SpreadsheetCell();
+    userTable = getUserTable();
     cell.rowNum = cellInfo.rowId;
-    cell.row = getRowAtIndex(cellInfo.rowId);
+    cell.row = userTable.getRowAtIndex(cellInfo.rowId);
     cell.elementKey = cellInfo.elementKey;
     OrderedColumns orderedDefns = getColumnDefinitions();
     ColumnDefinition cd = orderedDefns.find(cellInfo.elementKey);
-    cell.displayText = cell.row.getDisplayTextOfData(cd.getType(), cellInfo.elementKey);
-    cell.value = cell.row.getRawDataOrMetadataByElementKey(cellInfo.elementKey);
+    getTableId();
+    cell.displayText = userTable
+        .getDisplayTextOfData(cellInfo.rowId, cd.getType(), cellInfo.elementKey);
+    cell.value = cell.row.getDataByKey(cellInfo.elementKey);
     return cell;
   }
 

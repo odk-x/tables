@@ -15,36 +15,38 @@
  */
 package org.opendatakit.tables.activities;
 
-import android.view.*;
-import com.google.android.gms.maps.MapFragment;
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.utilities.DependencyChecker;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.ODKWebView;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.data.PossibleTableViewTypes;
-import org.opendatakit.tables.fragments.*;
-import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
-import org.opendatakit.tables.utils.ActivityUtil;
-import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.SQLQueryStruct;
-
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.RemoteException;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
+
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.webkitserver.utilities.UrlUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.views.ODKWebView;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.data.PossibleTableViewTypes;
+import org.opendatakit.tables.fragments.AbsBaseFragment;
+import org.opendatakit.tables.fragments.DetailViewFragment;
+import org.opendatakit.tables.fragments.ListViewFragment;
+import org.opendatakit.tables.fragments.MapListViewFragment;
+import org.opendatakit.tables.fragments.SpreadsheetFragment;
+import org.opendatakit.tables.fragments.TableMapInnerFragment;
+import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
+import org.opendatakit.tables.utils.ActivityUtil;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.SQLQueryStruct;
 
 /**
  * Displays information about a table. List, Map, and Detail views are all
@@ -220,25 +222,28 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
    */
   public UserTable getUserTable() {
     if ( mUserTable == null ) {
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(this.getIntent().getExtras());
         String[] emptyArray = {};
-        UserTable result = Tables.getInstance().getDatabase().rawSqlQuery(this.getAppName(), db,
+        UserTable result = Tables.getInstance().getDatabase().simpleQuery(this.getAppName(), db,
             this.getTableId(), getColumnDefinitions(), sqlQueryStruct.whereClause,
             (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs,
             (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
-            sqlQueryStruct.having, sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
+            sqlQueryStruct.having,
+            (sqlQueryStruct.orderByElementKey == null) ? emptyArray : new String[] { sqlQueryStruct.orderByElementKey },
+            (sqlQueryStruct.orderByDirection == null) ? emptyArray : new String[] {
+                sqlQueryStruct.orderByDirection }, null, null);
         mUserTable = result;
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
       } finally {
         if ( db != null ) {
           try {
             Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             // ignore
             e.printStackTrace();
           }
@@ -381,7 +386,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
       try {
         ActivityUtil.addRow(this, this.getAppName(), this.getTableId(), this.getColumnDefinitions(),
             null);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       }
@@ -403,7 +408,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
       try {
         ActivityUtil.editRow(this, this.getAppName(), this.getTableId(), this.getColumnDefinitions(),
           rowId);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       }
@@ -415,45 +420,19 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    try {
-      // for most returns, we just refresh the data set and redraw the page
-      // for others, we need to take more intensive action
-      switch (requestCode) {
-      case Constants.RequestCodes.ADD_ROW_COLLECT:
-        if (resultCode == Activity.RESULT_OK) {
-          WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result ok, refreshing backing table");
-          CollectUtil.handleOdkCollectAddReturn(getBaseContext(), getAppName(), getTableId(),
-              resultCode, data);
-        } else {
-          WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result canceled, not refreshing backing " + "table");
-        }
-        break;
-      case Constants.RequestCodes.EDIT_ROW_COLLECT:
-        if (resultCode == Activity.RESULT_OK) {
-          WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result ok, refreshing backing table");
-          CollectUtil.handleOdkCollectEditReturn(getBaseContext(), getAppName(), getTableId(),
-              resultCode, data);
-        } else {
-          WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result canceled, not refreshing backing " + "table");
-        }
-        break;
+    // for most returns, we just refresh the data set and redraw the page
+    // for others, we need to take more intensive action
+    switch (requestCode) {
       case Constants.RequestCodes.ADD_ROW_SURVEY:
       case Constants.RequestCodes.EDIT_ROW_SURVEY:
         if (resultCode == Activity.RESULT_OK) {
           WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result ok, refreshing backing table");
+                  "[onActivityResult] result ok, refreshing backing table");
         } else {
           WebLogger.getLogger(getAppName()).d(TAG,
-              "[onActivityResult] result canceled, refreshing backing table");
+                  "[onActivityResult] result canceled, refreshing backing table");
         }
         break;
-      }
-    } catch ( RemoteException e ) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
 
     super.onActivityResult(requestCode, resultCode, data);
@@ -462,12 +441,12 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
       // verify that the data table doesn't contain checkpoints...
       // always refresh, as table properties may have done something
       refreshDataAndDisplayFragment();
-    } catch ( RemoteException e ) {
+    } catch ( IllegalStateException e ) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
   }
 
-  public void refreshDataAndDisplayFragment() throws RemoteException {
+  public void refreshDataAndDisplayFragment() {
     WebLogger.getLogger(getAppName()).d(TAG, "[refreshDataAndDisplayFragment]");
     // drop cached table, if any...
     mUserTable = null;
@@ -496,12 +475,12 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
   private void possiblySupplyDefaults() {
 
     if ( mPossibleTableViewTypes == null && Tables.getInstance().getDatabase() != null ) {
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
         mPossibleTableViewTypes = new PossibleTableViewTypes(getAppName(), db, getTableId(),
             getColumnDefinitions());
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         WebLogger.getLogger(getAppName()).e(TAG,
             "[databaseAvailable] unable to access database");
@@ -510,7 +489,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
         if (db != null) {
           try {
             Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName()).e(TAG,
                 "[databaseAvailable] unable to access database");

@@ -20,9 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.common.android.data.ColorRule;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.data.ColorRule;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 
@@ -78,7 +79,7 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
     // We'll need to display the display name if this is an editable field.
     // (ie if a status column or table rule)
     String description = "";
-    boolean isMetadataRule = false;
+    boolean isMetadataSyncRule = false;
     if (mType == ColorRuleGroup.Type.STATUS_COLUMN || mType == ColorRuleGroup.Type.TABLE) {
       ColorRule colorRule = mColorRules.get(currentPosition);
       String elementKey = colorRule.getColumnElementKey();
@@ -86,32 +87,44 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
       String appName = mTableLevelActivity.getAppName();
         
       if (Arrays.asList(mAdminColumns).contains(elementKey)) {
-        isMetadataRule = true;
-        // We know it must be a String rep of an int.
-        SyncState targetState = SyncState.valueOf(colorRule.getVal());
-        // For now we need to handle the special cases of the sync state.
-        if (targetState == SyncState.new_row) {
-          description = this.mTableLevelActivity.getString(R.string.sync_state_equals_new_row_message);
-        } else if (targetState == SyncState.changed) {
-          description = this.mTableLevelActivity.getString(R.string.sync_state_equals_changed_message);
-        } else if (targetState == SyncState.synced) {
-          description = this.mTableLevelActivity.getString(R.string.sync_state_equals_synced_message);
-        } else if (targetState == SyncState.synced_pending_files) {
-          description = this.mTableLevelActivity
-              .getString(R.string.sync_state_equals_synced_pending_files_message);
-        } else if (targetState == SyncState.deleted) {
-          description = this.mTableLevelActivity.getString(R.string.sync_state_equals_deleted_message);
-        } else if (targetState == SyncState.in_conflict) {
-          description = this.mTableLevelActivity.getString(R.string.sync_state_equals_in_conflict_message);
+        if (elementKey.equals(DataTableColumns.SYNC_STATE)) {
+          isMetadataSyncRule = true;
+          // We know it must be a String rep of an int.
+          SyncState targetState = null;
+          try {
+            targetState = SyncState.valueOf(colorRule.getVal());
+
+            // For now we need to handle the special cases of the sync state.
+            if (targetState == SyncState.new_row) {
+              description = this.mTableLevelActivity.getString(R.string.sync_state_equals_new_row_message);
+            } else if (targetState == SyncState.changed) {
+              description = this.mTableLevelActivity.getString(R.string.sync_state_equals_changed_message);
+            } else if (targetState == SyncState.synced) {
+              description = this.mTableLevelActivity.getString(R.string.sync_state_equals_synced_message);
+            } else if (targetState == SyncState.synced_pending_files) {
+              description = this.mTableLevelActivity
+                      .getString(R.string.sync_state_equals_synced_pending_files_message);
+            } else if (targetState == SyncState.deleted) {
+              description = this.mTableLevelActivity.getString(R.string.sync_state_equals_deleted_message);
+            } else if (targetState == SyncState.in_conflict) {
+              description = this.mTableLevelActivity.getString(R.string.sync_state_equals_in_conflict_message);
+            } else {
+              WebLogger.getLogger(mAppName).e(TAG, "unrecognized sync state: " + targetState);
+              description = "unknown";
+            }
+          } catch (IllegalArgumentException | NullPointerException ex) {
+            WebLogger.getLogger(mAppName).e(TAG, "unrecognized sync state: " + targetState);
+            description = "unknown";
+          }
         } else {
-          WebLogger.getLogger(mAppName).e(TAG, "unrecognized sync state: " + targetState);
-          description = "unknown";
+          description = elementKey;
         }
       } else {
         description = mLocalizedDisplayNames.get(elementKey);
       }
     }
-    if (!isMetadataRule) {
+
+    if (!isMetadataSyncRule) {
       description += " " + mColorRules.get(currentPosition).getOperator().getSymbol() + " "
           + mColorRules.get(currentPosition).getVal();
     }
@@ -128,16 +141,7 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
     // The radio button is meaningless here, so get it off the screen.
     final RadioButton radioButton = (RadioButton) row.findViewById(R.id.radio_button);
     radioButton.setVisibility(View.GONE);
-    // And now the settings icon.
-    final ImageView editView = (ImageView) row.findViewById(R.id.row_options);
-    final View holderView = row;
-    editView.setOnClickListener(new OnClickListener() {
 
-      @Override
-      public void onClick(View v) {
-        holderView.showContextMenu();
-      }
-    });
     return row;
   }
 }

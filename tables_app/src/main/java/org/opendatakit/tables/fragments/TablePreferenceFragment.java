@@ -17,14 +17,14 @@ package org.opendatakit.tables.fragments;
 
 import java.io.File;
 
-import org.opendatakit.aggregate.odktables.rest.ElementDataType;
-import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.TableViewType;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.LocalKeyValueStoreConstants;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.utilities.*;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
@@ -38,7 +38,6 @@ import org.opendatakit.tables.utils.PreferenceUtil;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -78,7 +77,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     // preferences.
     try {
       this.initializeAllPreferences();
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
     }
@@ -89,35 +88,46 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     String fullPath = null;
     String relativePath = null;
     WebLogger.getLogger(getAppName()).d(TAG, "[onActivityResult]");
-    try {
-      switch (requestCode) {
-      case Constants.RequestCodes.CHOOSE_LIST_FILE:
-        if ( data != null ) {
+
+    switch (requestCode) {
+    case Constants.RequestCodes.CHOOSE_LIST_FILE:
+      if ( data != null ) {
+        try {
           fullPath = getFullPathFromIntent(data);
           relativePath = getRelativePathOfFile(fullPath);
           this.setListViewFileName(relativePath);
+        } catch (IllegalArgumentException e) {
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
+          Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())), Toast.LENGTH_LONG).show();
         }
-        break;
-      case Constants.RequestCodes.CHOOSE_DETAIL_FILE:
-        if ( data != null ) {
+      }
+      break;
+    case Constants.RequestCodes.CHOOSE_DETAIL_FILE:
+      if ( data != null ) {
+        try {
           fullPath = getFullPathFromIntent(data);
           relativePath = getRelativePathOfFile(fullPath);
           this.setDetailViewFileName(relativePath);
+        } catch (IllegalArgumentException e) {
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
+          Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())), Toast.LENGTH_LONG).show();
         }
-        break;
-      case Constants.RequestCodes.CHOOSE_MAP_FILE:
-        if ( data != null ) {
+      }
+      break;
+    case Constants.RequestCodes.CHOOSE_MAP_FILE:
+      if ( data != null ) {
+        try {
           fullPath = getFullPathFromIntent(data);
           relativePath = getRelativePathOfFile(fullPath);
           this.setMapListViewFileName(relativePath);
+        } catch (IllegalArgumentException e) {
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
+          Toast.makeText(getActivity(), getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())), Toast.LENGTH_LONG).show();
         }
-        break;
-      default:
-        super.onActivityResult(requestCode, resultCode, data);
       }
-    } catch ( RemoteException e ) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
+      break;
+    default:
+      super.onActivityResult(requestCode, resultCode, data);
     }
   }
 
@@ -137,12 +147,11 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * Sets the file name for the list view of this table.
    * 
    * @param relativePath
-   * @throws RemoteException 
    */
-  void setListViewFileName(String relativePath) throws RemoteException {
+  void setListViewFileName(String relativePath) {
     try {
       TableUtil.get().atomicSetListViewFilename(Tables.getInstance(), getAppName(), getTableId(), relativePath);
-    } catch ( RemoteException e) {
+    } catch ( ServicesAvailabilityException e) {
       Toast.makeText(getActivity(), "Unable to save List View filename", Toast.LENGTH_LONG).show();
     }
   }
@@ -151,12 +160,11 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * Sets the file name for the detail view of this table.
    * 
    * @param relativePath
-   * @throws RemoteException 
    */
-  void setDetailViewFileName(String relativePath) throws RemoteException {
+  void setDetailViewFileName(String relativePath) {
     try {
       TableUtil.get().atomicSetDetailViewFilename(Tables.getInstance(), getAppName(), getTableId(), relativePath);
-    } catch ( RemoteException e ) {
+    } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to set Detail View filename", Toast.LENGTH_LONG).show();
     }
   }
@@ -165,12 +173,11 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * Sets the file name for the list view to be displayed in the map.
    * 
    * @param relativePath
-   * @throws RemoteException 
    */
-  void setMapListViewFileName(String relativePath) throws RemoteException {
+  void setMapListViewFileName(String relativePath) {
     try {
       TableUtil.get().atomicSetMapListViewFilename(Tables.getInstance(), getAppName(), getTableId(), relativePath);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       Toast.makeText(getActivity(), "Unable to set Map List View Filename", Toast.LENGTH_LONG).show();
     }
   }
@@ -179,10 +186,10 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * Convenience method for initializing all the preferences. Requires a
    * {@link ContextMenu}, so must be called in or after
    * {@link TablePreferenceFragment#onActivityCreated(Bundle)}.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  protected void initializeAllPreferences() throws RemoteException {
-    OdkDbHandle db = null;
+  protected void initializeAllPreferences() throws ServicesAvailabilityException {
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
 
@@ -192,7 +199,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       this.initializeDefaultViewType();
       this.initializeTableColorRules();
       this.initializeStatusColorRules();
-      this.initializeMapColorRule();
+      this.initializeMapColorRule(db);
       this.initializeDetailFile(db);
       this.initializeListFile(db);
       this.initializeMapListFile(db);
@@ -204,7 +211,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     }
   }
 
-  private void initializeDisplayNamePreference(OdkDbHandle db) throws RemoteException {
+  private void initializeDisplayNamePreference(DbHandle db) throws ServicesAvailabilityException {
     EditTextPreference displayPref = this
         .findEditTextPreference(Constants.PreferenceKeys.Table.DISPLAY_NAME);
 
@@ -219,7 +226,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     idPref.setSummary(getTableId());
   }
 
-  private void initializeDefaultViewType() throws RemoteException {
+  private void initializeDefaultViewType() throws ServicesAvailabilityException {
     // We have to set the current default view and disable the entries that
     // don't apply to this table.
     DefaultViewTypePreference viewPref = (DefaultViewTypePreference) this
@@ -260,26 +267,27 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     });
   }
 
-  private void initializeListFile(OdkDbHandle db) throws RemoteException {
+  private void initializeListFile(DbHandle db) throws ServicesAvailabilityException {
     FileSelectorPreference listPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.LIST_FILE);
     listPref.setFields(this, Constants.RequestCodes.CHOOSE_LIST_FILE,
-        ((AbsBaseActivity) getActivity()).getAppName());
+            ((AbsBaseActivity) getActivity()).getAppName());
     listPref.setSummary(TableUtil.get().getListViewFilename(Tables.getInstance(), getAppName(), db, getTableId()));
   }
 
-  private void initializeMapListFile(OdkDbHandle db) throws RemoteException {
+  private void initializeMapListFile(DbHandle db) throws ServicesAvailabilityException {
     FileSelectorPreference mapListPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.MAP_LIST_FILE);
     mapListPref.setFields(this, Constants.RequestCodes.CHOOSE_MAP_FILE,
         ((AbsBaseActivity) getActivity()).getAppName());
-    String mapListViewFileName = TableUtil.get().getMapListViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
+    String mapListViewFileName = TableUtil
+        .get().getMapListViewFilename(Tables.getInstance(), getAppName(), db, getTableId());
     WebLogger.getLogger(getAppName()).d(TAG,
-        "[initializeMapListFile] file is: " + mapListViewFileName);
+            "[initializeMapListFile] file is: " + mapListViewFileName);
     mapListPref.setSummary(mapListViewFileName);
   }
 
-  private void initializeDetailFile(OdkDbHandle db) throws RemoteException {
+  private void initializeDetailFile(DbHandle db) throws ServicesAvailabilityException {
     FileSelectorPreference detailPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.DETAIL_FILE);
     detailPref.setFields(this, Constants.RequestCodes.CHOOSE_DETAIL_FILE,
@@ -296,16 +304,85 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       public boolean onPreferenceClick(Preference preference) {
         // pop in the list of columns.
         TableLevelPreferencesActivity activity = (TableLevelPreferencesActivity) getActivity();
-        activity.showColorRuleListFragment(null, ColorRuleGroup.Type.STATUS_COLUMN);
+        activity.showStatusColorRuleListFragment(ColorRuleGroup.Type.STATUS_COLUMN);
         return false;
       }
     });
   }
 
-  private void initializeMapColorRule() {
+  private void initializeMapColorRule(DbHandle db) throws ServicesAvailabilityException {
     ListPreference mapColorPref = this
-        .findListPreference(Constants.PreferenceKeys.Table.MAP_COLOR_RULE);
-    // TODO:
+            .findListPreference(Constants.PreferenceKeys.Table.MAP_COLOR_RULE);
+
+    TableUtil.MapViewColorRuleInfo mvcri =
+            TableUtil.get().getMapListViewColorRuleInfo(Tables.getInstance(), getAppName(),
+                    db, getTableId());
+
+    String initColorType = null;
+
+    if (mvcri != null && mvcri.colorType != null){
+      if (mvcri.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
+        initColorType = getString(R.string.color_rule_type_values_status);
+      } else if (mvcri.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
+        initColorType = getString(R.string.color_rule_type_values_table);
+      } else {
+        initColorType = getString(R.string.color_rule_type_values_none);
+      }
+
+      mapColorPref.setValue(initColorType);
+    }
+
+    // Set color rule for map view
+		mapColorPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        WebLogger.getLogger(getAppName()).e(TAG,
+                "[onPreferenceChange] for map color rule preference. Pref is: " + newValue);
+        DbHandle db = null;
+        String colorRuleType = null;
+        try {
+          String selectedValue = newValue.toString();
+
+          if (selectedValue == null) {
+            return false;
+          }
+
+          // Support for selectable color rules seems to have been removed
+          // This should just be taken out of Tables for now
+          String colorElementKey = null;
+          if (selectedValue.equals(getString(R.string.color_rule_type_values_status))) {
+            colorRuleType = LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS;
+          } else if (selectedValue.equals(getString(R.string.color_rule_type_values_table))) {
+            colorRuleType = LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE;
+          } else {
+            colorRuleType = LocalKeyValueStoreConstants.Map.COLOR_TYPE_NONE;
+          }
+
+          db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+          TableUtil.MapViewColorRuleInfo mvcri = new TableUtil.MapViewColorRuleInfo(colorRuleType, null);
+          TableUtil.get().setMapListViewColorRuleInfo(Tables.getInstance(), getAppName(), db, getTableId(), mvcri);
+          return true;
+
+        } catch (ServicesAvailabilityException re) {
+          WebLogger.getLogger(getAppName()).e(TAG,
+                  "[onPreferenceChange] for map color rule preference. RemoteException : ");
+          re.printStackTrace();
+          return false;
+        } finally {
+          if (db != null) {
+            try {
+              Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+            } catch (ServicesAvailabilityException re) {
+              WebLogger.getLogger(getAppName()).e(TAG,
+                      "[onPreferenceChange] for map color rule preference. " +
+                              "RemoteException while closing db: ");
+              re.printStackTrace();
+            }
+          }
+        }
+      }
+    });
   }
 
   private void initializeColumns() {

@@ -21,9 +21,9 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.common.android.utilities.DataUtil;
-import org.opendatakit.common.android.utilities.StaticStateManipulator;
-import org.opendatakit.common.android.utilities.StaticStateManipulator.IStaticFieldManipulator;
+import org.opendatakit.utilities.DateUtils;
+import org.opendatakit.utilities.StaticStateManipulator;
+import org.opendatakit.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulator.InputView;
@@ -35,7 +35,7 @@ import org.opendatakit.tables.utils.InputScreenUtil.TimeInputView;
 
 public class ElementTypeManipulatorFactory {
 
-  private static class DateManipulator implements ITypeManipulatorFragment {
+  private static class DateManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
     
@@ -67,32 +67,32 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String formatForCollect(DataUtil dataUtil, String databaseValue) {
+    public String formatForCollect(DateUtils dataUtil, String databaseValue) {
       return dataUtil.formatLongDateTimeForUser(dataUtil.parseDateTimeFromDb(databaseValue));
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyDateValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Object parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Object> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
           "DATE parsing not implemented!");
     }
 
     @Override
-    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value) {
       return new DateInputView(context, du, value);
     }
   }
 
-  private static class DateTimeManipulator implements ITypeManipulatorFragment {
+  private static class DateTimeManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
     
@@ -124,33 +124,33 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String formatForCollect(DataUtil dataUtil, String databaseValue) {
+    public String formatForCollect(DateUtils dataUtil, String databaseValue) {
       return dataUtil.formatLongDateTimeForUser(dataUtil.parseDateTimeFromDb(databaseValue));
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyDateTimeValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Object parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Object> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
           "DATETIME parsing not implemented!");
     }
 
     @Override
-    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value) {
       return new DateTimeInputView(context, du, value);
     }
   }
 
 
-  private static class TimeManipulator implements ITypeManipulatorFragment {
+  private static class TimeManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
     
@@ -182,32 +182,32 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String formatForCollect(DataUtil dataUtil, String databaseValue) {
+    public String formatForCollect(DateUtils dataUtil, String databaseValue) {
       return dataUtil.formatLongDateTimeForUser(dataUtil.parseDateTimeFromDb(databaseValue));
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyTimeValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Object parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Object> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
           "TIME parsing not implemented!");
     }
 
     @Override
-    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value) {
       return new TimeInputView(context, du, value);
     }
   }
 
-  private static class DateRangeManipulator implements ITypeManipulatorFragment {
+  private static class DateRangeManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
     
@@ -239,32 +239,32 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String formatForCollect(DataUtil dataUtil, String databaseValue) {
+    public String formatForCollect(DateUtils dataUtil, String databaseValue) {
       return dataUtil.formatLongIntervalForUser(dataUtil.parseIntervalFromDb(databaseValue));
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyDateRangeValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Object parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Object> clazz) {
       // TODO: verify against choices list
       throw new UnsupportedOperationException(
           "DATE_RANGE parsing not implemented!");
     }
 
     @Override
-    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value) {
       return new DateRangeInputView(context, du, value);
     }
   }
 
-  private static class IntegerManipulator implements ITypeManipulatorFragment {
+  private static class IntegerManipulator implements ITypeManipulatorFragment<Integer> {
 
     ElementType type;
     
@@ -296,35 +296,36 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String formatForCollect(DataUtil dataUtil, String databaseValue) {
+    public String formatForCollect(DateUtils dataUtil, String databaseValue) {
       return databaseValue;
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyIntegerValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Integer parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>>
+        displayChoicesList, String inValue,
+        Class<Integer> clazz) {
       // TODO: verify against choices list
       if ( inValue == null ) {
         return null;
       }
       int integerValue = Integer.parseInt(inValue);
-      return (T) Integer.valueOf(integerValue);
+      return (Integer) Integer.valueOf(integerValue);
     }
 
     @Override
-    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value) {
       return new GeneralInputView(context, du, value);
     }
   }
 
-  private static class NumberManipulator implements ITypeManipulatorFragment {
+  private static class NumberManipulator implements ITypeManipulatorFragment<Double> {
 
     ElementType type;
     
@@ -356,35 +357,35 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String formatForCollect(DataUtil dataUtil, String databaseValue) {
+    public String formatForCollect(DateUtils dataUtil, String databaseValue) {
       return databaseValue;
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyNumberValue(inValue);
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Double parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Double> clazz) {
       // TODO: verify against choices list
       if ( inValue == null ) {
         return null;
       }
       double numberValue = Double.parseDouble(inValue);
-      return (T) Double.valueOf(numberValue);
+      return (Double) Double.valueOf(numberValue);
     }
 
     @Override
-    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value) {
       return new GeneralInputView(context, du, value);
     }
   }
 
-  private static class BoolManipulator implements ITypeManipulatorFragment {
+  private static class BoolManipulator implements ITypeManipulatorFragment<Integer> {
 
     ElementType type;
     
@@ -416,7 +417,7 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String formatForCollect(DataUtil dataUtil, String databaseValue) {
+    public String formatForCollect(DateUtils dataUtil, String databaseValue) {
       if ( databaseValue == null ) {
         return null;
       }
@@ -428,7 +429,7 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       if ( inValue == null ) {
@@ -444,28 +445,28 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Integer parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Integer> clazz) {
       // TODO: verify against choices list
       if ( inValue == null ) {
         return null;
       }
       if ( inValue.equalsIgnoreCase("true") ) {
-        return (T) Integer.valueOf(1);
+        return (Integer) Integer.valueOf(1);
       }
       if ( inValue.equalsIgnoreCase("false") ) {
-        return (T) Integer.valueOf(0);
+        return (Integer) Integer.valueOf(0);
       }
       throw new IllegalArgumentException("invalid boolean value: " + inValue);
     }
 
     @Override
-    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value) {
       return new GeneralInputView(context, du, value);
     }
   }
 
-  private static class StringManipulator implements ITypeManipulatorFragment {
+  private static class StringManipulator implements ITypeManipulatorFragment<String> {
 
     ElementType type;
     
@@ -497,31 +498,31 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String formatForCollect(DataUtil dataUtil, String databaseValue) {
+    public String formatForCollect(DateUtils dataUtil, String databaseValue) {
       return databaseValue;
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       // TODO: verify against choices list
       return inValue;
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public String parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<String> clazz) {
       // TODO: verify against choices list
-      return (T) inValue;
+      return (String) inValue;
     }
 
     @Override
-    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value) {
       return new GeneralInputView(context, du, value);
     }
   }
 
-  private static class ObjectManipulator implements ITypeManipulatorFragment {
+  private static class ObjectManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
     
@@ -545,24 +546,24 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String formatForCollect(DataUtil dataUtil, String databaseValue) {
+    public String formatForCollect(DateUtils dataUtil, String databaseValue) {
       throw new UnsupportedOperationException("this should not be called");
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
         String inValue) {
       throw new UnsupportedOperationException("this should not be called");
     }
 
     @Override
-    public <T> T parseStringValue(DataUtil dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<T> clazz) {
+    public Object parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
+        Class<Object> clazz) {
       throw new UnsupportedOperationException("this should not be called");
     }
 
     @Override
-    public InputView getInputView(AbsBaseActivity context, DataUtil du, String value) {
+    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value) {
       throw new UnsupportedOperationException("this should not be called");
     }
   }

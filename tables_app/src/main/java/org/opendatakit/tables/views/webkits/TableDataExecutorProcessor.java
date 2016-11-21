@@ -14,16 +14,20 @@
 
 package org.opendatakit.tables.views.webkits;
 
-import android.os.RemoteException;
-import org.opendatakit.common.android.data.ColorGuide;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.RowColorObject;
-import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.views.ExecutorContext;
-import org.opendatakit.common.android.views.ExecutorProcessor;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.ColorGuide;
+import org.opendatakit.data.ColorGuideGroup;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.RowColorObject;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.views.ExecutorContext;
+import org.opendatakit.views.ExecutorProcessor;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.fragments.MapListViewFragment;
+import org.opendatakit.tables.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,18 +39,26 @@ import java.util.Map;
  */
 public class TableDataExecutorProcessor extends ExecutorProcessor {
 
+  private AbsBaseWebActivity mActivity;
+
+  protected static final String ROW_COLORS = "rowColors";
+  protected static final String STATUS_COLORS = "statusColors";
+  protected static final String COLUMN_COLORS = "columnColors";
+  protected static final String MAP_INDEX = "mapIndex";
+
   enum colorRuleType {
     TABLE,
     COLUMN,
     STATUS
   };
 
-  public TableDataExecutorProcessor(ExecutorContext context) {
+  public TableDataExecutorProcessor(ExecutorContext context, AbsBaseWebActivity activity) {
     super(context);
+    this.mActivity = activity;
   }
 
   @Override
-  protected void extendQueryMetadata(OdkDbHandle db, List<KeyValueStoreEntry> entries, UserTable userTable, Map<String, Object> metadata) {
+  protected void extendQueryMetadata(DbHandle db, List<KeyValueStoreEntry> entries, UserTable userTable, Map<String, Object> metadata) {
     // TODO: construct color rule data here...
     String [] adminCols = ADMIN_COLUMNS.toArray(new String[0]);
 
@@ -72,17 +84,25 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
         }
       }
 
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     }
 
-    metadata.put("rowColors", rowColors);
-    metadata.put("statusColors", statusColors);
-    metadata.put("columnColors", colColors);
+    metadata.put(ROW_COLORS, rowColors);
+    metadata.put(STATUS_COLORS, statusColors);
+    metadata.put(COLUMN_COLORS, colColors);
 
+    if (mActivity != null) {
+      MapListViewFragment mlvFragment = (MapListViewFragment) mActivity.getFragmentManager().findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+      if (mlvFragment != null && mlvFragment.isVisible()) {
+        int mapIndex = mlvFragment.getIndexOfSelectedItem();
+        metadata.put(MAP_INDEX, mapIndex);
+      }
+    }
   }
 
-  private void constructRowColorObjects(OdkDbHandle db, UserTable userTable, String[] adminCols, ArrayList<RowColorObject>colors, colorRuleType crType, String elementKey) throws RemoteException {
+  private void constructRowColorObjects(DbHandle db, UserTable userTable, String[] adminCols, ArrayList<RowColorObject>colors, colorRuleType crType, String elementKey) throws
+      ServicesAvailabilityException {
     // Should reuse this code for column and status color rules
 
     ColorRuleGroup crg = null;
@@ -99,14 +119,18 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
       return;
     }
 
+    ColorGuideGroup cgg = new ColorGuideGroup(crg, userTable);
+
     // Loop through the rows
     for (int i = 0; i < userTable.getNumberOfRows(); i++) {
-      ColorGuide tcg = crg.getColorGuide(userTable.getColumnDefinitions(), userTable.getRowAtIndex(i));
+      ColorGuide tcg = cgg.getColorGuideForRowIndex(i);
 
       if (tcg != null) {
-        String hexFgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getForeground());
-        String hexBgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getBackground());
-        RowColorObject rco = new RowColorObject(userTable.getRowAtIndex(i).getRowId(), i, hexFgString, hexBgString);
+        //String hexFgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getForeground());
+        String hexFgString = String.format("#%06X", (0xFFFFFF & tcg.getForeground()));
+        //String hexBgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getBackground());
+        String hexBgString = String.format("#%06X", (0xFFFFFF & tcg.getBackground()));
+        RowColorObject rco = new RowColorObject(userTable.getRowId(i), i, hexFgString, hexBgString);
         colors.add(rco);
       }
     }

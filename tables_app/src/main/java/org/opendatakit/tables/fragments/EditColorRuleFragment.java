@@ -16,14 +16,15 @@
 package org.opendatakit.tables.fragments;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
-import org.opendatakit.common.android.data.ColorRule;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.ColorRule;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
@@ -33,7 +34,6 @@ import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;
 
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -145,19 +145,19 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   @Override
   public void onResume() {
     super.onResume();
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       this.initializeStateRequiringContext(db);
       this.initializeAllPreferences(db);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
     } finally {
       if ( db != null ) {
         try {
           Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           Toast.makeText(getActivity(), "Error releasing database", Toast.LENGTH_LONG).show();
         }
@@ -167,9 +167,9 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
 
   /**
    * Set up the objects that require a context.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  private void initializeStateRequiringContext(OdkDbHandle db) throws RemoteException {
+  private void initializeStateRequiringContext(DbHandle db) throws ServicesAvailabilityException {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
 
     // 1) First fill in the color rule group and list.
@@ -219,11 +219,15 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
       String localizedDisplayName = tc.localizedDisplayNames.get(elementKey);
       colorColDisplayNames.add(localizedDisplayName);
     }
+
+    colorColDisplayNames.addAll(Arrays.asList(tc.adminColumns));
+    colorColElementKeys.addAll(Arrays.asList(tc.adminColumns));
+
     mColumnDisplayNames = colorColDisplayNames.toArray(new String[colorColDisplayNames.size()]);
     mColumnElementKeys = colorColElementKeys.toArray(new String[colorColElementKeys.size()]);
   }
 
-  private void initializeAllPreferences(OdkDbHandle db) throws RemoteException {
+  private void initializeAllPreferences(DbHandle db) throws ServicesAvailabilityException {
     // We have several things to do here. First we'll initialize all the
     // individual preferences.
     this.initializeColumns(db);
@@ -245,7 +249,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     return this.mRulePosition == INVALID_RULE_POSITION;
   }
 
-  private void initializeColumns(OdkDbHandle db) throws RemoteException {
+  private void initializeColumns(DbHandle db) throws ServicesAvailabilityException {
     final ListPreference pref = this
         .findListPreference(Constants.PreferenceKeys.ColorRule.ELEMENT_KEY);
     // And now we have to consider that we don't display this at all.
@@ -271,19 +275,19 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
             "onPreferenceChance callback invoked for value: " + newValue);
         mElementKey = (String) newValue;
         String localizedDisplayName = null;
-        OdkDbHandle db = null;
+        DbHandle db = null;
         try {
           db = Tables.getInstance().getDatabase().openDatabase(getAppName());
           localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
               db, getTableId(),
               mElementKey);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
         } finally {
           if (db != null) {
             try {
               Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-            } catch (RemoteException e) {
+            } catch (ServicesAvailabilityException e) {
               WebLogger.getLogger(getAppName()).printStackTrace(e);
             }
           }
@@ -370,7 +374,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
           try {
             saveRule();
             return true;
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             e.printStackTrace();
             return false;
           }
@@ -380,7 +384,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     });
   }
 
-  private void saveRule() throws RemoteException {
+  private void saveRule() throws ServicesAvailabilityException {
     ColorRule newRule = constructColorRuleFromState();
     if (this.isUnpersistedNewRule()) {
       this.mColorRuleGroup.getColorRules().add(newRule);

@@ -80,7 +80,7 @@ public class Constants {
     /**
      * Key to the where clause if this list view is to be opened with a more
      * complex query than permissible by the simple query object. Must conform
-     * to the expectations of rawSqlQuery() AIDL.
+     * to the expectations of simpleQuery() AIDL.
      */
     public static final String SQL_WHERE = "sqlWhereClause";
     /**
@@ -129,6 +129,7 @@ public class Constants {
     public static final String TABLE_PREFERENCE = "tagTablePreference";
     public static final String COLUMN_PREFERENCE = "tagColumnPreference";
     public static final String COLOR_RULE_LIST = "tagColorRuleList";
+    public static final String STATUS_COLOR_RULE_LIST = "tagStatusColorRuleList";
     public static final String EDIT_COLOR_RULE = "tagEditColorRule";
   }
 
@@ -157,6 +158,7 @@ public class Constants {
     public static class Column {
       public static final String DISPLAY_NAME = "column_pref_display_name";
       public static final String ELEMENT_KEY = "column_pref_element_key";
+      public static final String ELEMENT_NAME = "column_pref_element_name";
       public static final String TYPE = "column_pref_column_type";
       public static final String WIDTH = "column_pref_column_width";
       public static final String COLOR_RULES = "column_pref_color_rules";
@@ -187,8 +189,6 @@ public class Constants {
     public static final int LAUNCH_WEB_VIEW = 10;
     /** For launching an intent to edit a table's properties. */
     public static final int LAUNCH_TABLE_PREFS = 11;
-    public static final int EDIT_ROW_COLLECT = 12;
-    public static final int ADD_ROW_COLLECT = 13;
     public static final int LAUNCH_COLOR_RULE_LIST = 16;
     public static final int ADD_ROW_SURVEY = 17;
     public static final int EDIT_ROW_SURVEY = 18;

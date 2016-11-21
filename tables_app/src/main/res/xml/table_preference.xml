@@ -55,7 +55,7 @@
         <Preference
             android:key="table_pref_status_column_color_rules"
             android:persistent="false"
-            android:title="@string/edit_status_column_color_rules" />
+            android:title="@string/show_status_column_color_rules" />
         
         <!-- Individual columns -->
         
@@ -73,16 +73,6 @@
             android:key="table_pref_detail_file"
             android:persistent="false"
             android:title="@string/detail_view_file"/>
-        
-    </PreferenceCategory>
-    
-    <PreferenceCategory 
-        android:title="@string/graph_view_settings">
-        
-        <Preference
-            android:key="table_pref_graph_view_manager"
-            android:persistent="false"
-            android:title="@string/graph_view_manager" />
         
     </PreferenceCategory>
     

@@ -33,13 +33,13 @@ import java.util.List;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.data.OrderedColumns;
+import org.opendatakit.common.android.database.data.UserTable;
 import org.opendatakit.common.android.data.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.database.service.OdkDbInterface;
+import org.opendatakit.common.android.database.service.DbHandle;
+import org.opendatakit.common.android.database.service.AidlDbInterface;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.application.Tables;
@@ -76,7 +76,7 @@ public class TestCaseUtils {
   }
 
   public static void setNoTableDataset() {
-    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+    AidlDbInterface stubIf = mock(AidlDbInterface.class);
 
     try {
       ArrayList<String> adminColumnsList = new ArrayList<String>();
@@ -95,13 +95,13 @@ public class TestCaseUtils {
       String[] adminColumns = new String[adminColumnsList.size()];
       adminColumnsList.toArray(adminColumns);
 
-      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
-      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      DbHandle hNoTransaction = new DbHandle("noTrans");
+      DbHandle hTransaction = new DbHandle("trans");
       doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
       doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
       
       List<String> tableIds = new ArrayList<String>();
-      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class));
       
       String[] empty = {};
       int userColumns;
@@ -117,18 +117,18 @@ public class TestCaseUtils {
 
   public static void setOneTableDataset() {
 
-    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+    AidlDbInterface stubIf = mock(AidlDbInterface.class);
     try {
       
-      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
-      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      DbHandle hNoTransaction = new DbHandle("noTrans");
+      DbHandle hTransaction = new DbHandle("trans");
       doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
       doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
       
       List<String> tableIds = new ArrayList<String>();
       String tableId1 = TestConstants.DEFAULT_EMPTY_TABLE_ID;
       tableIds.add(tableId1);
-      doReturn(tableIds).when(stubIf).getAllTableIds(any(String.class), any(OdkDbHandle.class));
+      doReturn(tableIds).when(stubIf).getAllTableIds(any(String.class), any(DbHandle.class));
       
       List<Column> columns1 = new ArrayList<Column>();
       columns1.add(new Column(TestConstants.ElementKeys.STRING_COLUMN,TestConstants.ElementKeys.STRING_COLUMN,
@@ -140,12 +140,12 @@ public class TestCaseUtils {
   
       OrderedColumns orderedColumns1 = new OrderedColumns(TestConstants.TABLES_DEFAULT_APP_NAME, tableId1, columns1);
   
-      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1));
+      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1));
       
       TableUtil util = mock(TableUtil.class);
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(tableId1+"_name");
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
       TableUtil.set(util);
     } catch (RemoteException e) {
@@ -157,7 +157,7 @@ public class TestCaseUtils {
 
   public static void setTwoTableDataset() {
 
-    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+    AidlDbInterface stubIf = mock(AidlDbInterface.class);
 
     try {
       ArrayList<String> adminColumnsList = new ArrayList<String>();
@@ -176,8 +176,8 @@ public class TestCaseUtils {
       String[] adminColumns = new String[adminColumnsList.size()];
       adminColumnsList.toArray(adminColumns);
 
-      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
-      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      DbHandle hNoTransaction = new DbHandle("noTrans");
+      DbHandle hTransaction = new DbHandle("trans");
       doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
       doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
       
@@ -186,7 +186,7 @@ public class TestCaseUtils {
       String tableId2 = TestConstants.DEFAULT_EMPTY_GEOTABLE_ID;
       tableIds.add(tableId1);
       tableIds.add(tableId2);
-      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class));
       
       String[] empty = {};
       int userColumns;
@@ -264,23 +264,23 @@ public class TestCaseUtils {
           elementKeyToIndex2, elementKeyForIndex2, 0);
   
 
-      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1));
-      doReturn(orderedColumns2).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2));
+      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1));
+      doReturn(orderedColumns2).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2));
       
       TableUtil util = mock(TableUtil.class);
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(tableId1+"_name");
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2)))
         .thenReturn(tableId2+"_name");
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
       TableUtil.set(util);
 
-      doReturn(tbl1).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl1).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(tableId1), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
-      doReturn(tbl2).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl2).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
           eq(tableId2), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
     } catch (RemoteException e) {
       // ignore?
@@ -291,7 +291,7 @@ public class TestCaseUtils {
 
   public static void setThreeTableDataset(boolean mockData) {
 
-    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+    AidlDbInterface stubIf = mock(AidlDbInterface.class);
 
     try {
       ArrayList<String> adminColumnsList = new ArrayList<String>();
@@ -310,8 +310,8 @@ public class TestCaseUtils {
       String[] adminColumns = new String[adminColumnsList.size()];
       adminColumnsList.toArray(adminColumns);
 
-      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
-      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      DbHandle hNoTransaction = new DbHandle("noTrans");
+      DbHandle hTransaction = new DbHandle("trans");
       doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
       doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
       
@@ -322,7 +322,7 @@ public class TestCaseUtils {
       tableIds.add(tableId1);
       tableIds.add(tableId2);
       tableIds.add(tableId3);
-      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class));
       
       String[] empty = {};
       int userColumns;
@@ -485,7 +485,7 @@ public class TestCaseUtils {
         Row row1 = new Row(tbl3, rowId1for3, rowData1for3 );
         Row singleRow1 = new Row(singleRow1Tbl3, rowId1for3, rowData1for3 );
         singleRow1Tbl3.addRow(singleRow1);
-        doReturn(singleRow1Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow1Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId1for3));
   
         String rowId2for3 = TestConstants.ROWID_2;
@@ -512,7 +512,7 @@ public class TestCaseUtils {
         Row row2 = new Row(tbl3, rowId2for3, rowData2for3 );
         Row singleRow2 = new Row(singleRow2Tbl3, rowId2for3, rowData2for3 );
         singleRow2Tbl3.addRow(singleRow2);
-        doReturn(singleRow2Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow2Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId2for3));
   
         String rowId3for3 = TestConstants.ROWID_3;
@@ -539,7 +539,7 @@ public class TestCaseUtils {
         Row row3 = new Row(tbl3, rowId3for3, rowData3for3 );
         Row singleRow3 = new Row(singleRow3Tbl3, rowId3for3, rowData3for3 );
         singleRow3Tbl3.addRow(singleRow3);
-        doReturn(singleRow3Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow3Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
               eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId3for3));
         
         tbl3.addRow(row1);
@@ -547,30 +547,30 @@ public class TestCaseUtils {
         tbl3.addRow(row3);
       }
 
-      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1));
-      doReturn(orderedColumns2).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2));
-      doReturn(orderedColumns3).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3));
+      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1));
+      doReturn(orderedColumns2).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2));
+      doReturn(orderedColumns3).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3));
       
       TableUtil util = mock(TableUtil.class);
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(tableId1+"_name");
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2)))
         .thenReturn(tableId2+"_name");
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3)))
         .thenReturn(tableId3+"_name");
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
       TableUtil.set(util);
 
-      doReturn(tbl1).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl1).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(tableId1), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
-      doReturn(tbl2).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl2).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
           eq(tableId2), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
-      doReturn(tbl3).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl3).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
           eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
     } catch (RemoteException e) {
       // ignore?
@@ -581,7 +581,7 @@ public class TestCaseUtils {
   public static void setThreeTableDatasetReviseRow1() {
 
     boolean mockData = true;
-    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+    AidlDbInterface stubIf = mock(AidlDbInterface.class);
 
     try {
       ArrayList<String> adminColumnsList = new ArrayList<String>();
@@ -600,8 +600,8 @@ public class TestCaseUtils {
       String[] adminColumns = new String[adminColumnsList.size()];
       adminColumnsList.toArray(adminColumns);
 
-      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
-      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      DbHandle hNoTransaction = new DbHandle("noTrans");
+      DbHandle hTransaction = new DbHandle("trans");
       doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
       doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
       
@@ -612,7 +612,7 @@ public class TestCaseUtils {
       tableIds.add(tableId1);
       tableIds.add(tableId2);
       tableIds.add(tableId3);
-      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class));
       
       String[] empty = {};
       int userColumns;
@@ -775,7 +775,7 @@ public class TestCaseUtils {
         Row row1 = new Row(tbl3, rowId1for3, rowData1for3 );
         Row singleRow1 = new Row(singleRow1Tbl3, rowId1for3, rowData1for3 );
         singleRow1Tbl3.addRow(singleRow1);
-        doReturn(singleRow1Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow1Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId1for3));
   
         String rowId2for3 = TestConstants.ROWID_2;
@@ -802,7 +802,7 @@ public class TestCaseUtils {
         Row row2 = new Row(tbl3, rowId2for3, rowData2for3 );
         Row singleRow2 = new Row(singleRow2Tbl3, rowId2for3, rowData2for3 );
         singleRow2Tbl3.addRow(singleRow2);
-        doReturn(singleRow2Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow2Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId2for3));
   
         String rowId3for3 = TestConstants.ROWID_3;
@@ -829,7 +829,7 @@ public class TestCaseUtils {
         Row row3 = new Row(tbl3, rowId3for3, rowData3for3 );
         Row singleRow3 = new Row(singleRow3Tbl3, rowId3for3, rowData3for3 );
         singleRow3Tbl3.addRow(singleRow3);
-        doReturn(singleRow3Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow3Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
               eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId3for3));
         
         tbl3.addRow(row1);
@@ -837,30 +837,30 @@ public class TestCaseUtils {
         tbl3.addRow(row3);
       }
 
-      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1));
-      doReturn(orderedColumns2).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2));
-      doReturn(orderedColumns3).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3));
+      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1));
+      doReturn(orderedColumns2).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2));
+      doReturn(orderedColumns3).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3));
       
       TableUtil util = mock(TableUtil.class);
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(tableId1+"_name");
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2)))
         .thenReturn(tableId2+"_name");
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3)))
         .thenReturn(tableId3+"_name");
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
       TableUtil.set(util);
 
-      doReturn(tbl1).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl1).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(tableId1), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
-      doReturn(tbl2).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl2).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
           eq(tableId2), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
-      doReturn(tbl3).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl3).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
           eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
     } catch (RemoteException e) {
       // ignore?
@@ -872,7 +872,7 @@ public class TestCaseUtils {
   public static void setThreeTableDatasetReviseRow2() {
 
     boolean mockData = true;
-    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+    AidlDbInterface stubIf = mock(AidlDbInterface.class);
 
     try {
       ArrayList<String> adminColumnsList = new ArrayList<String>();
@@ -891,8 +891,8 @@ public class TestCaseUtils {
       String[] adminColumns = new String[adminColumnsList.size()];
       adminColumnsList.toArray(adminColumns);
 
-      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
-      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      DbHandle hNoTransaction = new DbHandle("noTrans");
+      DbHandle hTransaction = new DbHandle("trans");
       doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
       doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
       
@@ -903,7 +903,7 @@ public class TestCaseUtils {
       tableIds.add(tableId1);
       tableIds.add(tableId2);
       tableIds.add(tableId3);
-      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class));
       
       String[] empty = {};
       int userColumns;
@@ -1066,7 +1066,7 @@ public class TestCaseUtils {
         Row row1 = new Row(tbl3, rowId1for3, rowData1for3 );
         Row singleRow1 = new Row(singleRow1Tbl3, rowId1for3, rowData1for3 );
         singleRow1Tbl3.addRow(singleRow1);
-        doReturn(singleRow1Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow1Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId1for3));
   
         String rowId2for3 = TestConstants.ROWID_2;
@@ -1093,7 +1093,7 @@ public class TestCaseUtils {
         Row row2 = new Row(tbl3, rowId2for3, rowData2for3 );
         Row singleRow2 = new Row(singleRow2Tbl3, rowId2for3, rowData2for3 );
         singleRow2Tbl3.addRow(singleRow2);
-        doReturn(singleRow2Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow2Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId2for3));
   
         String rowId3for3 = TestConstants.ROWID_3;
@@ -1120,7 +1120,7 @@ public class TestCaseUtils {
         Row row3 = new Row(tbl3, rowId3for3, rowData3for3 );
         Row singleRow3 = new Row(singleRow3Tbl3, rowId3for3, rowData3for3 );
         singleRow3Tbl3.addRow(singleRow3);
-        doReturn(singleRow3Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow3Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
               eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId3for3));
         
         tbl3.addRow(row1);
@@ -1128,30 +1128,30 @@ public class TestCaseUtils {
         tbl3.addRow(row3);
       }
 
-      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1));
-      doReturn(orderedColumns2).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2));
-      doReturn(orderedColumns3).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3));
+      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1));
+      doReturn(orderedColumns2).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2));
+      doReturn(orderedColumns3).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3));
       
       TableUtil util = mock(TableUtil.class);
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(tableId1+"_name");
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2)))
         .thenReturn(tableId2+"_name");
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3)))
         .thenReturn(tableId3+"_name");
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
       TableUtil.set(util);
 
-      doReturn(tbl1).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl1).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(tableId1), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
-      doReturn(tbl2).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl2).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
           eq(tableId2), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
-      doReturn(tbl3).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl3).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
           eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
     } catch (RemoteException e) {
       // ignore?
@@ -1162,7 +1162,7 @@ public class TestCaseUtils {
   public static void setThreeTableDatasetAddRow4() {
 
     boolean mockData = true;
-    OdkDbInterface stubIf = mock(OdkDbInterface.class);
+    AidlDbInterface stubIf = mock(AidlDbInterface.class);
 
     try {
       ArrayList<String> adminColumnsList = new ArrayList<String>();
@@ -1181,8 +1181,8 @@ public class TestCaseUtils {
       String[] adminColumns = new String[adminColumnsList.size()];
       adminColumnsList.toArray(adminColumns);
 
-      OdkDbHandle hNoTransaction = new OdkDbHandle("noTrans");
-      OdkDbHandle hTransaction = new OdkDbHandle("trans");
+      DbHandle hNoTransaction = new DbHandle("noTrans");
+      DbHandle hTransaction = new DbHandle("trans");
       doReturn(hTransaction).when(stubIf).openDatabase(any(String.class), eq(true));
       doReturn(hNoTransaction).when(stubIf).openDatabase(any(String.class), eq(false));
       
@@ -1193,7 +1193,7 @@ public class TestCaseUtils {
       tableIds.add(tableId1);
       tableIds.add(tableId2);
       tableIds.add(tableId3);
-      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class));
+      doReturn(tableIds).when(stubIf).getAllTableIds(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class));
       
       String[] empty = {};
       int userColumns;
@@ -1359,7 +1359,7 @@ public class TestCaseUtils {
         Row row1 = new Row(tbl3, rowId1for3, rowData1for3 );
         Row singleRow1 = new Row(singleRow1Tbl3, rowId1for3, rowData1for3 );
         singleRow1Tbl3.addRow(singleRow1);
-        doReturn(singleRow1Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow1Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId1for3));
   
         String rowId2for3 = TestConstants.ROWID_2;
@@ -1386,7 +1386,7 @@ public class TestCaseUtils {
         Row row2 = new Row(tbl3, rowId2for3, rowData2for3 );
         Row singleRow2 = new Row(singleRow2Tbl3, rowId2for3, rowData2for3 );
         singleRow2Tbl3.addRow(singleRow2);
-        doReturn(singleRow2Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow2Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId2for3));
   
         String rowId3for3 = TestConstants.ROWID_3;
@@ -1413,7 +1413,7 @@ public class TestCaseUtils {
         Row row3 = new Row(tbl3, rowId3for3, rowData3for3 );
         Row singleRow3 = new Row(singleRow3Tbl3, rowId3for3, rowData3for3 );
         singleRow3Tbl3.addRow(singleRow3);
-        doReturn(singleRow3Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow3Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
               eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId3for3));
         
         String rowId4for3 = TestConstants.ROWID_4;
@@ -1440,7 +1440,7 @@ public class TestCaseUtils {
         Row row4 = new Row(tbl3, rowId4for3, rowData4for3 );
         Row singleRow4 = new Row(singleRow4Tbl3, rowId4for3, rowData4for3 );
         singleRow4Tbl3.addRow(singleRow4);
-        doReturn(singleRow4Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+        doReturn(singleRow4Tbl3).when(stubIf).getDataInExistingDBTableWithId(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), eq(rowId4for3));
         
         tbl3.addRow(row1);
@@ -1449,30 +1449,30 @@ public class TestCaseUtils {
         tbl3.addRow(row4);
       }
 
-      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1));
-      doReturn(orderedColumns2).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2));
-      doReturn(orderedColumns3).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3));
+      doReturn(orderedColumns1).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1));
+      doReturn(orderedColumns2).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2));
+      doReturn(orderedColumns3).when(stubIf).getUserDefinedColumns(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3));
       
       TableUtil util = mock(TableUtil.class);
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(tableId1+"_name");
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2)))
         .thenReturn(tableId2+"_name");
-      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3)))
+      when(util.getLocalizedDisplayName(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3)))
         .thenReturn(tableId3+"_name");
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId1)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId1)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId2)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId2)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
-      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), eq(tableId3)))
+      when(util.getDefaultViewType(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), eq(tableId3)))
         .thenReturn(TableUtil.DEFAULT_KEY_CURRENT_VIEW_TYPE);
       TableUtil.set(util);
 
-      doReturn(tbl1).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl1).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
             eq(tableId1), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
-      doReturn(tbl2).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl2).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
           eq(tableId2), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
-      doReturn(tbl3).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(OdkDbHandle.class), 
+      doReturn(tbl3).when(stubIf).rawSqlQuery(eq(TestConstants.TABLES_DEFAULT_APP_NAME), any(DbHandle.class), 
           eq(TestConstants.DEFAULT_TABLE_ID), any(OrderedColumns.class), any(String.class), eq(empty), eq(empty), any(String.class), any(String.class), any(String.class));
     } catch (RemoteException e) {
       // ignore?

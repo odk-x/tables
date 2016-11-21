@@ -20,22 +20,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.logic.CommonToolProperties;
-import org.opendatakit.common.android.logic.PropertiesSingleton;
-import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.utilities.*;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.logic.TablesToolProperties;
 import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
 import org.opendatakit.tables.views.components.LockableScrollView;
 
 import android.content.Context;
-import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -94,7 +92,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
   private CellInfo lastHighlightedCellId;
 
-  public SpreadsheetView(Context context, Controller controller, SpreadsheetUserTable table) throws RemoteException {
+  public SpreadsheetView(Context context, Controller controller, SpreadsheetUserTable table) throws
+      ServicesAvailabilityException {
     super(context);
     this.context = context;
     this.controller = controller;
@@ -115,7 +114,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // if a custom font size is defined in the KeyValueStore, use that
     // if not, use the general font size defined in preferences
     String appName = table.getAppName();
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
@@ -482,7 +481,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   public void onCreateMainDataContextMenu(ContextMenu menu) {
     try {
       controller.prepDataCellOccm(menu, lastHighlightedCellId);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG,
@@ -495,7 +494,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   public void onCreateIndexDataContextMenu(ContextMenu menu) {
     try {
       controller.prepDataCellOccm(menu, lastHighlightedCellId);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG,
@@ -508,7 +507,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   public void onCreateHeaderContextMenu(ContextMenu menu) {
     try {
       controller.prepHeaderCellOccm(menu, lastHighlightedCellId);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG,
@@ -534,6 +533,9 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       CellInfo cellId = null;
       if (view instanceof TabularView) {
         cellId = ((TabularView) view).getCellInfo(x, y);
+        if (cellId == null) {
+          return false;
+        }
       } else {
         WebLogger.getLogger(table.getAppName()).e(TAG, "Unexpected view type!");
       }
@@ -572,13 +574,13 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     public void headerCellClicked(CellInfo cellId);
 
-    public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws RemoteException;
+    public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
     public void openHeaderContextMenu(View view);
 
     public void dataCellClicked(CellInfo cellId);
 
-    public void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws RemoteException;
+    public void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
     public void openDataContextMenu(View view);
   }
@@ -591,9 +593,9 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * consider if you need to be accessing column widths.
    *
    * @return
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  public int[] getColumnWidths(OdkDbHandle db) throws RemoteException {
+  public int[] getColumnWidths(DbHandle db) throws ServicesAvailabilityException {
     // So what we want to do is go through and get the column widths for each
     // column. A problem here is that there is no caching, and if you have a
     // lot of columns you're really working the gut of the database.
@@ -602,7 +604,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     String appName = table.getAppName();
 
     Map<String, Integer> colWidths =
-            ColumnUtil.get().getColumnWidths(Tables.getInstance(), appName, db, table.getTableId(), table.getColumnDefinitions());
+            ColumnUtil
+                .get().getColumnWidths(Tables.getInstance(), appName, db, table.getTableId(), table.getColumnDefinitions());
 
     for (int i = 0; i < numberOfDisplayColumns; i++) {
       ColumnDefinition cd = table.getColumnByIndex(i);

@@ -19,18 +19,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.ODKDataUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.utilities.LocalizationUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
@@ -74,12 +74,12 @@ public class MultipleChoiceSettingDialog extends Dialog {
     optionValues.clear();
     ArrayList<Map<String, Object>> choices;
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
           Tables.getInstance(), appName, db, tableId, cd.getElementKey());
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       layout.removeAllViews();
       return;
@@ -87,7 +87,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
       if (db != null) {
         try {
           Tables.getInstance().getDatabase().closeDatabase(appName, db);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
           WebLogger.getLogger(appName).e(TAG, "Unable to close database");
         }
@@ -109,7 +109,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
         if (textObj instanceof String) {
           return (String) textObj;
         }
-        return ODKDataUtils.getLocalizedDisplayName((Map<String, Object>) textObj);
+        return LocalizationUtils.getLocalizedDisplayName((Map<String, Object>) textObj);
       }
     }
     return "";

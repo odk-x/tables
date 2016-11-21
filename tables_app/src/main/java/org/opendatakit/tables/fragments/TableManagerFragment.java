@@ -15,16 +15,16 @@
  */
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.listener.DatabaseConnectionListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -40,7 +40,6 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
@@ -51,19 +50,6 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.*;
-import org.opendatakit.tables.views.components.TableNameStructAdapter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class TableManagerFragment extends ListFragment implements DatabaseConnectionListener {
 
@@ -91,9 +77,15 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     updateTableIdList();
   }
 
+  @Override
+  public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    this.setHasOptionsMenu(true);
+    this.registerForContextMenu(this.getListView());
+  }
+
   /**
    * Refresh the list of tables that is being displayed by the fragment.
-   * @throws RemoteException 
    */
   protected void updateTableIdList() {
     AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
@@ -102,7 +94,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     }
     
     String appName = baseActivity.getAppName();
-    OdkDbHandle db = null;
+    DbHandle db = null;
 
     List<TableNameStruct> tableNameStructs = new ArrayList<TableNameStruct>();
 
@@ -122,14 +114,14 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
         }
         WebLogger.getLogger(baseActivity.getAppName()).e(TAG,
             "got tableId list of size: " + tableNameStructs.size());
-      } catch ( RemoteException e ) {
+      } catch ( ServicesAvailabilityException e ) {
         WebLogger.getLogger(baseActivity.getAppName()).e(TAG,
             "error while fetching tableId list: " + e.toString());
       } finally {
         if (db != null) {
           try {
             Tables.getInstance().getDatabase().closeDatabase(appName, db);
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(baseActivity.getAppName()).e(TAG,
                 "error while closing database: " + e.toString());
           }
@@ -211,11 +203,11 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           // treat delete as a local removal -- not a server side deletion
-          OdkDbHandle db = null;
+          DbHandle db = null;
           try {
             try {
               db = Tables.getInstance().getDatabase().openDatabase(appName);
-              Tables.getInstance().getDatabase().deleteDBTableAndAllData(appName, db, tableIdOfSelectedItem);
+              Tables.getInstance().getDatabase().deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
             } finally {
               if (db != null) {
                 Tables.getInstance().getDatabase().closeDatabase(appName, db);
@@ -223,7 +215,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
             }
             // Now update the list.
             updateTableIdList();
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(((AbsBaseActivity) getActivity()).getAppName()).printStackTrace(e);
             Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
           }

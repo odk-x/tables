@@ -25,43 +25,52 @@ import android.widget.ScrollView;
  * Modified HorizontalScrollView that communicates scroll actions to interior
  * Vertical scroll view. From:
  * http://stackoverflow.com/questions/3866499/two-directional-scroll-view
- *
+ * <p/>
  * Usage: ScrollView sv = new ScrollView(this.getContext()); WScrollView hsv =
  * new WScrollView(this.getContext()); hsv.sv = sv;
- *
+ * <p/>
  * sv.addView(new ViewOfYourChoice(getContext()), new
  * LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT));
  * hsv.addView(sv, new LayoutParams(LayoutParams.WRAP_CONTENT,
  * LayoutParams.MATCH_PARENT)); setContentView(hsv, new
  * LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
- *
  */
 public class WScrollView extends HorizontalScrollView {
-	public ScrollView sv;
+  public ScrollView sv;
 
-	public WScrollView(Context context) {
-		super(context);
-	}
+  public WScrollView(Context context) {
+    super(context);
+  }
 
-	public WScrollView(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
+  public WScrollView(Context context, AttributeSet attrs) {
+    super(context, attrs);
+  }
 
-	public WScrollView(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-	}
+  public WScrollView(Context context, AttributeSet attrs, int defStyle) {
+    super(context, attrs, defStyle);
+  }
 
-	@Override
-	public boolean onTouchEvent(MotionEvent event) {
-		boolean ret = super.onTouchEvent(event);
-		ret = ret | sv.onTouchEvent(event);
-		return ret;
-	}
+  @Override
+  public boolean onTouchEvent(MotionEvent event) {
+    try {
+      boolean ret = super.onTouchEvent(event);
+      ret = ret | sv.onTouchEvent(event);
+      return ret;
+    } catch (IllegalArgumentException iae) {
+      // Ignore iae and return false
+    }
+    return false;
+  }
 
-	@Override
-	public boolean onInterceptTouchEvent(MotionEvent event) {
-		boolean ret = super.onInterceptTouchEvent(event);
-		ret = ret | sv.onInterceptTouchEvent(event);
-		return ret;
-	}
+  @Override
+  public boolean onInterceptTouchEvent(MotionEvent event) {
+    try {
+      boolean ret = super.onInterceptTouchEvent(event);
+      ret = ret | sv.onInterceptTouchEvent(event);
+      return ret;
+    } catch (IllegalArgumentException iae) {
+      // Ignore iae and return false
+    }
+    return false;
+  }
 }

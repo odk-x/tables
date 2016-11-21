@@ -15,18 +15,18 @@
  */
 package org.opendatakit.tables.utils;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.Row;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.data.Row;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.types.FormType;
-import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import android.app.Activity;
@@ -34,114 +34,99 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.util.DisplayMetrics;
+import android.widget.Toast;
 
 public class ActivityUtil {
 
   private static final String TAG = ActivityUtil.class.getSimpleName();
 
-  /*
-   * Examples for how this is done elsewhere can be found in: Examples for how
-   * this is done in Collect can be found in the Collect code in
-   * org.odk.collect.android.tasks.SaveToDiskTask.java, in the
-   * updateInstanceDatabase() method.
+  /**
+   * Edit a row in SpreadsheetFragment
+   *
+   * @param activity
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
+   * @param row
+   * @throws ServicesAvailabilityException
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, Row row) throws RemoteException {
+      OrderedColumns orderedDefns, Row row) throws ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
-    if (formType.isCollectForm()) {
-      Map<String, String> elementKeyToValue = new HashMap<String, String>();
 
-      for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
-        if (cd.isUnitOfRetention()) {
-          String value = row.getRawDataOrMetadataByElementKey(cd.getElementKey());
-          elementKeyToValue.put(cd.getElementKey(), value);
-        }
-      }
+    // If no formId has been specified, show toast and exit
+    if (formType.getFormId() == null) {
+      Toast.makeText(activity, R.string.no_form_id_specified, Toast.LENGTH_LONG).show();
+      return;
+    }
 
-      Intent intent = CollectUtil.getIntentForOdkCollectEditRow(activity, appName, tableId,
-          orderedDefns, elementKeyToValue, null, null, null, row.getRowId());
+    SurveyFormParameters params = formType.getSurveyFormParameters();
 
-      if (intent != null) {
-        CollectUtil.launchCollectToEditRow(activity, intent, row.getRowId());
-      } else {
-        WebLogger.getLogger(appName).e(TAG, "intent null when trying to create for edit row.");
-      }
-    } else {
-      SurveyFormParameters params = formType.getSurveyFormParameters();
-
-      Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, appName, tableId, params,
-          row.getRowId());
-      if (intent != null) {
-        SurveyUtil.launchSurveyToEditRow(activity, tableId, intent, row.getRowId());
-      }
+    Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, appName, tableId, params,
+              row.getDataByKey(DataTableColumns.ID));
+    if (intent != null) {
+      SurveyUtil.launchSurveyToEditRow(activity, tableId, intent, row.getDataByKey(DataTableColumns.ID));
     }
   }
 
   /**
-   * Edit a row using the form specified by tableProperties.
+   * Edit a row using the form specified by tableProperties. Currently used by TableDisplayActivity
    * 
    * @param activity
    *          the activity that should await the return
-   * @param tableProperties
    * @param rowId
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, String rowId) throws RemoteException {
-    FormType formType = FormType.constructFormType(activity, appName, tableId);
-    if (formType.isCollectForm()) {
-      WebLogger.getLogger(appName).d(TAG, "[editRow] using collect form");
-      CollectFormParameters collectFormParameters = CollectFormParameters
-          .constructCollectFormParameters(activity, appName, tableId);
-      WebLogger.getLogger(appName).d(TAG,
-          "[editRow] is custom form: " + collectFormParameters.isCustom());
-      CollectUtil.editRowWithCollect(activity, appName, tableId, orderedDefns, rowId,
-          collectFormParameters);
-    } else {
+      OrderedColumns orderedDefns, String rowId) throws ServicesAvailabilityException {
       WebLogger.getLogger(appName).d(TAG, "[editRow] using survey form");
       SurveyFormParameters surveyFormParameters = SurveyFormParameters
           .constructSurveyFormParameters(activity, appName, tableId);
-      WebLogger.getLogger(appName).d(TAG,
-          "[editRow] is custom form: " + surveyFormParameters.isUserDefined());
-      SurveyUtil.editRowWithSurvey(activity, appName, tableId, rowId, surveyFormParameters);
+
+    // If no formId has been specified, show toast and exit
+    if (surveyFormParameters.getFormId() == null) {
+      Toast.makeText(activity, R.string.no_form_id_specified, Toast.LENGTH_LONG).show();
+      return;
     }
+
+    WebLogger.getLogger(appName).d(TAG,
+            "[editRow] is custom form: " + surveyFormParameters.isUserDefined());
+    SurveyUtil.editRowWithSurvey(activity, appName, tableId, rowId, surveyFormParameters);
   }
 
   /**
    * Add a row to the table represented by tableProperties. The default form
-   * settings will be used.
+   * settings will be used.  Currently used by TableDisplayActivity and LocationDialogFragment
    * 
    * @param activity
    *          the activity to launch and await the return
-   * @param tableProperties
-   *          the table to which the row should be added. This is used to
-   *          determine which form type and which app will perform the add.
+   * @param appName
+   * @param tableId
+   * @param orderedDefns
+   *
    * @param prepopulatedValues
    *          a map of elementKey to value with which the new row should be
    *          prepopulated.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
   public static void addRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, Map<String, String> prepopulatedValues) throws RemoteException {
+      OrderedColumns orderedDefns, Map<String, String> prepopulatedValues) throws
+      ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
-    if (formType.isCollectForm()) {
-      WebLogger.getLogger(appName).d(TAG, "[onOptionsItemSelected] using Collect form");
-      CollectFormParameters collectFormParameters = formType.getCollectFormParameters();
-      WebLogger.getLogger(appName).d(TAG,
-          "[onOptionsItemSelected] Collect form is custom: " + collectFormParameters.isCustom());
-      CollectUtil.addRowWithCollect(activity, appName, tableId, orderedDefns,
-          collectFormParameters, prepopulatedValues);
-    } else {
-      // survey form
-      WebLogger.getLogger(appName).d(TAG, "[onOptionsItemSelected] using Survey form");
-      SurveyFormParameters surveyFormParameters = formType.getSurveyFormParameters();
-      WebLogger.getLogger(appName).d(TAG,
-          "[onOptionsItemSelected] survey form is custom: " + surveyFormParameters.isUserDefined());
-      SurveyUtil.addRowWithSurvey(activity, appName, tableId, surveyFormParameters,
-          prepopulatedValues);
+
+    // If no formId has been specified, show toast and exit
+    if (formType.getFormId() == null) {
+      Toast.makeText(activity, R.string.no_form_id_specified, Toast.LENGTH_LONG).show();
+      return;
     }
+    // survey form
+    WebLogger.getLogger(appName).d(TAG, "[onOptionsItemSelected] using Survey form");
+    SurveyFormParameters surveyFormParameters = formType.getSurveyFormParameters();
+    WebLogger.getLogger(appName).d(TAG,
+            "[onOptionsItemSelected] survey form is custom: " + surveyFormParameters.isUserDefined());
+    SurveyUtil.addRowWithSurvey(activity, appName, tableId, surveyFormParameters,
+            prepopulatedValues);
   }
 
   /**
@@ -152,6 +137,7 @@ public class ActivityUtil {
    * @param activity
    * @param appName
    * @param tableId
+   * @param fragmentTypeToDisplay
    */
   public static void launchTableLevelPreferencesActivity(Activity activity, String appName,
       String tableId, TableLevelPreferencesActivity.FragmentType fragmentTypeToDisplay) {
@@ -198,7 +184,8 @@ public class ActivityUtil {
   public static boolean isTabletDevice(Context activityContext) {
     // Verifies if the Generalized Size of the device is XLARGE to be
     // considered a Tablet
-    boolean xlarge = ((activityContext.getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE);
+    boolean xlarge = ((activityContext.getResources().getConfiguration().screenLayout
+            & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE);
     // If XLarge, checks if the Generalized Density is at least MDPI
     // (160dpi)
     if (xlarge) {

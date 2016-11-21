@@ -19,12 +19,13 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.activities.BaseActivity;
-import org.opendatakit.common.android.provider.TablesProviderAPI;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.provider.TablesProviderAPI;
+import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class Launcher extends BaseActivity {
 
     this.mAppName = IntentUtil.retrieveAppNameFromBundle(extras);
     if (this.mAppName == null) {
-      this.mAppName = "tables";
+      this.mAppName = TableFileUtils.getDefaultAppName();
     }
 
     Uri uri = intent.getData();

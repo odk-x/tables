@@ -16,6 +16,7 @@
 package org.opendatakit.tables.utils;
 
 import android.util.Log;
+import org.opendatakit.utilities.ODKFileUtils;
 
 /**
  * This is a general place for utils regarding odktables files. These are files
@@ -28,12 +29,9 @@ public class TableFileUtils {
 
   private static final String TAG = TableFileUtils.class.getSimpleName();
 
-  /** The default app name for ODK Tables */
-  private static final String ODK_TABLES_APP_NAME = "tables";
-
   public static final String getDefaultAppName() {
     Log.i(TAG, "appName is null on intent");
     Thread.dumpStack();
-    return ODK_TABLES_APP_NAME;
+    return ODKFileUtils.getOdkDefaultAppName();
   }
 }

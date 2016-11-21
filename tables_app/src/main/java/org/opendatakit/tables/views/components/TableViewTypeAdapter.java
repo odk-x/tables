@@ -15,8 +15,8 @@
  */
 package org.opendatakit.tables.views.components;
 
-import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.data.TableViewType;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 
 import android.content.Context;
@@ -60,6 +60,10 @@ public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
   
   @Override
   public boolean isEnabled(int position) {
+    if (this.mPossibleViewTypes == null) {
+      return false;
+    }
+
     String currentItem = this.mViewTypeValues[position].toString();
     if (currentItem.equals(TableViewType.SPREADSHEET.name())) {
       if (this.mPossibleViewTypes.spreadsheetViewIsPossible()) {

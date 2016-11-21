@@ -26,29 +26,20 @@ import java.util.TimeZone;
 
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.Row;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.DataUtil;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.UrlUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.views.ODKWebView;
-import org.opendatakit.database.service.OdkDbHandle;
-import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.utilities.DateUtils;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.data.Row;
 import org.opendatakit.tables.application.Tables;
 
-import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
-import android.os.Build;
-import android.os.RemoteException;
-import android.webkit.ConsoleMessage;
-import android.webkit.WebChromeClient;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -124,12 +115,13 @@ public class WebViewUtil {
    * @param rawValue
    * @param contentValues
    * @return false if the data was invalid for the given type
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public static boolean addValueToContentValues(Context context, String appName, String tableId,
-      DataUtil du,
+      DateUtils du,
       // TableProperties tp,
-      ColumnDefinition colDefn, String rawValue, ContentValues contentValues) throws RemoteException {
+      ColumnDefinition colDefn, String rawValue, ContentValues contentValues) throws
+      ServicesAvailabilityException {
     // the value we're going to key things against in the database.
     String contentValuesKey = colDefn.getElementKey();
     if (rawValue == null) {
@@ -140,7 +132,7 @@ public class WebViewUtil {
     } else {
       // we have to validate it -- get the choices list, if any
       ArrayList<Map<String, Object>> choices;
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
         choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
@@ -165,22 +157,29 @@ public class WebViewUtil {
       // This means all is well, and we can parse the value.
       ElementType columnType = colDefn.getType();
       ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(appName);
-      org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment r = m
-          .getDefaultRenderer(columnType);
       ElementDataType type = columnType.getDataType();
 
       if (type == ElementDataType.integer) {
+        ElementTypeManipulator.ITypeManipulatorFragment<Integer> r;
+        r = (ElementTypeManipulator.ITypeManipulatorFragment<Integer>) m.getDefaultRenderer(columnType);
         contentValues.put(contentValuesKey,
-            (Integer) r.parseStringValue(du, choices, rawValue, Integer.class));
+            r.parseStringValue(du, choices, rawValue, Integer.class));
       } else if (type == ElementDataType.number) {
+        ElementTypeManipulator.ITypeManipulatorFragment<Double> r;
+        r = (ElementTypeManipulator.ITypeManipulatorFragment<Double>) m.getDefaultRenderer(columnType);
         contentValues.put(contentValuesKey,
-            (Double) r.parseStringValue(du, choices, rawValue, Double.class));
+            r.parseStringValue(du, choices, rawValue, Double.class));
       } else if (type == ElementDataType.bool) {
+        ElementTypeManipulator.ITypeManipulatorFragment<Integer> r;
+        r = (ElementTypeManipulator.ITypeManipulatorFragment<Integer>) m.getDefaultRenderer(columnType);
         contentValues.put(contentValuesKey,
-            (Boolean) r.parseStringValue(du, choices, rawValue, Boolean.class));
+            (r.parseStringValue(du, choices, rawValue, Integer.class) == 0)
+                ? Boolean.FALSE : Boolean.TRUE );
       } else {
+        ElementTypeManipulator.ITypeManipulatorFragment<String> r;
+        r = (ElementTypeManipulator.ITypeManipulatorFragment<String>) m.getDefaultRenderer(columnType);
         contentValues.put(contentValuesKey,
-            (String) r.parseStringValue(du, choices, rawValue, String.class));
+            r.parseStringValue(du, choices, rawValue, String.class));
       }
       return true;
     }
@@ -197,10 +196,10 @@ public class WebViewUtil {
    * @param orderedDefns
    * @param elementKeyToValue
    * @return
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public static ContentValues getContentValuesFromMap(Context context, String appName,
-      String tableId, OrderedColumns orderedDefns, Map<String, String> elementKeyToValue) throws RemoteException {
+      String tableId, OrderedColumns orderedDefns, Map<String, String> elementKeyToValue) throws ServicesAvailabilityException {
     // Note that we're not currently
     // going to handle complex types or those that map to a json value. We
     // could, but we'd probably have to have a known entity do the conversions
@@ -211,7 +210,7 @@ public class WebViewUtil {
     // TODO: respect locale and timezone. Getting this structure from other
     // places it is used.
 
-    DataUtil dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
+    DateUtils dataUtil = new DateUtils(Locale.ENGLISH, TimeZone.getDefault());
     for (Map.Entry<String, String> entry : elementKeyToValue.entrySet()) {
       String elementKey = entry.getKey();
       String rawValue = entry.getValue();
@@ -245,15 +244,15 @@ public class WebViewUtil {
    * @param orderedDefns
    * @param rowId
    * @return
-   * @throws RemoteException
+   * @throws ServicesAvailabilityException
    */
   public static Map<String, String> getMapOfElementKeyToValue(Context context, String appName,
-      String tableId, OrderedColumns orderedDefns, String rowId) throws RemoteException {
+      String tableId, OrderedColumns orderedDefns, String rowId) throws ServicesAvailabilityException {
     String[] adminColumns = null;
     UserTable userTable = null;
 
     {
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
 
@@ -280,7 +279,7 @@ public class WebViewUtil {
     allElementKeys.addAll(userDefinedElementKeys);
     allElementKeys.addAll(adminElementKeys);
     for (String elementKey : allElementKeys) {
-      elementKeyToValue.put(elementKey, requestedRow.getRawDataOrMetadataByElementKey(elementKey));
+      elementKeyToValue.put(elementKey, requestedRow.getDataByKey(elementKey));
     }
     return elementKeyToValue;
   }

@@ -15,14 +15,16 @@
  */
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.common.android.utilities.CsvUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.common.android.utilities.CsvUtil.ImportListener;
+import org.opendatakit.builder.CsvUtilSupervisor;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.builder.CsvUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.listener.ImportListener;
 import org.opendatakit.tables.activities.ImportCSVActivity;
 import org.opendatakit.tables.application.Tables;
 
 import android.os.AsyncTask;
-import android.os.RemoteException;
 
 public class ImportTask
 extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
@@ -46,11 +48,15 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 	@Override
 	protected Boolean doInBackground(ImportRequest... importRequests) {
 		ImportRequest request = importRequests[0];
-		CsvUtil cu = new CsvUtil(Tables.getInstance(), appName);
+		CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
+			@Override public UserDbInterface getDatabase() {
+				return Tables.getInstance().getDatabase();
+			}
+		}, appName);
 		  try {
         return cu.importSeparable(this, request.getTableId(),
              request.getFileQualifier(), request.getCreateTable());
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         WebLogger.getLogger(appName).e(TAG, "Unable to access database");
         return false;

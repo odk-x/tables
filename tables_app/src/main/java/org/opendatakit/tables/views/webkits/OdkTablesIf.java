@@ -15,9 +15,9 @@
  */
 package org.opendatakit.tables.views.webkits;
 
-import android.os.RemoteException;
 import android.widget.Toast;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 
 import java.lang.ref.WeakReference;
@@ -177,103 +177,6 @@ public class OdkTablesIf {
   }
 
   /**
-   * Add a row using Collect and the default form.
-   *
-   * This synchronously launches an intent to open ODK Collect to insert a new row in the table.
-   *
-   * @param tableId
-   *          the tableId of the table to receive the add.
-   * @return true if the activity was launched, false if something went wrong
-   * @deprecated
-   */
-  @android.webkit.JavascriptInterface
-  public boolean addRowWithCollectDefault(String tableId) {
-    if (isInactive()) return false;
-    return this.addRowWithCollect(tableId, null, null, null, null);
-  }
-
-  /**
-   * Add a row using Collect, a specific form, and a map of prepopulated values.
-   *
-   * This synchronously launches an intent to open ODK Collect to insert a new row in the table.
-   * <p>
-   * The form must have been added to Collect and visible in the "Fill Blank
-   * Forms" screen.
-   * 
-   * @param tableId
-   * @param formId
-   *          if null, will launch the default form
-   * @param formVersion
-   * @param formRootElement
-   * @param jsonMap
-   *          a stringify'd JSON map of element key to value.
-   *          A null value will not prepopulate any values.
-   * @return true if the activity was launched, false if something went wrong
-   * @deprecated
-   */
-  @android.webkit.JavascriptInterface
-  public boolean addRowWithCollect(String tableId, String formId, String formVersion,
-      String formRootElement, String jsonMap) {
-    if (isInactive()) return false;
-    try {
-      return weakControl.get().helperAddRowWithCollect(tableId, formId, formVersion, formRootElement,
-          jsonMap);
-    } catch (RemoteException e) {
-      String appName = weakControl.get().retrieveAppName();
-      WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
-      Toast.makeText(weakControl.get().mActivity, R.string.error_accessing_database, Toast.LENGTH_LONG).show();
-      return false;
-    }
-  }
-
-  /**
-   * Edit the given row using Collect.
-   *
-   * This synchronously launches an intent to open ODK Collect to edit a row in the table.
-   *
-   * @param tableId
-   * @param rowId
-   * @return true if the activity was launched, false if something went wrong
-   * @deprecated
-   */
-  @android.webkit.JavascriptInterface
-  public boolean editRowWithCollectDefault(String tableId, String rowId) {
-    if (isInactive()) return false;
-    return this.editRowWithCollect(tableId, rowId, null, null, null);
-  }
-
-  /**
-   * Edit the given row using Collect and a specific form.
-   *
-   * This synchronously launches an intent to open ODK Collect to edit a row in the table.
-   *
-   * @param tableId
-   * @param rowId
-   * @param formId
-   *          if null, uses the default form
-   * @param formVersion
-   * @param formRootElement
-   * @return true if the activity was launched, false if something went wrong
-   * @deprecated
-   */
-  @android.webkit.JavascriptInterface
-  public boolean editRowWithCollect(String tableId, String rowId, String formId,
-      String formVersion, String formRootElement) {
-    if (isInactive()) return false;
-    try {
-      return weakControl.get().helperEditRowWithCollect(tableId, rowId, formId, formVersion,
-          formRootElement);
-    } catch (RemoteException e) {
-      String appName = weakControl.get().retrieveAppName();
-      WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
-      Toast.makeText(weakControl.get().mActivity, R.string.error_accessing_database, Toast.LENGTH_LONG).show();
-      return false;
-    }
-  }
-
-  /**
    * Edit the given row using Survey and the default form.
    *
    * This synchronously launches an intent to open ODK Survey to edit a row in the table.
@@ -304,7 +207,7 @@ public class OdkTablesIf {
     if (isInactive()) return false;
     try {
       return weakControl.get().helperEditRowWithSurvey(tableId, rowId, formId, screenPath);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       String appName = weakControl.get().retrieveAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
@@ -347,7 +250,7 @@ public class OdkTablesIf {
     if (isInactive()) return false;
     try {
       return weakControl.get().helperAddRowWithSurvey(tableId, formId, screenPath, jsonMap);
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       String appName = weakControl.get().retrieveAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());

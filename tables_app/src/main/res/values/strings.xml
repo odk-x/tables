@@ -17,8 +17,6 @@
 	<string name="cannot_revert_color_rules">Cannot Revert Color Rules</string>
 	<string name="no_color_rules">No Color Rules</string>
 	<string name="edit_color_rules">Edit Color Rules</string>
-	<string name="box_stem_settings_title">Box-Stem Graph Settings</string>
-	<string name="impossible_box_stem">At least one number column is required for box-stem graphs.</string>
 	<!--  authority name for table files -->
 	<string name="table_files_authority">org.opendatakit.tables.tablefilesauthority</string>
 	<!-- For editing ListView things -->
@@ -26,8 +24,6 @@
 	<string name="file">File</string>
 	<string name="no_table_message">Use + submenu to add a new table</string>
 	<string name="no_list_view_message">Use + submenu to add a new list view</string>
-	<string name="user_defined_graphview_name_label">Name</string>
-	<string name="app_defined_graphtype_label">Graph Type</string>
 	<!-- For various TableManager things -->
 	<string name="name_of_new_table">Name of New Table</string>
 	<string name="export">Export</string>
@@ -67,7 +63,6 @@
 	<string name="list_format">List Format</string>
 	<string name="sync_no_tables_ready">There are no tables ready to be synched with the server.</string>
 	<string name="press_to_add_color_rule">Press + to add a color rule</string>
-	<string name="press_to_add_graph">Press + to add a graph.</string>
 	<string name="list_view_settings">List View Settings</string>
 	<string name="press_to_add_list_view">Press + to add a list view.</string>
 	<string name="open_new_spreadsheet">Open New Spreadsheet File</string>
@@ -82,7 +77,6 @@
 	<string name="error_while_changing_sort_column">Error while changing sort column</string>
 	<string name="error_while_changing_index_column">Error while changing index column</string>
 	<string name="list">List</string>
-	<string name="graph">Graph</string>
 	<string name="map">Map</string>
 	<string name="preferred_view_type">Preferred View Type</string>
 	<string name="sms_shortcut_name">Shortcut Name</string>
@@ -176,12 +170,10 @@
 	<string name="info_bar_plain_title">Table: %1$s</string>
 	<string name="info_bar_list_title">Table: %1$s (List)</string>
 	<string name="info_bar_detail_title">Table: %1$s (Detailed)</string>
-	<string name="info_bar_graph_title">Table: %1$s (Graph: %2$s)</string>
 	<string name="search">Search</string>
 	<string name="view_type">View Type</string>
 	<string name="view_type_table">Table</string>
 	<string name="view_type_list">List</string>
-	<string name="view_type_graph">Graph</string>
 	<string name="add_row">Add Row</string>
 	<string name="settings">Settings</string>
 	<string name="display_prefs">Display Preferences</string>
@@ -208,7 +200,6 @@
 	<string name="confirm_delete_view_title">Confirm Delete List View</string>
 	<string name="are_you_sure_delete_view">Please confirm deletion of list view: %1$s</string>
 	<string name="set_as_default_list_view">%1$s is now the default list view.</string>
-	<string name="set_as_default_graph_view">%1$s is now the default graph view.</string>
 		<string name="no_default_no_changes">There are no default settings! No changes have been made.</string>
 	<string name="are_you_sure_save_default_settings">Please confirm saving of these settings as default. Any modifications of the old default settings will be lost.</string>
 	<string name="are_you_sure_copy_default_settings_to_server_settings">Please confirm copying of default settings to server sync settings. Settings in the server sync set will be pushed to the server at next sync.</string>
@@ -235,9 +226,6 @@
 	<string name="change_table_type">Change Table Type</string>
 	<string name="display_settings">Display Settings</string>
 	<string name="display_list_view_settings">List View Settings</string>
-	<string name="graph_view_manager">Graph View Manager</string>
-	<string name="graph_view_settings">Graph View Settings</string>
-	<string name="display_graph_view_settings">Graph View Settings</string>
 	<string name="map_view_settings">Map View Settings</string>
 	<string name="display_map_view_settings">Map View Settings</string>
 	<string name="detail_view_file">Detail View File</string>
@@ -245,10 +233,9 @@
 	<string name="change_detail_view_file">Change Detail View File</string>
 	<string name="edit_table_color_rules">Edit Table Color Rules</string>
 	<string name="table_color_rules">Table Color Rules</string>
-	<string name="edit_status_column_color_rules">Edit Status Column Color Rules</string>
+	<string name="show_status_column_color_rules">Show Status Column Color Rules</string>
 	<string name="status_column_color_rules">Status Column Color Rules</string>
 	<string name="add_new_color_rule">Add New Color Rule</string>
-	<string name="selectable_column_color_rules">Selectable Column Color Rules</string>
 	<string name="color_rule_preview">Color Rule Preview</string>
 	<string name="status_column">Status Column</string>
 	<string name="color_rule_title_for">Color Rules for %1$s</string>
@@ -302,21 +289,6 @@
 	<string name="export_failure">File export failed.</string>
 	<string name="export_in_progress">File export in progress&#8230;</string>
 	<string name="export_partial_success">Data exported, but some customized settings were not able to exported.</string>
-	<string name="graph_manager">Graph Manager</string>
-	<string name="add_new_graph">Add New Graph</string>
-	<string name="edit_graph">Edit this Graph</string>
-	<string name="delete_graph">Delete this Graph</string>
-	<string name="confirm_delete_graph">Confirm Delete Graph</string>
-	<string name="are_you_sure_delete_graph">Please confirm deletion of graph: %1$s</string>
-	<string name="generated_graph_name">un-named-graph-%1$d</string>
-	<string name="confirm_save_graph">Confirm Save Graph</string>
-	<string name="are_you_sure_save_graph">Do you want to save the graph?</string>
-	<string name="save_graph_as">Save Graph As&#8230;</string>
-	<string name="enter_new_graph_name">Enter Name for this Graph:</string>
-	<string name="error_graph_name_empty">Graph name cannot be empty!</string>
-	<string name="error_graph_name_spaces">Graph name cannot contain spaces!</string>
-	<string name="confirm_overwrite_graph">Confirm Overwrite Graph</string>
-	<string name="are_you_sure_overwrite_graph">Please confirm overwriting of graph: %1$s</string>
 	<string name="confirm_delete_row">Confirm Delete Row</string>
 	<string name="are_you_sure_delete_row">Please confirm deletion of row: %1$s</string>
 	<string name="resolve_conflict">Resolve Conflict</string>
@@ -415,8 +387,16 @@
 	<string name="initializing">Initializing &#8230;</string>
 	
 	<string name="configuring_app">Configuring %1$s</string>
-	<string name="sync_not_found">ODK Sync is not installed</string>
+	<string name="sync_not_found">ODK Services is not installed</string>
 	
 	<string name="no_table_data">No Data Tables</string>
 	<string name="database_unavailable">Database Unavailable</string>
+
+	<string name="file_not_under_app_dir">File is not located under %1$s directory</string>
+	<string name="no_form_id_specified">Form Id must be specified</string>
+	<string name="survey_not_installed">ODK Survey is not installed</string>
+	<string name="collect_not_installed">ODK Collect is not installed</string>
+
+	<string name="unable_to_save_db_changes">Unable to save database changes</string>
+	<string name="unable_to_retrieve_form_type">Unable to retrieve form type</string>
 </resources>

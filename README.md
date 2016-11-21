@@ -45,6 +45,10 @@ Open the Tables project in Android Studio. Select `Build->Make Project` to build
 
 Be sure to install ODK Core onto your device before attempting to run Tables.
 
+## Running tests
+
+When running tests from Android Studio, execute `adb shell pm grant org.opendatakit.tables android.permission.SET_ANIMATION_SCALE` in the terminal first. 
+
 ## Source tree information
 Quick description of the content in the root folder:
 

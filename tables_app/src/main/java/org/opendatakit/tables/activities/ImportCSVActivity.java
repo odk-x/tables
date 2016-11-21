@@ -17,9 +17,9 @@ package org.opendatakit.tables.activities;
 
 import java.io.File;
 
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.tasks.ImportRequest;
@@ -171,7 +171,16 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
     File csvFile = new File(filepath);
     // We have to first hand this off to account for the difference in
     // external storage directories on different versions of android.
-    String relativePath = ODKFileUtils.asRelativePath(appName, csvFile);
+    String relativePath = null;
+    try {
+      relativePath = ODKFileUtils.asRelativePath(appName, csvFile);
+    } catch (IllegalArgumentException iae) {
+      WebLogger.getLogger(getAppName()).printStackTrace(iae);
+      Toast.makeText(this, getString(R.string.file_not_under_app_dir,
+              ODKFileUtils.getAppFolder(getAppName())), Toast.LENGTH_LONG).show();
+      return;
+
+    }
     WebLogger.getLogger(appName).d(TAG, "relative path of import file: " + relativePath);
     File assetCsv = new File(ODKFileUtils.getAssetsCsvFolder(appName));
     String assetRelativePath = ODKFileUtils.asRelativePath(appName, assetCsv);

@@ -18,11 +18,11 @@ package org.opendatakit.tables.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
@@ -30,7 +30,6 @@ import org.opendatakit.tables.application.Tables;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -69,7 +68,7 @@ public class ColumnListFragment extends ListFragment {
     // All we need to do is get the columns to display.
     try {
       setElementKeysAndDisplayNames();
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(tableLevelPreferenceActivity.getAppName()).printStackTrace(e);
       return;
     }
@@ -89,15 +88,15 @@ public class ColumnListFragment extends ListFragment {
    * Retrieve all the element keys for the columns in the table.
    * 
    * @return
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  private void setElementKeysAndDisplayNames() throws RemoteException {
+  private void setElementKeysAndDisplayNames() throws ServicesAvailabilityException {
     
     AbsTableActivity activity = retrieveTableActivity();
     String appName = activity.getAppName();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     TableUtil.TableColumns tc = null;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       tc = TableUtil.get().getTableColumns(Tables.getInstance(), appName, db, activity.getTableId());

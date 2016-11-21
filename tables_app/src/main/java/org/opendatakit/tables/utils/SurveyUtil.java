@@ -23,25 +23,30 @@ import java.util.UUID;
 
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
-import org.opendatakit.common.android.provider.FormsColumns;
-import org.opendatakit.common.android.provider.FormsProviderAPI;
-import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.database.utilities.KeyValueStoreUtils;
+import org.opendatakit.dependencies.DependencyChecker;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.provider.FormsProviderAPI;
+import org.opendatakit.utilities.*;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.R;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.RemoteException;
+
+import android.widget.Toast;
 
 /**
- * The ODKSurvey analogue to {@see CollectUtil}. Various functions and
- * utilities necessary to use Survey to interact with ODKTables.
+ * Various functions and utilities necessary
+ * to use Survey to interact with ODKTables.
  *
  * @author sudar.sam@gmail.com
  *
@@ -72,9 +77,9 @@ public class SurveyUtil {
   private static final String INSTANCE_UUID_PREFIX = "uuid:";
 
   /** Survey's package name as declared in the manifest. */
-  private static final String SURVEY_PACKAGE_NAME = "org.opendatakit.survey.android";
+  private static final String SURVEY_PACKAGE_NAME = IntentConsts.Survey.SURVEY_PACKAGE_NAME;
   /** The full path to Survey's main menu activity. */
-  private static final String SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME = "org.opendatakit.survey.android.activities.SplashScreenActivity";
+  private static final String SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME = IntentConsts.Survey.SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME;
 
   /**
    * Returns Android's content scheme, with ://, ready for prepending to an
@@ -96,9 +101,7 @@ public class SurveyUtil {
   }
 
   /**
-   * Acquire an intent that will be set up to add a row using Survey. As with
-   * {@see CollectUtil#getIntentForOdkCollectAddRow(Context, String, String, org.opendatakit.tables.utils.CollectUtil.CollectFormParameters, Map)}
-   * , it
+   * Acquire an intent that will be set up to add a row using Survey. It
    * should eventually be able to prepopulate the row with the values in
    * elementKeyToValue. However! Much of this is still unimplemented.
    *
@@ -129,7 +132,7 @@ public class SurveyUtil {
                                           SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME));
     intent.setAction(Intent.ACTION_EDIT);
     Uri addUri = getUriForSurveyAddRow(context, appName, tableId, surveyFormParameters, elementNameToValue,
-        context.getContentResolver());
+            context.getContentResolver());
     intent.setData(addUri);
     return intent;
   }
@@ -164,7 +167,7 @@ public class SurveyUtil {
                                           SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME));
     intent.setAction(Intent.ACTION_EDIT);
     Uri editUri = getUriForSurveyEditRow(context, appName, tableId, surveyFormParameters, instanceId,
-        context.getContentResolver());
+            context.getContentResolver());
     intent.setData(editUri);
     return intent;
   }
@@ -255,7 +258,7 @@ public class SurveyUtil {
                                            Map<String, String> elementNameToValue) {
     // We're operating for the moment under the assumption that Survey expects
     // a uri like the following:
-    // content://org.opendatakit.survey.android.provider.FormProvider/
+    // content://org.opendatakit.survey.provider.FormProvider/
     // appname/formId/#.
     // # is a url frame and it accepts query parameters as in a URL. Pertinent
     // ones include those specified in SurveyFormParameters. Of particular note
@@ -328,10 +331,16 @@ public class SurveyUtil {
    */
   public static void launchSurveyToAddRow(AbsBaseActivity activityToAwaitReturn, 
       String tableId, Intent surveyAddIntent) {
-    activityToAwaitReturn.setActionTableId(tableId);
-    activityToAwaitReturn.startActivityForResult(
-        surveyAddIntent,
-        Constants.RequestCodes.ADD_ROW_SURVEY);
+    Context ctxt = activityToAwaitReturn.getApplicationContext();
+    if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)) {
+      activityToAwaitReturn.setActionTableId(tableId);
+      activityToAwaitReturn.startActivityForResult(
+              surveyAddIntent,
+              Constants.RequestCodes.ADD_ROW_SURVEY);
+
+    }  else {
+      Toast.makeText(ctxt, ctxt.getString(R.string.survey_not_installed), Toast.LENGTH_LONG).show();
+    }
   }
 
   /**
@@ -406,10 +415,15 @@ public class SurveyUtil {
                                            String tableId,
                                            Intent surveyEditIntent,
                                            String rowId) {
-    activityToAwaitReturn.setActionTableId(tableId);
-    activityToAwaitReturn.startActivityForResult(
-        surveyEditIntent,
-        Constants.RequestCodes.EDIT_ROW_SURVEY);
+    Context ctxt = activityToAwaitReturn.getApplicationContext();
+    if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)){
+      activityToAwaitReturn.setActionTableId(tableId);
+      activityToAwaitReturn.startActivityForResult(
+              surveyEditIntent,
+              Constants.RequestCodes.EDIT_ROW_SURVEY);
+    } else {
+      Toast.makeText(ctxt, ctxt.getString(R.string.survey_not_installed), Toast.LENGTH_LONG).show();
+    }
   }
 
   /**
@@ -488,17 +502,18 @@ public class SurveyUtil {
      * @param appName
      * @param tableId
      * @return
-     * @throws RemoteException
+     * @throws ServicesAvailabilityException
      */
     public static SurveyFormParameters constructSurveyFormParameters(
-        Context context, String appName, String tableId) throws RemoteException {
+        Context context, String appName, String tableId) throws ServicesAvailabilityException {
       String formId;
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
-        List<KeyValueStoreEntry> kvsList =  Tables.getInstance().getDatabase()
-                .getDBTableMetadata(appName, db, tableId, SurveyUtil.KVS_PARTITION, SurveyUtil.KVS_ASPECT, SurveyUtil.KEY_FORM_ID );
-        if ( kvsList.size() != 1 ) {
+        List<KeyValueStoreEntry> kvsList = Tables.getInstance().getDatabase()
+            .getTableMetadata(appName, db, tableId, SurveyUtil.KVS_PARTITION,
+                SurveyUtil.KVS_ASPECT, SurveyUtil.KEY_FORM_ID, null).getEntries();
+        if (kvsList.size() != 1) {
           formId = null;
         } else {
           formId = KeyValueStoreUtils.getString(appName, kvsList.get(0));
@@ -515,14 +530,14 @@ public class SurveyUtil {
       return new SurveyFormParameters(true, formId, null);
     }
 
-    public void persist(String appName, OdkDbHandle db, String tableId) throws RemoteException {
+    public void persist(String appName, DbHandle db, String tableId) throws ServicesAvailabilityException {
       KeyValueStoreEntry entry = KeyValueStoreUtils.buildEntry(tableId,
               SurveyUtil.KVS_PARTITION,
               SurveyUtil.KVS_ASPECT,
               SurveyUtil.KEY_FORM_ID,
               ElementDataType.string, this.isUserDefined() ? this.mFormId : null);
 
-      Tables.getInstance().getDatabase().replaceDBTableMetadata(appName, db, entry);
+      Tables.getInstance().getDatabase().replaceTableMetadata(appName, db, entry);
     }
   }
 

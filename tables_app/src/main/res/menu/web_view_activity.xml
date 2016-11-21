@@ -3,12 +3,12 @@
     
     <item
         android:id="@+id/menu_web_view_activity_table_manager"
-        android:icon="@drawable/ic_action_sort_by_size"
+        android:icon="@drawable/ic_sort_black_24dp"
         android:showAsAction="always"
         android:title="@string/table_manager_title" />
 	<item
 	    android:id="@+id/menu_table_about"
-	    android:icon="@android:drawable/ic_menu_info_details"
+	    android:icon="@drawable/ic_info_outline_black_24dp"
 	    android:title="@string/about"
 	    android:showAsAction="never" />
     

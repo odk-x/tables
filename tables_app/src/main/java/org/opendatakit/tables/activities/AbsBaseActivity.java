@@ -20,13 +20,14 @@ import java.util.List;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
-import org.opendatakit.IntentConsts;
-import org.opendatakit.common.android.activities.BaseActivity;
-import org.opendatakit.common.android.application.CommonApplication;
-import org.opendatakit.common.android.listener.DatabaseConnectionListener;
-import org.opendatakit.common.android.utilities.DependencyChecker;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.application.CommonApplication;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.listener.DatabaseConnectionListener;
+import org.opendatakit.dependencies.DependencyChecker;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
 import org.opendatakit.database.service.TableHealthStatus;
 import org.opendatakit.tables.R;
@@ -39,7 +40,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.RemoteException;
 import android.widget.Toast;
 
 /**
@@ -59,7 +59,6 @@ public abstract class AbsBaseActivity extends BaseActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
     this.mAppName = retrieveAppNameFromIntent();
     if ( savedInstanceState != null ) {
       if ( savedInstanceState.containsKey(Constants.IntentKeys.ACTION_TABLE_ID) ) {
@@ -77,6 +76,8 @@ public abstract class AbsBaseActivity extends BaseActivity {
         mConflictTables = savedInstanceState.getBundle(Constants.IntentKeys.CONFLICT_TABLES);
       }
     }
+
+    super.onCreate(savedInstanceState);
 
     DependencyChecker dc = new DependencyChecker(this);
     boolean dependable = dc.checkDependencies();
@@ -126,7 +127,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
     WebLogger.getLogger(getAppName()).i(this.getClass().getSimpleName(), "scanAllTables -- searching for conflicts and checkpoints ");
     
     CommonApplication app = (CommonApplication) getApplication();
-    OdkDbHandle db = null;
+    DbHandle db = null;
 
     if ( app.getDatabase() == null ) {
       return;
@@ -154,13 +155,13 @@ public abstract class AbsBaseActivity extends BaseActivity {
       }
       mCheckpointTables = checkpointTables;
       mConflictTables = conflictTables;
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     } finally {
       if ( db != null ) {
         try {
           app.getDatabase().closeDatabase(mAppName, db);
-        } catch (RemoteException e) {
+        } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           WebLogger.getLogger(getAppName()).e(this.getClass().getSimpleName(),"Unable to close database");
         }

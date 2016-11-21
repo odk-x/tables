@@ -1,4 +1,4 @@
-gradle.ext.gradleConfigVersion = 30
+gradle.ext.gradleConfigVersion = 63
 
 if ( !gradle.ext.has('workspacePath') ) {
 	def env = System.getProperties();
@@ -41,9 +41,4 @@ if (libraryProjectPath.exists() && gradle.ext.useLocal) { // check if local libr
 if (commonProjectPath.exists() && gradle.ext.useLocal) { // check if local common project is present
     include commonProjectName
     project(commonProjectName).setProjectDir(commonProjectPath) // set local location
-}
-
-if (playServicesPath.exists() && gradle.ext.useLocal) { // check if local common project is present
-    include playServicesName
-    project(playServicesName).setProjectDir(playServicesPath) // set local location
 }

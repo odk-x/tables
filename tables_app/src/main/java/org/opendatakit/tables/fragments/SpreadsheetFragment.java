@@ -19,19 +19,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.TimeZone;
 
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.JoinColumn;
-import org.opendatakit.common.android.data.Row;
-import org.opendatakit.common.android.utilities.ColumnUtil;
-import org.opendatakit.common.android.utilities.DataUtil;
-import org.opendatakit.common.android.utilities.TableUtil;
-import org.opendatakit.common.android.utilities.WebLogger;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.data.JoinColumn;
+import org.opendatakit.exception.ActionNotAuthorizedException;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.utilities.*;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.application.Tables;
@@ -53,7 +53,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -78,7 +77,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   private static final String TAG = SpreadsheetFragment.class.getSimpleName();
 
   private static final int MENU_ITEM_ID_HISTORY_IN = 0;
-  private static final int MENU_ITEM_ID_EDIT_CELL = 1;
+//  private static final int MENU_ITEM_ID_EDIT_CELL = 1;
   private static final int MENU_ITEM_ID_DELETE_ROW = 2;
   private static final int MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY = 3;
   private static final int MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY = 4;
@@ -113,7 +112,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       } else {
         return this.buildSpreadsheetView();
       }
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       WebLogger.getLogger(getAppName()).e(TAG,
           "Error while constructing spreadsheet view: " + e.toString());
@@ -137,40 +136,40 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
    * Build a {@link SpreadsheetView} view to display.
    *
    * @return
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  SpreadsheetView buildSpreadsheetView() throws RemoteException {
+  SpreadsheetView buildSpreadsheetView() throws ServicesAvailabilityException {
     return new SpreadsheetView((TableDisplayActivity) this.getActivity(), this, spreadsheetTable);
   }
 
-  void addGroupByColumn(ColumnDefinition cd) throws RemoteException {
+  void addGroupByColumn(ColumnDefinition cd) {
     try {
       TableUtil.get().atomicAddGroupByColumn(Tables.getInstance(), getAppName(), getTableId(), cd.getElementKey());
-    } catch ( RemoteException e ) {
+    } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to add column to Group By list", Toast.LENGTH_LONG).show();
     }
   }
 
-  void removeGroupByColumn(ColumnDefinition cd) throws RemoteException {
+  void removeGroupByColumn(ColumnDefinition cd) {
     try {
       TableUtil.get().atomicRemoveGroupByColumn(Tables.getInstance(), getAppName(), getTableId(), cd.getElementKey());
-    } catch ( RemoteException e ) {
+    } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to remove column from Group By list", Toast.LENGTH_LONG).show();
     }
   }
 
-  void setColumnAsSort(ColumnDefinition cd) throws RemoteException {
+  void setColumnAsSort(ColumnDefinition cd) {
     try {
       TableUtil.get().atomicSetSortColumn(Tables.getInstance(), getAppName(), getTableId(), (cd == null) ? null : cd.getElementKey());
-    } catch ( RemoteException e ) {
+    } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to set Sort Column", Toast.LENGTH_LONG).show();
     }
   }
 
-  void setColumnAsIndexedCol(ColumnDefinition cd) throws RemoteException {
+  void setColumnAsIndexedCol(ColumnDefinition cd) {
     try {
       TableUtil.get().atomicSetIndexColumn(Tables.getInstance(), getAppName(), getTableId(), (cd == null) ? null : cd.getElementKey());
-    } catch ( RemoteException e ) {
+    } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to set Index Column", Toast.LENGTH_LONG).show();
     }
   }
@@ -212,7 +211,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           s.append(", ");
         }
         first = false;
-        String value = cell.row.getRawDataOrMetadataByElementKey(groupByColumn);
+        String value = cell.row.getDataByKey(groupByColumn);
         if (value == null) {
           s.append(groupByColumn).append(" IS NULL");
         } else {
@@ -238,13 +237,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     dialog.show();
   }
 
-  private void init() throws RemoteException {
+  private void init() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     activity.refreshDataAndDisplayFragment();
   }
 
-  private void deleteRow(String rowId) throws RemoteException {
-    OdkDbHandle db = null;
+  private void deleteRow(String rowId) throws ServicesAvailabilityException,
+      ActionNotAuthorizedException {
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       Tables.getInstance().getDatabase().deleteRowWithId(getAppName(), db, getTableId(),
@@ -259,33 +259,38 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   @Override
   public boolean onContextItemSelected(MenuItem item) {
     SpreadsheetCell cell;
-    AbsTableActivity activity = (AbsTableActivity) getActivity();
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     switch (item.getItemId()) {
     case MENU_ITEM_ID_HISTORY_IN:
       cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
       openCollectionView(cell);
       return true;
-    case MENU_ITEM_ID_EDIT_CELL:
-      cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
-      openCellEditDialog(cell);
-      return true;
+//    case MENU_ITEM_ID_EDIT_CELL:
+//      cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
+//      openCellEditDialog(cell);
+//      return true;
     case MENU_ITEM_ID_DELETE_ROW:
       cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
       AlertDialog confirmDeleteAlert;
       // Prompt an alert box
-      final String rowId = cell.row.getRowId();
+      final String rowId = cell.row.getDataByKey(DataTableColumns.ID);
       AlertDialog.Builder alert = new AlertDialog.Builder(activity);
       alert.setTitle(getString(R.string.confirm_delete_row)).setMessage(
           getString(R.string.are_you_sure_delete_row, rowId));
       // OK Action => delete the row
       alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
-          AbsTableActivity activity = (AbsTableActivity) getActivity();
+          TableDisplayActivity activity = (TableDisplayActivity) getActivity();
           try {
             deleteRow(rowId);
             init();
-          } catch (RemoteException e) {
+          } catch (ActionNotAuthorizedException e) {
+            WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+            WebLogger.getLogger(activity.getAppName()).e(TAG, "Not authorized for action while "
+                + "accessing database");
+            Toast.makeText(activity, "Not authorized for action while accessing database", Toast.LENGTH_LONG).show();
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
             WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
             Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
@@ -310,7 +315,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       try {
         ActivityUtil.editRow(activity, activity.getAppName(), activity.getTableId(),
             activity.getColumnDefinitions(), cell.row);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
         WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
         Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
@@ -323,11 +328,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
       // Get the JoinColumn.
       ArrayList<JoinColumn> joinColumns;
-      OdkDbHandle db = null;
+      DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-        joinColumns = ColumnUtil.get().getJoins(Tables.getInstance(), getAppName(), db, getTableId(), cd.getElementKey());
-      } catch (RemoteException e) {
+        joinColumns = ColumnUtil
+            .get().getJoins(Tables.getInstance(), getAppName(), db, getTableId(), cd.getElementKey());
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
         WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
         Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
@@ -336,7 +342,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
         if (db != null) {
           try {
             Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
             WebLogger.getLogger(activity.getAppName()).e(TAG, "Error closing database");
             Toast.makeText(activity, "Error closing database", Toast.LENGTH_LONG).show();
@@ -388,7 +394,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
             joinedColTableDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(), 
                 db, tableId,
                 elementKey);
-          } catch (RemoteException e) {
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
             WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
             Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
@@ -396,7 +402,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
             if (db != null) {
               try {
                 Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
-              } catch (RemoteException e) {
+              } catch (ServicesAvailabilityException e) {
                 WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
                 WebLogger.getLogger(activity.getAppName()).e(TAG, "Error closing database");
                 Toast.makeText(activity, "Error closing database", Toast.LENGTH_LONG).show();
@@ -419,67 +425,31 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       }
       return true;
     case MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY:
-      try {
         addGroupByColumn(spreadsheetTable
             .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
         init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
       return true;
     case MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY:
-      try {
         removeGroupByColumn(spreadsheetTable
             .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
         init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
       return true;
     case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-      try {
-        setColumnAsSort(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
-        init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
+      setColumnAsSort(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
+      init();
       return true;
     case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
-      try {
-        setColumnAsSort(null);
-        init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
+      setColumnAsSort(null);
+      init();
       return true;
     case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-      try {
-        setColumnAsIndexedCol(spreadsheetTable
+      setColumnAsIndexedCol(spreadsheetTable
             .getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
-        init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
+      init();
       return true;
     case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
-      try {
-        setColumnAsIndexedCol(null);
-        init();
-      } catch (RemoteException e) {
-        WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-        WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-        Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-      }
+      setColumnAsIndexedCol(null);
+      init();
       return true;
     case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
       String elementKey = this.mLastHeaderCellMenued.elementKey;
@@ -504,11 +474,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   }
 
   @Override
-  public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo) throws RemoteException {
+  public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo) throws ServicesAvailabilityException {
     this.mLastDataCellMenued = cellInfo;
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
     String localizedDisplayName;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
@@ -523,23 +493,26 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     menu.setHeaderTitle(localizedDisplayName);
 
     MenuItem mi;
-    Row row = spreadsheetTable.getRowAtIndex(cellInfo.rowId);
     if (this.hasGroupBys()) {
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN, ContextMenu.NONE, "View Collection");
-      mi.setIcon(R.drawable.view);
+      mi.setIcon(R.drawable.ic_view_headline_black_24dp);
     }
-    String viewString = row.getDisplayTextOfData(cd.getType(), cellInfo.elementKey);
     // TODO: display value and use edit icon...
-    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE,
-        getString(R.string.edit_cell, viewString));
-    mi.setIcon(R.drawable.ic_action_edit);
+//    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE,
+//        getString(R.string.edit_cell, viewString));
+//    mi.setIcon(R.drawable.ic_action_edit);
 
-    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE,
-        getString(R.string.delete_row));
-    mi.setIcon(R.drawable.ic_action_discard);
-    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE,
-        getString(R.string.edit_row));
-    mi.setIcon(R.drawable.ic_action_edit);
+    String access = spreadsheetTable.getRowAtIndex(cellInfo.rowId)
+            .getDataByKey(DataTableColumns.EFFECTIVE_ACCESS);
+
+    if ( access.contains("d") ) {
+      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE, getString(R.string.delete_row));
+      mi.setIcon(R.drawable.ic_action_content_discard);
+    }
+    if ( access.contains("w") ) {
+      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE, getString(R.string.edit_row));
+      mi.setIcon(R.drawable.ic_mode_edit_black_24dp);
+    }
 
     // check a join association with this column; add a join... option if
     // it is applicable.
@@ -558,7 +531,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     if (joinColumns != null && joinColumns.size() != 0) {
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_JOIN_TABLE, ContextMenu.NONE,
           getString(R.string.open_join_table));
-      mi.setIcon(R.drawable.ic_action_search);
+      mi.setIcon(R.drawable.ic_search_black_24dp);
     }
   }
 
@@ -573,13 +546,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
   }
 
   @Override
-  public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo) throws RemoteException {
+  public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo) throws ServicesAvailabilityException {
     this.mLastHeaderCellMenued = cellInfo;
 
     String sortColumn;
     String indexColumn;
     ArrayList<String> groupByColumns;
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       sortColumn = TableUtil.get().getSortColumn(Tables.getInstance(), getAppName(), db, getTableId());
@@ -630,18 +603,18 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
     private final SpreadsheetCell cell;
     private final CellValueView.CellEditView cev;
-    private DataUtil dataUtil;
+    private DateUtils dataUtil;
 
     public CellEditDialog(SpreadsheetCell cell) {
       super(getActivity());
       this.cell = cell;
-      this.dataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
+      this.dataUtil = new DateUtils(Locale.ENGLISH, TimeZone.getDefault());
       ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
       CellValueView.CellEditView cevTemp = null;
       try {
         cevTemp = CellValueView
             .getCellEditView(Tables.getInstance(), getActivity(), getAppName(), getTableId(), cd, cell.value);
-      } catch (RemoteException e) {
+      } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         WebLogger.getLogger(getAppName()).e(TAG,  "Unable to access database");
         return;
@@ -657,7 +630,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       setButton.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-          OdkDbHandle db = null;
+          DbHandle db = null;
           try {
             try {
               db = Tables.getInstance().getDatabase().openDatabase(getAppName());
@@ -677,7 +650,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     
               Tables.getInstance().getDatabase().updateRowWithId(getAppName(), db,
                   getTableId(),
-                  getColumnDefinitions(), values, cell.row.getRowId());
+                  getColumnDefinitions(), values, cell.row.getDataByKey(DataTableColumns.ID));
             } finally {
               if (db != null) {
                 Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
@@ -685,7 +658,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
             }
   
             init();
-          } catch (RemoteException e) {
+          } catch (ActionNotAuthorizedException e) {
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
+            WebLogger.getLogger(getAppName()).e(TAG, "Action not authorized while accessing "
+                + "database");
+            Toast.makeText(CellEditDialog.this.getContext(), "Action not authorized while accessing database", Toast.LENGTH_LONG).show();
+          } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName()).e(TAG, "Error while accessing database");
             Toast.makeText(CellEditDialog.this.getContext(), "Error while accessing database", Toast.LENGTH_LONG).show();

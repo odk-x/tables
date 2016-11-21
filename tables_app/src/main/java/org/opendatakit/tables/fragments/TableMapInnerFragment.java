@@ -18,39 +18,34 @@ package org.opendatakit.tables.fragments;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.opendatakit.aggregate.odktables.rest.ElementDataType;
-import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.common.android.data.ColorGuide;
-import org.opendatakit.common.android.data.ColorRuleGroup;
-import org.opendatakit.common.android.data.ColumnDefinition;
-import org.opendatakit.common.android.data.OrderedColumns;
-import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.Row;
-import org.opendatakit.common.android.utilities.*;
-import org.opendatakit.database.service.KeyValueStoreEntry;
-import org.opendatakit.database.service.OdkDbHandle;
+import org.opendatakit.data.ColorGuide;
+import org.opendatakit.data.ColorGuideGroup;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.LocalKeyValueStoreConstants;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.utilities.*;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.data.Row;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.activities.TablePropertiesManager;
 import org.opendatakit.tables.application.Tables;
 
-import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.RemoteException;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
-import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -128,6 +123,7 @@ public class TableMapInnerFragment extends MapFragment {
 
   /** Used for coloring markers. */
   private ColorRuleGroup mColorGroup;
+  private ColorGuideGroup mColorGuideGroup;
 
   /** the latitide elementKey to use for plotting */
   private String mLatitudeElementKey;
@@ -189,12 +185,12 @@ public class TableMapInnerFragment extends MapFragment {
                   .getDouble(SAVE_TARGET_LONG)), savedInstanceState.getFloat(SAVE_ZOOM)));
     }
     getMap().setMyLocationEnabled(true);
-    getMap().setOnMapLongClickListener(getOnMapLongClickListener());
+    //getMap().setOnMapLongClickListener(getOnMapLongClickListener());
     getMap().setOnMapClickListener(getOnMapClickListener());
   }
 
   /** Re-initializes the map, including the markers. 
-   * @throws RemoteException */
+   **/
   public void clearAndInitializeMap() {
     AbsBaseActivity activity = (AbsBaseActivity) getActivity();
     WebLogger.getLogger(activity.getAppName()).d(TAG, "[clearAndInitializeMap]");
@@ -204,7 +200,7 @@ public class TableMapInnerFragment extends MapFragment {
     try {
       resetColorProperties();
       setMarkers();
-    } catch (RemoteException e) {
+    } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
       WebLogger.getLogger(activity.getAppName()).e(TAG, "Unable to access database");
     }
@@ -224,21 +220,21 @@ public class TableMapInnerFragment extends MapFragment {
 
   /**
    * Sets up the color properties used for color rules.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  public void resetColorProperties() throws RemoteException {
+  public void resetColorProperties() throws ServicesAvailabilityException {
     findColorGroupAndDbConfiguration();
   }
 
   /**
    * Finds the color group that will be needed when making color rules.
-   * @throws RemoteException 
+   * @throws ServicesAvailabilityException
    */
-  private void findColorGroupAndDbConfiguration() throws RemoteException {
+  private void findColorGroupAndDbConfiguration() throws ServicesAvailabilityException {
     // Grab the color group
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
-    OdkDbHandle db = null;
+    DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(activity.getAppName());
       
@@ -261,11 +257,10 @@ public class TableMapInnerFragment extends MapFragment {
         mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), activity.getAppName(),
             db, activity.getTableId(), adminColumns);
       }
-      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_COLUMN)) {
-        if (colorRuleInfo.colorElementKey != null) {
-          mColorGroup = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(), activity.getAppName(),
-              db, activity.getTableId(), colorRuleInfo.colorElementKey, adminColumns);
-        }
+
+      if (mColorGroup != null) {
+        UserTable userTableForColor = activity.getUserTable();
+        mColorGuideGroup = new ColorGuideGroup(mColorGroup, userTableForColor);
       }
     } finally {
       if ( db != null ) {
@@ -278,7 +273,7 @@ public class TableMapInnerFragment extends MapFragment {
    * Sets the location markers based off of the columns set in the table
    * properties.
    */
-  private void setMarkers() throws RemoteException {
+  private void setMarkers() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     boolean isMocked = Tables.getInstance().isMocked();
@@ -314,8 +309,8 @@ public class TableMapInnerFragment extends MapFragment {
       // Go through each row and create a marker at the specified location.
       for (int i = 0; i < table.getNumberOfRows(); i++) {
         Row row = table.getRowAtIndex(i);
-        String latitudeString = row.getRawDataOrMetadataByElementKey(latitudeColumn.getElementKey());
-        String longitudeString = row.getRawDataOrMetadataByElementKey(longitudeColumn.getElementKey());
+        String latitudeString = row.getDataByKey(latitudeColumn.getElementKey());
+        String longitudeString = row.getDataByKey(longitudeColumn.getElementKey());
         if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
             || longitudeString.length() == 0) {
           continue;
@@ -365,9 +360,8 @@ public class TableMapInnerFragment extends MapFragment {
 
     UserTable table = activity.getUserTable();
     // Create a guide depending on the color group.
-    if (table != null && mColorGroup != null) {
-      ColorGuide guide = mColorGroup.getColorGuide(activity.getColumnDefinitions(),
-          table.getRowAtIndex(index));
+    if (table != null && mColorGuideGroup != null) {
+      ColorGuide guide = mColorGuideGroup.getColorGuideForRowIndex(index);
       // Based on if the guide matched or not, grab the hue.
       if (guide != null) {
         float[] hsv = new float[3];
@@ -379,7 +373,7 @@ public class TableMapInnerFragment extends MapFragment {
     return DEFAULT_MARKER_HUE;
   }
 
-  private String getLatitudeElementKey(OdkDbHandle dbHandle) throws RemoteException {
+  private String getLatitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
@@ -388,7 +382,7 @@ public class TableMapInnerFragment extends MapFragment {
     return latitudeElementKey;
   }
 
-  private String getLongitudeElementKey(OdkDbHandle dbHandle) throws RemoteException {
+  private String getLongitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     String longitudeElementKey =
@@ -443,45 +437,45 @@ public class TableMapInnerFragment extends MapFragment {
   /**
    * On a long click, add a row to the data table at the position clicked.
    */
-  private OnMapLongClickListener getOnMapLongClickListener() {
-    return new OnMapLongClickListener() {
-      @Override
-      public void onMapLongClick(LatLng location) {
-        TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-
-        // Create a mapping from the lat and long columns to the
-        // values in the location.
-        Map<String, String> elementNameToValue = new HashMap<String, String>();
-
-        OrderedColumns orderedDefns = activity.getColumnDefinitions();
-        for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
-          elementNameToValue.put(cd.getElementName(), "");
-        }
-        {
-          ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
-          elementNameToValue.put(mLatitudeElementKey, Double.toString(location.latitude));
-        }
-
-        {
-          ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
-          elementNameToValue.put(mLongitudeElementKey, Double.toString(location.longitude));
-        }
-        // To store the mapping in a bundle, we need to put it in string list.
-        ArrayList<String> bundleStrings = new ArrayList<String>();
-        for (String key : elementNameToValue.keySet()) {
-          bundleStrings.add(key);
-          bundleStrings.add(elementNameToValue.get(key));
-        }
-        // Bundle it all up for the fragment.
-        Bundle b = new Bundle();
-        b.putStringArrayList(LocationDialogFragment.ELEMENT_NAME_TO_VALUE_KEY, bundleStrings);
-        b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
-        LocationDialogFragment dialog = new LocationDialogFragment();
-        dialog.setArguments(b);
-        dialog.show(getFragmentManager(), "LocationDialogFragment");
-      }
-    };
-  }
+//  private OnMapLongClickListener getOnMapLongClickListener() {
+//    return new OnMapLongClickListener() {
+//      @Override
+//      public void onMapLongClick(LatLng location) {
+//        TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+//
+//        // Create a mapping from the lat and long columns to the
+//        // values in the location.
+//        Map<String, String> elementNameToValue = new HashMap<String, String>();
+//
+//        OrderedColumns orderedDefns = activity.getColumnDefinitions();
+//        for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
+//          elementNameToValue.put(cd.getElementName(), "");
+//        }
+//        {
+//          ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
+//          elementNameToValue.put(mLatitudeElementKey, Double.toString(location.latitude));
+//        }
+//
+//        {
+//          ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
+//          elementNameToValue.put(mLongitudeElementKey, Double.toString(location.longitude));
+//        }
+//        // To store the mapping in a bundle, we need to put it in string list.
+//        ArrayList<String> bundleStrings = new ArrayList<String>();
+//        for (String key : elementNameToValue.keySet()) {
+//          bundleStrings.add(key);
+//          bundleStrings.add(elementNameToValue.get(key));
+//        }
+//        // Bundle it all up for the fragment.
+//        Bundle b = new Bundle();
+//        b.putStringArrayList(LocationDialogFragment.ELEMENT_NAME_TO_VALUE_KEY, bundleStrings);
+//        b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
+//        LocationDialogFragment dialog = new LocationDialogFragment();
+//        dialog.setArguments(b);
+//        dialog.show(getFragmentManager(), "LocationDialogFragment");
+//      }
+//    };
+//  }
 
   /**
    * When a marker is clicked, set the index of the list fragment, and then show

@@ -19,7 +19,7 @@ import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
  * Interface defining behavior for those Fragments that display a
- * {@link org.opendatakit.common.android.views.ODKWebView }.
+ * {@link org.opendatakit.views.ODKWebView }.
  *
  * @author sudar.sam@gmail.com
  *

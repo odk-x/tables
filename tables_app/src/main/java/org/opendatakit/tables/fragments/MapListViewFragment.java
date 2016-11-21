@@ -15,7 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.common.android.utilities.WebLogger;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 
 import android.os.Bundle;
@@ -41,7 +41,7 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
    * The index of an item that has been selected by the user.
    */
   protected int mSelectedItemIndex;
-  protected static final int INVALID_INDEX = -1;
+  public static final int INVALID_INDEX = -1;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -107,6 +107,10 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
     // TODO: Make map index work with async API
     //this.mTableDataReference.setNoItemSelected();
     this.resetView();
+  }
+
+  public int getIndexOfSelectedItem() {
+    return this.mSelectedItemIndex;
   }
 
 }

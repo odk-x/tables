@@ -14,7 +14,7 @@
 
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.database.data.UserTable;
 import org.opendatakit.tables.fragments.DetailViewFragment;
 import org.opendatakit.tables.fragments.GraphManagerFragment;
 import org.opendatakit.tables.fragments.GraphViewFragment;
