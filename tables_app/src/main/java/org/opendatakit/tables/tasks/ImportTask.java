@@ -70,7 +70,7 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 
 	  @Override
 	  public void updateProgressDetail(String progressString) {
-	    // TODO present progressString in a dialog
+			this.importCSVActivity.updateProgressDialogStatusString(progressString);
 	  }
 
 	protected void onProgressUpdate(Integer... progress) {

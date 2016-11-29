@@ -54,35 +54,68 @@ public abstract class AbstractImportExportActivity extends AbsBaseActivity {
 	protected static final int
 	  CSVIMPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 9;
 
+	private Dialog activeDialog = null;
+
 	@Override
 	protected Dialog onCreateDialog(int id) {
+		Dialog d = null;
 		switch(id) {
 		case CSVEXPORT_SUCCESS_DIALOG:
-			return getDialog(getString(R.string.export_success));
+			d = getDialog(getString(R.string.export_success));
+			break;
 		case CSVIMPORT_SUCCESS_DIALOG:
-			return getDialog(getString(R.string.import_success));
+			d = getDialog(getString(R.string.import_success));
+			break;
 		case EXPORT_IN_PROGRESS_DIALOG:
 			ProgressDialog epd = new ProgressDialog(this);
 			epd.setMessage(getString(R.string.export_in_progress));
-			return epd;
+			d = epd;
+			break;
 		case IMPORT_IN_PROGRESS_DIALOG:
 			ProgressDialog ipd = new ProgressDialog(this);
 			ipd.setMessage(getString(R.string.import_in_progress));
-			return ipd;
+			d = ipd;
+			break;
 		case CSVIMPORT_FAIL_DIALOG:
-			return getDialog(getString(R.string.import_failure));
+			d = getDialog(getString(R.string.import_failure));
+			break;
 		case CSVEXPORT_FAIL_DIALOG:
-			return getDialog(getString(R.string.export_failure));
+			d = getDialog(getString(R.string.export_failure));
+			break;
 		case CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG:
-		  return getDialog(getString(R.string.export_partial_success));
+			d = getDialog(getString(R.string.export_partial_success));
+			break;
 		case CSVIMPORT_FAIL_DUPLICATE_TABLE:
-		  return getDialog(getString(R.string.import_failure_existing_table));
+			d = getDialog(getString(R.string.import_failure_existing_table));
+			break;
 		case CSVIMPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG:
-		  return getDialog(getString(R.string.import_partial_success));
+		  d = getDialog(getString(R.string.import_partial_success));
+			break;
 		default:
 			throw new IllegalArgumentException();
 		}
+		activeDialog = d;
+		d.setOnDismissListener(new DialogInterface.OnDismissListener() {
+			@Override public void onDismiss(DialogInterface dialog) {
+				activeDialog = null;
+			}
+		});
+		return d;
 	}
+
+	 public void updateProgressDialogStatusString(final String status) {
+		 this.runOnUiThread(new Runnable() {
+			 @Override public void run() {
+				 Dialog d = activeDialog;
+				 if ( d != null ) {
+					 if ( d instanceof ProgressDialog ) {
+						 ProgressDialog epd = (ProgressDialog) d;
+						 epd.setMessage(status);
+					 }
+				 }
+			 }
+		 });
+	 }
 
     protected class PickFileButtonListener implements OnClickListener {
       String appName;
