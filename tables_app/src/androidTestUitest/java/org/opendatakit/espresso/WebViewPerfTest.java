@@ -1,5 +1,9 @@
 package org.opendatakit.espresso;
 
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.web.webdriver.DriverAtoms;
 import android.support.test.espresso.web.webdriver.Locator;
@@ -44,13 +48,12 @@ public class WebViewPerfTest {
 
    private static final String LIMIT_TO_USE = "200";
    private static final String OFFSET_TO_USE = "0";
-   private static final String OS_TO_USE = "5.1";
-   private static final String DEVICE_TO_USE = "Nexus 6";
 
    // DB_TO_USE Options are android and custom
    enum TEST_DB_TYPE {
       ANDROID,
-      CUSTOM
+      CUSTOM,
+      ERROR
    }
    private static final TEST_DB_TYPE DB_TO_USE = TEST_DB_TYPE.ANDROID;
 
@@ -64,6 +67,73 @@ public class WebViewPerfTest {
    // ALL_IN_ONE_APK_USED Options are true and false
    private static final TEST_TRUE_FALSE ALL_IN_ONE_APK_USED = TEST_TRUE_FALSE.FALSE;
 
+   private static String getOsToUse() {
+      return Build.VERSION.RELEASE;
+   }
+
+   private static String getDeviceToUse() {
+      String manufacturer = Build.MANUFACTURER;
+      String model = Build.MODEL;
+      if (model.startsWith(manufacturer)) {
+         return capitalize(model);
+      }
+      return capitalize(manufacturer) + " " + model;
+   }
+
+   private static String capitalize(String str) {
+      if (str == null || str.length() == 0) {
+         return "";
+      }
+
+      char[] arr = str.toCharArray();
+      boolean capitalizeNext = true;
+
+      //        String phrase = "";
+      StringBuilder phrase = new StringBuilder();
+      for (char c : arr) {
+         if (capitalizeNext && Character.isLetter(c)) {
+            //                phrase += Character.toUpperCase(c);
+            phrase.append(Character.toUpperCase(c));
+            capitalizeNext = false;
+            continue;
+         } else if (Character.isWhitespace(c)) {
+            capitalizeNext = true;
+         }
+         //            phrase += c;
+         phrase.append(c);
+      }
+
+      return phrase.toString();
+   }
+
+   private static TEST_DB_TYPE getDbInUse() {
+      Context ctxt = null;
+      try {
+         ctxt = InstrumentationRegistry.getContext();
+      } catch (Exception e) {
+         e.printStackTrace();
+         return TEST_DB_TYPE.ERROR;
+      }
+      if ( ctxt == null ) {
+         return TEST_DB_TYPE.ERROR;
+      }
+      PackageInfo pInfo = null;
+      try {
+         pInfo = ctxt.getPackageManager().getPackageInfo("org.opendatakit.services", 0);
+      } catch (PackageManager.NameNotFoundException e) {
+         e.printStackTrace();
+      }
+      if ( pInfo == null ) {
+         return TEST_DB_TYPE.ERROR;
+      }
+
+      String version = pInfo.versionName;
+      if ( version.endsWith("builtinDB")) {
+         return TEST_DB_TYPE.ANDROID;
+      } else {
+         return TEST_DB_TYPE.CUSTOM;
+      }
+   }
 
    @ClassRule
    public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
@@ -110,15 +180,15 @@ public class WebViewPerfTest {
       // Set the os version
       onWebView()
               .withElement(findElement(Locator.ID, "os"))
-              .perform(DriverAtoms.webKeys(OS_TO_USE));
+              .perform(DriverAtoms.webKeys(getOsToUse()));
 
       // Set the device
       onWebView()
               .withElement(findElement(Locator.ID, "device"))
-              .perform(DriverAtoms.webKeys(DEVICE_TO_USE));
+              .perform(DriverAtoms.webKeys(getDeviceToUse()));
 
       // Set the database
-      switch (DB_TO_USE) {
+      switch (getDbInUse()) {
          case ANDROID:
             onWebView()
                     .withElement(findElement(Locator.ID, "db-android"))
