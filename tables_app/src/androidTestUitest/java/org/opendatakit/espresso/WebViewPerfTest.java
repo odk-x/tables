@@ -42,7 +42,7 @@ public class WebViewPerfTest {
    private UiDevice mDevice;
 
    // Run through the app for performance timings
-   private static final int numOfTimesToRun = 100;
+   private static final int numOfTimesToRun = 101;
    private static final int numOfMsToSleep = 10;
    private static final int maxRetriesForIter = 25;
 
