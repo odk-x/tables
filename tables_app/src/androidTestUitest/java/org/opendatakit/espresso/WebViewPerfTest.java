@@ -165,7 +165,7 @@ public class WebViewPerfTest {
    }
 
    @Test public void performanceTestForLargeDataSet() {
-      //if (true) return;
+      if (true) return;
 
       // Set the limit
       onWebView()
