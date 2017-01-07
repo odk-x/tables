@@ -25,7 +25,7 @@ android {
         targetSdkVersion(targetVersion)
         versionCode(releaseVersionCode)
         versionName(versionCodeName)
-
+        multiDexEnabled(true)
         testApplicationId(groupId + tablesName + testNameSuffix)
         testInstrumentationRunner(instrumentationRunner)
     }
@@ -45,9 +45,6 @@ android {
         }
     }
 
-    dexOptions {
-        javaMaxHeapSize "2g"
-    }
 
     signingConfigs {
         release {
@@ -82,6 +79,10 @@ android {
 
         exclude('META-INF/maven/com.google.guava/guava/pom.properties')
         exclude ('META-INF/maven/com.google.guava/guava/pom.xml')
+    }
+
+    dexOptions {
+        javaMaxHeapSize "2g"
     }
 
     compileOptions {
