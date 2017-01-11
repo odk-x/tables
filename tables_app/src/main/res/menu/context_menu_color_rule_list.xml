@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:appcompat="http://schemas.android.com/apk/res-auto">
     
 	<item 
 	    android:id="@+id/context_menu_delete_color_rule"
 	    android:title="@string/delete_color_rule" 
-	    android:showAsAction="always"
+	    appcompat:showAsAction="always"
 	    android:icon="@drawable/ic_action_content_discard" />
     
 </menu>

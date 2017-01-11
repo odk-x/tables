@@ -12,5 +12,5 @@
 	  android:id="@id/android:empty"
 	  android:layout_width="match_parent"
 	  android:layout_height="fill_parent"
-	  android:text="@+string/no_shortcuts"/>
+	  android:text="@string/no_shortcuts"/>
 </LinearLayout>

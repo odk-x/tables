@@ -8,7 +8,7 @@
  <TextView
  	android:layout_width="fill_parent"
  	android:layout_height="wrap_content"
-	android:text="@+string/open_new_spreadsheet"
+	android:text="@string/open_new_spreadsheet"
  />
  <TextView
  	android:id="@+id/file_manager_path"

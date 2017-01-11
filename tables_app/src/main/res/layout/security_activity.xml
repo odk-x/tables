@@ -19,7 +19,7 @@
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:textColor="#000000"
-		android:text="@+string/read_access_control_group" />
+		android:text="@string/read_access_control_group" />
 
 	<Spinner
         android:id="@+id/security_activity_read_spinner"
@@ -31,7 +31,7 @@
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:textColor="#000000"
-		android:text="@+string/write_access_control_group" />
+		android:text="@string/write_access_control_group" />
 
 	<Spinner
         android:id="@+id/security_activity_write_spinner"

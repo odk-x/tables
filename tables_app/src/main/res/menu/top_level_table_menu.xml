@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:appcompat="http://schemas.android.com/apk/res-auto">
     
     <!-- Add a row -->
     <item
         android:id="@+id/top_level_table_menu_add"
         android:icon="@drawable/ic_add_black_24dp"
         android:title="@string/add_row"
-        android:showAsAction="always" />
+        appcompat:showAsAction="always" />
     
     <!-- Select a view -->
     <item
         android:id="@+id/top_level_table_menu_select_view"
         android:icon="@drawable/ic_view_headline_black_24dp"
         android:title="@string/select_view"
-        android:showAsAction="always" >
+        appcompat:showAsAction="always" >
         
         <!-- View submenu -->
         <menu>
@@ -35,7 +36,7 @@
         android:id="@+id/top_level_table_menu_table_properties"
         android:icon="@drawable/ic_settings_black_24dp"
         android:title="@string/preferences"
-        android:showAsAction="always" />
+        appcompat:showAsAction="always" />
             
 
 </menu>
