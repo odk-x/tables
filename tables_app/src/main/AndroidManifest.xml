@@ -93,12 +93,10 @@
         </activity>
         <activity android:name=".activities.MainActivity" />
         <activity android:name=".activities.TableDisplayActivity">
-        
             <intent-filter>
                 <action android:name="org.opendatakit.tables.activities.TableDisplayActivity" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-            
         </activity>
         <activity android:name=".activities.TableLevelPreferencesActivity" />
         <activity android:name=".activities.DisplayPrefsActivity"/>
@@ -107,11 +105,10 @@
         <activity android:name=".activities.ExportCSVActivity"/>
         <activity
             android:name=".activities.AndroidShortcuts"
-            android:label="@string/shortcut_name"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+            android:label="@string/shortcut_name" >
+            <!--android:theme="@android:style/Theme.Translucent.NoTitleBar" > -->
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

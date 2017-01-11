@@ -8,8 +8,8 @@
     </style>
     
     <style name="Opendatakit" parent="android:style/Theme.DeviceDefault.Light">
-	    <item name="android:scrollbarThumbHorizontal">@+drawable/thumb</item>
-	    <item name="android:scrollbarThumbVertical">@+drawable/thumb</item>
+	    <item name="android:scrollbarThumbHorizontal">@drawable/thumb</item>
+	    <item name="android:scrollbarThumbVertical">@drawable/thumb</item>
 	    <item name="android:scrollbarSize">2.5mm</item>
 	    <item name="android:scrollbarAlwaysDrawVerticalTrack">true</item>
 	    <item name="android:scrollbarAlwaysDrawHorizontalTrack">true</item>

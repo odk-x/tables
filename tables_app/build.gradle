@@ -133,8 +133,6 @@ dependencies {
                       classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
-    compile 'com.android.support:support-annotations:25.1.0'
-    compile 'com.android.support:support-v4:25.1.0'
     compile 'com.google.android.gms:play-services:' + gpsVersion
  
     //for Espresso
@@ -144,7 +142,6 @@ dependencies {
     androidTestUitestCompile 'com.android.support.test.espresso:espresso-intents:2.2.2'
     androidTestUitestCompile 'com.android.support.test.espresso:espresso-web:2.2.2'
     androidTestUitestCompile 'com.android.support:support-annotations:25.1.0'
-    androidTestUitestCompile 'com.android.support:support-v4:25.1.0'
 
 	//for UI Automator
     androidTestUitestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
