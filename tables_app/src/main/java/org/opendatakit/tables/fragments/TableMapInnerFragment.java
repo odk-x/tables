@@ -156,66 +156,66 @@ public class TableMapInnerFragment extends MapFragment {
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onSaveInstanceState]");
-    int markerIndexToSave = INVALID_INDEX;
-    if (mCurrentMarker != null) {
-      markerIndexToSave = mMarkerIds.get(mCurrentMarker);
-    }
-    WebLogger.getLogger(activity.getAppName()).d(TAG,
-        "[onSaveInstanceState] saving markder index: " + markerIndexToSave);
-    outState.putInt(SAVE_KEY_INDEX, markerIndexToSave);
-    CameraPosition pos = getMap().getCameraPosition();
-    outState.putFloat(SAVE_ZOOM, pos.zoom);
-    outState.putDouble(SAVE_TARGET_LAT, pos.target.latitude);
-    outState.putDouble(SAVE_TARGET_LONG, pos.target.longitude);
+//    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+//    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onSaveInstanceState]");
+//    int markerIndexToSave = INVALID_INDEX;
+//    if (mCurrentMarker != null) {
+//      markerIndexToSave = mMarkerIds.get(mCurrentMarker);
+//    }
+//    WebLogger.getLogger(activity.getAppName()).d(TAG,
+//        "[onSaveInstanceState] saving markder index: " + markerIndexToSave);
+//    outState.putInt(SAVE_KEY_INDEX, markerIndexToSave);
+//    CameraPosition pos = getMap().getCameraPosition();
+//    outState.putFloat(SAVE_ZOOM, pos.zoom);
+//    outState.putDouble(SAVE_TARGET_LAT, pos.target.latitude);
+//    outState.putDouble(SAVE_TARGET_LONG, pos.target.longitude);
   }
 
   @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onViewCreated]");
-    clearAndInitializeMap();
-    if (savedInstanceState != null) {
-      savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
-      getMap().moveCamera(
-          CameraUpdateFactory.newLatLngZoom(
-              new LatLng(savedInstanceState.getDouble(SAVE_TARGET_LAT), savedInstanceState
-                  .getDouble(SAVE_TARGET_LONG)), savedInstanceState.getFloat(SAVE_ZOOM)));
-    }
-    getMap().setMyLocationEnabled(true);
-    //getMap().setOnMapLongClickListener(getOnMapLongClickListener());
-    getMap().setOnMapClickListener(getOnMapClickListener());
+//    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+//    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onViewCreated]");
+//    clearAndInitializeMap();
+//    if (savedInstanceState != null) {
+//      savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
+//      getMap().moveCamera(
+//          CameraUpdateFactory.newLatLngZoom(
+//              new LatLng(savedInstanceState.getDouble(SAVE_TARGET_LAT), savedInstanceState
+//                  .getDouble(SAVE_TARGET_LONG)), savedInstanceState.getFloat(SAVE_ZOOM)));
+//    }
+//    getMap().setMyLocationEnabled(true);
+//    //getMap().setOnMapLongClickListener(getOnMapLongClickListener());
+//    getMap().setOnMapClickListener(getOnMapClickListener());
   }
 
   /** Re-initializes the map, including the markers. 
    **/
   public void clearAndInitializeMap() {
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[clearAndInitializeMap]");
-    if( getMap() != null ) {
-      getMap().clear();
-    }
-    try {
-      resetColorProperties();
-      setMarkers();
-    } catch (ServicesAvailabilityException e) {
-      WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-      WebLogger.getLogger(activity.getAppName()).e(TAG, "Unable to access database");
-    }
+//    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+//    WebLogger.getLogger(activity.getAppName()).d(TAG, "[clearAndInitializeMap]");
+//    if( getMap() != null ) {
+//      getMap().clear();
+//    }
+//    try {
+//      resetColorProperties();
+//      setMarkers();
+//    } catch (ServicesAvailabilityException e) {
+//      WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+//      WebLogger.getLogger(activity.getAppName()).e(TAG, "Unable to access database");
+//    }
   }
 
   @Override
   public void onDestroy() {
     super.onDestroy();
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onDestroy]");
-    // Clear up any memory references. When destroyed, there cannot be any
-    // references to the markers, otherwise leaks will happen.
-    mMarkerIds.clear();
-    mVisibleMarkers.clear();
-    mCurrentMarker = null;
+//    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+//    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onDestroy]");
+//    // Clear up any memory references. When destroyed, there cannot be any
+//    // references to the markers, otherwise leaks will happen.
+//    mMarkerIds.clear();
+//    mVisibleMarkers.clear();
+//    mCurrentMarker = null;
   }
 
   /**
@@ -232,41 +232,41 @@ public class TableMapInnerFragment extends MapFragment {
    */
   private void findColorGroupAndDbConfiguration() throws ServicesAvailabilityException {
     // Grab the color group
-    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-
-    DbHandle db = null;
-    try {
-      db = Tables.getInstance().getDatabase().openDatabase(activity.getAppName());
-      
-      // get the elementKey for the latitude and longitude columns
-      mLatitudeElementKey = getLatitudeElementKey(db);
-      mLongitudeElementKey = getLongitudeElementKey(db);
-
-      String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
-
-      TableUtil.MapViewColorRuleInfo colorRuleInfo =
-              TableUtil.get().getMapListViewColorRuleInfo(Tables.getInstance(), activity.getAppName(), db, activity.getTableId());
-
-      // Create a guide depending on what type of color rule is selected.
-      mColorGroup = null;
-      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
-        mColorGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), activity.getAppName(),
-            db, activity.getTableId(), adminColumns);
-      }
-      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
-        mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), activity.getAppName(),
-            db, activity.getTableId(), adminColumns);
-      }
-
-      if (mColorGroup != null) {
-        UserTable userTableForColor = activity.getUserTable();
-        mColorGuideGroup = new ColorGuideGroup(mColorGroup, userTableForColor);
-      }
-    } finally {
-      if ( db != null ) {
-        Tables.getInstance().getDatabase().closeDatabase(activity.getAppName(), db);
-      }
-    }
+//    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+//
+//    DbHandle db = null;
+//    try {
+//      db = Tables.getInstance().getDatabase().openDatabase(activity.getAppName());
+//
+//      // get the elementKey for the latitude and longitude columns
+//      mLatitudeElementKey = getLatitudeElementKey(db);
+//      mLongitudeElementKey = getLongitudeElementKey(db);
+//
+//      String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
+//
+//      TableUtil.MapViewColorRuleInfo colorRuleInfo =
+//              TableUtil.get().getMapListViewColorRuleInfo(Tables.getInstance(), activity.getAppName(), db, activity.getTableId());
+//
+//      // Create a guide depending on what type of color rule is selected.
+//      mColorGroup = null;
+//      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
+//        mColorGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), activity.getAppName(),
+//            db, activity.getTableId(), adminColumns);
+//      }
+//      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
+//        mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), activity.getAppName(),
+//            db, activity.getTableId(), adminColumns);
+//      }
+//
+//      if (mColorGroup != null) {
+//        UserTable userTableForColor = activity.getUserTable();
+//        mColorGuideGroup = new ColorGuideGroup(mColorGroup, userTableForColor);
+//      }
+//    } finally {
+//      if ( db != null ) {
+//        Tables.getInstance().getDatabase().closeDatabase(activity.getAppName(), db);
+//      }
+//    }
   }
 
   /**
@@ -274,76 +274,76 @@ public class TableMapInnerFragment extends MapFragment {
    * properties.
    */
   private void setMarkers() {
-    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-
-    boolean isMocked = Tables.getInstance().isMocked();
-
-    if (mMarkerIds != null) {
-      mMarkerIds.clear();
-    }
-    if (mVisibleMarkers != null) {
-      mVisibleMarkers.clear();
-    }
-
-    mMarkerIds = new HashMap<Marker, Integer>();
-    mVisibleMarkers = new HashSet<Marker>();
-
-    if (mLatitudeElementKey == null || mLongitudeElementKey == null) {
-      Toast.makeText(getActivity(), getActivity().getString(R.string.lat_long_not_set),
-          Toast.LENGTH_LONG).show();
-      return;
-    }
-
-    UserTable table = activity.getUserTable();
-
-    OrderedColumns orderedDefns = activity.getColumnDefinitions();
-
-    if ( table != null && orderedDefns != null ) {
-      // Try to find the map columns in the store.
-      ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
-      ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
-
-      // Find the locations from entries in the table.
-      LatLng firstLocation = null;
-
-      // Go through each row and create a marker at the specified location.
-      for (int i = 0; i < table.getNumberOfRows(); i++) {
-        Row row = table.getRowAtIndex(i);
-        String latitudeString = row.getDataByKey(latitudeColumn.getElementKey());
-        String longitudeString = row.getDataByKey(longitudeColumn.getElementKey());
-        if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
-            || longitudeString.length() == 0) {
-          continue;
-        }
-
-        // Create a LatLng from the latitude and longitude strings.
-        LatLng location = parseLocationFromString(latitudeColumn, latitudeString, longitudeColumn,
-            longitudeString);
-        if (location == null) {
-          continue;
-        }
-        if (firstLocation == null) {
-          firstLocation = location;
-        }
-
-        if (!isMocked) {
-          Marker marker = getMap().addMarker(new MarkerOptions().position(location).draggable(false)
-              .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
-          mMarkerIds.put(marker, i);
-          if (mCurrentIndex == i) {
-            WebLogger.getLogger(activity.getAppName()).d(TAG, "[setMarkers] selecting marker: " + i);
-            selectMarker(marker);
-          }
-        }
-      }
-
-      if (firstLocation != null) {
-        if (!isMocked) {
-          getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
-          getMap().setOnMarkerClickListener(getOnMarkerClickListener());
-        }
-      }
-    }
+//    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+//
+//    boolean isMocked = Tables.getInstance().isMocked();
+//
+//    if (mMarkerIds != null) {
+//      mMarkerIds.clear();
+//    }
+//    if (mVisibleMarkers != null) {
+//      mVisibleMarkers.clear();
+//    }
+//
+//    mMarkerIds = new HashMap<Marker, Integer>();
+//    mVisibleMarkers = new HashSet<Marker>();
+//
+//    if (mLatitudeElementKey == null || mLongitudeElementKey == null) {
+//      Toast.makeText(getActivity(), getActivity().getString(R.string.lat_long_not_set),
+//          Toast.LENGTH_LONG).show();
+//      return;
+//    }
+//
+//    UserTable table = activity.getUserTable();
+//
+//    OrderedColumns orderedDefns = activity.getColumnDefinitions();
+//
+//    if ( table != null && orderedDefns != null ) {
+//      // Try to find the map columns in the store.
+//      ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
+//      ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
+//
+//      // Find the locations from entries in the table.
+//      LatLng firstLocation = null;
+//
+//      // Go through each row and create a marker at the specified location.
+//      for (int i = 0; i < table.getNumberOfRows(); i++) {
+//        Row row = table.getRowAtIndex(i);
+//        String latitudeString = row.getDataByKey(latitudeColumn.getElementKey());
+//        String longitudeString = row.getDataByKey(longitudeColumn.getElementKey());
+//        if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
+//            || longitudeString.length() == 0) {
+//          continue;
+//        }
+//
+//        // Create a LatLng from the latitude and longitude strings.
+//        LatLng location = parseLocationFromString(latitudeColumn, latitudeString, longitudeColumn,
+//            longitudeString);
+//        if (location == null) {
+//          continue;
+//        }
+//        if (firstLocation == null) {
+//          firstLocation = location;
+//        }
+//
+//        if (!isMocked) {
+//          Marker marker = getMap().addMarker(new MarkerOptions().position(location).draggable(false)
+//              .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
+//          mMarkerIds.put(marker, i);
+//          if (mCurrentIndex == i) {
+//            WebLogger.getLogger(activity.getAppName()).d(TAG, "[setMarkers] selecting marker: " + i);
+//            selectMarker(marker);
+//          }
+//        }
+//      }
+//
+//      if (firstLocation != null) {
+//        if (!isMocked) {
+//          getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
+//          getMap().setOnMarkerClickListener(getOnMarkerClickListener());
+//        }
+//      }
+//    }
   }
 
   /**

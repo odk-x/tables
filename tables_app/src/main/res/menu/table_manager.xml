@@ -1,30 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:appcompat="http://schemas.android.com/apk/res-auto">
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
         android:id="@+id/menu_table_manager_import"
         android:icon="@drawable/ic_add_black_24dp"
         android:title="@string/import_csv"
-        appcompat:showAsAction="always" />
+        android:showAsAction="always" />
     <item 
         android:id="@+id/menu_table_manager_export"
         android:icon="@drawable/ic_forward_black_24dp"
         android:title="@string/export"
-        appcompat:showAsAction="always" />
+		android:showAsAction="always" />
     <item
         android:id="@+id/menu_table_manager_sync"
         android:icon="@drawable/ic_cached_black_24dp"
         android:title="@string/sync"
-        appcompat:showAsAction="always" />
+		android:showAsAction="always" />
     <item
         android:id="@+id/menu_table_manager_preferences"
         android:icon="@drawable/ic_settings_black_24dp"
         android:title="@string/preferences"
-        appcompat:showAsAction="always" />
+		android:showAsAction="always" />
 	<item
 	    android:id="@+id/menu_table_about"
 	    android:icon="@drawable/ic_info_outline_black_24dp"
 	    android:title="@string/about"
-	    appcompat:showAsAction="never" />
+		android:showAsAction="never" />
 </menu>

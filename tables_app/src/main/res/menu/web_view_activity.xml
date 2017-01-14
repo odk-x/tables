@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:appcompat="http://schemas.android.com/apk/res-auto">
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
     
     <item
         android:id="@+id/menu_web_view_activity_table_manager"
         android:icon="@drawable/ic_sort_black_24dp"
-        appcompat:showAsAction="always"
+        android:showAsAction="always"
         android:title="@string/table_manager_title" />
 	<item
 	    android:id="@+id/menu_table_about"
 	    android:icon="@drawable/ic_info_outline_black_24dp"
 	    android:title="@string/about"
-	    appcompat:showAsAction="never" />
+	    android:showAsAction="never" />
     
 </menu>

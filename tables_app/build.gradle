@@ -25,7 +25,7 @@ android {
         targetSdkVersion(targetVersion)
         versionCode(releaseVersionCode)
         versionName(versionCodeName)
-        multiDexEnabled(true)
+
         testApplicationId(groupId + tablesName + testNameSuffix)
         testInstrumentationRunner(instrumentationRunner)
     }
@@ -81,10 +81,6 @@ android {
         exclude ('META-INF/maven/com.google.guava/guava/pom.xml')
     }
 
-    dexOptions {
-        javaMaxHeapSize "2g"
-    }
-
     compileOptions {
       sourceCompatibility javaVersion
       targetCompatibility javaVersion
@@ -133,7 +129,9 @@ dependencies {
                       classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
-    compile 'com.google.android.gms:play-services:' + gpsVersion
+    compile 'com.google.android.gms:play-services-maps:10.0.1'
+
+//    compile 'com.google.android.gms:play-services:' + gpsVersion
  
     //for Espresso
     androidTestUitestCompile 'com.android.support.test:runner:0.5'
