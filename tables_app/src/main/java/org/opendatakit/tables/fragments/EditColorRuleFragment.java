@@ -305,7 +305,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   }
 
   private void initializeComparisonType() {
-    final ListPreference pref = (ListPreference) this
+    final ListPreference pref = this
         .findListPreference(Constants.PreferenceKeys.ColorRule.COMPARISON_TYPE);
     pref.setEntries(this.mOperatorHumanFriendlyValues);
     pref.setEntryValues(this.mOperatorEntryValues);
@@ -320,7 +320,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         // Here we want to update the rule and also persist it.
         WebLogger.getLogger(getAppName()).d(TAG,
-            "onPreferenceChange callback invoked for value: " + (String) newValue);
+            "onPreferenceChange callback invoked for value: " + newValue);
         ColorRule.RuleType newOperator = ColorRule.RuleType.getEnumFromString((String) newValue);
         mRuleOperator = newOperator;
         preference.setSummary(mRuleOperator.getSymbol());
@@ -446,11 +446,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
         return true;
       } else { // isUnpersistedRule
         ColorRule existingRule = this.mColorRuleGroup.getColorRules().get(this.mRulePosition);
-        if (userDefinedRule.equalsWithoutId(existingRule)) {
-          return false;
-        } else {
-          return true;
-        }
+        return !userDefinedRule.equalsWithoutId(existingRule);
       }
     } else { // preferencesDefineValidRule
       return false;

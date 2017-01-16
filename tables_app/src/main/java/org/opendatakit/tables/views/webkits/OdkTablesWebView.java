@@ -4,11 +4,10 @@ import android.content.Context;
 import android.os.Looper;
 import android.util.AttributeSet;
 import org.opendatakit.activities.IOdkDataActivity;
-import org.opendatakit.views.ODKWebView;
-import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.activities.IOdkTablesActivity;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.views.ODKWebView;
 
 /**
  * @author mitchellsundt@gmail.com

@@ -10,7 +10,6 @@ import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.uiautomator.*;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import org.opendatakit.tables.R;

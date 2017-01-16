@@ -56,7 +56,7 @@ class TabularView extends View {
     // remain for now just for ease of debugging if for some reason it matters 
     // in a way I don't yet see. They will probably be safe to consolidate in the
     // future.
-    MAIN_DATA, MAIN_HEADER, INDEX_DATA, INDEX_HEADER, STATUS_DATA, STATUS_HEADER;
+    MAIN_DATA, MAIN_HEADER, INDEX_DATA, INDEX_HEADER, STATUS_DATA, STATUS_HEADER
   }
 
   /**
@@ -805,7 +805,7 @@ class TabularView extends View {
   }
 
   interface ColorDecider {
-    public ColorGuide getColor(int index, String[] rowData, Map<String, Integer> columnMapping,
+    ColorGuide getColor(int index, String[] rowData, Map<String, Integer> columnMapping,
         Map<String, ColumnDefinition> definitionMapping);
   }
 

@@ -48,7 +48,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     COLUMN_LIST,
     COLUMN_PRFERENCE,
     COLOR_RULE_LIST,
-    STATUS_COLOR_RULE_LIST;
+    STATUS_COLOR_RULE_LIST
   }
       
   FragmentType mCurrentFragmentType;

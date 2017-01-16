@@ -50,7 +50,7 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
     TABLE,
     COLUMN,
     STATUS
-  };
+  }
 
   public TableDataExecutorProcessor(ExecutorContext context, AbsBaseWebActivity activity) {
     super(context);

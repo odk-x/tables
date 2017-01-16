@@ -15,34 +15,31 @@
  */
 package org.opendatakit.tables.utils;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import org.opendatakit.aggregate.odktables.rest.ApiConstants;
-import org.opendatakit.aggregate.odktables.rest.ElementDataType;
-import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.database.utilities.KeyValueStoreUtils;
-import org.opendatakit.dependencies.DependencyChecker;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.provider.FormsProviderAPI;
-import org.opendatakit.utilities.*;
-import org.opendatakit.database.data.KeyValueStoreEntry;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.R;
-
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-
 import android.widget.Toast;
+import org.opendatakit.aggregate.odktables.rest.ApiConstants;
+import org.opendatakit.aggregate.odktables.rest.ElementDataType;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.database.data.KeyValueStoreEntry;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.utilities.KeyValueStoreUtils;
+import org.opendatakit.dependencies.DependencyChecker;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.provider.FormsProviderAPI;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Various functions and utilities necessary

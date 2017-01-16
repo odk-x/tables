@@ -38,8 +38,7 @@ public class CellValueView {
     DbHandle db = null;
     try {
       db = app.getDatabase().openDatabase(appName);
-      ArrayList<Map<String,Object>> displayChoices = (ArrayList<Map<String, Object>>) 
-          ColumnUtil.get().getDisplayChoicesList(app, appName, db, tableId, cd.getElementKey());
+      ArrayList<Map<String,Object>> displayChoices = ColumnUtil.get().getDisplayChoicesList(app, appName, db, tableId, cd.getElementKey());
       if (displayChoices != null) {
         return new MultipleChoiceEditView(context, cd, displayChoices, value);
       } else {

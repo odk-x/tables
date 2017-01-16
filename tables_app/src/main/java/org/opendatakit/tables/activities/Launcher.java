@@ -19,13 +19,12 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
-import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.provider.TablesProviderAPI;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.utilities.ODKFileUtils;
 
 import java.util.List;
 

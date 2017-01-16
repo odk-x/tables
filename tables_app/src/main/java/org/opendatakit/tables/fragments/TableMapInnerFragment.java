@@ -15,44 +15,31 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.opendatakit.data.ColorGuide;
-import org.opendatakit.data.ColorGuideGroup;
-import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.database.LocalKeyValueStoreConstants;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.UserTable;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.utilities.*;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.data.Row;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.application.Tables;
-
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Toast;
-
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
+import org.opendatakit.data.ColorGuide;
+import org.opendatakit.data.ColorGuideGroup;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.application.Tables;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The InnerMapFragment has the capability of showing a map. It displays markers

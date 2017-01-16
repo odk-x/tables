@@ -130,7 +130,7 @@ public class OdkTables {
       throw new IllegalStateException(OdkTables.class.getSimpleName() + " must be have an "
           + AbsBaseActivity.class.getSimpleName());
     }
-    AbsBaseActivity baseActivity = (AbsBaseActivity) this.mActivity;
+    AbsBaseActivity baseActivity = this.mActivity;
     return baseActivity.getAppName();
   }
 

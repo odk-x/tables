@@ -15,24 +15,6 @@
  */
 package org.opendatakit.tables.views;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.data.utilities.ColumnUtil;
-import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.utilities.*;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
-import org.opendatakit.tables.views.components.LockableScrollView;
-
 import android.content.Context;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
@@ -41,6 +23,22 @@ import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
+import org.opendatakit.tables.views.components.LockableScrollView;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A view similar to a spreadsheet. Builds TabularViews for the header and body
@@ -572,17 +570,17 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
   public interface Controller {
 
-    public void headerCellClicked(CellInfo cellId);
+    void headerCellClicked(CellInfo cellId);
 
-    public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
+    void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
-    public void openHeaderContextMenu(View view);
+    void openHeaderContextMenu(View view);
 
-    public void dataCellClicked(CellInfo cellId);
+    void dataCellClicked(CellInfo cellId);
 
-    public void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
+    void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
-    public void openDataContextMenu(View view);
+    void openDataContextMenu(View view);
   }
 
   /**

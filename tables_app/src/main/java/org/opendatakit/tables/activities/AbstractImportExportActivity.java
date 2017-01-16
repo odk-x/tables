@@ -15,10 +15,6 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.activities.BaseActivity;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.tables.R;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -29,6 +25,8 @@ import android.net.Uri;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Toast;
+import org.opendatakit.tables.R;
+import org.opendatakit.utilities.ODKFileUtils;
 
 /**
  * An abstract parent class for import/export activities.

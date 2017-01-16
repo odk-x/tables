@@ -316,7 +316,7 @@ public class ElementTypeManipulatorFactory {
         return null;
       }
       int integerValue = Integer.parseInt(inValue);
-      return (Integer) Integer.valueOf(integerValue);
+      return Integer.valueOf(integerValue);
     }
 
     @Override
@@ -376,7 +376,7 @@ public class ElementTypeManipulatorFactory {
         return null;
       }
       double numberValue = Double.parseDouble(inValue);
-      return (Double) Double.valueOf(numberValue);
+      return Double.valueOf(numberValue);
     }
 
     @Override
@@ -452,10 +452,10 @@ public class ElementTypeManipulatorFactory {
         return null;
       }
       if ( inValue.equalsIgnoreCase("true") ) {
-        return (Integer) Integer.valueOf(1);
+        return Integer.valueOf(1);
       }
       if ( inValue.equalsIgnoreCase("false") ) {
-        return (Integer) Integer.valueOf(0);
+        return Integer.valueOf(0);
       }
       throw new IllegalArgumentException("invalid boolean value: " + inValue);
     }
@@ -513,7 +513,7 @@ public class ElementTypeManipulatorFactory {
     public String parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
         Class<String> clazz) {
       // TODO: verify against choices list
-      return (String) inValue;
+      return inValue;
     }
 
     @Override

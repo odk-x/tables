@@ -173,7 +173,7 @@ public class SpreadsheetUserTable {
     public String elementKey; // of the column
     public String displayText;
     public String value;
-  };
+  }
 
   public SpreadsheetCell getSpreadsheetCell(Context context, CellInfo cellInfo) {
     SpreadsheetCell cell = new SpreadsheetCell();

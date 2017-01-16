@@ -66,23 +66,11 @@ public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
 
     String currentItem = this.mViewTypeValues[position].toString();
     if (currentItem.equals(TableViewType.SPREADSHEET.name())) {
-      if (this.mPossibleViewTypes.spreadsheetViewIsPossible()) {
-        return true;
-      } else {
-        return false;
-      }
+      return this.mPossibleViewTypes.spreadsheetViewIsPossible();
     } else if (currentItem.equals(TableViewType.LIST.name())) {
-      if (this.mPossibleViewTypes.listViewIsPossible()) {
-        return true;
-      } else {
-        return false;
-      }
+      return this.mPossibleViewTypes.listViewIsPossible();
     } else if (currentItem.equals(TableViewType.MAP.name())) {
-      if (this.mPossibleViewTypes.mapViewIsPossible()) {
-        return true;
-      } else {
-        return false;
-      }
+      return this.mPossibleViewTypes.mapViewIsPossible();
     } else {
       // Enable it.
       WebLogger.getLogger(mAppName).e(TAG, "unrecognized entryValue: " + currentItem);

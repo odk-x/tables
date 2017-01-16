@@ -48,9 +48,9 @@ public class InitializationFragment extends Fragment implements InitializationLi
 
   private static final int ID = R.layout.copy_expansion_files_layout;
 
-  private static enum DialogState {
+  private enum DialogState {
     Init, Progress, Alert, None
-  };
+  }
 
   // keys for the data being retained
 

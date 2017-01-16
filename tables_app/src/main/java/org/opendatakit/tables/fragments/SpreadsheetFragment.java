@@ -139,7 +139,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
    * @throws ServicesAvailabilityException
    */
   SpreadsheetView buildSpreadsheetView() throws ServicesAvailabilityException {
-    return new SpreadsheetView((TableDisplayActivity) this.getActivity(), this, spreadsheetTable);
+    return new SpreadsheetView(this.getActivity(), this, spreadsheetTable);
   }
 
   void addGroupByColumn(ColumnDefinition cd) {

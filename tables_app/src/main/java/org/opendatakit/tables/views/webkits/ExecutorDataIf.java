@@ -76,10 +76,10 @@ public interface ExecutorDataIf {
      * @return see description in class header
      * transId and leaveTransactionOpen are used only if the user wants to explicitly control db transactions
      */
-    public String query(String tableId, String whereClause, String[] sqlBindParams,
-                        String[] groupBy, String having, String orderByElementKey, String orderByDirection,
-                        boolean includeKeyValueStoreMap,
-                        String callbackJSON, String transId, Boolean leaveTransactionOpen)
+    String query(String tableId, String whereClause, String[] sqlBindParams, String[] groupBy,
+        String having, String orderByElementKey, String orderByDirection,
+        boolean includeKeyValueStoreMap, String callbackJSON, String transId,
+        Boolean leaveTransactionOpen)
             throws ServicesAvailabilityException, SQLiteException;
 
 
@@ -97,8 +97,8 @@ public interface ExecutorDataIf {
      *
      * transId and leaveTransactionOpen are used only if the user wants to explicitly control db transactions
      */
-    public String rawQuery(String sqlCommand, String[] sqlBindParams,
-                           String callbackJSON, String transId, Boolean leaveTransactionOpen)
+    String rawQuery(String sqlCommand, String[] sqlBindParams, String callbackJSON, String transId,
+        Boolean leaveTransactionOpen)
             throws ServicesAvailabilityException, SQLiteException;
 
 
@@ -117,8 +117,8 @@ public interface ExecutorDataIf {
      *
      * transId and leaveTransactionOpen are used only if the user wants to explicitly control db transactions
      */
-    public String updateRow(String tableId, String stringifiedJSON, String rowId,
-                            String callbackJSON, String transId, Boolean leaveTransactionOpen)
+    String updateRow(String tableId, String stringifiedJSON, String rowId, String callbackJSON,
+        String transId, Boolean leaveTransactionOpen)
             throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
 
@@ -137,8 +137,8 @@ public interface ExecutorDataIf {
      *
      * transId and leaveTransactionOpen are used only if the user wants to explicitly control db transactions
      */
-    public String deleteRow(String tableId, String stringifiedJSON, String rowId,
-                            String callbackJSON, String transId, Boolean leaveTransactionOpen)
+    String deleteRow(String tableId, String stringifiedJSON, String rowId, String callbackJSON,
+        String transId, Boolean leaveTransactionOpen)
             throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
 
@@ -157,8 +157,8 @@ public interface ExecutorDataIf {
      *
      * transId and leaveTransactionOpen are used only if the user wants to explicitly control db transactions
      */
-    public String addRow(String tableId, String stringifiedJSON, String rowId,
-                         String callbackJSON, String transId, Boolean leaveTransactionOpen)
+    String addRow(String tableId, String stringifiedJSON, String rowId, String callbackJSON,
+        String transId, Boolean leaveTransactionOpen)
             throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
 
@@ -178,8 +178,8 @@ public interface ExecutorDataIf {
      *
      * transId and leaveTransactionOpen are used only if the user wants to explicitly control db transactions
      */
-    public String addCheckpoint(String tableId, String stringifiedJSON, String rowId,
-                                String callbackJSON, String transId, Boolean leaveTransactionOpen)
+    String addCheckpoint(String tableId, String stringifiedJSON, String rowId, String callbackJSON,
+        String transId, Boolean leaveTransactionOpen)
             throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
 
@@ -198,8 +198,8 @@ public interface ExecutorDataIf {
      *
      * transId and leaveTransactionOpen are used only if the user wants to explicitly control db transactions
      */
-    public String saveCheckpointAsIncomplete(String tableId, String stringifiedJSON, String rowId,
-                                             String callbackJSON, String transId, Boolean leaveTransactionOpen)
+    String saveCheckpointAsIncomplete(String tableId, String stringifiedJSON, String rowId,
+        String callbackJSON, String transId, Boolean leaveTransactionOpen)
             throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
 
@@ -218,8 +218,8 @@ public interface ExecutorDataIf {
      *
      * transId and leaveTransactionOpen are used only if the user wants to explicitly control db transactions
      */
-    public String saveCheckpointAsComplete(String tableId, String stringifiedJSON, String rowId,
-                                           String callbackJSON, String transId, Boolean leaveTransactionOpen)
+    String saveCheckpointAsComplete(String tableId, String stringifiedJSON, String rowId,
+        String callbackJSON, String transId, Boolean leaveTransactionOpen)
             throws ServicesAvailabilityException, ActionNotAuthorizedException;
 
     /**
@@ -236,7 +236,7 @@ public interface ExecutorDataIf {
      *
      * transId and leaveTransactionOpen are used only if the user wants to explicitly control db transactions
      */
-    public String deleteLastCheckpoint (String tableId, String rowId,
-                                        String callbackJSON, String transId, Boolean leaveTransactionOpen)
+    String deleteLastCheckpoint(String tableId, String rowId, String callbackJSON, String transId,
+        Boolean leaveTransactionOpen)
             throws ServicesAvailabilityException, ActionNotAuthorizedException;
 }

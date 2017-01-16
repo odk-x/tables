@@ -15,30 +15,23 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.File;
-
-import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.tasks.ImportRequest;
-import org.opendatakit.tables.tasks.ImportTask;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.TableFileUtils;
-
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.tasks.ImportRequest;
+import org.opendatakit.tables.tasks.ImportTask;
+import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.utilities.ODKFileUtils;
+
+import java.io.File;
 
 /**
  * An activity for importing CSV files to a table.

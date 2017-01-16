@@ -135,7 +135,7 @@ public class WebViewUtil {
       DbHandle db = null;
       try {
         db = Tables.getInstance().getDatabase().openDatabase(appName);
-        choices = (ArrayList<Map<String, Object>>) ColumnUtil.get().getDisplayChoicesList(
+        choices = ColumnUtil.get().getDisplayChoicesList(
             Tables.getInstance(), appName, db, tableId, colDefn.getElementKey());
       } finally {
         if (db != null) {

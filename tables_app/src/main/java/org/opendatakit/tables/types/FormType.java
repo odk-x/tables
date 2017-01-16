@@ -43,7 +43,7 @@ public class FormType {
    */
   public enum Type {
     SURVEY
-  };
+  }
 
   private Type type;
   private SurveyFormParameters mSurveyParams;

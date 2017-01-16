@@ -109,8 +109,8 @@ public class MainActivity extends AbsBaseWebActivity implements
     TABLE_MANAGER_SCREEN,
     ABOUT_SCREEN,
     WEBVIEW_SCREEN
-  };
-  
+  }
+
   /**
    * The active screen -- retained state
    */

@@ -15,8 +15,6 @@
 package org.opendatakit.tables.application;
 
 import org.opendatakit.application.CommonApplication;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 
 public class Tables extends CommonApplication {

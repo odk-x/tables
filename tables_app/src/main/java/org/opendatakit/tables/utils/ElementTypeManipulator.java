@@ -43,8 +43,8 @@ public class ElementTypeManipulator {
   }
 
   public interface ITypeManipulatorFragment<T> {
-    public String   getElementTypeDisplayLabel();
-    public String   getCollectType();
+    String   getElementTypeDisplayLabel();
+    String   getCollectType();
     /* 
      * DateUtils:
         if ( cp.getColumnType() == ColumnType.DATE ) {
@@ -63,8 +63,8 @@ public class ElementTypeManipulator {
 
      * 
      */
-    public String formatForCollect(DateUtils dataUtil, String databaseValue);
-    public Class<?> getDatabaseType();
+    String formatForCollect(DateUtils dataUtil, String databaseValue);
+    Class<?> getDatabaseType();
     /*
      * DateUtils:
         if ( cp.getColumnType() == ColumnType.DATE ) {
@@ -88,7 +88,8 @@ public class ElementTypeManipulator {
         }
 
      */
-    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue);
+    String verifyValidityAndNormalizeValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue);
     /*
      * DateUtils:
      *        
@@ -129,7 +130,8 @@ public class ElementTypeManipulator {
       }
 
      */
-    public T parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue, Class<T> clazz);
+    T parseStringValue(DateUtils dataUtil, ArrayList<Map<String, Object>> displayChoicesList,
+        String inValue, Class<T> clazz);
     
     /*
      * InputScreenUtil
@@ -150,7 +152,7 @@ public class ElementTypeManipulator {
         }
 
      */
-    public InputView getInputView(AbsBaseActivity context, DateUtils du, String value);
+    InputView getInputView(AbsBaseActivity context, DateUtils du, String value);
   }
   
   private HashMap<String, ITypeManipulatorFragment<?> > renderers = new HashMap<String,

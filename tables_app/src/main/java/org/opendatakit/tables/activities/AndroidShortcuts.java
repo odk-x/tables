@@ -14,19 +14,6 @@
 
 package org.opendatakit.tables.activities;
 
-import java.io.File;
-import java.util.ArrayList;
-
-import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.activities.BaseActivity;
-import org.opendatakit.provider.TableDefinitionsColumns;
-import org.opendatakit.provider.TablesProviderAPI;
-import org.opendatakit.database.utilities.CursorUtils;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.Constants;
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -44,6 +31,17 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.database.utilities.CursorUtils;
+import org.opendatakit.provider.TableDefinitionsColumns;
+import org.opendatakit.provider.TablesProviderAPI;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.utilities.ODKFileUtils;
+
+import java.io.File;
+import java.util.ArrayList;
 
 /**
  * Allows the user to create desktop shortcuts to any form currently avaiable to

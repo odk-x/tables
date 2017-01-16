@@ -30,12 +30,12 @@ public interface IWebFragment {
    * Get the webkit in this fragment
    * @return
    */
-  public OdkTablesWebView getWebKit();
+  OdkTablesWebView getWebKit();
 
   /**
    * Toggles visibility of the "database unavailable" text box and 
    * the webkit based upon the accessibility of the database.
    */
-  public abstract void setWebKitVisibility();
+  void setWebKitVisibility();
 
 }

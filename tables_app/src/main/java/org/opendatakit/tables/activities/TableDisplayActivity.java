@@ -87,7 +87,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
    *
    */
   public enum ViewFragmentType {
-    SPREADSHEET, LIST, MAP, DETAIL;
+    SPREADSHEET, LIST, MAP, DETAIL
   }
 
   /**

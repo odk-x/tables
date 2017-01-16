@@ -15,27 +15,24 @@
  */
 package org.opendatakit.tables.views.components;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import org.opendatakit.aggregate.odktables.rest.SyncState;
-import org.opendatakit.data.ColorRule;
-import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
+import org.opendatakit.aggregate.odktables.rest.SyncState;
+import org.opendatakit.data.ColorRule;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
 
