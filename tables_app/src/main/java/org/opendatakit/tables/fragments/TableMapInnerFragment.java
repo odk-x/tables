@@ -18,26 +18,41 @@ package org.opendatakit.tables.fragments;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.application.Tables;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,7 +63,7 @@ import java.util.Set;
  * @author Chris Gelon (cgelon)
  * @author sudar.sam@gmail.com
  */
-public class TableMapInnerFragment extends MapFragment {
+public class TableMapInnerFragment extends MapFragment implements OnMapReadyCallback {
 
   private static final String TAG = TableMapInnerFragment.class.getSimpleName();
 
@@ -75,6 +90,13 @@ public class TableMapInnerFragment extends MapFragment {
   private static final String SAVE_TARGET_LONG = "saveTargetLong";
   /** The zoom level of the camera. Used when saving the instance. */
   private static final String SAVE_ZOOM = "saveZoom";
+
+  private static final float initCameraValue = -1;
+
+  private GoogleMap map;
+  private double savedLatitude = initCameraValue;
+  private double savedLongitude = initCameraValue;
+  private float savedZoom = initCameraValue;
 
   /**
    * Interface for listening to different events that may be triggered by this
@@ -143,66 +165,90 @@ public class TableMapInnerFragment extends MapFragment {
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-//    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-//    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onSaveInstanceState]");
-//    int markerIndexToSave = INVALID_INDEX;
-//    if (mCurrentMarker != null) {
-//      markerIndexToSave = mMarkerIds.get(mCurrentMarker);
-//    }
-//    WebLogger.getLogger(activity.getAppName()).d(TAG,
-//        "[onSaveInstanceState] saving markder index: " + markerIndexToSave);
-//    outState.putInt(SAVE_KEY_INDEX, markerIndexToSave);
-//    CameraPosition pos = getMap().getCameraPosition();
-//    outState.putFloat(SAVE_ZOOM, pos.zoom);
-//    outState.putDouble(SAVE_TARGET_LAT, pos.target.latitude);
-//    outState.putDouble(SAVE_TARGET_LONG, pos.target.longitude);
+    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onSaveInstanceState]");
+    int markerIndexToSave = INVALID_INDEX;
+    if (mCurrentMarker != null) {
+      markerIndexToSave = mMarkerIds.get(mCurrentMarker);
+    }
+    WebLogger.getLogger(activity.getAppName()).d(TAG,
+        "[onSaveInstanceState] saving markder index: " + markerIndexToSave);
+    outState.putInt(SAVE_KEY_INDEX, markerIndexToSave);
+
+    if (map != null) {
+      CameraPosition pos = map.getCameraPosition();
+      outState.putFloat(SAVE_ZOOM, pos.zoom);
+      outState.putDouble(SAVE_TARGET_LAT, pos.target.latitude);
+      outState.putDouble(SAVE_TARGET_LONG, pos.target.longitude);
+    }
   }
 
   @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-//    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-//    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onViewCreated]");
-//    clearAndInitializeMap();
-//    if (savedInstanceState != null) {
-//      savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
-//      getMap().moveCamera(
-//          CameraUpdateFactory.newLatLngZoom(
-//              new LatLng(savedInstanceState.getDouble(SAVE_TARGET_LAT), savedInstanceState
-//                  .getDouble(SAVE_TARGET_LONG)), savedInstanceState.getFloat(SAVE_ZOOM)));
-//    }
-//    getMap().setMyLocationEnabled(true);
-//    //getMap().setOnMapLongClickListener(getOnMapLongClickListener());
-//    getMap().setOnMapClickListener(getOnMapClickListener());
+    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onViewCreated]");
+
+    getMapAsync(this);
+
+    if (savedInstanceState != null) {
+      savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
+      this.savedLatitude = savedInstanceState.getDouble(SAVE_TARGET_LAT);
+      this.savedLongitude = savedInstanceState.getDouble(SAVE_TARGET_LONG);
+      this.savedZoom = savedInstanceState.getFloat(SAVE_ZOOM);
+    }
+  }
+
+  @Override
+  public void onMapReady(final GoogleMap map) {
+    if (map != null) {
+      this.map = map;
+
+      clearAndInitializeMap();
+      if (this.savedLatitude != this.initCameraValue
+              && this.savedLongitude != this.initCameraValue
+              && this.savedZoom != this.initCameraValue) {
+        this.map.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                new LatLng(savedLatitude, savedLongitude), savedZoom));
+      }
+
+
+      this.map.setMyLocationEnabled(true);
+      this.map.setOnMapLongClickListener(getOnMapLongClickListener());
+      this.map.setOnMapClickListener(getOnMapClickListener());
+    }
   }
 
   /** Re-initializes the map, including the markers. 
    **/
   public void clearAndInitializeMap() {
-//    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-//    WebLogger.getLogger(activity.getAppName()).d(TAG, "[clearAndInitializeMap]");
-//    if( getMap() != null ) {
-//      getMap().clear();
-//    }
-//    try {
-//      resetColorProperties();
-//      setMarkers();
-//    } catch (ServicesAvailabilityException e) {
-//      WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-//      WebLogger.getLogger(activity.getAppName()).e(TAG, "Unable to access database");
-//    }
+    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+    WebLogger.getLogger(activity.getAppName()).d(TAG, "[clearAndInitializeMap]");
+    if( map != null ) {
+      map.clear();
+    }
+    try {
+      resetColorProperties();
+      setMarkers();
+    } catch (ServicesAvailabilityException e) {
+      WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+      WebLogger.getLogger(activity.getAppName()).e(TAG, "Unable to access database");
+    }
   }
 
   @Override
   public void onDestroy() {
     super.onDestroy();
-//    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-//    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onDestroy]");
-//    // Clear up any memory references. When destroyed, there cannot be any
-//    // references to the markers, otherwise leaks will happen.
-//    mMarkerIds.clear();
-//    mVisibleMarkers.clear();
-//    mCurrentMarker = null;
+    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onDestroy]");
+    // Clear up any memory references. When destroyed, there cannot be any
+    // references to the markers, otherwise leaks will happen.
+    if (map != null) {
+      mMarkerIds.clear();
+      mVisibleMarkers.clear();
+      mCurrentMarker = null;
+      map = null;
+    }
   }
 
   /**
@@ -219,41 +265,41 @@ public class TableMapInnerFragment extends MapFragment {
    */
   private void findColorGroupAndDbConfiguration() throws ServicesAvailabilityException {
     // Grab the color group
-//    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-//
-//    DbHandle db = null;
-//    try {
-//      db = Tables.getInstance().getDatabase().openDatabase(activity.getAppName());
-//
-//      // get the elementKey for the latitude and longitude columns
-//      mLatitudeElementKey = getLatitudeElementKey(db);
-//      mLongitudeElementKey = getLongitudeElementKey(db);
-//
-//      String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
-//
-//      TableUtil.MapViewColorRuleInfo colorRuleInfo =
-//              TableUtil.get().getMapListViewColorRuleInfo(Tables.getInstance(), activity.getAppName(), db, activity.getTableId());
-//
-//      // Create a guide depending on what type of color rule is selected.
-//      mColorGroup = null;
-//      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
-//        mColorGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), activity.getAppName(),
-//            db, activity.getTableId(), adminColumns);
-//      }
-//      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
-//        mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), activity.getAppName(),
-//            db, activity.getTableId(), adminColumns);
-//      }
-//
-//      if (mColorGroup != null) {
-//        UserTable userTableForColor = activity.getUserTable();
-//        mColorGuideGroup = new ColorGuideGroup(mColorGroup, userTableForColor);
-//      }
-//    } finally {
-//      if ( db != null ) {
-//        Tables.getInstance().getDatabase().closeDatabase(activity.getAppName(), db);
-//      }
-//    }
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+
+    DbHandle db = null;
+    try {
+      db = Tables.getInstance().getDatabase().openDatabase(activity.getAppName());
+
+      // get the elementKey for the latitude and longitude columns
+      mLatitudeElementKey = getLatitudeElementKey(db);
+      mLongitudeElementKey = getLongitudeElementKey(db);
+
+      String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
+
+      TableUtil.MapViewColorRuleInfo colorRuleInfo =
+              TableUtil.get().getMapListViewColorRuleInfo(Tables.getInstance(), activity.getAppName(), db, activity.getTableId());
+
+      // Create a guide depending on what type of color rule is selected.
+      mColorGroup = null;
+      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
+        mColorGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), activity.getAppName(),
+            db, activity.getTableId(), adminColumns);
+      }
+      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
+        mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), activity.getAppName(),
+            db, activity.getTableId(), adminColumns);
+      }
+
+      if (mColorGroup != null) {
+        UserTable userTableForColor = activity.getUserTable();
+        mColorGuideGroup = new ColorGuideGroup(mColorGroup, userTableForColor);
+      }
+    } finally {
+      if ( db != null ) {
+        Tables.getInstance().getDatabase().closeDatabase(activity.getAppName(), db);
+      }
+    }
   }
 
   /**
@@ -261,76 +307,76 @@ public class TableMapInnerFragment extends MapFragment {
    * properties.
    */
   private void setMarkers() {
-//    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-//
-//    boolean isMocked = Tables.getInstance().isMocked();
-//
-//    if (mMarkerIds != null) {
-//      mMarkerIds.clear();
-//    }
-//    if (mVisibleMarkers != null) {
-//      mVisibleMarkers.clear();
-//    }
-//
-//    mMarkerIds = new HashMap<Marker, Integer>();
-//    mVisibleMarkers = new HashSet<Marker>();
-//
-//    if (mLatitudeElementKey == null || mLongitudeElementKey == null) {
-//      Toast.makeText(getActivity(), getActivity().getString(R.string.lat_long_not_set),
-//          Toast.LENGTH_LONG).show();
-//      return;
-//    }
-//
-//    UserTable table = activity.getUserTable();
-//
-//    OrderedColumns orderedDefns = activity.getColumnDefinitions();
-//
-//    if ( table != null && orderedDefns != null ) {
-//      // Try to find the map columns in the store.
-//      ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
-//      ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
-//
-//      // Find the locations from entries in the table.
-//      LatLng firstLocation = null;
-//
-//      // Go through each row and create a marker at the specified location.
-//      for (int i = 0; i < table.getNumberOfRows(); i++) {
-//        Row row = table.getRowAtIndex(i);
-//        String latitudeString = row.getDataByKey(latitudeColumn.getElementKey());
-//        String longitudeString = row.getDataByKey(longitudeColumn.getElementKey());
-//        if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
-//            || longitudeString.length() == 0) {
-//          continue;
-//        }
-//
-//        // Create a LatLng from the latitude and longitude strings.
-//        LatLng location = parseLocationFromString(latitudeColumn, latitudeString, longitudeColumn,
-//            longitudeString);
-//        if (location == null) {
-//          continue;
-//        }
-//        if (firstLocation == null) {
-//          firstLocation = location;
-//        }
-//
-//        if (!isMocked) {
-//          Marker marker = getMap().addMarker(new MarkerOptions().position(location).draggable(false)
-//              .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
-//          mMarkerIds.put(marker, i);
-//          if (mCurrentIndex == i) {
-//            WebLogger.getLogger(activity.getAppName()).d(TAG, "[setMarkers] selecting marker: " + i);
-//            selectMarker(marker);
-//          }
-//        }
-//      }
-//
-//      if (firstLocation != null) {
-//        if (!isMocked) {
-//          getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
-//          getMap().setOnMarkerClickListener(getOnMarkerClickListener());
-//        }
-//      }
-//    }
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+
+    boolean isMocked = Tables.getInstance().isMocked();
+
+    if (mMarkerIds != null) {
+      mMarkerIds.clear();
+    }
+    if (mVisibleMarkers != null) {
+      mVisibleMarkers.clear();
+    }
+
+    mMarkerIds = new HashMap<Marker, Integer>();
+    mVisibleMarkers = new HashSet<Marker>();
+
+    if (mLatitudeElementKey == null || mLongitudeElementKey == null) {
+      Toast.makeText(getActivity(), getActivity().getString(R.string.lat_long_not_set),
+          Toast.LENGTH_LONG).show();
+      return;
+    }
+
+    UserTable table = activity.getUserTable();
+
+    OrderedColumns orderedDefns = activity.getColumnDefinitions();
+
+    if ( table != null && orderedDefns != null ) {
+      // Try to find the map columns in the store.
+      ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
+      ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
+
+      // Find the locations from entries in the table.
+      LatLng firstLocation = null;
+
+      // Go through each row and create a marker at the specified location.
+      for (int i = 0; i < table.getNumberOfRows(); i++) {
+        Row row = table.getRowAtIndex(i);
+        String latitudeString = row.getDataByKey(latitudeColumn.getElementKey());
+        String longitudeString = row.getDataByKey(longitudeColumn.getElementKey());
+        if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
+            || longitudeString.length() == 0) {
+          continue;
+        }
+
+        // Create a LatLng from the latitude and longitude strings.
+        LatLng location = parseLocationFromString(latitudeColumn, latitudeString, longitudeColumn,
+            longitudeString);
+        if (location == null) {
+          continue;
+        }
+        if (firstLocation == null) {
+          firstLocation = location;
+        }
+
+        if (!isMocked && map != null) {
+          Marker marker = map.addMarker(new MarkerOptions().position(location).draggable(false)
+              .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
+          mMarkerIds.put(marker, i);
+          if (mCurrentIndex == i) {
+            WebLogger.getLogger(activity.getAppName()).d(TAG, "[setMarkers] selecting marker: " + i);
+            selectMarker(marker);
+          }
+        }
+      }
+
+      if (firstLocation != null && map != null) {
+        if (!isMocked) {
+          map.moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
+          map.setOnMarkerClickListener(getOnMarkerClickListener());
+        }
+      }
+    }
   }
 
   /**
@@ -424,45 +470,46 @@ public class TableMapInnerFragment extends MapFragment {
   /**
    * On a long click, add a row to the data table at the position clicked.
    */
-//  private OnMapLongClickListener getOnMapLongClickListener() {
-//    return new OnMapLongClickListener() {
-//      @Override
-//      public void onMapLongClick(LatLng location) {
-//        TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-//
-//        // Create a mapping from the lat and long columns to the
-//        // values in the location.
-//        Map<String, String> elementNameToValue = new HashMap<String, String>();
-//
-//        OrderedColumns orderedDefns = activity.getColumnDefinitions();
-//        for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
-//          elementNameToValue.put(cd.getElementName(), "");
-//        }
-//        {
-//          ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
-//          elementNameToValue.put(mLatitudeElementKey, Double.toString(location.latitude));
-//        }
-//
-//        {
-//          ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
-//          elementNameToValue.put(mLongitudeElementKey, Double.toString(location.longitude));
-//        }
-//        // To store the mapping in a bundle, we need to put it in string list.
-//        ArrayList<String> bundleStrings = new ArrayList<String>();
-//        for (String key : elementNameToValue.keySet()) {
-//          bundleStrings.add(key);
-//          bundleStrings.add(elementNameToValue.get(key));
-//        }
-//        // Bundle it all up for the fragment.
-//        Bundle b = new Bundle();
-//        b.putStringArrayList(LocationDialogFragment.ELEMENT_NAME_TO_VALUE_KEY, bundleStrings);
-//        b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
-//        LocationDialogFragment dialog = new LocationDialogFragment();
-//        dialog.setArguments(b);
-//        dialog.show(getFragmentManager(), "LocationDialogFragment");
-//      }
-//    };
-//  }
+  // Check that this is not working on 208
+  private OnMapLongClickListener getOnMapLongClickListener() {
+    return new OnMapLongClickListener() {
+      @Override
+      public void onMapLongClick(LatLng location) {
+        TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+
+        // Create a mapping from the lat and long columns to the
+        // values in the location.
+        Map<String, String> elementNameToValue = new HashMap<String, String>();
+
+        OrderedColumns orderedDefns = activity.getColumnDefinitions();
+        for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
+          elementNameToValue.put(cd.getElementName(), "");
+        }
+        {
+          ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
+          elementNameToValue.put(mLatitudeElementKey, Double.toString(location.latitude));
+        }
+
+        {
+          ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
+          elementNameToValue.put(mLongitudeElementKey, Double.toString(location.longitude));
+        }
+        // To store the mapping in a bundle, we need to put it in string list.
+        ArrayList<String> bundleStrings = new ArrayList<String>();
+        for (String key : elementNameToValue.keySet()) {
+          bundleStrings.add(key);
+          bundleStrings.add(elementNameToValue.get(key));
+        }
+        // Bundle it all up for the fragment.
+        Bundle b = new Bundle();
+        b.putStringArrayList(LocationDialogFragment.ELEMENT_NAME_TO_VALUE_KEY, bundleStrings);
+        b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
+        LocationDialogFragment dialog = new LocationDialogFragment();
+        dialog.setArguments(b);
+        dialog.show(getFragmentManager(), "LocationDialogFragment");
+      }
+    };
+  }
 
   /**
    * When a marker is clicked, set the index of the list fragment, and then show

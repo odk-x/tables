@@ -15,22 +15,22 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.tables.activities.AbsTableActivity;
-import org.opendatakit.tables.utils.ActivityUtil;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.widget.Toast;
+
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.activities.AbsTableWebActivity;
+import org.opendatakit.tables.utils.ActivityUtil;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The LocationDialogFragment is used when asking the user if they would like to
@@ -65,7 +65,7 @@ public class LocationDialogFragment extends DialogFragment {
       builder.setMessage("Would you like to add a row at: " + location + "?")
           .setPositiveButton("Add", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-              AbsTableActivity activity = (AbsTableActivity) getActivity();
+              AbsTableWebActivity activity = (AbsTableWebActivity) getActivity();
               try {
                 ActivityUtil.addRow(activity, activity.getAppName(), 
                     activity.getTableId(),
