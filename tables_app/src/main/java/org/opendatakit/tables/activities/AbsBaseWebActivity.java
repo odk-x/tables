@@ -38,7 +38,7 @@ import java.util.LinkedList;
  *   public void databaseUnavailable();
  *   public void initializationCompleted();
  */
-public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdkTablesActivity {
+public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOdkTablesActivity {
   private static final String t = "AbsBaseWebActivity";
 
   // tags for retained context
@@ -69,10 +69,9 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
   // no need to preserve
   private PropertyManager mPropertyManager;
 
-  public abstract String getTableId();
   public abstract String getInstanceId();
   public abstract ODKWebView getWebKitView();
-
+  
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);

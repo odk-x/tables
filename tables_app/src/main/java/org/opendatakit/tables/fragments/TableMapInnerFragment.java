@@ -309,8 +309,6 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
   private void setMarkers() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
-    boolean isMocked = Tables.getInstance().isMocked();
-
     if (mMarkerIds != null) {
       mMarkerIds.clear();
     }
@@ -359,7 +357,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
           firstLocation = location;
         }
 
-        if (!isMocked && map != null) {
+        if (map != null) {
           Marker marker = map.addMarker(new MarkerOptions().position(location).draggable(false)
               .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
           mMarkerIds.put(marker, i);
@@ -371,10 +369,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       }
 
       if (firstLocation != null && map != null) {
-        if (!isMocked) {
           map.moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
           map.setOnMarkerClickListener(getOnMarkerClickListener());
-        }
       }
     }
   }

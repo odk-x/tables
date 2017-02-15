@@ -28,11 +28,9 @@ import android.view.View;
 import android.widget.Toast;
 
 import org.opendatakit.database.data.UserTable;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.webkitserver.utilities.UrlUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.views.ODKWebView;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
@@ -47,6 +45,8 @@ import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
+import org.opendatakit.views.ODKWebView;
+import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 /**
  * Displays information about a table. List, Map, and Detail views are all
@@ -72,8 +72,8 @@ import org.opendatakit.tables.utils.SQLQueryStruct;
  * @author sudar.sam@gmail.com
  *
  */
-public class TableDisplayActivity extends AbsTableWebActivity implements
-    TableMapInnerFragmentListener {
+public class TableDisplayActivity extends AbsBaseWebActivity implements
+    TableMapInnerFragmentListener, IOdkTablesActivity {
 
   private static final String TAG = "TableDisplayActivity";
 
@@ -186,8 +186,8 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
   protected void onResume() {
     super.onResume();
 
-    showCurrentDisplayFragment(false);
-  }
+      showCurrentDisplayFragment(false);
+    }
 
   /** Cached data from database */
   private PossibleTableViewTypes mPossibleTableViewTypes = null;
@@ -279,6 +279,7 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
     super.onDestroy();
     WebLogger.getLogger(getAppName()).d(TAG, "[onDestroy]");
   }
+
 
   @Override public ODKWebView getWebKitView() {
     FragmentManager fragmentManager = this.getFragmentManager();
@@ -664,22 +665,22 @@ public class TableDisplayActivity extends AbsTableWebActivity implements
     // itself. So, we need to hide and show the others as appropriate.
     View onePaneContent = this.findViewById(R.id.activity_table_display_activity_one_pane_content);
     View mapContent = this.findViewById(R.id.activity_table_display_activity_map_content);
-    switch (viewFragmentType) {
-    case DETAIL:
-    case LIST:
-    case SPREADSHEET:
-      onePaneContent.setVisibility(View.VISIBLE);
-      mapContent.setVisibility(View.GONE);
-      return;
-    case MAP:
-      onePaneContent.setVisibility(View.GONE);
-      mapContent.setVisibility(View.VISIBLE);
-      return;
-    default:
-      WebLogger.getLogger(getAppName()).e(TAG,
-          "[updateChildViewVisibility] unrecognized type: " + viewFragmentType);
+      switch (viewFragmentType) {
+        case DETAIL:
+        case LIST:
+        case SPREADSHEET:
+          onePaneContent.setVisibility(View.VISIBLE);
+          mapContent.setVisibility(View.GONE);
+          return;
+        case MAP:
+          onePaneContent.setVisibility(View.GONE);
+          mapContent.setVisibility(View.VISIBLE);
+          return;
+        default:
+          WebLogger.getLogger(getAppName()).e(TAG,
+                  "[updateChildViewVisibility] unrecognized type: " + viewFragmentType);
+      }
     }
-  }
 
   /**
    * Invoked by TableMapInnerFragment when an item has been selected

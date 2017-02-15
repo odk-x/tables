@@ -24,7 +24,7 @@ import android.widget.Toast;
 
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.tables.activities.AbsTableWebActivity;
+import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
 
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class LocationDialogFragment extends DialogFragment {
       builder.setMessage("Would you like to add a row at: " + location + "?")
           .setPositiveButton("Add", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-              AbsTableWebActivity activity = (AbsTableWebActivity) getActivity();
+              AbsTableActivity activity = (AbsTableActivity) getActivity();
               try {
                 ActivityUtil.addRow(activity, activity.getAppName(), 
                     activity.getTableId(),

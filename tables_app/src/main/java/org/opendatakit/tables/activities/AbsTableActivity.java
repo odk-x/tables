@@ -15,14 +15,14 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.consts.IntentConsts;
+import android.os.Bundle;
+
 import org.opendatakit.application.CommonApplication;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
-
-import android.os.Bundle;
 
 /**
  * This class is the base for any Activity that will display information about
@@ -45,9 +45,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
     mTableId = retrieveTableIdFromIntent();
     if (mTableId == null) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] table id was not present in Intent.");
-      throw new IllegalStateException(
-          "A table id was not passed to a table activity");
-    }  
+    }
   }
   
   /**
