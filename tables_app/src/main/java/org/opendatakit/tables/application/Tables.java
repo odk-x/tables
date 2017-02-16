@@ -54,7 +54,7 @@ public class Tables extends CommonApplication {
     return -1; // R.id.webkit;
   }
 
-  public String getVersionedAppName() {
+  public String getVersionedToolName() {
     String versionDetail = this.getVersionDetail();
     return getString(R.string.app_name) + versionDetail;
   }

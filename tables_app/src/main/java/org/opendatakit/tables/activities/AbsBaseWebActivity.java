@@ -5,8 +5,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import org.json.JSONObject;
+import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.application.AppAwareApplication;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.properties.CommonToolProperties;
@@ -210,7 +210,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
     Intent i;
     boolean isCurrentApp = false;
-    String currentApp = "org.opendatakit." + ((AppAwareApplication) getApplication()).getToolName();
+    String currentApp = "org.opendatakit." + ((ToolAwareApplication) getApplication()).getToolName();
 
     boolean isOpendatakitApp = false;
     if (action.startsWith(currentApp)) {
