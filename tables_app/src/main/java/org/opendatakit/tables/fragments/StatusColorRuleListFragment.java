@@ -17,6 +17,7 @@ package org.opendatakit.tables.fragments;
 
 import java.util.Map;
 
+import android.content.Context;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.TableUtil;
@@ -65,9 +66,9 @@ public class StatusColorRuleListFragment extends ListFragment {
   }
 
   @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    if (!(activity instanceof TableLevelPreferencesActivity)) {
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    if (!(context instanceof TableLevelPreferencesActivity)) {
       throw new IllegalArgumentException(
               "must be attached to a " +
                       TableLevelPreferencesActivity.class.getSimpleName());

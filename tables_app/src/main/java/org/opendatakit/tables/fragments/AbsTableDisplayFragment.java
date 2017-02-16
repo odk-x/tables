@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
+import android.content.Context;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -30,9 +31,9 @@ import android.app.Fragment;
 public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
   
   @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    if (!(activity instanceof TableDisplayActivity)) {
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    if (!(context instanceof TableDisplayActivity)) {
       throw new IllegalStateException("fragment must be attached to a " +
           TableDisplayActivity.class.getSimpleName());
     }

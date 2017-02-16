@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
+import android.content.Context;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -35,13 +36,13 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
 
   protected String mAppName;
 
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    if (!(activity instanceof AbsBaseActivity)) {
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    if (!(context instanceof AbsBaseActivity)) {
       throw new IllegalStateException(AbsBaseFragment.class.getSimpleName()
           + " must be attached to an " + AbsBaseActivity.class.getSimpleName());
     }
-    mAppName = ((AbsBaseActivity) activity).getAppName();
+    mAppName = ((AbsBaseActivity) context).getAppName();
   }
 
   @Override

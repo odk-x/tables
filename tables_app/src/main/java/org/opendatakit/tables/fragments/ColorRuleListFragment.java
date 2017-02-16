@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import android.content.Context;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -80,9 +81,9 @@ public class ColorRuleListFragment extends ListFragment {
   }
     
   @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    if (!(activity instanceof TableLevelPreferencesActivity)) {
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    if (!(context instanceof TableLevelPreferencesActivity)) {
       throw new IllegalArgumentException(
           "must be attached to a " +
               TableLevelPreferencesActivity.class.getSimpleName());

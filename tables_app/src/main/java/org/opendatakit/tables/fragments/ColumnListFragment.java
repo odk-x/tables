@@ -18,6 +18,7 @@ package org.opendatakit.tables.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.Context;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.TableUtil;
@@ -51,9 +52,9 @@ public class ColumnListFragment extends ListFragment {
   private List<String> mDisplayNames;
 
   @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    if (!(activity instanceof AbsTableActivity)) {
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    if (!(context instanceof AbsTableActivity)) {
       throw new IllegalStateException("must be attached to "
           + AbsTableActivity.class.getSimpleName());
     }

@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
+import android.content.Context;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
@@ -44,9 +45,9 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   private static final String TAG =
       ColumnPreferenceFragment.class.getSimpleName();
 
-  public void onAttach(android.app.Activity activity) {
-    super.onAttach(activity);
-    if (!(activity instanceof TableLevelPreferencesActivity)) {
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    if (!(context instanceof TableLevelPreferencesActivity)) {
       throw new IllegalStateException("fragment must be attached to "
           + TableLevelPreferencesActivity.class.getSimpleName());
     }
