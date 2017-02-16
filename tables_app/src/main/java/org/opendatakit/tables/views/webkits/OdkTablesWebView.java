@@ -32,34 +32,23 @@ public class OdkTablesWebView extends ODKWebView {
     return false;
   }
 
+   /**
+    *  IMPORTANT: This function should only be called with the context of the database listeners
+    *  OR if called from elsewhere there should be an if statement before invoking that checks
+    *  if the database is currently available.
+    */
   @Override public void loadPage() {
+
     /**
      * NOTE: Reload the web framework only if it has changed.
      */
 
-    if ( ((IOdkDataActivity) getContext()).getDatabase() == null ) {
-      // do not initiate reload until we have the database set up...
-      return;
-    }
-
     log.i(t, "loadPage: current loadPageUrl: " + getLoadPageUrl());
-    final String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(
+    String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(
         hasPageFrameworkFinishedLoading() && getLoadPageUrl() != null );
 
     if ( baseUrl != null ) {
-      resetLoadPageStatus(baseUrl);
-
-      // Ensure that this is run on the UI thread
-      if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
-        post(new Runnable() {
-          public void run() {
-            loadUrl(baseUrl);
-          }
-        });
-      } else {
-        loadUrl(baseUrl);
-      }
-
+      loadPageOnUiThread(baseUrl, false);
     } else if ( hasPageFrameworkFinishedLoading() ) {
       log.w(t, "loadPage: framework was loaded -- but no URL -- don't load anything!");
     } else {
@@ -68,28 +57,18 @@ public class OdkTablesWebView extends ODKWebView {
 
   }
 
-  @Override public void reloadPage() {
+   /**
+    *  IMPORTANT: This function should only be called with the context of the database listeners
+    *  OR if called from elsewhere there should be an if statement before invoking that checks
+    *  if the database is currently available.
+    */
+   @Override public void reloadPage() {
+
     log.i(t, "reloadPage: current loadPageUrl: " + getLoadPageUrl());
-    final String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(false);
+    String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(false);
 
     if ( baseUrl != null ) {
-      if ( hasPageFrameworkFinishedLoading() || !baseUrl.equals(getLoadPageUrl()) ) {
-        resetLoadPageStatus(baseUrl);
-        log.i(t, "reloadPage: full reload: " + baseUrl);
-
-        // Ensure that this is run on the UI thread
-        if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
-          post(new Runnable() {
-            public void run() {
-              loadUrl(baseUrl);
-            }
-          });
-        } else {
-          loadUrl(baseUrl);
-        }
-      } else {
-        log.w(t, "reloadPage: framework in process of loading -- ignoring request!");
-      }
+      loadPageOnUiThread(baseUrl, true);
     } else {
       log.w(t, "reloadPage: framework did not load -- cannot load anything!");
     }

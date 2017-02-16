@@ -15,6 +15,9 @@
  */
 package org.opendatakit.tables.fragments;
 
+import android.app.Activity;
+import android.util.Log;
+import org.opendatakit.activities.IOdkDataActivity;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 
@@ -63,10 +66,25 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
    * Resets the webview (the list), and sets the visibility to visible.
    */
   void resetView() {
+
+     // do not initiate reload until we have the database set up...
+     Activity activity = getActivity();
+     if(activity instanceof IOdkDataActivity) {
+        if ( ((IOdkDataActivity) activity).getDatabase() == null ) {
+           return;
+        }
+     } else {
+        Log.e(TAG, "Problem: MapListView not being rendered from activity that is an "
+            + "IOdkDataActivity");
+        return;
+     }
+
+
     WebLogger.getLogger(getAppName()).d(TAG, "[resetView]");
 
     OdkTablesWebView currentView = (OdkTablesWebView) this.getView().findViewById(R.id.webkit);
-    // Just reload the page.
+
+     // reload the page.
     currentView.reloadPage();
   }
 
