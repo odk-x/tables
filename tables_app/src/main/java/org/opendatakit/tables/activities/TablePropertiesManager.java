@@ -478,8 +478,8 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     public boolean onPreferenceChange(Preference preference, Object newValue) {
       String localizedDisplayName;
       try {
-        localizedDisplayName = LocalizationUtils.getLocalizedDisplayName(
-                TableUtil.get().atomicSetRawDisplayName(Tables.getInstance(), appName, tableId, (String) newValue));
+        localizedDisplayName = LocalizationUtils.getLocalizedDisplayName(appName, tableId,
+            TableUtil.get().atomicSetRawDisplayName(Tables.getInstance(), appName, tableId, (String) newValue));
       } catch ( ServicesAvailabilityException e ) {
         Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
         init();

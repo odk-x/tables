@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColumnUtil;
@@ -35,6 +36,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
+import org.opendatakit.utilities.ODKFileUtils;
 
 /**
  * A dialog for editing the multiple-choice options for a column.
@@ -104,12 +106,12 @@ public class MultipleChoiceSettingDialog extends Dialog {
   private String getLocalizedString(Map<String, Object> option) {
     Object displayObj = option.get("display");
     if (displayObj != null) {
-      Object textObj = ((Map<String, Object>) displayObj).get("text");
-      if (textObj != null) {
-        if (textObj instanceof String) {
-          return (String) textObj;
-        }
-        return LocalizationUtils.getLocalizedDisplayName((Map<String, Object>) textObj);
+      try {
+        String asWrappedString = ODKFileUtils.mapper.writeValueAsString(displayObj);
+        return LocalizationUtils.getLocalizedDisplayName(appName, tableId, asWrappedString);
+      } catch ( JsonProcessingException e ) {
+        WebLogger.getLogger(appName).printStackTrace(e);
+        WebLogger.getLogger(appName).e(TAG, "Unable to localize choice");
       }
     }
     return "";
