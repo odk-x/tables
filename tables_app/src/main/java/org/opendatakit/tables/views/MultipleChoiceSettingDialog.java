@@ -23,6 +23,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
@@ -103,12 +105,13 @@ public class MultipleChoiceSettingDialog extends Dialog {
   }
 
   @SuppressWarnings("unchecked")
-  private String getLocalizedString(Map<String, Object> option) {
+  private String getLocalizedString(String userSelectedDefaultLocale, Map<String, Object> option) {
     Object displayObj = option.get("display");
     if (displayObj != null) {
       try {
         String asWrappedString = ODKFileUtils.mapper.writeValueAsString(displayObj);
-        return LocalizationUtils.getLocalizedDisplayName(appName, tableId, asWrappedString);
+        return LocalizationUtils.getLocalizedDisplayName(appName, tableId,
+            userSelectedDefaultLocale, asWrappedString);
       } catch ( JsonProcessingException e ) {
         WebLogger.getLogger(appName).printStackTrace(e);
         WebLogger.getLogger(appName).e(TAG, "Unable to localize choice");
@@ -120,6 +123,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
   private void init() {
     layout.removeAllViews();
     optionFields.clear();
+    PropertiesSingleton props = CommonToolProperties.get(getContext(), appName);
     TableLayout optionList = new TableLayout(context);
     LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -127,7 +131,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
     for (int i = 0; i < optionValues.size(); i++) {
       final int index = i;
       EditText field = new EditText(context);
-      field.setText(getLocalizedString(optionValues.get(i)));
+      field.setText(getLocalizedString(props.getUserSelectedDefaultLocale(), optionValues.get(i)));
       optionFields.add(field);
       TableRow row = new TableRow(context);
       row.addView(field);
