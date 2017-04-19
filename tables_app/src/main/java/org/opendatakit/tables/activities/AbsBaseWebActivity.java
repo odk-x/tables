@@ -143,7 +143,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
     final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
         getTableId(), getInstanceId(),
-        props.getActiveUser(), props.getLocale(),
+        props.getActiveUser(), props.getUserSelectedDefaultLocale(),
         props.getProperty(CommonToolProperties.KEY_USERNAME),
         props.getProperty(CommonToolProperties.KEY_ACCOUNT));
 
@@ -283,7 +283,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
         final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
             getTableId(), getInstanceId(),
-            props.getActiveUser(), props.getLocale(),
+            props.getActiveUser(), props.getUserSelectedDefaultLocale(),
             props.getProperty(CommonToolProperties.KEY_USERNAME),
             props.getProperty(CommonToolProperties.KEY_ACCOUNT));
 
