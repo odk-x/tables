@@ -30,6 +30,8 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.data.TableViewType;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.utilities.*;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
@@ -477,9 +479,11 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
       String localizedDisplayName;
+      PropertiesSingleton props = CommonToolProperties.get(getApplicationContext(), getAppName());
       try {
-        localizedDisplayName = LocalizationUtils.getLocalizedDisplayName(
-                TableUtil.get().atomicSetRawDisplayName(Tables.getInstance(), appName, tableId, (String) newValue));
+        localizedDisplayName = LocalizationUtils.getLocalizedDisplayName(appName, tableId,
+            props.getUserSelectedDefaultLocale(),
+            TableUtil.get().atomicSetRawDisplayName(Tables.getInstance(), appName, tableId, (String) newValue));
       } catch ( ServicesAvailabilityException e ) {
         Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
         init();
