@@ -111,7 +111,7 @@ public class ActivityUtil {
    * @throws ServicesAvailabilityException
    */
   public static void addRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, Map<String, String> prepopulatedValues) throws
+      OrderedColumns orderedDefns, Map<String, Object> prepopulatedValues) throws
       ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 

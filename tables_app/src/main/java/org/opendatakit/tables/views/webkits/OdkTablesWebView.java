@@ -1,12 +1,9 @@
 package org.opendatakit.tables.views.webkits;
 
 import android.content.Context;
-import android.os.Looper;
 import android.util.AttributeSet;
-import org.opendatakit.activities.IOdkDataActivity;
 import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.activities.IOdkTablesActivity;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.views.ODKWebView;
 
 /**
@@ -15,17 +12,10 @@ import org.opendatakit.views.ODKWebView;
 public class OdkTablesWebView extends ODKWebView {
   private static final String t = "OdkTablesWebView";
 
-  private OdkTables tables;
-
   public OdkTablesWebView(Context context, AttributeSet attrs) {
     super(context, attrs);
 
     AbsBaseWebActivity activity = (AbsBaseWebActivity) context;
-
-    // stomp on the odkTables object...
-    tables = new OdkTables(activity, this, activity.getTableId());
-    addJavascriptInterface(tables.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.CONTROL);
   }
 
   @Override public boolean hasPageFramework() {

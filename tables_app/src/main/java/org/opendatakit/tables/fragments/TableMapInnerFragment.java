@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
@@ -49,8 +50,8 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.utilities.ODKFileUtils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -475,30 +476,22 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
         // Create a mapping from the lat and long columns to the
         // values in the location.
-        Map<String, String> elementNameToValue = new HashMap<String, String>();
+        Map<String, Object> elementKeyToValue = new HashMap<String, Object>();
 
-        OrderedColumns orderedDefns = activity.getColumnDefinitions();
-        for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
-          elementNameToValue.put(cd.getElementName(), "");
-        }
-        {
-          ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
-          elementNameToValue.put(mLatitudeElementKey, Double.toString(location.latitude));
-        }
+        elementKeyToValue.put(mLatitudeElementKey,location.latitude);
+        elementKeyToValue.put(mLongitudeElementKey, location.longitude);
 
-        {
-          ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
-          elementNameToValue.put(mLongitudeElementKey, Double.toString(location.longitude));
-        }
-        // To store the mapping in a bundle, we need to put it in string list.
-        ArrayList<String> bundleStrings = new ArrayList<String>();
-        for (String key : elementNameToValue.keySet()) {
-          bundleStrings.add(key);
-          bundleStrings.add(elementNameToValue.get(key));
+        // To store the mapping in a bundle, JSON stringify it.
+        String jsonStringifyElementKeyToValueMap = null;
+        try {
+          jsonStringifyElementKeyToValueMap = ODKFileUtils.mapper.writeValueAsString(elementKeyToValue);
+        } catch (JsonProcessingException e) {
+          WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+          throw new IllegalStateException("should never happen");
         }
         // Bundle it all up for the fragment.
         Bundle b = new Bundle();
-        b.putStringArrayList(LocationDialogFragment.ELEMENT_NAME_TO_VALUE_KEY, bundleStrings);
+        b.putString(LocationDialogFragment.ELEMENT_KEY_TO_VALUE_MAP_KEY, jsonStringifyElementKeyToValueMap);
         b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
         LocationDialogFragment dialog = new LocationDialogFragment();
         dialog.setArguments(b);

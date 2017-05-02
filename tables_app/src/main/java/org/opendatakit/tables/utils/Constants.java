@@ -206,7 +206,6 @@ public class Constants {
    *
    */
   public static class JavaScriptHandles {
-    public static final String CONTROL = "odkTables";
     public static final String COMMON = "odkCommon";
     // new data interface
     public static final String DATAIF = "odkDataIf";

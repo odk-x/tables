@@ -14,6 +14,7 @@
 
 package org.opendatakit.tables.views.webkits;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
@@ -75,12 +76,15 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
       constructRowColorObjects(db, userTable, adminCols, statusColors, colorRuleType.STATUS, null);
 
       // Need to get column color rules working
-      Map<String, Integer> elementKeyMap = (Map<String, Integer>) metadata.get("elementKeyMap");
-      for (String elementKey : elementKeyMap.keySet()) {
-        ArrayList<RowColorObject> colColorGuide = new ArrayList<RowColorObject>();
-        constructRowColorObjects(db, userTable, adminCols, colColorGuide, colorRuleType.COLUMN, elementKey);
-        if (colColorGuide.size() > 0) {
-          colColors.put(elementKey, colColorGuide);
+      Object ekm = metadata.get("elementKeyMap");
+      if ( ekm instanceof Map ) {
+        Map<String, Integer> elementKeyMap = (Map<String, Integer>) ekm;
+        for (String elementKey : elementKeyMap.keySet()) {
+          ArrayList<RowColorObject> colColorGuide = new ArrayList<RowColorObject>();
+          constructRowColorObjects(db, userTable, adminCols, colColorGuide, colorRuleType.COLUMN, elementKey);
+          if (colColorGuide.size() > 0) {
+            colColors.put(elementKey, colColorGuide);
+          }
         }
       }
 

@@ -22,14 +22,15 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
+import org.opendatakit.utilities.ODKFileUtils;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,19 +47,19 @@ public class LocationDialogFragment extends DialogFragment {
    */
   public static final String LOCATION_KEY = "locationkey";
   /**
-   * The key in the argument bundle to grab the mapping from element names to
-   * values.
+   * JSON stringify of Map<String,Object> for the elementKey -to- value map.
    */
-  public static final String ELEMENT_NAME_TO_VALUE_KEY = "elementnametovaluekey";
+  public static final String ELEMENT_KEY_TO_VALUE_MAP_KEY = "elementKeyToValueMapKey";
 
   private String _location;
-  private ArrayList<String> _mappingList;
+  private String _jsonStringifyElementKeyToValue;
 
   @Override
   public Dialog onCreateDialog(Bundle savedInstanceState) {
     Bundle bundle = getArguments();
     String location = bundle.getString(LOCATION_KEY);
-    final Map<String, String> mapping = getElementNameToValueMap(bundle.getStringArrayList(ELEMENT_NAME_TO_VALUE_KEY));
+    final Map<String, Object> mapping = getElementKeyToValueMap(bundle.getString
+        (ELEMENT_KEY_TO_VALUE_MAP_KEY));
     if (location != null) {
       // Use the Builder class for convenient dialog construction
       AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -91,18 +92,23 @@ public class LocationDialogFragment extends DialogFragment {
     super.onSaveInstanceState(outState);
 
     outState.putString(LOCATION_KEY, _location);
-    outState.putStringArrayList(ELEMENT_NAME_TO_VALUE_KEY, _mappingList);
+    outState.putString(ELEMENT_KEY_TO_VALUE_MAP_KEY, _jsonStringifyElementKeyToValue);
   }
 
   /**
    * There is no way to store a map in a bundle, so I had to store it as a list,
    * alternating the key and the value. This recreates the map from the bundle.
    */
-  private Map<String, String> getElementNameToValueMap(List<String> strings) {
-    Map<String, String> elementNameToValue = new HashMap<String, String>();
-    for (int i = 0; i < strings.size(); i += 2) {
-      elementNameToValue.put(strings.get(i), strings.get(i + 1));
+  private Map<String, Object> getElementKeyToValueMap(String jsonStringifyElementKeyToValue) {
+    HashMap<String, Object> elementKeyToValue = new HashMap<String, Object>();
+    if ( jsonStringifyElementKeyToValue != null ) {
+      TypeReference<HashMap<String,Object>> ref = new TypeReference<HashMap<String, Object>>() { };
+      try {
+        elementKeyToValue = ODKFileUtils.mapper.readValue(jsonStringifyElementKeyToValue, ref);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
-    return elementNameToValue;
+    return elementKeyToValue;
   }
 }

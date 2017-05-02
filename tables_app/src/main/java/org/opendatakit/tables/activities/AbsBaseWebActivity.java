@@ -4,7 +4,9 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.opendatakit.application.ToolAwareApplication;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.application.CommonApplication;
@@ -13,6 +15,7 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.DynamicPropertiesCallback;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.properties.PropertyManager;
+import org.opendatakit.webkitserver.utilities.DoActionUtils;
 import org.opendatakit.webkitserver.utilities.SerializationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
@@ -175,29 +178,17 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     return sessionVariables.getString(elementPath);
   }
 
+
   /**
    * Invoked from within Javascript to launch an activity.
    *
-   * @param dispatchString   Opaque string -- typically identifies prompt and user action
+   * See interface for argument spec.
    *
-   * @param action
-   *          -- the intent to be launched
-   * @param valueContentMap
-   *          -- parameters to pass to the intent
-   *          {
-   *            uri: uriValue, // parse to a uri and set as the data of the
-   *                           // intent
-   *            extras: extrasMap, // added as extras to the intent
-   *            package: packageStr, // the name of a package to launch
-   *            type: typeStr, // will be set as the type
-   *            data: dataUri // will be parsed to a uri and set as the data of
-   *                          // the intent. For now this is equivalent to the
-   *                          // uri field, although that name is less precise.
-   *          }
+   * @return "OK" if successfully launched intent
    */
   @Override
   public String doAction(
-      String dispatchString,
+      String dispatchStructAsJSONstring,
       String action,
       JSONObject valueContentMap) {
 
@@ -208,124 +199,14 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
       return "IGNORE";
     }
 
-    Intent i;
-    boolean isCurrentApp = false;
-    String currentApp = "org.opendatakit." + ((ToolAwareApplication) getApplication()).getToolName();
+    Intent i = DoActionUtils.buildIntent(this, mPropertyManager, dispatchStructAsJSONstring, action,
+        valueContentMap);
 
-    boolean isOpendatakitApp = false;
-    if (action.startsWith(currentApp)) {
-      Class<?> clazz;
-      try {
-        clazz = Class.forName(action);
-        i = new Intent(this, clazz);
-        isCurrentApp = true;
-      } catch (ClassNotFoundException e) {
-        WebLogger.getLogger(getAppName()).printStackTrace(e);
-        i = new Intent(action);
-      }
-    } else {
-      i = new Intent(action);
+    if ( i == null ) {
+      return "JSONException";
     }
 
-    if (action.startsWith("org.opendatakit.")) {
-      isOpendatakitApp = true;
-    }
-
-    try {
-
-      String uriKey = "uri";
-      String extrasKey = "extras";
-      String packageKey = "package";
-      String typeKey = "type";
-      String dataKey = "data";
-
-      JSONObject valueMap = null;
-      if (valueContentMap != null) {
-
-        // do type first, as it says in the spec this call deletes any other
-        // data (eg by setData()) on the intent.
-        if (valueContentMap.has(typeKey)) {
-          String type = valueContentMap.getString(typeKey);
-          i.setType(type);
-        }
-
-        if (valueContentMap.has(uriKey) || valueContentMap.has(dataKey)) {
-          // as it currently stands, the data property can be in either the uri
-          // or data keys.
-          String uriValueStr = null;
-          if (valueContentMap.has(uriKey)) {
-            uriValueStr = valueContentMap.getString(uriKey);
-          }
-          // go ahead and overwrite with data if it's present.
-          if (valueContentMap.has(dataKey)) {
-            uriValueStr = valueContentMap.getString(dataKey);
-          }
-          if (uriValueStr != null) {
-            Uri uri = Uri.parse(uriValueStr);
-            i.setData(uri);
-          }
-        }
-
-        if (valueContentMap.has(extrasKey)) {
-          valueMap = valueContentMap.getJSONObject(extrasKey);
-        }
-
-        if (valueContentMap.has(packageKey)) {
-          String packageStr = valueContentMap.getString(packageKey);
-          i.setPackage(packageStr);
-        }
-
-      }
-
-      if (valueMap != null) {
-        Bundle b;
-        PropertiesSingleton props = CommonToolProperties.get(this, getAppName());
-
-        final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
-            getTableId(), getInstanceId(),
-            props.getActiveUser(), props.getUserSelectedDefaultLocale(),
-            props.getProperty(CommonToolProperties.KEY_USERNAME),
-            props.getProperty(CommonToolProperties.KEY_ACCOUNT));
-
-        b = SerializationUtils.convertToBundle(valueMap, new SerializationUtils.MacroStringExpander() {
-
-          @Override
-          public String expandString(String value) {
-            if (value != null && value.startsWith("opendatakit-macro(") && value.endsWith(")")) {
-              String term = value.substring("opendatakit-macro(".length(), value.length() - 1)
-                  .trim();
-              String v = mPropertyManager.getSingularProperty(term, cb);
-              if (v != null) {
-                return v;
-              } else {
-                WebLogger.getLogger(getAppName()).e(t, "Unable to process opendatakit-macro: " + value);
-                throw new IllegalArgumentException(
-                    "Unable to process opendatakit-macro expression: " + value);
-              }
-            } else {
-              return value;
-            }
-          }
-        });
-
-        i.putExtras(b);
-      }
-
-      if (isOpendatakitApp) {
-        // ensure that we supply our appName...
-        if (!i.hasExtra(IntentConsts.INTENT_KEY_APP_NAME)) {
-          i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
-          WebLogger.getLogger(getAppName()).w(t, "doAction into Survey or Tables does not supply an appName. Adding: "
-              + getAppName());
-        }
-      }
-    } catch (Exception ex) {
-      WebLogger.getLogger(getAppName()).e(t, "JSONException: " + ex.toString());
-      WebLogger.getLogger(getAppName()).printStackTrace(ex);
-      return "JSONException: " + ex.toString();
-    }
-
-    dispatchStringWaitingForData = dispatchString;
+    dispatchStringWaitingForData = dispatchStructAsJSONstring;
     actionWaitingForData = action;
 
     try {
@@ -345,44 +226,8 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
     if (requestCode == Constants.RequestCodes.LAUNCH_DOACTION) {
       try {
-        String jsonObject = null;
-        Bundle b = (intent == null) ? null : intent.getExtras();
-        JSONObject val = (b == null) ? null : SerializationUtils.convertFromBundle(getAppName(), b);
-        JSONObject jsonValue = new JSONObject();
-        jsonValue.put("status", resultCode);
-        if ( val != null ) {
-          jsonValue.put("result", val);
-        }
-        JSONObject result = new JSONObject();
-        result.put("dispatchString", dispatchStringWaitingForData);
-        result.put("action",  actionWaitingForData);
-        result.put("jsonValue", jsonValue);
-
-        String actionOutcome = result.toString();
-        this.queueActionOutcome(actionOutcome);
-
-        WebLogger.getLogger(getAppName()).i(t, "Constants.RequestCodes.LAUNCH_DOACTION: " + jsonObject);
-
-        if ( view != null ) {
-          view.signalQueuedActionAvailable();
-        }
-      } catch (Exception e) {
-        try {
-          JSONObject jsonValue = new JSONObject();
-          jsonValue.put("status", 0);
-          jsonValue.put("result", e.toString());
-          JSONObject result = new JSONObject();
-          result.put("dispatchString", dispatchStringWaitingForData);
-          result.put("action",  actionWaitingForData);
-          result.put("jsonValue", jsonValue);
-          this.queueActionOutcome(result.toString());
-
-          if ( view != null ) {
-            view.signalQueuedActionAvailable();
-          }
-        } catch (Exception ex) {
-          ex.printStackTrace();
-        }
+        DoActionUtils.processActivityResult(this, view, resultCode, intent,
+            dispatchStringWaitingForData, actionWaitingForData);
       } finally {
         dispatchStringWaitingForData = null;
         actionWaitingForData = null;
