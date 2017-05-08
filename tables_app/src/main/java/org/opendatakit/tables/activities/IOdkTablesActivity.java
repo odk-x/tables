@@ -8,6 +8,6 @@ import org.opendatakit.activities.IOdkDataActivity;
  */
 public interface IOdkTablesActivity extends IOdkCommonActivity, IOdkDataActivity {
 
-  String getUrlBaseLocation(boolean ifChanged);
+  String getUrlBaseLocation(boolean ifChanged, String fragmentID);
 
 }

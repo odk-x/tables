@@ -22,6 +22,7 @@ import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
 
 import android.os.Bundle;
+import org.opendatakit.views.OdkData;
 
 /**
  *
@@ -148,6 +149,18 @@ public class IntentUtil {
   }
 
   /**
+   * Return the fragment view type from the bundle.
+   * @param bundle
+   * @return the fragment view type, null if it does not exist or if the bundle is null
+   */
+  public static String retrieveFragmentViewTypeFromBundle(Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    return bundle.getString(OdkData.IntentKeys.TABLE_DISPLAY_VIEW_TYPE);
+  }
+
+  /**
    * Return the app name from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
    * {@link IntentConsts#INTENT_KEY_APP_NAME}.
@@ -216,6 +229,31 @@ public class IntentUtil {
     addRowIdToBundle(bundle, rowId);
     addFileNameToBundle(bundle, fileName);
     addFragmentViewTypeToBundle(bundle, ViewFragmentType.DETAIL);
+  }
+
+  /**
+   * Add values to intent to prepare to launch a detail with list view. Convenience
+   * method for calling the corresponding methods in this class, including
+   * {@link #addFragmentViewTypeToBundle(Bundle, ViewFragmentType)} with
+   * {@link ViewFragmentType#DETAIL_WITH_LIST}.
+   *
+   * @param bundle
+   * @param appName
+   * @param tableId
+   * @param rowId
+   * @param fileName
+   */
+  public static void addDetailWithListViewKeysToIntent(
+      Bundle bundle,
+      String appName,
+      String tableId,
+      String rowId,
+      String fileName) {
+    addAppNameToBundle(bundle, appName);
+    addTableIdToBundle(bundle, tableId);
+    addRowIdToBundle(bundle, rowId);
+    addFileNameToBundle(bundle, fileName);
+    addFragmentViewTypeToBundle(bundle, ViewFragmentType.DETAIL_WITH_LIST);
   }
 
   /**

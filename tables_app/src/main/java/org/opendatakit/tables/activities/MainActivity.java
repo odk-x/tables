@@ -37,6 +37,8 @@ import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.views.OdkData;
+import org.opendatakit.views.ViewDataQueryParams;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.views.ODKWebView;
@@ -64,7 +66,9 @@ public class MainActivity extends AbsBaseWebActivity implements
   private static final String QUERY_START_PARAM = "?";
 
   @Override
-  public ODKWebView getWebKitView() {
+  public ODKWebView getWebKitView(String viewID) {
+    // Don't use viewID as there is only one webkit to return
+
     if ( activeScreenType == ScreenType.WEBVIEW_SCREEN ) {
       FragmentManager mgr = this.getFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
@@ -76,7 +80,7 @@ public class MainActivity extends AbsBaseWebActivity implements
   }
 
   @Override
-  public String getUrlBaseLocation(boolean ifChanged) {
+  public String getUrlBaseLocation(boolean ifChanged, String fragmentID) {
     // TODO: do we need to track the ifChanged status?
     if ( activeScreenType == ScreenType.WEBVIEW_SCREEN ) {
       FragmentManager mgr = this.getFragmentManager();
@@ -437,6 +441,31 @@ public class MainActivity extends AbsBaseWebActivity implements
       }
     }
     super.onActivityResult(requestCode, resultCode, data);
+  }
+
+  @Override
+  public ViewDataQueryParams getViewQueryParams(String viewID){
+    // Ignore viewID, there is only one fragment
+
+    Bundle bundle = this.getIntentExtras();
+
+    String tableId = bundle.getString(OdkData.IntentKeys.TABLE_ID);
+    if (tableId == null || tableId.isEmpty()) {
+      throw new IllegalArgumentException("Tables view launched without tableId specified");
+    }
+
+    String rowId = bundle.getString(IntentConsts.INTENT_KEY_INSTANCE_ID);
+    String whereClause = bundle.getString(Constants.IntentKeys.SQL_WHERE);
+    String[] selArgs = bundle.getStringArray(Constants.IntentKeys.SQL_SELECTION_ARGS);
+    String[] groupBy = bundle.getStringArray(Constants.IntentKeys.SQL_GROUP_BY_ARGS);
+    String havingClause = bundle.getString(Constants.IntentKeys.SQL_HAVING);
+    String orderByElemKey = bundle.getString(Constants.IntentKeys.SQL_ORDER_BY_ELEMENT_KEY);
+    String orderByDir = bundle.getString(Constants.IntentKeys.SQL_ORDER_BY_DIRECTION);
+
+    ViewDataQueryParams params = new ViewDataQueryParams(tableId, rowId, whereClause, selArgs,
+        groupBy, havingClause, orderByElemKey, orderByDir);
+
+    return params;
   }
 
 }
