@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.dependencies.DependencyChecker;
 import org.opendatakit.provider.TablesProviderAPI;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -71,6 +72,12 @@ public class Launcher extends BaseActivity {
     // ensuring directories exist
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(this.mAppName);
+
+    DependencyChecker dc = new DependencyChecker(this);
+    boolean dependable = dc.checkDependencies();
+    if (!dependable) { // dependencies missing
+      return;
+    }
 
     // Launch the TableManager.
 
