@@ -20,10 +20,10 @@ public class OdkTablesWebView extends ODKWebView {
 
     AbsBaseWebActivity activity = (AbsBaseWebActivity) context;
 
-     // stomp on the odkTables object...
+     // stomp on the odkTablesIf object...
      tables = new OdkTables(activity, this);
      addJavascriptInterface(tables.getJavascriptInterfaceWithWeakReference(),
-         Constants.JavaScriptHandles.CONTROL);
+         Constants.JavaScriptHandles.ODK_TABLES_IF);
   }
 
   @Override public boolean hasPageFramework() {

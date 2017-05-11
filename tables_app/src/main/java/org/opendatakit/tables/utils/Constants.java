@@ -213,7 +213,7 @@ public class Constants {
    *
    */
   public static class JavaScriptHandles {
-    public static final String CONTROL = "odkTablesIf";
+    public static final String ODK_TABLES_IF = "odkTablesIf";
   }
 
 }
