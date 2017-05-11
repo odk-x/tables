@@ -106,7 +106,7 @@ allprojects {
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
-    compile 'com.android.support:support-annotations:25.1.0'
+    compile 'com.android.support:support-annotations:25.3.1'
 
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
@@ -145,7 +145,7 @@ dependencies {
     androidTestUitestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
     androidTestUitestCompile 'com.android.support.test.espresso:espresso-intents:2.2.2'
     androidTestUitestCompile 'com.android.support.test.espresso:espresso-web:2.2.2'
-    androidTestUitestCompile 'com.android.support:support-annotations:25.1.0'
+    androidTestUitestCompile 'com.android.support:support-annotations:25.3.1'
 
 	//for UI Automator
     androidTestUitestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
