@@ -123,6 +123,13 @@ public class Constants {
     public static final String MAP_LIST = "tagMapListFragment";
 
     /**
+     * ViewFragmentType.DETAIL_WITH_LIST has two inner fragments.
+     * The inner fragments are controlled with these fragment tags.
+     */
+    public static final String DETAIL_WITH_LIST_DETAIL = "tagDetailWithListDetailFragment";
+    public static final String DETAIL_WITH_LIST_LIST = "tagDetailWithListListFragment";
+
+    /**
      * Preference screens have their own tags...
      */
     public static final String COLUMN_LIST = "tagColumnList";
@@ -201,14 +208,12 @@ public class Constants {
   /**
    * The names of the JavaScript interfaces that are attached to the window
    * object.
-   * 
+   *
    * @author sudar.sam@gmail.com
    *
    */
   public static class JavaScriptHandles {
-    public static final String COMMON = "odkCommon";
-    // new data interface
-    public static final String DATAIF = "odkDataIf";
+    public static final String CONTROL = "odkTablesIf";
   }
 
 }

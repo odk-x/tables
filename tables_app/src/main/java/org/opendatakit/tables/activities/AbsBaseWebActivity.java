@@ -73,7 +73,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   private PropertyManager mPropertyManager;
 
   public abstract String getInstanceId();
-  public abstract ODKWebView getWebKitView();
+  public abstract ODKWebView getWebKitView(String viewID);
   
   @Override
   protected void onSaveInstanceState(Bundle outState) {
@@ -222,7 +222,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
     WebLogger.getLogger(getAppName()).i(t, "onActivityResult");
-    ODKWebView view = getWebKitView();
+    ODKWebView view = getWebKitView(null);
 
     if (requestCode == Constants.RequestCodes.LAUNCH_DOACTION) {
       try {
@@ -270,7 +270,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   }
 
   @Override
-  public void signalResponseAvailable(String responseJSON) {
+  public void signalResponseAvailable(String responseJSON, String viewID) {
     if ( responseJSON == null ) {
       WebLogger.getLogger(getAppName()).e(t, "signalResponseAvailable -- got null responseJSON!");
     } else {
@@ -279,7 +279,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     }
     if ( responseJSON != null) {
       this.queueResponseJSON.push(responseJSON);
-      final ODKWebView webView = getWebKitView();
+      final ODKWebView webView = getWebKitView(viewID);
       if (webView != null) {
         runOnUiThread(new Runnable() {
           @Override

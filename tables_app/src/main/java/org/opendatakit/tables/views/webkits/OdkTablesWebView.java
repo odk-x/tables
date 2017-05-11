@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.activities.IOdkTablesActivity;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.views.ODKWebView;
 
 /**
@@ -12,10 +13,17 @@ import org.opendatakit.views.ODKWebView;
 public class OdkTablesWebView extends ODKWebView {
   private static final String t = "OdkTablesWebView";
 
+   private OdkTables tables;
+
   public OdkTablesWebView(Context context, AttributeSet attrs) {
     super(context, attrs);
 
     AbsBaseWebActivity activity = (AbsBaseWebActivity) context;
+
+     // stomp on the odkTables object...
+     tables = new OdkTables(activity, this);
+     addJavascriptInterface(tables.getJavascriptInterfaceWithWeakReference(),
+         Constants.JavaScriptHandles.CONTROL);
   }
 
   @Override public boolean hasPageFramework() {
@@ -35,10 +43,10 @@ public class OdkTablesWebView extends ODKWebView {
 
     log.i(t, "loadPage: current loadPageUrl: " + getLoadPageUrl());
     String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(
-        hasPageFrameworkFinishedLoading() && getLoadPageUrl() != null );
+        hasPageFrameworkFinishedLoading() && getLoadPageUrl() != null, getContainerFragmentID());
 
     if ( baseUrl != null ) {
-      loadPageOnUiThread(baseUrl, false);
+      loadPageOnUiThread(baseUrl, getContainerFragmentID(), false);
     } else if ( hasPageFrameworkFinishedLoading() ) {
       log.w(t, "loadPage: framework was loaded -- but no URL -- don't load anything!");
     } else {
@@ -55,10 +63,11 @@ public class OdkTablesWebView extends ODKWebView {
    @Override public void reloadPage() {
 
     log.i(t, "reloadPage: current loadPageUrl: " + getLoadPageUrl());
-    String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(false);
+    String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(false,
+            getContainerFragmentID());
 
     if ( baseUrl != null ) {
-      loadPageOnUiThread(baseUrl, true);
+      loadPageOnUiThread(baseUrl, getContainerFragmentID(), true);
     } else {
       log.w(t, "reloadPage: framework did not load -- cannot load anything!");
     }
