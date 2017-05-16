@@ -4,19 +4,13 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONTokener;
-import org.opendatakit.application.ToolAwareApplication;
-import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.DynamicPropertiesCallback;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.properties.PropertyManager;
 import org.opendatakit.webkitserver.utilities.DoActionUtils;
-import org.opendatakit.webkitserver.utilities.SerializationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 import org.opendatakit.logging.WebLogger;
@@ -135,20 +129,16 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   @Override
   public String getActiveUser() {
-    PropertiesSingleton props = CommonToolProperties.get(this, getAppName());
-
-    return props.getActiveUser();
+    return mProps.getActiveUser();
   }
 
   @Override
   public String getProperty(String propertyId) {
-    PropertiesSingleton props = CommonToolProperties.get(this, getAppName());
-
     final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
         getTableId(), getInstanceId(),
-        props.getActiveUser(), props.getUserSelectedDefaultLocale(),
-        props.getProperty(CommonToolProperties.KEY_USERNAME),
-        props.getProperty(CommonToolProperties.KEY_ACCOUNT));
+        mProps.getActiveUser(), mProps.getUserSelectedDefaultLocale(),
+        mProps.getProperty(CommonToolProperties.KEY_USERNAME),
+        mProps.getProperty(CommonToolProperties.KEY_ACCOUNT));
 
     String value = mPropertyManager.getSingularProperty(propertyId, cb);
     return value;

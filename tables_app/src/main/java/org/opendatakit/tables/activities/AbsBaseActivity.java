@@ -30,6 +30,8 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
 import org.opendatakit.database.service.TableHealthStatus;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
@@ -52,6 +54,7 @@ import android.widget.Toast;
 public abstract class AbsBaseActivity extends BaseActivity {
 
   protected String mAppName;
+  protected PropertiesSingleton mProps;
   protected String mActionTableId = null;
   
   Bundle mCheckpointTables = new Bundle();
@@ -60,6 +63,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     this.mAppName = retrieveAppNameFromIntent();
+    this.mProps = CommonToolProperties.get(this, mAppName);
     if ( savedInstanceState != null ) {
       if ( savedInstanceState.containsKey(Constants.IntentKeys.ACTION_TABLE_ID) ) {
         mActionTableId = savedInstanceState.getString(Constants.IntentKeys.ACTION_TABLE_ID);

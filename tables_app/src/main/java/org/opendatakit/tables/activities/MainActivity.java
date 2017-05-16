@@ -51,6 +51,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 
 import java.io.File;
+import java.util.Collections;
 
 /**
  * The main activity for ODK Tables. It serves primarily as a holder for
@@ -184,8 +185,7 @@ public class MainActivity extends AbsBaseWebActivity implements
    * @return
    */
   protected File getHomeScreen(Bundle savedInstanceState) {
-    PropertiesSingleton props = CommonToolProperties.get(this, mAppName);
-    Boolean setting = props.getBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN);
+    Boolean setting = mProps.getBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN);
     String relativeFileName = 
         IntentUtil.retrieveFileNameFromSavedStateOrArguments(savedInstanceState, this.getIntent().getExtras());
 
@@ -210,8 +210,8 @@ public class MainActivity extends AbsBaseWebActivity implements
     } else {
       if ( (setting == null || setting == Boolean.TRUE) && relativeFileName == null ) {
         // the home screen doesn't exist but we are requesting to show it -- clear the setting
-        props.setBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN, false);
-        props.writeProperties();
+        mProps.setProperties(Collections.singletonMap(CommonToolProperties.KEY_USE_HOME_SCREEN,
+            Boolean.toString(false)));
       }
       return null;
     }
