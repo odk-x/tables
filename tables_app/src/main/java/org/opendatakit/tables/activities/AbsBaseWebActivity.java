@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import org.json.JSONObject;
 import org.opendatakit.application.CommonApplication;
+import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.DynamicPropertiesCallback;
@@ -129,14 +130,19 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   @Override
   public String getActiveUser() {
-    return mProps.getActiveUser();
+    try {
+      return getDatabase().getActiveUser(mAppName);
+    } catch (ServicesAvailabilityException e) {
+      WebLogger.getLogger(mAppName).printStackTrace(e);
+      return CommonToolProperties.ANONYMOUS_USER;
+    }
   }
 
   @Override
   public String getProperty(String propertyId) {
     final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
         getTableId(), getInstanceId(),
-        mProps.getActiveUser(), mProps.getUserSelectedDefaultLocale(),
+        getActiveUser(), mProps.getUserSelectedDefaultLocale(),
         mProps.getProperty(CommonToolProperties.KEY_USERNAME),
         mProps.getProperty(CommonToolProperties.KEY_ACCOUNT));
 
