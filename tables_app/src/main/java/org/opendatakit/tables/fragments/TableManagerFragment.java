@@ -16,6 +16,7 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
 
@@ -25,6 +26,8 @@ import java.util.List;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -94,6 +97,11 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     }
     
     String appName = baseActivity.getAppName();
+
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
 
     List<TableNameStruct> tableNameStructs = new ArrayList<TableNameStruct>();
@@ -101,12 +109,13 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     if ( Tables.getInstance().getDatabase() != null ) {
       
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        db = dbInterface.openDatabase(appName);
   
-        List<String> tableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
+        List<String> tableIds = dbInterface.getAllTableIds(appName, db);
   
         for (String tableId : tableIds) {
-          String localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
+          String localizedDisplayName = TableUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
+              dbInterface, appName, db, tableId);
   
           TableNameStruct tableNameStruct = new TableNameStruct(tableId, localizedDisplayName);
   
@@ -120,7 +129,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       } finally {
         if (db != null) {
           try {
-            Tables.getInstance().getDatabase().closeDatabase(appName, db);
+            dbInterface.closeDatabase(appName, db);
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(baseActivity.getAppName()).e(TAG,
                 "error while closing database: " + e.toString());

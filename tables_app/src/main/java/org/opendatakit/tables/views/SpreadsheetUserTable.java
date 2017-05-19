@@ -23,11 +23,14 @@ import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
@@ -53,15 +56,18 @@ public class SpreadsheetUserTable {
   UserTable userTable;
 
   public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws ServicesAvailabilityException {
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
     this.fragment = frag;
 
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     ArrayList<String> colOrder;
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(frag.getAppName());
+      db = dbInterface.openDatabase(frag.getAppName());
       userTable = getUserTable();
-      indexColumnElementKey = TableUtil.get().getIndexColumn(Tables.getInstance(), getAppName(), db, getTableId());
-      colOrder = TableUtil.get().getColumnOrder(Tables.getInstance(), frag.getAppName(), db, frag.getTableId(),
+      indexColumnElementKey = TableUtil.get().getIndexColumn(dbInterface, getAppName(), db, getTableId());
+      colOrder = TableUtil.get().getColumnOrder(dbInterface, frag.getAppName(), db, frag.getTableId(),
               frag.getColumnDefinitions());
 
       header = new String[colOrder.size()];
@@ -72,21 +78,20 @@ public class SpreadsheetUserTable {
       for (int i = 0; i < colOrder.size(); ++i) {
         String elementKey = colOrder.get(i);
         String localizedDisplayName;
-        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(),
-            getAppName(), db, frag.getTableId(),
-            elementKey);
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
+            dbInterface, getAppName(), db, frag.getTableId(), elementKey);
 
         header[i] = localizedDisplayName;
         spreadsheetIndexToElementKey[i] = elementKey;
         elementKeyToSpreadsheetIndex.put(elementKey, i);
 
         ArrayList<Map<String,Object>> choices =
-        ColumnUtil.get().getDisplayChoicesList(Tables.getInstance(), getAppName(), db, frag.getTableId(), elementKey);
+        ColumnUtil.get().getDisplayChoicesList(dbInterface, getAppName(), db, frag.getTableId(), elementKey);
         elementKeyToDisplayChoicesList.put(elementKey, choices);
       }
     } finally {
       if ( db != null ) {
-        Tables.getInstance().getDatabase().closeDatabase(frag.getAppName(), db);
+        dbInterface.closeDatabase(frag.getAppName(), db);
       }
     }
   }
@@ -107,19 +112,22 @@ public class SpreadsheetUserTable {
     return elementKeyToDisplayChoicesList.get(elementKey);
   }
 
-  public ColorRuleGroup getColumnColorRuleGroup(DbHandle db, String elementKey, String[] adminColumns) throws
+  public ColorRuleGroup getColumnColorRuleGroup(UserDbInterface dbInterface,
+      DbHandle db, String elementKey, String[] adminColumns) throws
       ServicesAvailabilityException {
-    return ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(),
+    return ColorRuleGroup.getColumnColorRuleGroup(dbInterface,
         getAppName(), db, getTableId(), elementKey, adminColumns);
   }
 
-  public ColorRuleGroup getStatusColumnRuleGroup(DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
-    return ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(),
+  public ColorRuleGroup getStatusColumnRuleGroup(UserDbInterface dbInterface,
+      DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
+    return ColorRuleGroup.getStatusColumnRuleGroup(dbInterface,
         getAppName(), db, getTableId(), adminColumns);
   }
 
-  public ColorRuleGroup getTableColorRuleGroup(DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
-    return ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(),
+  public ColorRuleGroup getTableColorRuleGroup(UserDbInterface dbInterface,
+      DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
+    return ColorRuleGroup.getTableColorRuleGroup(dbInterface,
         getAppName(), db, getTableId(), adminColumns);
   }
 

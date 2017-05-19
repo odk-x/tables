@@ -22,11 +22,14 @@ import java.util.Map;
 import android.content.Context;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColorRuleUtil;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
@@ -117,20 +120,24 @@ public class ColorRuleListFragment extends ListFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     this.setHasOptionsMenu(true);
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     TableUtil.TableColumns tc = null;
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      db = dbInterface.openDatabase(getAppName());
 
-      tc = TableUtil.get().getTableColumns(Tables.getInstance(), getAppName(), db, getTableId());
-      this.mColorRuleGroup = this.retrieveColorRuleGroup(db, tc.adminColumns);
+      tc = TableUtil.get().getTableColumns(userSelectedDefaultLocale, dbInterface, getAppName(), db,
+          getTableId());
+      this.mColorRuleGroup = this.retrieveColorRuleGroup(dbInterface, db, tc.adminColumns);
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       throw new IllegalStateException("Unable to access database");
     } finally {
       if ( db != null ) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+          dbInterface.closeDatabase(getAppName(), db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           WebLogger.getLogger(getAppName()).e(TAG, "Error while initializing color rule list");
@@ -272,7 +279,7 @@ public class ColorRuleListFragment extends ListFragment {
           WebLogger.getLogger(appName).d(TAG, "trying to delete rule at position: " + position);
           mColorRuleGroup.getColorRules().remove(position);
           try {
-            mColorRuleGroup.saveRuleList(Tables.getInstance());
+            mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName()).e(TAG, "Error while saving color rules");
@@ -314,7 +321,7 @@ public class ColorRuleListFragment extends ListFragment {
       List<ColorRule> newList = new ArrayList<ColorRule>();
       newList.addAll(ColorRuleUtil.getDefaultSyncStateColorRules());
       this.mColorRuleGroup.replaceColorRuleList(newList);
-      this.mColorRuleGroup.saveRuleList(Tables.getInstance());
+      this.mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     case COLUMN:
@@ -322,7 +329,7 @@ public class ColorRuleListFragment extends ListFragment {
       // We want to just wipe all the columns for both of these types.
       List<ColorRule> emptyList = new ArrayList<ColorRule>();
       this.mColorRuleGroup.replaceColorRuleList(emptyList);
-      this.mColorRuleGroup.saveRuleList(Tables.getInstance());
+      this.mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     default:
@@ -351,7 +358,10 @@ public class ColorRuleListFragment extends ListFragment {
     return result.getTableId();
   }
   
-  ColorRuleGroup retrieveColorRuleGroup(DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
+  ColorRuleGroup retrieveColorRuleGroup(UserDbInterface dbInterface, DbHandle db, String[]
+      adminColumns)
+      throws
+      ServicesAvailabilityException {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
     ColorRuleGroup result = null;
     switch (type) {
@@ -359,15 +369,15 @@ public class ColorRuleListFragment extends ListFragment {
       String elementKey =
           this.retrieveTableLevelPreferencesActivity().getElementKey();
       result = ColorRuleGroup.getColumnColorRuleGroup(
-          Tables.getInstance(), getAppName(), db, getTableId(), elementKey, adminColumns);
+          dbInterface, getAppName(), db, getTableId(), elementKey, adminColumns);
       break;
     case STATUS_COLUMN:
       result = ColorRuleGroup.getStatusColumnRuleGroup(
-          Tables.getInstance(), getAppName(), db, getTableId(), adminColumns);
+          dbInterface, getAppName(), db, getTableId(), adminColumns);
       break;
     case TABLE:
       result = ColorRuleGroup.getTableColorRuleGroup(
-          Tables.getInstance(), getAppName(), db, getTableId(), adminColumns);
+          dbInterface, getAppName(), db, getTableId(), adminColumns);
       break;
     default:
       throw new IllegalArgumentException(

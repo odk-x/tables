@@ -44,6 +44,7 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
@@ -268,27 +269,29 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     // Grab the color group
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(activity.getAppName());
+      db = dbInterface.openDatabase(activity.getAppName());
 
       // get the elementKey for the latitude and longitude columns
       mLatitudeElementKey = getLatitudeElementKey(db);
       mLongitudeElementKey = getLongitudeElementKey(db);
 
-      String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
+      String[] adminColumns = dbInterface.getAdminColumns();
 
       TableUtil.MapViewColorRuleInfo colorRuleInfo =
-              TableUtil.get().getMapListViewColorRuleInfo(Tables.getInstance(), activity.getAppName(), db, activity.getTableId());
+              TableUtil.get().getMapListViewColorRuleInfo(dbInterface, activity.getAppName(),
+                  db, activity.getTableId());
 
       // Create a guide depending on what type of color rule is selected.
       mColorGroup = null;
       if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
-        mColorGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), activity.getAppName(),
+        mColorGroup = ColorRuleGroup.getTableColorRuleGroup(dbInterface, activity.getAppName(),
             db, activity.getTableId(), adminColumns);
       }
       if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
-        mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), activity.getAppName(),
+        mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(dbInterface, activity.getAppName(),
             db, activity.getTableId(), adminColumns);
       }
 
@@ -298,7 +301,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       }
     } finally {
       if ( db != null ) {
-        Tables.getInstance().getDatabase().closeDatabase(activity.getAppName(), db);
+        dbInterface.closeDatabase(activity.getAppName(), db);
       }
     }
   }
@@ -408,7 +411,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     String latitudeElementKey =
-            TableUtil.get().getMapListViewLatitudeElementKey(Tables.getInstance(), activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
+            TableUtil.get().getMapListViewLatitudeElementKey(Tables.getInstance().getDatabase(),
+                activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
     return latitudeElementKey;
   }
 
@@ -416,7 +420,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     String longitudeElementKey =
-            TableUtil.get().getMapListViewLongitudeElementKey(Tables.getInstance(), activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
+            TableUtil.get().getMapListViewLongitudeElementKey(Tables.getInstance().getDatabase(),
+                activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
     return longitudeElementKey;
   }
 

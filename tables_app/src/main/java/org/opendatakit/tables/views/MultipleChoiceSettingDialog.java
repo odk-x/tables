@@ -21,6 +21,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.properties.CommonToolProperties;
@@ -78,11 +79,12 @@ public class MultipleChoiceSettingDialog extends Dialog {
     optionValues.clear();
     ArrayList<Map<String, Object>> choices;
 
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
+      db = dbInterface.openDatabase(appName);
       choices = ColumnUtil.get().getDisplayChoicesList(
-          Tables.getInstance(), appName, db, tableId, cd.getElementKey());
+          dbInterface, appName, db, tableId, cd.getElementKey());
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       layout.removeAllViews();
@@ -90,7 +92,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
     } finally {
       if (db != null) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
+          dbInterface.closeDatabase(appName, db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
           WebLogger.getLogger(appName).e(TAG, "Unable to close database");

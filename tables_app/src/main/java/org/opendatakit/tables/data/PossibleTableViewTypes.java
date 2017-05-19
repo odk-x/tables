@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.data.TableViewType;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
@@ -47,7 +48,8 @@ public class PossibleTableViewTypes {
 
   public PossibleTableViewTypes(String appName, DbHandle db, String tableId, OrderedColumns orderedDefns) throws
       ServicesAvailabilityException {
-    TableViewType defaultViewType = TableUtil.get().getDefaultViewType(Tables.getInstance(),
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    TableViewType defaultViewType = TableUtil.get().getDefaultViewType(dbInterface,
         appName, db, tableId);
     if ( defaultViewType != null ) {
       switch (defaultViewType) {
@@ -68,13 +70,13 @@ public class PossibleTableViewTypes {
     }
 
     mSpreadsheetIsValid = true; // always
-    mListFileName = TableUtil.get().getListViewFilename(Tables.getInstance(), appName, db, tableId);
+    mListFileName = TableUtil.get().getListViewFilename(dbInterface, appName, db, tableId);
     mListIsValid = (null != mListFileName);
-    mMapListFileName = TableUtil.get().getMapListViewFilename(Tables.getInstance(), appName, db,
+    mMapListFileName = TableUtil.get().getMapListViewFilename(dbInterface, appName, db,
         tableId);
     mMapIsValid = (null != mMapListFileName) && orderedDefns.mapViewIsPossible();
 
-    mDetailFileName = TableUtil.get().getDetailViewFilename(Tables.getInstance(), appName, db,
+    mDetailFileName = TableUtil.get().getDetailViewFilename(dbInterface, appName, db,
         tableId);
   }
   

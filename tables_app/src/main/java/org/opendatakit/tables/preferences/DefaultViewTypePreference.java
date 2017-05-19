@@ -19,6 +19,7 @@ import java.util.Arrays;
 
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.data.TableViewType;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
@@ -56,16 +57,17 @@ public class DefaultViewTypePreference extends ListPreference {
     TableViewType defaultViewType = null;
     this.mEntryValues = this.mContext.getResources().getTextArray(
       R.array.table_view_types_values);
-    
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(mAppName);
+      db = dbInterface.openDatabase(mAppName);
       this.mPossibleViewTypes = new PossibleTableViewTypes(mAppName, db, tableId, orderedDefns);
       // Let's set the currently selected one.
-      defaultViewType = TableUtil.get().getDefaultViewType(Tables.getInstance(), mAppName, db, tableId);
+      defaultViewType = TableUtil.get().getDefaultViewType(dbInterface, mAppName, db, tableId);
     } finally {
       if ( db != null ) {
-        Tables.getInstance().getDatabase().closeDatabase(mAppName, db);
+        dbInterface.closeDatabase(mAppName, db);
       }
     }
 

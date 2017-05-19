@@ -14,9 +14,9 @@
 
 package org.opendatakit.tables.views.webkits;
 
-import android.database.sqlite.SQLiteException;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.sqlite.database.sqlite.SQLiteException;
 
 /**
  * @author mitchellsundt@gmail.com

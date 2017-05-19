@@ -48,7 +48,8 @@ public class PreferenceUtil {
       TableViewType viewType) {
 
     try {
-      TableUtil.get().atomicSetDefaultViewType(Tables.getInstance(), appName, tableId, viewType);
+      TableUtil.get().atomicSetDefaultViewType(Tables.getInstance().getDatabase(),
+          appName, tableId, viewType);
     } catch (ServicesAvailabilityException e) {
       Toast.makeText(context, "Unable to change default view type", Toast.LENGTH_LONG).show();
     }
@@ -73,7 +74,8 @@ public class PreferenceUtil {
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       result = ColumnUtil
-          .get().getColumnWidth(Tables.getInstance(), appName, db, tableId, elementKey);
+          .get().getColumnWidth(Tables.getInstance().getDatabase(),
+              appName, db, tableId, elementKey);
     } finally {
       if ( db != null ) {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);
@@ -90,7 +92,8 @@ public class PreferenceUtil {
       int newColumnWidth) {
 
     try {
-      ColumnUtil.get().atomicSetColumnWidth(Tables.getInstance(), appName, tableId, elementKey, newColumnWidth);
+      ColumnUtil.get().atomicSetColumnWidth(Tables.getInstance().getDatabase(),
+          appName, tableId, elementKey, newColumnWidth);
     } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(context, "Unable to change Column Width", Toast.LENGTH_LONG).show();
     }

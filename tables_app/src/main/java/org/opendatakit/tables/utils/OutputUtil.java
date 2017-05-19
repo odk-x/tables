@@ -20,8 +20,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.logging.WebLogger;
@@ -95,21 +98,27 @@ public class OutputUtil {
     Map<String, String> tableIdToDisplayName = new HashMap<String, String>();
     Map<String, Map<String, Object>> tableIdToControlTable = new HashMap<String, Map<String, Object>>();
 
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      List<String> tableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
+      db = dbInterface.openDatabase(appName);
+      List<String> tableIds = dbInterface.getAllTableIds(appName, db);
       for (String tableId : tableIds) {
 
         String localizedDisplayName;
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
+        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
+            dbInterface, appName, db, tableId);
         tableIdToDisplayName.put(tableId, localizedDisplayName);
-        Map<String, Object> controlTable = getMapForControlTable(appName, db, tableId);
+        Map<String, Object> controlTable = getMapForControlTable(userSelectedDefaultLocale,
+            dbInterface, appName, db, tableId);
         tableIdToControlTable.put(tableId, controlTable);
       }
     } finally {
       if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
+        dbInterface.closeDatabase(appName, db);
       }
     }
     controlMap.put(CTRL_KEY_TABLE_ID_TO_DISPLAY_NAME, tableIdToDisplayName);
@@ -130,15 +139,17 @@ public class OutputUtil {
    * displayName, ...},
    *
    * }
-   * 
+   *
+   * @param dbInterface
    * @param db
    * @param appName
    * @param tableId
    * @return
    * @throws ServicesAvailabilityException
    */
-  public static Map<String, Object> getMapForControlTable(String appName, DbHandle db,
-      String tableId) throws ServicesAvailabilityException {
+  public static Map<String, Object> getMapForControlTable(String userSelectedDefaultLocale,
+      UserDbInterface dbInterface, String appName, DbHandle db, String tableId)
+      throws ServicesAvailabilityException {
     Map<String, Object> controlTable = new HashMap<String, Object>();
     Map<String, String> pathToKey = new HashMap<String, String>();
     OrderedColumns orderedDefns;
@@ -147,9 +158,9 @@ public class OutputUtil {
     String defaultListFileName = null;
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
 
-    orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);
-    defaultDetailFileName = TableUtil.get().getDetailViewFilename(Tables.getInstance(), appName, db, tableId);
-    defaultListFileName = TableUtil.get().getListViewFilename(Tables.getInstance(), appName, db, tableId);
+    orderedDefns = dbInterface.getUserDefinedColumns(appName, db, tableId);
+    defaultDetailFileName = TableUtil.get().getDetailViewFilename(dbInterface, appName, db, tableId);
+    defaultListFileName = TableUtil.get().getListViewFilename(dbInterface, appName, db, tableId);
 
     for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
       String elementName = cd.getElementName();
@@ -157,9 +168,9 @@ public class OutputUtil {
         pathToKey.put(cd.getElementName(), cd.getElementKey());
 
         String localizedDisplayName;
-        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName,
-            db, tableId,
-            cd.getElementKey());
+        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName
+            (userSelectedDefaultLocale, dbInterface, appName,
+            db, tableId, cd.getElementKey());
 
         keyToDisplayName.put(cd.getElementKey(), localizedDisplayName);
       }

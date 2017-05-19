@@ -35,7 +35,6 @@ import org.opendatakit.activities.IInitResumeActivity;
 import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.views.OdkData;
 import org.opendatakit.views.ViewDataQueryParams;
@@ -106,6 +105,11 @@ public class MainActivity extends AbsBaseWebActivity implements
         }
       }
     }
+    return null;
+  }
+
+  @Override public Integer getIndexOfSelectedItem() {
+    // never a map view -- no item selected
     return null;
   }
 

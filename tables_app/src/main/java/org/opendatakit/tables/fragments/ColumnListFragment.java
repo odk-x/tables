@@ -20,10 +20,13 @@ import java.util.List;
 
 import android.content.Context;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
@@ -96,14 +99,17 @@ public class ColumnListFragment extends ListFragment {
     AbsTableActivity activity = retrieveTableActivity();
     String appName = activity.getAppName();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     TableUtil.TableColumns tc = null;
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      tc = TableUtil.get().getTableColumns(Tables.getInstance(), appName, db, activity.getTableId());
+      db = dbInterface.openDatabase(appName);
+      tc = TableUtil.get().getTableColumns(userSelectedDefaultLocale, dbInterface, appName, db, activity.getTableId());
 
       ArrayList<String> colOrder;
-      colOrder = TableUtil.get().getColumnOrder(Tables.getInstance(), appName, db, activity.getTableId(), orderedDefns);
+      colOrder = TableUtil.get().getColumnOrder(dbInterface, appName, db, activity.getTableId(), orderedDefns);
       this.mElementKeys = colOrder;
       List<String> displayNames = new ArrayList<String>();
       for (String elementKey : mElementKeys) {
@@ -113,7 +119,7 @@ public class ColumnListFragment extends ListFragment {
       this.mDisplayNames = displayNames;
     } finally {
       if ( db != null ) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
+        dbInterface.closeDatabase(appName, db);
       }
     }
   }

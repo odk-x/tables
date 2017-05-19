@@ -28,6 +28,7 @@ import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
@@ -112,23 +113,25 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // if a custom font size is defined in the KeyValueStore, use that
     // if not, use the general font size defined in preferences
     String appName = table.getAppName();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      String[] adminColumns = Tables.getInstance().getDatabase().getAdminColumns();
+      db = dbInterface.openDatabase(appName);
+      String[] adminColumns = dbInterface.getAdminColumns();
       for (ColumnDefinition cd : table.getColumnDefinitions().getColumnDefinitions()) {
         mElementKeyToColorRuleGroup.put(cd.getElementKey(),
-            table.getColumnColorRuleGroup(db, cd.getElementKey(), adminColumns));
+            table.getColumnColorRuleGroup(dbInterface, db, cd.getElementKey(), adminColumns));
       }
-      mStatusColumnRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(),
+      mStatusColumnRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(dbInterface,
           appName, db, table.getTableId(), adminColumns);
-      mTableColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(),
+      mTableColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(dbInterface,
           appName, db, table.getTableId(), adminColumns);
       completeColWidths = getColumnWidths(db);
-      fontSize = TableUtil.get().getSpreadsheetViewFontSize(Tables.getInstance(), appName, db, table.getTableId());
+      fontSize = TableUtil.get().getSpreadsheetViewFontSize(
+          getContext(), dbInterface, appName, db, table.getTableId());
     } finally {
       if ( db != null ) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
+        dbInterface.closeDatabase(appName, db);
       }
     }
 
@@ -602,8 +605,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     String appName = table.getAppName();
 
     Map<String, Integer> colWidths =
-            ColumnUtil
-                .get().getColumnWidths(Tables.getInstance(), appName, db, table.getTableId(), table.getColumnDefinitions());
+            ColumnUtil.get().getColumnWidths(Tables.getInstance().getDatabase(),
+                appName, db, table.getTableId(), table.getColumnDefinitions());
 
     for (int i = 0; i < numberOfDisplayColumns; i++) {
       ColumnDefinition cd = table.getColumnByIndex(i);

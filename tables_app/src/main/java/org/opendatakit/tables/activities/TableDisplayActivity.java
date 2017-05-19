@@ -356,6 +356,16 @@ public class TableDisplayActivity extends AbsBaseWebActivity implements
     return null;
   }
 
+  @Override public Integer getIndexOfSelectedItem() {
+    MapListViewFragment mlvFragment = (MapListViewFragment) this.getFragmentManager()
+        .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+    if (mlvFragment != null && mlvFragment.isVisible()) {
+      return mlvFragment.getIndexOfSelectedItem();
+    }
+    // no item selected
+    return null;
+  }
+
   @Override public String getInstanceId() {
     if ( mCurrentFragmentType == ViewFragmentType.DETAIL || mCurrentFragmentType == ViewFragmentType.DETAIL_WITH_LIST) {
       String rowId = IntentUtil.retrieveRowIdFromBundle(this.getIntent().getExtras());

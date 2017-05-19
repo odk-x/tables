@@ -21,7 +21,10 @@ import java.util.Collections;
 import java.util.List;
 
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.logging.WebLogger;
@@ -173,16 +176,21 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
   @Override
   public void databaseAvailable() {
     super.databaseAvailable();
-    if ( Tables.getInstance().getDatabase() != null ) {
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    if ( dbInterface != null ) {
+      PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
+      String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
       DbHandle db = null;
       try {
         List<String> rawTableIds = Collections.emptyList();
         ArrayList<String> localizedNames = new ArrayList<String>();
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        rawTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
+        db = dbInterface.openDatabase(appName);
+        rawTableIds = dbInterface.getAllTableIds(appName, db);
         for (String tableId : rawTableIds) {
           String localizedDisplayName;
-          localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
+          localizedDisplayName = TableUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
+              dbInterface, appName, db, tableId);
           localizedNames.add(localizedDisplayName);
         }
         tableIds = rawTableIds.toArray(new String[rawTableIds.size()]);
@@ -192,7 +200,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
       } finally {
         if (db != null) {
           try {
-            Tables.getInstance().getDatabase().closeDatabase(appName, db);
+            dbInterface.closeDatabase(appName, db);
             db = null;
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(appName).printStackTrace(e);

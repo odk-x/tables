@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.database.service.DbHandle;
@@ -35,10 +36,12 @@ public class CellValueView {
   public static CellEditView getCellEditView(CommonApplication app, Context context, String appName, String tableId, ColumnDefinition cd, String value) throws
       ServicesAvailabilityException {
 
+    UserDbInterface dbInterface = app.getDatabase();
     DbHandle db = null;
     try {
-      db = app.getDatabase().openDatabase(appName);
-      ArrayList<Map<String,Object>> displayChoices = ColumnUtil.get().getDisplayChoicesList(app, appName, db, tableId, cd.getElementKey());
+      db = dbInterface.openDatabase(appName);
+      ArrayList<Map<String,Object>> displayChoices = ColumnUtil.get().getDisplayChoicesList(dbInterface,
+          appName, db, tableId, cd.getElementKey());
       if (displayChoices != null) {
         return new MultipleChoiceEditView(context, cd, displayChoices, value);
       } else {
@@ -46,7 +49,7 @@ public class CellValueView {
       }
     } finally {
       if ( db != null ) {
-        app.getDatabase().closeDatabase(appName, db);
+        dbInterface.closeDatabase(appName, db);
       }
     }
   }

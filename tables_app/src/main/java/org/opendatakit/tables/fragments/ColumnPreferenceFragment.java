@@ -19,6 +19,7 @@ import android.content.Context;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
@@ -127,16 +128,16 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
 
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     String rawDisplayName;
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      rawDisplayName = ColumnUtil.get().getRawDisplayName(Tables.getInstance(), getAppName(), 
-          db, getTableId(), 
-          this.retrieveColumnDefinition().getElementKey());
+      db = dbInterface.openDatabase(getAppName());
+      rawDisplayName = ColumnUtil.get().getRawDisplayName(dbInterface, getAppName(),
+          db, getTableId(), this.retrieveColumnDefinition().getElementKey());
     } finally {
       if ( db != null ) {
-        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+        dbInterface.closeDatabase(getAppName(), db);
       }
     }
 

@@ -316,7 +316,7 @@ public class ColorRulesDialog extends Dialog {
       }
     }
     colorRuler.replaceColorRuleList(rulesToPersist);
-    colorRuler.saveRuleList(Tables.getInstance());
+    colorRuler.saveRuleList(Tables.getInstance().getDatabase());
   }
 
   /*

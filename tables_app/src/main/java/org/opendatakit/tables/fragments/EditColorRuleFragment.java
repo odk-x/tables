@@ -20,11 +20,14 @@ import java.util.Arrays;
 
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
@@ -172,20 +175,24 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   private void initializeStateRequiringContext(DbHandle db) throws ServicesAvailabilityException {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
 
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     // 1) First fill in the color rule group and list.
-    TableUtil.TableColumns tc = TableUtil.get().getTableColumns(Tables.getInstance(), getAppName(), db, getTableId());
+    TableUtil.TableColumns tc = TableUtil.get().getTableColumns(userSelectedDefaultLocale,
+        dbInterface, getAppName(), db, getTableId());
     
     switch (this.mColorRuleGroupType) {
     case COLUMN:
-      this.mColorRuleGroup = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(), getAppName(),
+      this.mColorRuleGroup = ColorRuleGroup.getColumnColorRuleGroup(dbInterface, getAppName(),
           db, getTableId(), this.mElementKey, tc.adminColumns);
       break;
     case TABLE:
-      this.mColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), getAppName(),
+      this.mColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(dbInterface, getAppName(),
           db, getTableId(), tc.adminColumns);
       break;
     case STATUS_COLUMN:
-      this.mColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), getAppName(),
+      this.mColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(dbInterface, getAppName(),
           db, getTableId(), tc.adminColumns);
       break;
     default:
@@ -257,12 +264,15 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
       this.getPreferenceScreen().removePreference(pref);
       return;
     }
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
     pref.setEntries(this.mColumnDisplayNames);
     pref.setEntryValues(mColumnElementKeys);
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     if (!isUnpersistedNewRule()) {
       String localizedDisplayName;
-      localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
-          db, getTableId(),
+      localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
+          dbInterface, getAppName(), db, getTableId(),
           this.mColorRuleGroup.getColorRules().get(mRulePosition).getColumnElementKey());
       pref.setSummary(localizedDisplayName);
       pref.setValueIndex(pref.findIndexOfValue(mElementKey));
@@ -273,20 +283,23 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         WebLogger.getLogger(getAppName()).d(TAG,
             "onPreferenceChance callback invoked for value: " + newValue);
+        PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+        String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+
+        UserDbInterface dbInterface = Tables.getInstance().getDatabase();
         mElementKey = (String) newValue;
         String localizedDisplayName = null;
         DbHandle db = null;
         try {
-          db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
-              db, getTableId(),
-              mElementKey);
+          db = dbInterface.openDatabase(getAppName());
+          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
+              dbInterface, getAppName(), db, getTableId(), mElementKey);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
         } finally {
           if (db != null) {
             try {
-              Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+              dbInterface.closeDatabase(getAppName(), db);
             } catch (ServicesAvailabilityException e) {
               WebLogger.getLogger(getAppName()).printStackTrace(e);
             }
@@ -394,7 +407,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     } else {
       this.mColorRuleGroup.getColorRules().set(mRulePosition, newRule);
     }
-    mColorRuleGroup.saveRuleList(Tables.getInstance());
+    mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
     updateStateOfSaveButton();
   }
 

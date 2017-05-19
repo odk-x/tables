@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.activities.BasePreferenceActivity;
@@ -106,12 +107,17 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
   }
 
   private void createFromDatabase() {
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     String localizedDisplayName;
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
+      db = dbInterface.openDatabase(appName);
       localizedDisplayName = TableUtil
-          .get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
+          .get().getLocalizedDisplayName(userSelectedDefaultLocale,
+              dbInterface, appName, db, tableId);
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
@@ -121,7 +127,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     } finally {
       if (db != null) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
+          dbInterface.closeDatabase(appName, db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
           Toast.makeText(this, "Unable to close database", Toast.LENGTH_LONG).show();
@@ -143,11 +149,13 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     root.addPreference(genCat);
     genCat.setTitle(getString(R.string.general_settings));
 
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+
     String rawDisplayName;
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      rawDisplayName = TableUtil.get().getRawDisplayName(Tables.getInstance(), appName, db, tableId);
+      db = dbInterface.openDatabase(appName);
+      rawDisplayName = TableUtil.get().getRawDisplayName(dbInterface, appName, db, tableId);
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
@@ -156,7 +164,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     } finally {
       if (db != null) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
+          dbInterface.closeDatabase(appName, db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
           Toast.makeText(this, "Unable to close database", Toast.LENGTH_LONG).show();
@@ -219,11 +227,13 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     // viewTypePref.setEntries(viewTypeNames);
     // viewTypePref.setValue(String.valueOf(settings.getViewType()));
 
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+
     TableViewType type;
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      type = TableUtil.get().getDefaultViewType(Tables.getInstance(), appName, db, tableId);
+      db = dbInterface.openDatabase(appName);
+      type = TableUtil.get().getDefaultViewType(dbInterface, appName, db, tableId);
 
       viewTypePref.setValue(type.name());
       // TODO: currently throwing an error i think
@@ -287,7 +297,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       // prefCat.addPreference(statusColumnColorRulePref);
 
       TableUtil.MapViewColorRuleInfo info =
-              TableUtil.get().getMapListViewColorRuleInfo(Tables.getInstance(), getAppName(), db, tableId);
+              TableUtil.get().getMapListViewColorRuleInfo(dbInterface, getAppName(), db, tableId);
 
       ColumnDefinition colorColumn = null;
       // If the color rule type is columns, find the column that it identifies.
@@ -354,7 +364,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     } finally {
       if (db != null) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
+          dbInterface.closeDatabase(appName, db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
           Toast.makeText(this, "Unable to close database", Toast.LENGTH_LONG).show();
@@ -413,6 +423,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     if (resultCode == RESULT_CANCELED) {
       return;
     }
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     Uri uri;
     String filename;
     String relativePath;
@@ -423,7 +434,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       // We need to get the relative path under the app name.
       relativePath = getRelativePathOfFile(filename);
       try {
-        TableUtil.get().atomicSetDetailViewFilename(Tables.getInstance(), appName, tableId, relativePath);
+        TableUtil.get().atomicSetDetailViewFilename(dbInterface, appName, tableId, relativePath);
       } catch (ServicesAvailabilityException e) {
         Toast.makeText(getParent(), "Unable to set Detail View Filename", Toast.LENGTH_LONG).show();
       }
@@ -435,7 +446,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       // We need to get the relative path under the app name.
       relativePath = getRelativePathOfFile(filename);
       try {
-        TableUtil.get().atomicSetListViewFilename(Tables.getInstance(), appName, tableId, relativePath);
+        TableUtil.get().atomicSetListViewFilename(dbInterface, appName, tableId, relativePath);
       } catch (ServicesAvailabilityException e) {
         Toast.makeText(getParent(), "Unable to set List View Filename", Toast.LENGTH_LONG).show();
       }
@@ -447,7 +458,7 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       // We need to get the relative path under the app name.
       relativePath = getRelativePathOfFile(filename);
       try {
-        TableUtil.get().atomicSetMapListViewFilename(Tables.getInstance(), appName, tableId, relativePath);
+        TableUtil.get().atomicSetMapListViewFilename(dbInterface, appName, tableId, relativePath);
       } catch (ServicesAvailabilityException e) {
         Toast.makeText(getParent(), "Unable to set Map List View Filename", Toast.LENGTH_LONG).show();
       }
@@ -483,7 +494,8 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
       try {
         localizedDisplayName = LocalizationUtils.getLocalizedDisplayName(appName, tableId,
             props.getUserSelectedDefaultLocale(),
-            TableUtil.get().atomicSetRawDisplayName(Tables.getInstance(), appName, tableId, (String) newValue));
+            TableUtil.get().atomicSetRawDisplayName(Tables.getInstance().getDatabase(),
+                appName, tableId, (String) newValue));
       } catch ( ServicesAvailabilityException e ) {
         Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
         init();
@@ -565,7 +577,8 @@ public class TablePropertiesManager extends BasePreferenceActivity implements Da
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
       try {
-        TableUtil.get().atomicSetDefaultViewType(Tables.getInstance(), appName, tableId, TableViewType.valueOf((String) newValue));
+        TableUtil.get().atomicSetDefaultViewType(Tables.getInstance().getDatabase(),
+            appName, tableId, TableViewType.valueOf((String) newValue));
       } catch (ServicesAvailabilityException e) {
         Toast.makeText(getParent(), "Unable to change default view type", Toast.LENGTH_LONG).show();
       }

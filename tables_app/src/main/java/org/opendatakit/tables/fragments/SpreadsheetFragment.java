@@ -25,9 +25,12 @@ import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.data.JoinColumn;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.utilities.*;
 import org.opendatakit.database.service.DbHandle;
@@ -144,7 +147,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
   void addGroupByColumn(ColumnDefinition cd) {
     try {
-      TableUtil.get().atomicAddGroupByColumn(Tables.getInstance(), getAppName(), getTableId(), cd.getElementKey());
+      TableUtil.get().atomicAddGroupByColumn(Tables.getInstance().getDatabase(),
+          getAppName(), getTableId(), cd.getElementKey());
     } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to add column to Group By list", Toast.LENGTH_LONG).show();
     }
@@ -152,7 +156,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
   void removeGroupByColumn(ColumnDefinition cd) {
     try {
-      TableUtil.get().atomicRemoveGroupByColumn(Tables.getInstance(), getAppName(), getTableId(), cd.getElementKey());
+      TableUtil.get().atomicRemoveGroupByColumn(Tables.getInstance().getDatabase(),
+          getAppName(), getTableId(), cd.getElementKey());
     } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to remove column from Group By list", Toast.LENGTH_LONG).show();
     }
@@ -160,7 +165,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
   void setColumnAsSort(ColumnDefinition cd) {
     try {
-      TableUtil.get().atomicSetSortColumn(Tables.getInstance(), getAppName(), getTableId(), (cd == null) ? null : cd.getElementKey());
+      TableUtil.get().atomicSetSortColumn(Tables.getInstance().getDatabase(),
+          getAppName(), getTableId(), (cd == null) ? null : cd.getElementKey());
     } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to set Sort Column", Toast.LENGTH_LONG).show();
     }
@@ -168,7 +174,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
   void setColumnAsIndexedCol(ColumnDefinition cd) {
     try {
-      TableUtil.get().atomicSetIndexColumn(Tables.getInstance(), getAppName(), getTableId(), (cd == null) ? null : cd.getElementKey());
+      TableUtil.get().atomicSetIndexColumn(Tables.getInstance().getDatabase(),
+          getAppName(), getTableId(), (cd == null) ? null : cd.getElementKey());
     } catch ( ServicesAvailabilityException e ) {
       Toast.makeText(getActivity(), "Unable to set Index Column", Toast.LENGTH_LONG).show();
     }
@@ -258,6 +265,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
   @Override
   public boolean onContextItemSelected(MenuItem item) {
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+
     SpreadsheetCell cell;
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
@@ -330,9 +342,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       ArrayList<JoinColumn> joinColumns;
       DbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+        db = dbInterface.openDatabase(getAppName());
         joinColumns = ColumnUtil
-            .get().getJoins(Tables.getInstance(), getAppName(), db, getTableId(), cd.getElementKey());
+            .get().getJoins(dbInterface, getAppName(), db, getTableId(), cd.getElementKey());
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
         WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
@@ -341,7 +353,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
       } finally {
         if (db != null) {
           try {
-            Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+            dbInterface.closeDatabase(getAppName(), db);
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
             WebLogger.getLogger(activity.getAppName()).e(TAG, "Error closing database");
@@ -390,10 +402,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           String joinedColTableDisplayName;
           db = null;
           try {
-            db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-            joinedColTableDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(), 
-                db, tableId,
-                elementKey);
+            db = dbInterface.openDatabase(getAppName());
+            joinedColTableDisplayName = ColumnUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
+                dbInterface, getAppName(), db, tableId, elementKey);
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
             WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
@@ -401,7 +412,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
           } finally {
             if (db != null) {
               try {
-                Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+                dbInterface.closeDatabase(getAppName(), db);
               } catch (ServicesAvailabilityException e) {
                 WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
                 WebLogger.getLogger(activity.getAppName()).e(TAG, "Error closing database");
@@ -475,18 +486,22 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
 
   @Override
   public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo) throws ServicesAvailabilityException {
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+
     this.mLastDataCellMenued = cellInfo;
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
     String localizedDisplayName;
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
-          db, getTableId(),
-          cd.getElementKey());
+      db = dbInterface.openDatabase(getAppName());
+      localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
+          dbInterface, getAppName(), db, getTableId(), cd.getElementKey());
     } finally {
       if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+        dbInterface.closeDatabase(getAppName(), db);
       }
     }
 
@@ -519,12 +534,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     ArrayList<JoinColumn> joinColumns;
     db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      joinColumns = ColumnUtil.get().getJoins(Tables.getInstance(), getAppName(), 
+      db = dbInterface.openDatabase(getAppName());
+      joinColumns = ColumnUtil.get().getJoins(dbInterface, getAppName(),
           db, getTableId(), cd.getElementKey());
     } finally {
       if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+        dbInterface.closeDatabase(getAppName(), db);
       }
     }
 
@@ -555,10 +570,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment implements
     DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      sortColumn = TableUtil.get().getSortColumn(Tables.getInstance(), getAppName(), db, getTableId());
-      indexColumn = TableUtil.get().getIndexColumn(Tables.getInstance(), getAppName(), db, getTableId());
-      groupByColumns = TableUtil.get().getColumnOrder(Tables.getInstance(), getAppName(), db, getTableId(),
-              spreadsheetTable.getColumnDefinitions());
+      sortColumn = TableUtil.get().getSortColumn(Tables.getInstance().getDatabase(),
+          getAppName(), db, getTableId());
+      indexColumn = TableUtil.get().getIndexColumn(Tables.getInstance().getDatabase(),
+          getAppName(), db, getTableId());
+      groupByColumns = TableUtil.get().getColumnOrder(Tables.getInstance().getDatabase(),
+          getAppName(), db, getTableId(), spreadsheetTable.getColumnDefinitions());
     } finally {
       if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
