@@ -56,9 +56,9 @@ public class SpreadsheetUserTable {
   UserTable userTable;
 
   public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws ServicesAvailabilityException {
+    this.fragment = frag;
     PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    this.fragment = frag;
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     ArrayList<String> colOrder;
