@@ -14,36 +14,38 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.test.suitebuilder.annotation.LargeTest;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.views.SpreadsheetView;
+import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
-import org.opendatakit.util.DisableAnimationsRule;
+import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
 
 import static android.support.test.espresso.Espresso.*;
 import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.assertion.ViewAssertions.*;
-import static android.support.test.espresso.intent.Intents.*;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.intent.Intents.intended;
+import static android.support.test.espresso.intent.Intents.intending;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
-import static android.support.test.espresso.web.assertion.WebViewAssertions.*;
+import static android.support.test.espresso.web.assertion.WebViewAssertions.webMatches;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
-import static android.support.test.espresso.web.webdriver.DriverAtoms.*;
+import static android.support.test.espresso.web.webdriver.DriverAtoms.getText;
+import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 import static org.hamcrest.Matchers.*;
 import static org.opendatakit.util.TestConstants.*;
 
@@ -391,7 +393,7 @@ public class TablePrefTest {
     try{
       db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
       file = TableUtil.get()
-          .getListViewFilename(Tables.getInstance(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
+          .getListViewFilename(Tables.getInstance().getDatabase(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
 
@@ -417,7 +419,8 @@ public class TablePrefTest {
     try{
       db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
       file = TableUtil.get()
-          .getDetailViewFilename(Tables.getInstance(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
+          .getDetailViewFilename(Tables.getInstance().getDatabase(), APP_NAME, db,
+              T_HOUSE_E_TABLE_ID);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
 
@@ -443,7 +446,7 @@ public class TablePrefTest {
     try{
       db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
       file = TableUtil.get()
-          .getMapListViewFilename(Tables.getInstance(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
+          .getMapListViewFilename(Tables.getInstance().getDatabase(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
 
@@ -465,7 +468,7 @@ public class TablePrefTest {
   private static void setListViewFile(String filename) {
     try {
       TableUtil.get().atomicSetListViewFilename(
-          Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
+          Tables.getInstance().getDatabase(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     }
@@ -474,7 +477,7 @@ public class TablePrefTest {
   private static void setDetailViewFile(String filename) {
     try {
       TableUtil.get().atomicSetDetailViewFilename(
-          Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
+          Tables.getInstance().getDatabase(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     }
@@ -483,7 +486,7 @@ public class TablePrefTest {
   private static void setMapViewFile(String filename) {
     try {
       TableUtil.get().atomicSetMapListViewFilename(
-          Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
+          Tables.getInstance().getDatabase(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
     }
