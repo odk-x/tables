@@ -10,6 +10,7 @@ import android.support.test.espresso.Espresso;
 import android.support.test.espresso.intent.Intents;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
+import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
@@ -50,7 +51,7 @@ import static org.hamcrest.Matchers.*;
 import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
-@android.support.test.filters.LargeTest
+@LargeTest
 public class TablePrefTest {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
