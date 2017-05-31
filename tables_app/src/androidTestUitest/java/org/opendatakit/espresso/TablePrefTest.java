@@ -12,7 +12,12 @@ import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
-import android.test.suitebuilder.annotation.LargeTest;
+import android.util.Log;
+import android.view.View;
+
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -50,7 +55,7 @@ import static org.hamcrest.Matchers.*;
 import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
-@LargeTest
+@android.support.test.filters.LargeTest
 public class TablePrefTest {
   private Boolean initSuccess = null;
   private UiDevice mDevice;
@@ -141,7 +146,7 @@ public class TablePrefTest {
 
   @Test
   public void views_columns() {
-    final int numCol = 19;
+    final int numCol = 21; // was 19 then we added lat/lon?
 
     //go to columns
     onData(withKey(COLUMNS_LIST)).perform(click());
@@ -163,19 +168,19 @@ public class TablePrefTest {
   public void display_tableIdentifier() {
     //Check that display name and table id are shown correctly
     assertThat(EspressoUtils.getPrefSummary(TABLE_DISPLAY_NAME),
-        is("\"" + T_HOUSE_E_DISPLAY_NAME + "\""));
+        is("{\"text\":\"" + T_HOUSE_E_DISPLAY_NAME + "\"}"));
     assertThat(EspressoUtils.getPrefSummary(TABLE_ID), is(T_HOUSE_E_TABLE_ID));
   }
 
   @Test
   public void display_columnIdentifier() {
-    if (true) return;
+    //if (true) return;
     
     onData(withKey(COLUMNS_LIST)).perform(click());
     onData(is("House id")).perform(click());
 
-    assertThat(EspressoUtils.getPrefSummary(COL_DISPLAY_NAME), is("House id"));
-    assertThat(EspressoUtils.getPrefSummary(COL_KEY), is("House_id"));
+    assertThat(EspressoUtils.getPrefSummary(COL_DISPLAY_NAME), is("{\"text\":\"House id\"}"));
+    assertThat(EspressoUtils.getPrefSummary(COL_KEY), is("{\"text\":\"House_id\"}"));
   }
 
   @Test
@@ -293,7 +298,9 @@ public class TablePrefTest {
 
     try {
       //check url
+      Log.i("intents_detailView", "debug 3");
       onView(withId(R.id.webkit)).check(matches(ODKMatchers.withUrl(endsWith(detailViewPath))));
+      Log.i("intents_detailView", "debug 4");
 
       try {
         Thread.sleep(2000); //need this for older devices
