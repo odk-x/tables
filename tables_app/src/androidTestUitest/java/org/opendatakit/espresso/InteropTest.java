@@ -8,7 +8,6 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
 import android.support.test.filters.LargeTest;
-import android.util.Log;
 
 import org.junit.Before;
 import org.junit.Rule;
