@@ -149,7 +149,7 @@ public class InteropTest {
   }
 
   @Test
-  public void crossApp_badFormId() {
+  public void crossApp_badFormId() throws InterruptedException {
     //Open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
@@ -178,7 +178,11 @@ public class InteropTest {
 
       //wait for Survey to start
       mDevice.wait(Until.hasObject(By.pkg(SURVEY_PKG_NAME).depth(0)), APP_START_TIMEOUT);
-      mDevice.wait(Until.findObject(By.text("OK")), APP_INIT_TIMEOUT).click();
+      Thread.sleep(2000);
+      //mDevice.wait(Until.hasObject(By.textContains("Survey")), APP_INIT_TIMEOUT);
+      mDevice.pressBack();
+      Thread.sleep(2000);
+      mDevice.wait(Until.findObject(By.text("Ignore Changes")), APP_INIT_TIMEOUT).click();
 
       //check that we're back to Tables
       onView(withClassName(is(SpreadsheetView.class.getName()))).check(matches(isDisplayed()));

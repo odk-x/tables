@@ -20,6 +20,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.types.FormType;
+import org.opendatakit.utilities.ODKFileUtils;
 
 import android.app.Activity;
 import android.content.Context;
@@ -30,6 +31,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import java.io.File;
 
 public class EditFormDialogPreference extends DialogPreference {
 
@@ -43,6 +46,7 @@ public class EditFormDialogPreference extends DialogPreference {
   private View mDialogView;
   private FormType mFormType;
   private EditText mFormId;
+  private AbsTableActivity mActivity;
 
   public EditFormDialogPreference(Context context, AttributeSet attrs) {
     super(context, attrs);
@@ -52,6 +56,7 @@ public class EditFormDialogPreference extends DialogPreference {
       throw new IllegalArgumentException("EditFormDialogPreference must "
           + "be associated with an AbsTableActivity");
     }
+    mActivity = (AbsTableActivity) activity;
   }
 
   /**
@@ -100,8 +105,15 @@ public class EditFormDialogPreference extends DialogPreference {
     super.onDialogClosed(positiveResult);
     if (positiveResult) {
       String formId = this.mFormId.getText().toString();
-      if (formId == null || formId.length() == 0) {
+      if (formId.length() == 0) { // TODO: actually check that the form doesn't exist
         // TODO: should throw an error or prevent the close?
+        return;
+      }
+
+      String formDir = ODKFileUtils.getFormFolder(mActivity.getAppName(), mActivity.getTableId(), formId);
+      File f = new File(formDir);
+      File formDefJson = new File(f, ODKFileUtils.FORMDEF_JSON_FILENAME);
+      if (!f.exists() || !f.isDirectory() || !formDefJson.exists() || !formDefJson.isFile()) {
         return;
       }
       this.mFormType.setFormId(formId);
