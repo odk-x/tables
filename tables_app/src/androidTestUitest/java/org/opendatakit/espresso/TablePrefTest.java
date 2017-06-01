@@ -176,7 +176,7 @@ public class TablePrefTest {
     onData(is("House id")).perform(click());
 
     assertThat(EspressoUtils.getPrefSummary(COL_DISPLAY_NAME), is("{\"text\":\"House id\"}"));
-    assertThat(EspressoUtils.getPrefSummary(COL_KEY), is("{\"text\":\"House_id\"}"));
+    assertThat(EspressoUtils.getPrefSummary(COL_KEY), is("House_id"));
   }
 
   @Test
