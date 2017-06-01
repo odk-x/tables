@@ -19,6 +19,8 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -486,6 +488,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity implements
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     String filename = null;
+    Bundle bundle = new Bundle();
+    IntentUtil.addAppNameToBundle(bundle, getAppName());
     switch (item.getItemId()) {
     case R.id.top_level_table_menu_view_spreadsheet_view:
       setCurrentFragmentType(ViewFragmentType.SPREADSHEET, null, null);
@@ -541,6 +545,27 @@ public class TableDisplayActivity extends AbsBaseWebActivity implements
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       }
+      return true;
+    case R.id.menu_table_manager_sync:
+      try {
+        Intent syncIntent = new Intent();
+        syncIntent.setComponent(new ComponentName(IntentConsts.Sync.APPLICATION_NAME,
+            IntentConsts.Sync.ACTIVITY_NAME));
+        syncIntent.setAction(Intent.ACTION_DEFAULT);
+        syncIntent.putExtras(bundle);
+        this.startActivityForResult(syncIntent, Constants.RequestCodes.LAUNCH_SYNC);
+      } catch (ActivityNotFoundException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
+      }
+      return true;
+    case R.id.menu_table_manager_preferences:
+      Intent preferenceIntent = new Intent();
+      preferenceIntent.setComponent(new ComponentName(IntentConsts.AppProperties.APPLICATION_NAME,
+          IntentConsts.AppProperties.ACTIVITY_NAME));
+      preferenceIntent.setAction(Intent.ACTION_DEFAULT);
+      preferenceIntent.putExtras(bundle);
+      this.startActivityForResult(preferenceIntent, Constants.RequestCodes.LAUNCH_DISPLAY_PREFS);
       return true;
     default:
       return super.onOptionsItemSelected(item);
