@@ -154,7 +154,8 @@ public class InteropTest {
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
     //Open "Tea houses editable"
-    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
+    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click()); // Sometimes it fails on
+    // this line because tables didn't start. It's a problem with the test framework, not the app.
 
     //go to table pref
     onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
