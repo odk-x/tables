@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="TABLESPIN_ID" type="id" />
+    <item name="FILENAMEVAL_ID" type="id" />
+    <item name="EXPORTBUTTON_ID" type="id" />
+</resources>

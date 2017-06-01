@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import android.support.v4.content.ContextCompat;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -74,11 +75,6 @@ import android.widget.TextView;
  */
 public class ExportCSVActivity extends AbstractImportExportActivity {
 
-  /** view IDs (for use in testing) */
-  public static final int TABLESPIN_ID = 1;
-  public static final int FILENAMEVAL_ID = 2;
-  public static final int EXPORTBUTTON_ID = 3;
-
   private String appName;
   /* the list of table names */
   private String[] tableNames;
@@ -115,26 +111,26 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
     v.addView(est);
     // adding the table spinner
     tableSpin = new Spinner(this);
-    tableSpin.setId(TABLESPIN_ID);
+    tableSpin.setId(R.id.TABLESPIN_ID);
     v.addView(tableSpin);
     // Horizontal divider
     View ruler1 = new View(this);
-    ruler1.setBackgroundColor(getResources().getColor(R.color.black));
+    ruler1.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
     v.addView(ruler1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
     // adding the filename field
     TextView fnLabel = new TextView(this);
     fnLabel.setText(getString(R.string.export_file_qualifier));
     v.addView(fnLabel);
     filenameValField = new EditText(this);
-    filenameValField.setId(FILENAMEVAL_ID);
+    filenameValField.setId(R.id.FILENAMEVAL_ID);
     v.addView(filenameValField);
     // Horizontal divider
     View ruler3 = new View(this);
-    ruler3.setBackgroundColor(getResources().getColor(R.color.black));
+    ruler3.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
     v.addView(ruler3, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
     // adding the export button
     Button button = new Button(this);
-    button.setId(EXPORTBUTTON_ID);
+    button.setId(R.id.EXPORTBUTTON_ID);
     button.setText(getString(R.string.export_button));
     button.setOnClickListener(new ButtonListener());
     v.addView(button);
