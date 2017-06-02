@@ -72,7 +72,7 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 
 	  @Override
 	  public void updateProgressDetail(String progressString) {
-			progressDialogFragment.updateProgressDialogStatusString(this, progressString);
+			progressDialogFragment.updateProgressDialogStatusString(context, progressString);
 	  }
 
 	protected void onProgressUpdate(Integer... progress) {

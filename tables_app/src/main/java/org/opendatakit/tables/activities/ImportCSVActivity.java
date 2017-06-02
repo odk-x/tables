@@ -64,7 +64,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
     }
     setContentView(getView());
   }
-  
+
   @Override
   public String getAppName() {
     return appName;
@@ -142,7 +142,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
     String filenamePath = filenameValField.getText().toString().trim();
 
     ImportRequest request = null;
-    String assetsCsvRelativePath = ODKFileUtils.asRelativePath(appName, 
+    String assetsCsvRelativePath = ODKFileUtils.asRelativePath(appName,
         new File(ODKFileUtils.getAssetsCsvFolder(appName)));
     if ( filenamePath.startsWith(assetsCsvRelativePath)) {
         String remainingPath = filenamePath.substring(assetsCsvRelativePath.length()+1);
