@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.tasks;
 
+import org.opendatakit.tables.R;
 import android.os.AsyncTask;
 import org.opendatakit.builder.CsvUtil;
 import org.opendatakit.builder.CsvUtilSupervisor;
@@ -95,12 +96,12 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
    * Updates the open progress dialog with the new status
    * just passes along the request to ImportExportDialog
    *
-   * @param progressString the string to set in the window, like "Importing row 10"
+   * @param row the row we're currently importing
    */
   @Override
-  public void updateProgressDetail(String progressString) {
+  public void updateProgressDetail(int row) {
     ImportExportDialog.activeDialogFragment
-        .updateProgressDialogStatusString(context, progressString);
+        .updateProgressDialogStatusString(context, R.string.import_in_progress_row, row);
   }
 
   /**

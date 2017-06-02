@@ -135,7 +135,8 @@ public class ImportExportDialog extends DialogFragment {
    * @param task   used for running on the UI thread
    * @param status the message to set the dialog's text to
    */
-  public void updateProgressDialogStatusString(AbsBaseActivity task, final String status) {
+  public void updateProgressDialogStatusString(AbsBaseActivity task, final int id,
+      final int status) {
     task.runOnUiThread(new Runnable() {
       @Override
       public void run() {
@@ -145,8 +146,9 @@ public class ImportExportDialog extends DialogFragment {
           return;
         }
         if (getArguments().getInt("type") == PROGRESS_DIALOG) {
-          ((ProgressDialog) d).setMessage(status);
-          getArguments().putString("message", status); // in case the screen is rotated and the
+          String message = getString(id, status);
+          ((ProgressDialog) d).setMessage(message);
+          getArguments().putString("message", message); // in case the screen is rotated and the
           // dialog gets recreated, don't reset to the default message
         }
       }
