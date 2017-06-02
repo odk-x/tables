@@ -21,7 +21,8 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.builder.CsvUtil;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.listener.ImportListener;
-import org.opendatakit.tables.activities.ImportCSVActivity;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.utils.ImportExportDialog;
 import org.opendatakit.tables.application.Tables;
 
 import android.os.AsyncTask;
@@ -31,15 +32,16 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 
   private static final String TAG = "ImportTask";
 
-	private final ImportCSVActivity importCSVActivity;
 	private final String appName;
-
+	private ImportExportDialog progressDialogFragment;
+  private AbsBaseActivity context;
 	/**
-	 * @param importCSVActivity
+	 * @param TODO
 	 */
-	public ImportTask(ImportCSVActivity importCSVActivity, String appName) {
-		this.importCSVActivity = importCSVActivity;
+	public ImportTask(ImportExportDialog progressDialogFragment, String appName, AbsBaseActivity context) {
+		this.progressDialogFragment = progressDialogFragment;
 		this.appName = appName;
+    this.context = context;
 	}
 
 	public boolean caughtDuplicateTableException = false;
@@ -70,7 +72,7 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 
 	  @Override
 	  public void updateProgressDetail(String progressString) {
-			this.importCSVActivity.updateProgressDialogStatusString(progressString);
+			progressDialogFragment.updateProgressDialogStatusString(this, progressString);
 	  }
 
 	protected void onProgressUpdate(Integer... progress) {
@@ -78,16 +80,17 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 	}
 
 	protected void onPostExecute(Boolean result) {
-		this.importCSVActivity.dismissDialog(ImportCSVActivity.IMPORT_IN_PROGRESS_DIALOG);
+		progressDialogFragment.dismiss();
 		if (result) {
-			this.importCSVActivity.showDialog(ImportCSVActivity.CSVIMPORT_SUCCESS_DIALOG);
+			ImportExportDialog.newInstance(ImportExportDialog.CSVIMPORT_SUCCESS_DIALOG, context);
 		} else {
 			if (caughtDuplicateTableException) {
-				this.importCSVActivity.showDialog(ImportCSVActivity.CSVIMPORT_FAIL_DUPLICATE_TABLE);
+				ImportExportDialog.newInstance(ImportExportDialog
+								.CSVIMPORT_FAIL_DUPLICATE_TABLE, context);
 			} else if (problemImportingKVSEntries) {
-				this.importCSVActivity.showDialog(ImportCSVActivity.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG);
+				ImportExportDialog.newInstance(ImportExportDialog.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG, context);
 			} else {
-				this.importCSVActivity.showDialog(ImportCSVActivity.CSVIMPORT_FAIL_DIALOG);
+				ImportExportDialog.newInstance(ImportExportDialog.CSVIMPORT_FAIL_DIALOG, context);
 			}
 		}
 	}

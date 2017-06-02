@@ -23,7 +23,8 @@ import org.opendatakit.builder.CsvUtil;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.listener.ExportListener;
 import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.tables.activities.ExportCSVActivity;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.utils.ImportExportDialog;
 import org.opendatakit.tables.application.Tables;
 
 import android.os.AsyncTask;
@@ -35,15 +36,17 @@ public class ExportTask
   /**
 	 *
 	 */
-	private final ExportCSVActivity exportCSVActivity;
 	private final String appName;
+  private ImportExportDialog progressDialogFragment;
+  private AbsBaseActivity context;
 
 	/**
-	 * @param exportCSVActivity
+	 * @param appName
 	 */
-	public ExportTask(ExportCSVActivity exportCSVActivity, String appName) {
-		this.exportCSVActivity = exportCSVActivity;
+	public ExportTask(ImportExportDialog progressDialogFragment, String appName, AbsBaseActivity context) {
+    this.progressDialogFragment = progressDialogFragment;
 		this.appName = appName;
+    this.context = context;
 	}
 
 // This says whether or not the secondary entries in the key value store
@@ -61,7 +64,8 @@ public class ExportTask
         try {
           String tableId = request.getTableId();
           db = Tables.getInstance().getDatabase().openDatabase(appName);
-          OrderedColumns orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);          // export goes to output/csv directory...
+          OrderedColumns orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns
+              (appName, db, tableId); // export goes to output/csv directory...
           return cu.exportSeparable(this, db, tableId, orderedDefns, request.getFileQualifier());
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
@@ -90,15 +94,15 @@ public class ExportTask
     }
 
     protected void onPostExecute(Boolean result) {
-        this.exportCSVActivity.dismissDialog(ExportCSVActivity.EXPORT_IN_PROGRESS_DIALOG);
-        if (result) {
-          if (keyValueStoreSuccessful) {
-            this.exportCSVActivity.showDialog(ExportCSVActivity.CSVEXPORT_SUCCESS_DIALOG);
-          } else {
-            this.exportCSVActivity.showDialog(ExportCSVActivity.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG);
-          }
+      progressDialogFragment.dismiss();
+      if (result) {
+        if (keyValueStoreSuccessful) {
+          ImportExportDialog.newInstance(ImportExportDialog.CSVEXPORT_SUCCESS_DIALOG, context);
         } else {
-            this.exportCSVActivity.showDialog(ExportCSVActivity.CSVEXPORT_FAIL_DIALOG);
+          ImportExportDialog.newInstance(ImportExportDialog.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG, context);
         }
+      } else {
+          ImportExportDialog.newInstance(ImportExportDialog.CSVEXPORT_FAIL_DIALOG, context);
+      }
     }
 }

@@ -3,4 +3,5 @@
     <item name="TABLESPIN_ID" type="id" />
     <item name="FILENAMEVAL_ID" type="id" />
     <item name="EXPORTBUTTON_ID" type="id" />
+    <item name="IMPORTBUTTON_ID" type="id" />
 </resources>

@@ -26,6 +26,7 @@ import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.tables.utils.ImportExportDialog;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.logging.WebLogger;
@@ -73,7 +74,7 @@ import android.widget.TextView;
  * @author sudar.sam@gmail.com
  *
  */
-public class ExportCSVActivity extends AbstractImportExportActivity {
+public class ExportCSVActivity extends AbsBaseActivity {
 
   private String appName;
   /* the list of table names */
@@ -93,7 +94,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
     }
     setContentView(getView());
   }
-  
+
   @Override
   public String getAppName() {
     return appName;
@@ -146,8 +147,8 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
   private void exportSubmission() {
     File file = ODKFileUtils.asAppFile(appName, filenameValField.getText().toString().trim());
     String tableId = tableIds[tableSpin.getSelectedItemPosition()];
-    ExportTask task = new ExportTask(this, appName);
-    showDialog(EXPORT_IN_PROGRESS_DIALOG);
+    ExportTask task = new ExportTask(ImportExportDialog.newInstance
+        (ImportExportDialog.EXPORT_IN_PROGRESS_DIALOG, this), appName, this);
     task.execute(new ExportRequest(appName, tableId, filenameValField.getText().toString().trim()));
   }
 

@@ -15,9 +15,11 @@
  */
 package org.opendatakit.tables.activities;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -28,6 +30,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.tasks.ImportRequest;
 import org.opendatakit.tables.tasks.ImportTask;
+import org.opendatakit.tables.utils.ImportExportDialog;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -36,7 +39,7 @@ import java.io.File;
 /**
  * An activity for importing CSV files to a table.
  */
-public class ImportCSVActivity extends AbstractImportExportActivity {
+public class ImportCSVActivity extends AbsBaseActivity {
 
   private static final String TAG = ImportCSVActivity.class.getSimpleName();
 
@@ -67,6 +70,31 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
     return appName;
   }
 
+  protected class PickFileButtonListener implements OnClickListener {
+    String appName;
+    String title;
+
+    public PickFileButtonListener(String appName, String title) {
+      this.appName = appName;
+      this.title = title;
+    }
+
+    @Override
+    public void onClick(View v) {
+      Intent intent = new Intent("org.openintents.action.PICK_FILE");
+      intent.setData(Uri.parse("file://" + ODKFileUtils.getAssetsCsvFolder(appName)));
+      intent.putExtra("org.openintents.extra.TITLE", title);
+      try {
+        startActivityForResult(intent, 1);
+      } catch ( ActivityNotFoundException e ) {
+        e.printStackTrace();
+        // TODO
+        Toast.makeText(ImportCSVActivity.this, getString(R.string.file_picker_not_found), Toast
+            .LENGTH_LONG)
+            .show();
+      }
+    }
+  }
   /**
    * @return the view
    */
@@ -78,10 +106,10 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
     fn.setOrientation(LinearLayout.VERTICAL);
     TextView fnLabel = new TextView(this);
     fnLabel.setText(getString(R.string.import_csv_filename));
-    fnLabel.setTextColor(getResources().getColor(R.color.black));
+    fnLabel.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
     fn.addView(fnLabel);
     filenameValField = new EditText(this);
-    filenameValField.setId(FILENAMEVAL_ID);
+    filenameValField.setId(R.id.FILENAMEVAL_ID);
     fn.addView(filenameValField);
     v.addView(fn);
     pickFileButton = new Button(this);
@@ -91,11 +119,11 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
     v.addView(pickFileButton);
     // Horizontal divider
     View ruler1 = new View(this);
-    ruler1.setBackgroundColor(getResources().getColor(R.color.black));
+    ruler1.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
     v.addView(ruler1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
     // adding the import button
     this.mImportButton = new Button(this);
-    this.mImportButton.setId(IMPORTBUTTON_ID);
+    this.mImportButton.setId(R.id.IMPORTBUTTON_ID);
     this.mImportButton.setText(getString(R.string.import_append_table));
     this.mImportButton.setOnClickListener(new ImportButtonListener());
     v.addView(this.mImportButton);
@@ -149,8 +177,8 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
       return;
     }
 
-    showDialog(IMPORT_IN_PROGRESS_DIALOG);
-    ImportTask task = new ImportTask(this, appName);
+    ImportTask task = new ImportTask(ImportExportDialog.newInstance(ImportExportDialog
+        .IMPORT_IN_PROGRESS_DIALOG, this), appName, this);
     task.execute(request);
   }
 
