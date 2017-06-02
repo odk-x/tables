@@ -25,36 +25,31 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.application.Tables;
 
 /**
- * 
  * @author sudar.sam@gmail.com
- *
  */
 public class PreferenceUtil {
-  
+
   private static final String TAG = PreferenceUtil.class.getSimpleName();
-    
+
   /**
    * Save viewType to be the default view type for the tableId
-   * 
+   *
    * @param context
    * @param appName
    * @param tableId
    * @param viewType
    */
-  public static void setDefaultViewType(
-      Context context,
-      String appName,
-      String tableId,
+  public static void setDefaultViewType(Context context, String appName, String tableId,
       TableViewType viewType) {
 
     try {
-      TableUtil.get().atomicSetDefaultViewType(Tables.getInstance().getDatabase(),
-          appName, tableId, viewType);
+      TableUtil.get()
+          .atomicSetDefaultViewType(Tables.getInstance().getDatabase(), appName, tableId, viewType);
     } catch (ServicesAvailabilityException e) {
       Toast.makeText(context, "Unable to change default view type", Toast.LENGTH_LONG).show();
     }
   }
-  
+
   /**
    * Get the width thast has been set for the column. If none has been set,
    * returns {@see DEFAULT_COL_WIDTH}.
@@ -66,35 +61,30 @@ public class PreferenceUtil {
    * @return
    * @throws ServicesAvailabilityException
    */
-  public static int getColumnWidth(
-      Context context, String appName, String tableId,
+  public static int getColumnWidth(Context context, String appName, String tableId,
       String elementKey) throws ServicesAvailabilityException {
     Integer result = null;
     DbHandle db = null;
     try {
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      result = ColumnUtil
-          .get().getColumnWidth(Tables.getInstance().getDatabase(),
-              appName, db, tableId, elementKey);
+      result = ColumnUtil.get()
+          .getColumnWidth(Tables.getInstance().getDatabase(), appName, db, tableId, elementKey);
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
     return result;
   }
-  
-  public static void setColumnWidth(
-      Context context,
-      String appName,
-      String tableId,
-      String elementKey,
-      int newColumnWidth) {
+
+  public static void setColumnWidth(Context context, String appName, String tableId,
+      String elementKey, int newColumnWidth) {
 
     try {
-      ColumnUtil.get().atomicSetColumnWidth(Tables.getInstance().getDatabase(),
-          appName, tableId, elementKey, newColumnWidth);
-    } catch ( ServicesAvailabilityException e ) {
+      ColumnUtil.get()
+          .atomicSetColumnWidth(Tables.getInstance().getDatabase(), appName, tableId, elementKey,
+              newColumnWidth);
+    } catch (ServicesAvailabilityException e) {
       Toast.makeText(context, "Unable to change Column Width", Toast.LENGTH_LONG).show();
     }
   }

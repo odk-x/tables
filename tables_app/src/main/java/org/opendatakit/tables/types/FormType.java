@@ -15,21 +15,19 @@
  */
 package org.opendatakit.tables.types;
 
+import android.content.Context;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.utilities.KeyValueStoreUtils;
+import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
-
-import android.content.Context;
 
 /**
  * Definition of the form data type.
  *
  * @author sudar.sam@gmail.com
- *
  */
 public class FormType {
   private static final String TAG = "FormType";
@@ -48,19 +46,18 @@ public class FormType {
   private Type type;
   private SurveyFormParameters mSurveyParams;
 
-  public static FormType constructFormType(Context context, String appName, String tableId) throws
-      ServicesAvailabilityException {
-    return new FormType(context, appName, tableId, SurveyFormParameters.constructSurveyFormParameters(
-            context, appName, tableId));
+  public static FormType constructFormType(Context context, String appName, String tableId)
+      throws ServicesAvailabilityException {
+    return new FormType(context, appName, tableId,
+        SurveyFormParameters.constructSurveyFormParameters(context, appName, tableId));
   }
 
-  public void persist(Context context, String appName, String tableId) throws ServicesAvailabilityException {
+  public void persist(Context context, String appName, String tableId)
+      throws ServicesAvailabilityException {
     DbHandle db = null;
     try {
-      KeyValueStoreEntry entry = KeyValueStoreUtils.buildEntry(tableId,
-              FormType.KVS_PARTITION,
-              FormType.KVS_ASPECT,
-              FormType.KEY_FORM_TYPE,
+      KeyValueStoreEntry entry = KeyValueStoreUtils
+          .buildEntry(tableId, FormType.KVS_PARTITION, FormType.KVS_ASPECT, FormType.KEY_FORM_TYPE,
               ElementDataType.string, type.name());
 
       db = Tables.getInstance().getDatabase().openDatabase(appName);
@@ -72,7 +69,7 @@ public class FormType {
       // of the form type we are no longer using.
       this.mSurveyParams.persist(appName, db, tableId);
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }

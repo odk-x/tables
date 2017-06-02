@@ -28,29 +28,24 @@ import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
  * Displays an HTML file that is not associated with a particular table.
- * Consequently it does not add a data JavaScript interface to its 
- * {@link WebView}. To display data about a table, see 
+ * Consequently it does not add a data JavaScript interface to its
+ * {@link WebView}. To display data about a table, see
  * {@link AbsWebTableFragment} and its subclasses.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class WebFragment extends AbsBaseFragment implements IWebFragment {
-  
+
   private static final String TAG = WebFragment.class.getSimpleName();
 
   private static final int ID = R.layout.web_view_container;
 
   @Override
-  public View onCreateView(
-      LayoutInflater inflater,
-      ViewGroup container,
+  public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
     WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView] activity is: " + this.getActivity());
-    
-    View v = inflater.inflate(
-        R.layout.web_view_container,
-        container,
-        false);
+
+    View v = inflater.inflate(R.layout.web_view_container, container, false);
 
     return v;
   }
@@ -62,14 +57,14 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
 
   @Override
   public void setWebKitVisibility() {
-    if ( getView() == null ) {
+    if (getView() == null) {
       return;
     }
 
     OdkTablesWebView webView = (OdkTablesWebView) getView().findViewById(R.id.webkit);
     TextView noDatabase = (TextView) getView().findViewById(android.R.id.empty);
-    
-    if ( Tables.getInstance().getDatabase() != null ) {
+
+    if (Tables.getInstance().getDatabase() != null) {
       webView.setVisibility(View.VISIBLE);
       noDatabase.setVisibility(View.GONE);
     } else {
@@ -77,11 +72,11 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
       noDatabase.setVisibility(View.VISIBLE);
     }
   }
-  
+
   @Override
   public void databaseAvailable() {
 
-    if ( getView() != null ) {
+    if (getView() != null) {
       setWebKitVisibility();
       getWebKit().reloadPage();
     }
@@ -89,7 +84,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
 
   @Override
   public void databaseUnavailable() {
-    if ( getView() != null ) {
+    if (getView() != null) {
       setWebKitVisibility();
       getWebKit().setForceLoadDuringReload();
     }

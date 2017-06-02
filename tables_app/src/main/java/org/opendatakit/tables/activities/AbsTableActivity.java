@@ -16,7 +16,6 @@
 package org.opendatakit.tables.activities;
 
 import android.os.Bundle;
-
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.OrderedColumns;
@@ -28,17 +27,16 @@ import org.opendatakit.logging.WebLogger;
  * This class is the base for any Activity that will display information about
  * a particular table. Callers must pass in a table id in the bundle with the
  * key {@link IntentConsts#INTENT_KEY_TABLE_ID}.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public abstract class AbsTableActivity extends AbsBaseActivity {
-  
-  private static final String TAG = 
-      AbsTableActivity.class.getSimpleName();
-  
+
+  private static final String TAG = AbsTableActivity.class.getSimpleName();
+
   private String mTableId;
   private OrderedColumns mColumnDefinitions;
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -47,9 +45,10 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] table id was not present in Intent.");
     }
   }
-  
+
   /**
    * Retrieve the table id from the intent. Returns null if not present.
+   *
    * @return
    */
   String retrieveTableIdFromIntent() {
@@ -59,16 +58,17 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
   public String getTableId() {
     return this.mTableId;
   }
-  
+
   public synchronized OrderedColumns getColumnDefinitions() {
-    if ( this.mColumnDefinitions == null ) {
+    if (this.mColumnDefinitions == null) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] building mColumnDefinitions.");
       CommonApplication app = (CommonApplication) getApplication();
-      if ( app.getDatabase() != null ) {
+      if (app.getDatabase() != null) {
         DbHandle db = null;
         try {
           db = app.getDatabase().openDatabase(getAppName());
-          mColumnDefinitions = app.getDatabase().getUserDefinedColumns(getAppName(), db, getTableId());
+          mColumnDefinitions = app.getDatabase()
+              .getUserDefinedColumns(getAppName(), db, getTableId());
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to access database.");
           WebLogger.getLogger(getAppName()).printStackTrace(e);

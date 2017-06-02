@@ -15,40 +15,39 @@
  */
 package org.opendatakit.tables.views;
 
-import java.util.ArrayList;
-import java.util.Map;
-
-import org.opendatakit.application.CommonApplication;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.data.utilities.ColumnUtil;
-import org.opendatakit.database.service.DbHandle;
-
 import android.content.Context;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import org.opendatakit.application.CommonApplication;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
+
+import java.util.ArrayList;
+import java.util.Map;
 
 public class CellValueView {
 
-  public static CellEditView getCellEditView(CommonApplication app, Context context, String appName, String tableId, ColumnDefinition cd, String value) throws
-      ServicesAvailabilityException {
+  public static CellEditView getCellEditView(CommonApplication app, Context context, String appName,
+      String tableId, ColumnDefinition cd, String value) throws ServicesAvailabilityException {
 
     UserDbInterface dbInterface = app.getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(appName);
-      ArrayList<Map<String,Object>> displayChoices = ColumnUtil.get().getDisplayChoicesList(dbInterface,
-          appName, db, tableId, cd.getElementKey());
+      ArrayList<Map<String, Object>> displayChoices = ColumnUtil.get()
+          .getDisplayChoicesList(dbInterface, appName, db, tableId, cd.getElementKey());
       if (displayChoices != null) {
         return new MultipleChoiceEditView(context, cd, displayChoices, value);
       } else {
         return new DefaultEditView(context, value);
       }
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         dbInterface.closeDatabase(appName, db);
       }
     }
@@ -67,7 +66,8 @@ public class CellValueView {
 
     private final Spinner spinner;
 
-    public MultipleChoiceEditView(Context context, ColumnDefinition cd,  ArrayList<Map<String,Object>> displayChoices, String value) {
+    public MultipleChoiceEditView(Context context, ColumnDefinition cd,
+        ArrayList<Map<String, Object>> displayChoices, String value) {
       super(context);
       int selection = -1;
       for (int i = 0; i < displayChoices.size(); i++) {
@@ -76,7 +76,7 @@ public class CellValueView {
           break;
         }
       }
-      ArrayAdapter<Map<String,Object>> adapter = new ArrayAdapter<Map<String,Object>>(context,
+      ArrayAdapter<Map<String, Object>> adapter = new ArrayAdapter<Map<String, Object>>(context,
           android.R.layout.simple_spinner_item, displayChoices);
       adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
       spinner = new Spinner(context);

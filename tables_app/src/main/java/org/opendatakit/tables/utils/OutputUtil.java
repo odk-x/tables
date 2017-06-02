@@ -18,18 +18,18 @@ package org.opendatakit.tables.utils;
 import android.content.Context;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.CharEncoding;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -44,22 +44,29 @@ import java.util.Map;
  * requires outputting json structures representing the state of the database.
  *
  * @author sudar.sam@gmail.com
- *
  */
 public class OutputUtil {
 
   private static final String TAG = OutputUtil.class.getSimpleName();
 
-  /** The filename of the control object that will be written out. */
+  /**
+   * The filename of the control object that will be written out.
+   */
   public static final String CONTROL_FILE_NAME = "control.json";
-  /** The suffix of the name for each data object that will be written. */
+  /**
+   * The suffix of the name for each data object that will be written.
+   */
   public static final String DATA_FILE_SUFFIX = "_data.json";
 
   public static final String CTRL_KEY_TABLE_ID_TO_DISPLAY_NAME = "tableIdToDisplayName";
   public static final String CTRL_KEY_TABLE_INFO = "tables";
-  /** The key for the default detail view file in the table. */
+  /**
+   * The key for the default detail view file in the table.
+   */
   public static final String CTRL_KEY_DEFAULT_DETAIL_FILE = "defaultDetailFile";
-  /** The key for the default list view file in the table. */
+  /**
+   * The key for the default list view file in the table.
+   */
   public static final String CTRL_KEY_DEFAULT_LIST_FILE = "defaultListFile";
 
   // These are keys we'll be outputting for use in debugging when we write
@@ -90,10 +97,11 @@ public class OutputUtil {
    * ...}
    *
    * @return
-   * @throws JsonProcessingException 
+   * @throws JsonProcessingException
    * @throws ServicesAvailabilityException
    */
-  private static String getStringForControlObject(Context context, String appName) throws JsonProcessingException, ServicesAvailabilityException {
+  private static String getStringForControlObject(Context context, String appName)
+      throws JsonProcessingException, ServicesAvailabilityException {
     Map<String, Object> controlMap = new HashMap<String, Object>();
     Map<String, String> tableIdToDisplayName = new HashMap<String, String>();
     Map<String, Map<String, Object>> tableIdToControlTable = new HashMap<String, Map<String, Object>>();
@@ -109,8 +117,8 @@ public class OutputUtil {
       for (String tableId : tableIds) {
 
         String localizedDisplayName;
-        localizedDisplayName = TableUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
-            dbInterface, appName, db, tableId);
+        localizedDisplayName = TableUtil.get()
+            .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, appName, db, tableId);
         tableIdToDisplayName.put(tableId, localizedDisplayName);
         Map<String, Object> controlTable = getMapForControlTable(userSelectedDefaultLocale,
             dbInterface, appName, db, tableId);
@@ -137,7 +145,7 @@ public class OutputUtil {
    * {@link #CTRL_TABLE_KEY_ELEMENT_PATH_TO_KEY}: {elementPath: elementKey,
    * ...}, {@link #CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME}: {elementPath:
    * displayName, ...},
-   *
+   * <p>
    * }
    *
    * @param dbInterface
@@ -159,7 +167,8 @@ public class OutputUtil {
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
 
     orderedDefns = dbInterface.getUserDefinedColumns(appName, db, tableId);
-    defaultDetailFileName = TableUtil.get().getDetailViewFilename(dbInterface, appName, db, tableId);
+    defaultDetailFileName = TableUtil.get()
+        .getDetailViewFilename(dbInterface, appName, db, tableId);
     defaultListFileName = TableUtil.get().getListViewFilename(dbInterface, appName, db, tableId);
 
     for (ColumnDefinition cd : orderedDefns.getColumnDefinitions()) {
@@ -168,9 +177,9 @@ public class OutputUtil {
         pathToKey.put(cd.getElementName(), cd.getElementKey());
 
         String localizedDisplayName;
-        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName
-            (userSelectedDefaultLocale, dbInterface, appName,
-            db, tableId, cd.getElementKey());
+        localizedDisplayName = ColumnUtil.get()
+            .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, appName, db, tableId,
+                cd.getElementKey());
 
         keyToDisplayName.put(cd.getElementKey(), localizedDisplayName);
       }
@@ -189,12 +198,13 @@ public class OutputUtil {
    * @param context
    * @param appName
    * @throws ServicesAvailabilityException
-   * @throws JsonProcessingException 
+   * @throws JsonProcessingException
    */
-  public static void writeControlObject(Context context, String appName) throws JsonProcessingException, ServicesAvailabilityException {
+  public static void writeControlObject(Context context, String appName)
+      throws JsonProcessingException, ServicesAvailabilityException {
     String controlString = getStringForControlObject(context, appName);
-    String fileName = ODKFileUtils.getTablesDebugObjectFolder(appName) + File.separator
-        + CONTROL_FILE_NAME;
+    String fileName =
+        ODKFileUtils.getTablesDebugObjectFolder(appName) + File.separator + CONTROL_FILE_NAME;
     PrintWriter writer;
     try {
       writer = new PrintWriter(fileName, CharEncoding.UTF_8);

@@ -115,18 +115,18 @@ public class AndroidShortcuts extends BaseActivity {
 
       Cursor c = null;
       try {
-        c = getContentResolver().query(
-            Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName), null, null, null,
-            null);
+        c = getContentResolver()
+            .query(Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName), null, null, null,
+                null);
 
         if (c != null && c.getCount() > 0) {
           c.moveToPosition(-1);
           while (c.moveToNext()) {
-            String tableName = app.getName() + " > "
-                + CursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
-            uri = Uri.withAppendedPath(
-                Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
-                CursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
+            String tableName = app.getName() + " > " + CursorUtils
+                .getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
+            uri = Uri.withAppendedPath(Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
+                CursorUtils
+                    .getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
             choices.add(new Choice(R.drawable.tables_table, tableIcon, uri, tableName, appName));
           }
         }
@@ -144,8 +144,8 @@ public class AndroidShortcuts extends BaseActivity {
         View row;
 
         if (convertView == null) {
-          row = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(
-              R.layout.shortcut_item, null);
+          row = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE))
+              .inflate(R.layout.shortcut_item, null);
         } else {
           row = convertView;
         }
@@ -220,7 +220,7 @@ public class AndroidShortcuts extends BaseActivity {
     mAlertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok), errorListener);
     mAlertDialog.show();
   }
-  
+
   @Override
   public String getAppName() {
     return Tables.getInstance().getToolName();

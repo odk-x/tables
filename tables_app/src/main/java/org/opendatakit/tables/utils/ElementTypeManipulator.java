@@ -15,37 +15,38 @@
  */
 package org.opendatakit.tables.utils;
 
+import android.content.Context;
+import android.widget.LinearLayout;
+import org.opendatakit.aggregate.odktables.rest.ElementType;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.utilities.DateUtils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.utilities.DateUtils;
-import org.opendatakit.tables.activities.AbsBaseActivity;
-
-import android.content.Context;
-import android.widget.LinearLayout;
-
 public class ElementTypeManipulator {
   public static abstract class InputView extends LinearLayout {
 
-     protected final DateUtils du;
-     
-      public InputView(Context context, DateUtils du) {
-          super(context);
-          this.du = du;
-          setOrientation(LinearLayout.VERTICAL);
-      }
+    protected final DateUtils du;
 
-      public abstract boolean isValidValue();
+    public InputView(Context context, DateUtils du) {
+      super(context);
+      this.du = du;
+      setOrientation(LinearLayout.VERTICAL);
+    }
 
-      public abstract String getDbValue();
+    public abstract boolean isValidValue();
+
+    public abstract String getDbValue();
   }
 
   public interface ITypeManipulatorFragment<T> {
-    String   getElementTypeDisplayLabel();
-    String   getCollectType();
-    /* 
+    String getElementTypeDisplayLabel();
+
+    String getCollectType();
+
+    /*
      * DateUtils:
         if ( cp.getColumnType() == ColumnType.DATE ) {
             return formatLongDateTimeForUser(parseDateTimeFromDb(value));
@@ -64,7 +65,9 @@ public class ElementTypeManipulator {
      * 
      */
     String formatForCollect(DateUtils dataUtil, String databaseValue);
+
     Class<?> getDatabaseType();
+
     /*
      * DateUtils:
         if ( cp.getColumnType() == ColumnType.DATE ) {
@@ -90,6 +93,7 @@ public class ElementTypeManipulator {
      */
     String verifyValidityAndNormalizeValue(DateUtils dataUtil,
         ArrayList<Map<String, Object>> displayChoicesList, String inValue);
+
     /*
      * DateUtils:
      *        
@@ -132,7 +136,7 @@ public class ElementTypeManipulator {
      */
     T parseStringValue(DateUtils dataUtil, ArrayList<Map<String, Object>> displayChoicesList,
         String inValue, Class<T> clazz);
-    
+
     /*
      * InputScreenUtil
      *  
@@ -154,22 +158,21 @@ public class ElementTypeManipulator {
      */
     InputView getInputView(AbsBaseActivity context, DateUtils du, String value);
   }
-  
-  private HashMap<String, ITypeManipulatorFragment<?> > renderers = new HashMap<String,
-      ITypeManipulatorFragment<?> >();
-  
+
+  private HashMap<String, ITypeManipulatorFragment<?>> renderers = new HashMap<String, ITypeManipulatorFragment<?>>();
+
   public void addTypeManipulatorFragment(String type, ITypeManipulatorFragment<?> frag) {
-    renderers.put(type,  frag);
+    renderers.put(type, frag);
   }
-  
+
   public ITypeManipulatorFragment<?> getSpecialRenderer(ElementType type) {
     ITypeManipulatorFragment r = renderers.get(type.getElementType());
     return r;
   }
-  
+
   public ITypeManipulatorFragment<?> getDefaultRenderer(ElementType type) {
     ITypeManipulatorFragment<?> r = getSpecialRenderer(type);
-    if ( r == null ) {
+    if (r == null) {
       r = ElementTypeManipulatorFactory.getCustomManipulatorFragment(type);
       renderers.put(type.getElementType(), r);
     }

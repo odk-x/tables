@@ -13,41 +13,44 @@ import org.opendatakit.views.ODKWebView;
 public class OdkTablesWebView extends ODKWebView {
   private static final String t = "OdkTablesWebView";
 
-   private OdkTables tables;
+  private OdkTables tables;
 
   public OdkTablesWebView(Context context, AttributeSet attrs) {
     super(context, attrs);
 
     AbsBaseWebActivity activity = (AbsBaseWebActivity) context;
 
-     // stomp on the odkTablesIf object...
-     tables = new OdkTables(activity, this);
-     addJavascriptInterface(tables.getJavascriptInterfaceWithWeakReference(),
-         Constants.JavaScriptHandles.ODK_TABLES_IF);
+    // stomp on the odkTablesIf object...
+    tables = new OdkTables(activity, this);
+    addJavascriptInterface(tables.getJavascriptInterfaceWithWeakReference(),
+        Constants.JavaScriptHandles.ODK_TABLES_IF);
   }
 
-  @Override public boolean hasPageFramework() {
+  @Override
+  public boolean hasPageFramework() {
     return false;
   }
 
-   /**
-    *  IMPORTANT: This function should only be called with the context of the database listeners
-    *  OR if called from elsewhere there should be an if statement before invoking that checks
-    *  if the database is currently available.
-    */
-  @Override public void loadPage() {
+  /**
+   * IMPORTANT: This function should only be called with the context of the database listeners
+   * OR if called from elsewhere there should be an if statement before invoking that checks
+   * if the database is currently available.
+   */
+  @Override
+  public void loadPage() {
 
     /**
      * NOTE: Reload the web framework only if it has changed.
      */
 
     log.i(t, "loadPage: current loadPageUrl: " + getLoadPageUrl());
-    String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(
-        hasPageFrameworkFinishedLoading() && getLoadPageUrl() != null, getContainerFragmentID());
+    String baseUrl = ((IOdkTablesActivity) getContext())
+        .getUrlBaseLocation(hasPageFrameworkFinishedLoading() && getLoadPageUrl() != null,
+            getContainerFragmentID());
 
-    if ( baseUrl != null ) {
+    if (baseUrl != null) {
       loadPageOnUiThread(baseUrl, getContainerFragmentID(), false);
-    } else if ( hasPageFrameworkFinishedLoading() ) {
+    } else if (hasPageFrameworkFinishedLoading()) {
       log.w(t, "loadPage: framework was loaded -- but no URL -- don't load anything!");
     } else {
       log.w(t, "loadPage: framework did not load -- cannot load anything!");
@@ -55,18 +58,19 @@ public class OdkTablesWebView extends ODKWebView {
 
   }
 
-   /**
-    *  IMPORTANT: This function should only be called with the context of the database listeners
-    *  OR if called from elsewhere there should be an if statement before invoking that checks
-    *  if the database is currently available.
-    */
-   @Override public void reloadPage() {
+  /**
+   * IMPORTANT: This function should only be called with the context of the database listeners
+   * OR if called from elsewhere there should be an if statement before invoking that checks
+   * if the database is currently available.
+   */
+  @Override
+  public void reloadPage() {
 
     log.i(t, "reloadPage: current loadPageUrl: " + getLoadPageUrl());
-    String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(false,
-            getContainerFragmentID());
+    String baseUrl = ((IOdkTablesActivity) getContext())
+        .getUrlBaseLocation(false, getContainerFragmentID());
 
-    if ( baseUrl != null ) {
+    if (baseUrl != null) {
       loadPageOnUiThread(baseUrl, getContainerFragmentID(), true);
     } else {
       log.w(t, "reloadPage: framework did not load -- cannot load anything!");

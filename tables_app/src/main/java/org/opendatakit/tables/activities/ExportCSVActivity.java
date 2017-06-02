@@ -15,41 +15,34 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.*;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.tables.utils.ImportExportDialog;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
+import org.opendatakit.tables.utils.ImportExportDialog;
 import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.utilities.ODKFileUtils;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.Spinner;
-import android.widget.TextView;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class is responsible for exporting a table to CSV from the phone.
@@ -69,10 +62,8 @@ import android.widget.TextView;
  * that the user is able to see (the saved == complete rows) and all the
  * metadata for those rows at the time of the export.
  *
- *
  * @author unknown
  * @author sudar.sam@gmail.com
- *
  */
 public class ExportCSVActivity extends AbsBaseActivity {
 
@@ -147,8 +138,9 @@ public class ExportCSVActivity extends AbsBaseActivity {
   private void exportSubmission() {
     File file = ODKFileUtils.asAppFile(appName, filenameValField.getText().toString().trim());
     String tableId = tableIds[tableSpin.getSelectedItemPosition()];
-    ExportTask task = new ExportTask(ImportExportDialog.newInstance
-        (ImportExportDialog.EXPORT_IN_PROGRESS_DIALOG, this), appName, this);
+    ExportTask task = new ExportTask(
+        ImportExportDialog.newInstance(ImportExportDialog.EXPORT_IN_PROGRESS_DIALOG, this), appName,
+        this);
     task.execute(new ExportRequest(appName, tableId, filenameValField.getText().toString().trim()));
   }
 
@@ -175,7 +167,7 @@ public class ExportCSVActivity extends AbsBaseActivity {
     super.databaseAvailable();
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
-    if ( dbInterface != null ) {
+    if (dbInterface != null) {
       PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
       String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
       DbHandle db = null;
@@ -186,8 +178,9 @@ public class ExportCSVActivity extends AbsBaseActivity {
         rawTableIds = dbInterface.getAllTableIds(appName, db);
         for (String tableId : rawTableIds) {
           String localizedDisplayName;
-          localizedDisplayName = TableUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
-              dbInterface, appName, db, tableId);
+          localizedDisplayName = TableUtil.get()
+              .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, appName, db,
+                  tableId);
           localizedNames.add(localizedDisplayName);
         }
         tableIds = rawTableIds.toArray(new String[rawTableIds.size()]);

@@ -16,20 +16,18 @@
 package org.opendatakit.tables.fragments;
 
 import android.app.Activity;
+import android.os.Bundle;
 import android.util.Log;
 import org.opendatakit.activities.IOdkDataActivity;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-
-import android.os.Bundle;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
  * The list view that is displayed in a map.
- * 
+ *
  * @author Chris Gelon
  * @author sudar.sam@gmail.com
- *
  */
 public class MapListViewFragment extends ListViewFragment implements IMapListViewCallbacks {
 
@@ -50,9 +48,10 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     // AppName may not be available...
-    if ( savedInstanceState != null ) {
+    if (savedInstanceState != null) {
       this.mSelectedItemIndex = savedInstanceState.containsKey(INTENT_KEY_SELECTED_INDEX) ?
-          savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX) : -1;
+          savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX) :
+          -1;
     }
   }
 
@@ -67,31 +66,29 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
    */
   void resetView() {
 
-     // do not initiate reload until we have the database set up...
-     Activity activity = getActivity();
-     if(activity instanceof IOdkDataActivity) {
-        if ( ((IOdkDataActivity) activity).getDatabase() == null ) {
-           return;
-        }
-     } else {
-        Log.e(TAG, "Problem: MapListView not being rendered from activity that is an "
-            + "IOdkDataActivity");
+    // do not initiate reload until we have the database set up...
+    Activity activity = getActivity();
+    if (activity instanceof IOdkDataActivity) {
+      if (((IOdkDataActivity) activity).getDatabase() == null) {
         return;
-     }
-
+      }
+    } else {
+      Log.e(TAG,
+          "Problem: MapListView not being rendered from activity that is an " + "IOdkDataActivity");
+      return;
+    }
 
     WebLogger.getLogger(getAppName()).d(TAG, "[resetView]");
 
     OdkTablesWebView currentView = (OdkTablesWebView) this.getView().findViewById(R.id.webkit);
 
-     // reload the page.
+    // reload the page.
     currentView.reloadPage();
   }
 
   /**
-   *
    * @return true if the user has selected a row that should be displayed as
-   *         selected
+   * selected
    */
   protected boolean itemIsSelected() {
     return this.mSelectedItemIndex != INVALID_INDEX;

@@ -15,20 +15,6 @@
  */
 package org.opendatakit.tables.utils;
 
-import java.util.Map;
-
-import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.data.Row;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.types.FormType;
-import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -36,6 +22,19 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.widget.Toast;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.Row;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.types.FormType;
+import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
+
+import java.util.Map;
 
 public class ActivityUtil {
 
@@ -64,25 +63,25 @@ public class ActivityUtil {
     SurveyFormParameters params = formType.getSurveyFormParameters();
 
     Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, appName, tableId, params,
-              row.getDataByKey(DataTableColumns.ID));
+        row.getDataByKey(DataTableColumns.ID));
     if (intent != null) {
-      SurveyUtil.launchSurveyToEditRow(activity, tableId, intent, row.getDataByKey(DataTableColumns.ID));
+      SurveyUtil
+          .launchSurveyToEditRow(activity, tableId, intent, row.getDataByKey(DataTableColumns.ID));
     }
   }
 
   /**
    * Edit a row using the form specified by tableProperties. Currently used by TableDisplayActivity
-   * 
-   * @param activity
-   *          the activity that should await the return
+   *
+   * @param activity the activity that should await the return
    * @param rowId
    * @throws ServicesAvailabilityException
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
       OrderedColumns orderedDefns, String rowId) throws ServicesAvailabilityException {
-      WebLogger.getLogger(appName).d(TAG, "[editRow] using survey form");
-      SurveyFormParameters surveyFormParameters = SurveyFormParameters
-          .constructSurveyFormParameters(activity, appName, tableId);
+    WebLogger.getLogger(appName).d(TAG, "[editRow] using survey form");
+    SurveyFormParameters surveyFormParameters = SurveyFormParameters
+        .constructSurveyFormParameters(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit
     if (surveyFormParameters.getFormId() == null) {
@@ -90,29 +89,26 @@ public class ActivityUtil {
       return;
     }
 
-    WebLogger.getLogger(appName).d(TAG,
-            "[editRow] is custom form: " + surveyFormParameters.isUserDefined());
+    WebLogger.getLogger(appName)
+        .d(TAG, "[editRow] is custom form: " + surveyFormParameters.isUserDefined());
     SurveyUtil.editRowWithSurvey(activity, appName, tableId, rowId, surveyFormParameters);
   }
 
   /**
    * Add a row to the table represented by tableProperties. The default form
    * settings will be used.  Currently used by TableDisplayActivity and LocationDialogFragment
-   * 
-   * @param activity
-   *          the activity to launch and await the return
+   *
+   * @param activity           the activity to launch and await the return
    * @param appName
    * @param tableId
    * @param orderedDefns
-   *
-   * @param prepopulatedValues
-   *          a map of elementKey to value with which the new row should be
-   *          prepopulated.
+   * @param prepopulatedValues a map of elementKey to value with which the new row should be
+   *                           prepopulated.
    * @throws ServicesAvailabilityException
    */
   public static void addRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, Map<String, Object> prepopulatedValues) throws
-      ServicesAvailabilityException {
+      OrderedColumns orderedDefns, Map<String, Object> prepopulatedValues)
+      throws ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit
@@ -124,16 +120,16 @@ public class ActivityUtil {
     WebLogger.getLogger(appName).d(TAG, "[onOptionsItemSelected] using Survey form");
     SurveyFormParameters surveyFormParameters = formType.getSurveyFormParameters();
     WebLogger.getLogger(appName).d(TAG,
-            "[onOptionsItemSelected] survey form is custom: " + surveyFormParameters.isUserDefined());
-    SurveyUtil.addRowWithSurvey(activity, appName, tableId, surveyFormParameters,
-            prepopulatedValues);
+        "[onOptionsItemSelected] survey form is custom: " + surveyFormParameters.isUserDefined());
+    SurveyUtil
+        .addRowWithSurvey(activity, appName, tableId, surveyFormParameters, prepopulatedValues);
   }
 
   /**
    * Launch {@link TableLevelPreferencesActivity} to edit a table's properties.
    * Launches with request code
    * {@link Constants.RequestCodes#LAUNCH_TABLE_PREFS}.
-   * 
+   *
    * @param activity
    * @param appName
    * @param tableId
@@ -154,7 +150,7 @@ public class ActivityUtil {
    * Launch {@link TableLevelPreferencesActivity} to edit a column's list of
    * color rules. Launches with request code
    * {@link Constants.RequestCodes#LAUNCH_COLOR_RULE_LIST}.
-   * 
+   *
    * @param activity
    * @param appName
    * @param tableId
@@ -177,15 +173,14 @@ public class ActivityUtil {
   /**
    * Checks if the device is a tablet or a phone
    *
-   * @param activityContext
-   *          The Activity Context.
+   * @param activityContext The Activity Context.
    * @return Returns true if the device is a Tablet
    */
   public static boolean isTabletDevice(Context activityContext) {
     // Verifies if the Generalized Size of the device is XLARGE to be
     // considered a Tablet
     boolean xlarge = ((activityContext.getResources().getConfiguration().screenLayout
-            & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE);
+        & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE);
     // If XLarge, checks if the Generalized Density is at least MDPI
     // (160dpi)
     if (xlarge) {

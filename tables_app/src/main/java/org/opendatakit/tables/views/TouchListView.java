@@ -17,25 +17,18 @@
 
 package org.opendatakit.tables.views;
 
-import org.opendatakit.tables.R;
-
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.view.GestureDetector;
+import android.view.*;
 import android.view.GestureDetector.SimpleOnGestureListener;
-import android.view.Gravity;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewConfiguration;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import org.opendatakit.tables.R;
 
 public class TouchListView extends ListView {
   private ImageView mDragView;
@@ -45,7 +38,7 @@ public class TouchListView extends ListView {
   private int mFirstDragPos; // where was the dragged item originally
   private int mDragPoint; // at what offset inside the item did the user grab it
   private int mCoordOffset; // the difference between screen coordinates and
-                            // coordinates in this view
+  // coordinates in this view
   private DragListener mDragListener;
   private DropListener mDropListener;
   private RemoveListener mRemoveListener;
@@ -78,11 +71,11 @@ public class TouchListView extends ListView {
       TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.TouchListView, 0, 0);
 
       mItemHeightNormal = a.getDimensionPixelSize(R.styleable.TouchListView_normal_height, 0);
-      mItemHeightExpanded = a.getDimensionPixelSize(R.styleable.TouchListView_expanded_height,
-          mItemHeightNormal);
+      mItemHeightExpanded = a
+          .getDimensionPixelSize(R.styleable.TouchListView_expanded_height, mItemHeightNormal);
       grabberId = a.getResourceId(R.styleable.TouchListView_grabber, -1);
-      dragndropBackgroundColor = a.getColor(R.styleable.TouchListView_dragndrop_background,
-          0x00000000);
+      dragndropBackgroundColor = a
+          .getColor(R.styleable.TouchListView_dragndrop_background, 0x00000000);
       mRemoveMode = a.getInt(R.styleable.TouchListView_remove_mode, -1);
 
       a.recycle();
@@ -201,7 +194,7 @@ public class TouchListView extends ListView {
    * Restore size and visibility for all listitems
    */
   private void unExpandViews(boolean deletion) {
-    for (int i = 0;; i++) {
+    for (int i = 0; ; i++) {
       View v = getChildAt(i);
       if (v == null) {
         if (deletion) {
@@ -242,7 +235,7 @@ public class TouchListView extends ListView {
 
     View first = getChildAt(mFirstDragPos - getFirstVisiblePosition());
 
-    for (int i = 0;; i++) {
+    for (int i = 0; ; i++) {
       View vv = getChildAt(i);
       if (vv == null) {
         break;

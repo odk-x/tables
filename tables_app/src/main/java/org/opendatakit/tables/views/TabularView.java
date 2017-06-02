@@ -15,20 +15,6 @@
  */
 package org.opendatakit.tables.views;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
-import org.opendatakit.data.ColorGuide;
-import org.opendatakit.data.ColorGuideGroup;
-import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.logging.WebLogger;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -36,7 +22,15 @@ import android.graphics.Paint;
 import android.util.DisplayMetrics;
 import android.view.ContextMenu;
 import android.view.View;
+import org.opendatakit.data.ColorGuide;
+import org.opendatakit.data.ColorGuideGroup;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.provider.DataTableColumns;
+
+import java.util.*;
 
 /**
  * A view that draws a single table. A single table is essentially a grid of of
@@ -132,9 +126,7 @@ class TabularView extends View {
   /**
    * Construct the data portion of the main portion of the table. Default colors
    * are applied.
-   * 
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable,
-   *      List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
+   *
    * @param context
    * @param controller
    * @param tp
@@ -146,21 +138,21 @@ class TabularView extends View {
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
+   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getMainDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
-      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
+      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup,
+      ColorRuleGroup rowColorRuleGroup) {
     return new TabularView(context, controller, table, elementKeysToDisplay,
-        DEFAULT_FOREGROUND_COLOR, DEFAULT_DATA_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR,
-        columnWidths, TableLayoutType.MAIN_DATA, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
+        DEFAULT_FOREGROUND_COLOR, DEFAULT_DATA_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR, columnWidths,
+        TableLayoutType.MAIN_DATA, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
   }
 
   /**
    * Construct the header of the main portion of table. Default colors are
    * applied.
-   * 
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable,
-   *      List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
+   *
    * @param context
    * @param controller
    * @param tp
@@ -172,21 +164,22 @@ class TabularView extends View {
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
+   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getMainHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
-      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
+      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup,
+      ColorRuleGroup rowColorRuleGroup) {
     return new TabularView(context, controller, table, elementKeysToDisplay,
         DEFAULT_FOREGROUND_COLOR, DEFAULT_HEADER_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR,
-        columnWidths, TableLayoutType.MAIN_HEADER, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
+        columnWidths, TableLayoutType.MAIN_HEADER, fontSize, elementKeyToColorRuleGroup,
+        rowColorRuleGroup);
   }
 
   /**
    * Construct the data portion of the indexed table. Default colors are
    * applied.
-   * 
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable,
-   *      List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
+   *
    * @param context
    * @param controller
    * @param tp
@@ -198,21 +191,21 @@ class TabularView extends View {
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
+   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getIndexDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
-      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
+      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup,
+      ColorRuleGroup rowColorRuleGroup) {
     return new TabularView(context, controller, table, elementKeysToDisplay,
-        DEFAULT_FOREGROUND_COLOR, DEFAULT_DATA_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR,
-        columnWidths, TableLayoutType.INDEX_DATA, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
+        DEFAULT_FOREGROUND_COLOR, DEFAULT_DATA_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR, columnWidths,
+        TableLayoutType.INDEX_DATA, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
   }
 
   /**
    * Construct the header of the indexed portion of the table. Default colors
    * are applied.
-   * 
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable,
-   *      List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
+   *
    * @param context
    * @param controller
    * @param tp
@@ -224,21 +217,22 @@ class TabularView extends View {
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
+   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getIndexHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
-      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
+      int fontSize, Map<String, ColorRuleGroup> elementKeyToColorRuleGroup,
+      ColorRuleGroup rowColorRuleGroup) {
     return new TabularView(context, controller, table, elementKeysToDisplay,
         DEFAULT_FOREGROUND_COLOR, DEFAULT_HEADER_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR,
-        columnWidths, TableLayoutType.INDEX_HEADER, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
+        columnWidths, TableLayoutType.INDEX_HEADER, fontSize, elementKeyToColorRuleGroup,
+        rowColorRuleGroup);
   }
 
   /**
    * Construct the data portion of the status table. Default colors are applied.
    * No data is displayed in the status table.
-   * 
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable,
-   *      List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
+   *
    * @param context
    * @param controller
    * @param tp
@@ -249,6 +243,7 @@ class TabularView extends View {
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
+   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getStatusDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, int[] columnWidths, int fontSize,
@@ -258,16 +253,14 @@ class TabularView extends View {
     // something to display.
     dummyElementKeys.add("data");
     return new TabularView(context, controller, table, dummyElementKeys, DEFAULT_FOREGROUND_COLOR,
-        DEFAULT_DATA_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR, columnWidths, TableLayoutType.STATUS_DATA,
-        fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
+        DEFAULT_DATA_BACKGROUND_COLOR, DEFAULT_BORDER_COLOR, columnWidths,
+        TableLayoutType.STATUS_DATA, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
   }
 
   /**
    * Construct the header for the status table. Default colors are applied. No
    * data is displayed in the status column.
-   * 
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable,
-   *      List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
+   *
    * @param context
    * @param controller
    * @param tp
@@ -278,6 +271,7 @@ class TabularView extends View {
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
+   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getStatusHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, int[] columnWidths, int fontSize,
@@ -300,32 +294,28 @@ class TabularView extends View {
    * displays are must be all or a strict subset of the columns contained in the
    * SpreadsheetUserTable. The columns it is responsible for displaying are
    * specified by the elementKeys parameter.
-   * 
+   *
    * @param context
    * @param controller
    * @param tp
-   * @param table
-   *          the {@link SpreadsheetUserTable} into which this TabularView is
-   *          providing a view.
-   * @param elementKeys
-   *          the list of element keys which this tabular view is responsible
-   *          for displaying. E.g. if it is a data column without any frozen
-   *          columns, it would be the entire column order. If it was a single
-   *          frozen column, it would be just that element key. Must be nonzero
-   *          length.
+   * @param table                        the {@link SpreadsheetUserTable} into which this TabularView is
+   *                                     providing a view.
+   * @param elementKeys                  the list of element keys which this tabular view is responsible
+   *                                     for displaying. E.g. if it is a data column without any frozen
+   *                                     columns, it would be the entire column order. If it was a single
+   *                                     frozen column, it would be just that element key. Must be nonzero
+   *                                     length.
    * @param defaultForegroundColor
    * @param defaultBackgroundColor
    * @param borderColor
    * @param columnWidths
    * @param type
    * @param fontSize
-   * @param elementKeyToColumnProperties
-   *          mapping of element key to the corresponding
-   *          {@link ColumnDefinition} object. Must be all the columns, NOT just
-   *          those displayed in thie TabularView.
-   * @param elementKeyToColorRuleGroup
-   *          mapping of element key to their corresponding
-   *          {@link ColorRuleGroup} objects.
+   * @param elementKeyToColumnProperties mapping of element key to the corresponding
+   *                                     {@link ColumnDefinition} object. Must be all the columns, NOT just
+   *                                     those displayed in thie TabularView.
+   * @param elementKeyToColorRuleGroup   mapping of element key to their corresponding
+   *                                     {@link ColorRuleGroup} objects.
    */
   private TabularView(Context context, Controller controller, SpreadsheetUserTable table,
       List<String> elementKeys, int defaultForegroundColor, int defaultBackgroundColor,
@@ -346,8 +336,8 @@ class TabularView extends View {
         || this.type == TableLayoutType.STATUS_HEADER) {
       this.mNumberOfRows = 1;
     } else {
-      WebLogger.getLogger(this.mTable.getAppName()).e(TAG,
-          "Unrecognized TableType in constructor: " + this.type.name());
+      WebLogger.getLogger(this.mTable.getAppName())
+          .e(TAG, "Unrecognized TableType in constructor: " + this.type.name());
       this.mNumberOfRows = this.mTable.getNumberOfRows();
     }
     this.mColumnColorRules = elementKeyToColorRuleGroup;
@@ -359,7 +349,7 @@ class TabularView extends View {
       this.mRowColorGuideGroup = new ColorGuideGroup(mRowColorRuleGroup, mTable.getUserTable());
 
       Set<String> keys = elementKeyToColorRuleGroup.keySet();
-      for(String key: keys){
+      for (String key : keys) {
         ColorRuleGroup crg = elementKeyToColorRuleGroup.get(key);
         if (crg != null) {
           if (this.mColumnColorGuideGroup == null) {
@@ -614,7 +604,7 @@ class TabularView extends View {
       bottommost = (yScroll + metrics.heightPixels) / (BORDER_WIDTH + rowHeight);
       if (bottommost >= this.mNumberOfRows) {
         bottommost = this.mNumberOfRows - 1; // don't want to go beyond the last
-                                             // row
+        // row
       }
     }
     topmostBorder = topmost * (BORDER_WIDTH + rowHeight);
@@ -624,16 +614,16 @@ class TabularView extends View {
     // And now let's get the correct column. The math here can't be as simple,
     // b/c unlike rowHeight, columnWidth is not a fixed unit.
     int indexOfLeftmostColumn = getLeftmostColumnBasedOnXScroll(xScroll);
-    @SuppressWarnings("unused")
-    String leftmostElementKey = this.mElementKeys.get(indexOfLeftmostColumn);
+    @SuppressWarnings("unused") String leftmostElementKey = this.mElementKeys
+        .get(indexOfLeftmostColumn);
     leftLeftmost = xs[indexOfLeftmostColumn];
     leftmostBorder = leftLeftmost - BORDER_WIDTH;
     int indexOfRightmostColumn = getLeftmostColumnBasedOnXScroll(xScroll + metrics.widthPixels);
-    @SuppressWarnings("unused")
-    String rightmostElementKey = this.mElementKeys.get(indexOfRightmostColumn);
+    @SuppressWarnings("unused") String rightmostElementKey = this.mElementKeys
+        .get(indexOfRightmostColumn);
     leftRightmost = xs[indexOfRightmostColumn];
     // i believe at the end, then, this should be total width, once it is all on the column?
-    rightRightmostBorder = leftRightmost + columnWidths[indexOfRightmostColumn] + BORDER_WIDTH; 
+    rightRightmostBorder = leftRightmost + columnWidths[indexOfRightmostColumn] + BORDER_WIDTH;
     int yCoord = topmostBorder;
     for (int i = topmost; i < bottommost + 1; i++) {
       canvas.drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + BORDER_WIDTH,
@@ -675,18 +665,21 @@ class TabularView extends View {
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
 
         String datum = null;
-        if (this.type == TableLayoutType.STATUS_DATA || this.type == TableLayoutType.STATUS_HEADER) {
+        if (this.type == TableLayoutType.STATUS_DATA
+            || this.type == TableLayoutType.STATUS_HEADER) {
           datum = DEFAULT_STATUS_COLUMN_VALUE;
-        } else if (this.type == TableLayoutType.INDEX_HEADER || this.type == TableLayoutType.MAIN_HEADER) {
+        } else if (this.type == TableLayoutType.INDEX_HEADER
+            || this.type == TableLayoutType.MAIN_HEADER) {
           datum = this.mTable.getHeader(userDataIndex[j]);
-        } else if (this.type == TableLayoutType.INDEX_DATA || this.type == TableLayoutType.MAIN_DATA) {
+        } else if (this.type == TableLayoutType.INDEX_DATA
+            || this.type == TableLayoutType.MAIN_DATA) {
 
           ColumnDefinition cd = this.mTable.getColumnByIndex(userDataIndex[j]);
           datum = this.mTable.getCachedUserTable()
               .getDisplayTextOfData(theRowIndex, cd.getType(), cd.getElementKey());
         } else {
-          WebLogger.getLogger(this.mTable.getAppName()).e(TAG,
-              "unrecognized table type: " + this.type.name());
+          WebLogger.getLogger(this.mTable.getAppName())
+              .e(TAG, "unrecognized table type: " + this.type.name());
           datum = null;
         }
         if (datum == null) {
@@ -768,8 +761,8 @@ class TabularView extends View {
     }
     canvas.drawRect(x, y, x + columnWidth, y + rowHeight, bgPaint);
     canvas.save(Canvas.ALL_SAVE_FLAG);
-    canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y,
-        x + columnWidth - (2 * HORIZONTAL_CELL_PADDING), y + rowHeight);
+    canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y, x + columnWidth - (2 * HORIZONTAL_CELL_PADDING),
+        y + rowHeight);
     textPaint.setColor(foregroundColor);
     canvas.drawText(datum, x + HORIZONTAL_CELL_PADDING, (y + rowHeight - VERTICAL_CELL_PADDING),
         textPaint);
@@ -781,8 +774,8 @@ class TabularView extends View {
     canvas.drawLine(x + 1, y + 1, x + 1, y + rowHeight - 1, highlightPaint);
     canvas.drawLine(x + columnWidth - 1, y + 1, x + columnWidth - 1, y + rowHeight - 1,
         highlightPaint);
-    canvas.drawLine(x + 1, y + rowHeight - 1, x + columnWidth - 1, y + rowHeight - 1,
-        highlightPaint);
+    canvas
+        .drawLine(x + 1, y + rowHeight - 1, x + columnWidth - 1, y + rowHeight - 1, highlightPaint);
   }
 
   @Override
@@ -819,7 +812,7 @@ class TabularView extends View {
     /**
      * Gets the x translation of the scroll. This is in particular how far you
      * have scrolled to look at columns that do not begin onscreen.
-     * 
+     *
      * @return
      */
     int getMainScrollX();
@@ -828,7 +821,7 @@ class TabularView extends View {
      * Gets the y translation of the scroll. This is in particular the y offset
      * for the actual scrolling of the rows, so that a positive offset will
      * indicate that you have scrolled to some non-zero row.
-     * 
+     *
      * @return
      */
     int getMainScrollY();

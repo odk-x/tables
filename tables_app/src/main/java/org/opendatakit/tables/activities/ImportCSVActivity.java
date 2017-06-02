@@ -43,7 +43,9 @@ public class ImportCSVActivity extends AbsBaseActivity {
 
   private static final String TAG = ImportCSVActivity.class.getSimpleName();
 
-  /** view IDs (for use in testing) */
+  /**
+   * view IDs (for use in testing)
+   */
   public static final int FILENAMEVAL_ID = 3;
   public static final int IMPORTBUTTON_ID = 4;
 
@@ -53,7 +55,9 @@ public class ImportCSVActivity extends AbsBaseActivity {
   private EditText filenameValField;
   /* the button for selecting a file */
   private Button pickFileButton;
-  /** The button to import a table. */
+  /**
+   * The button to import a table.
+   */
   private Button mImportButton;
 
   public void onCreate(Bundle savedInstanceState) {
@@ -86,15 +90,15 @@ public class ImportCSVActivity extends AbsBaseActivity {
       intent.putExtra("org.openintents.extra.TITLE", title);
       try {
         startActivityForResult(intent, 1);
-      } catch ( ActivityNotFoundException e ) {
+      } catch (ActivityNotFoundException e) {
         e.printStackTrace();
         // TODO
-        Toast.makeText(ImportCSVActivity.this, getString(R.string.file_picker_not_found), Toast
-            .LENGTH_LONG)
-            .show();
+        Toast.makeText(ImportCSVActivity.this, getString(R.string.file_picker_not_found),
+            Toast.LENGTH_LONG).show();
       }
     }
   }
+
   /**
    * @return the view
    */
@@ -114,8 +118,8 @@ public class ImportCSVActivity extends AbsBaseActivity {
     v.addView(fn);
     pickFileButton = new Button(this);
     pickFileButton.setText(getString(R.string.import_choose_csv_file));
-    pickFileButton.setOnClickListener(new PickFileButtonListener(this.appName,
-        getString(R.string.import_choose_csv_file)));
+    pickFileButton.setOnClickListener(
+        new PickFileButtonListener(this.appName, getString(R.string.import_choose_csv_file)));
     v.addView(pickFileButton);
     // Horizontal divider
     View ruler1 = new View(this);
@@ -142,18 +146,17 @@ public class ImportCSVActivity extends AbsBaseActivity {
     String filenamePath = filenameValField.getText().toString().trim();
 
     ImportRequest request = null;
-    String assetsCsvRelativePath = ODKFileUtils.asRelativePath(appName,
-        new File(ODKFileUtils.getAssetsCsvFolder(appName)));
-    if ( filenamePath.startsWith(assetsCsvRelativePath)) {
-        String remainingPath = filenamePath.substring(assetsCsvRelativePath.length()+1);
+    String assetsCsvRelativePath = ODKFileUtils
+        .asRelativePath(appName, new File(ODKFileUtils.getAssetsCsvFolder(appName)));
+    if (filenamePath.startsWith(assetsCsvRelativePath)) {
+      String remainingPath = filenamePath.substring(assetsCsvRelativePath.length() + 1);
       String[] terms = remainingPath.split("\\.");
       if (terms.length == 2 && terms[1].equals("csv")) {
         String tableId = terms[0];
         String fileQualifier = null;
         request = new ImportRequest(tableId, fileQualifier);
-      } else if (terms.length == 3
-          && (terms[1].equals("properties") || terms[1].equals("definition"))
-          && terms[2].equals("csv")) {
+      } else if (terms.length == 3 && (terms[1].equals("properties") || terms[1]
+          .equals("definition")) && terms[2].equals("csv")) {
         String tableId = terms[0];
         String fileQualifier = null;
         request = new ImportRequest(tableId, fileQualifier);
@@ -161,9 +164,8 @@ public class ImportCSVActivity extends AbsBaseActivity {
         String tableId = terms[0];
         String fileQualifier = terms[1];
         request = new ImportRequest(tableId, fileQualifier);
-      } else if (terms.length == 4
-          && (terms[2].equals("properties") || terms[2].equals("definition"))
-          && terms[3].equals("csv")) {
+      } else if (terms.length == 4 && (terms[2].equals("properties") || terms[2]
+          .equals("definition")) && terms[3].equals("csv")) {
         String tableId = terms[0];
         String fileQualifier = terms[1];
         request = new ImportRequest(tableId, fileQualifier);
@@ -171,14 +173,14 @@ public class ImportCSVActivity extends AbsBaseActivity {
     }
 
     if (request == null) {
-      Toast
-          .makeText(this, "Invalid csv filename: " + filenameValField.getText(), Toast.LENGTH_LONG)
+      Toast.makeText(this, "Invalid csv filename: " + filenameValField.getText(), Toast.LENGTH_LONG)
           .show();
       return;
     }
 
-    ImportTask task = new ImportTask(ImportExportDialog.newInstance(ImportExportDialog
-        .IMPORT_IN_PROGRESS_DIALOG, this), appName, this);
+    ImportTask task = new ImportTask(
+        ImportExportDialog.newInstance(ImportExportDialog.IMPORT_IN_PROGRESS_DIALOG, this), appName,
+        this);
     task.execute(request);
   }
 
@@ -197,8 +199,9 @@ public class ImportCSVActivity extends AbsBaseActivity {
       relativePath = ODKFileUtils.asRelativePath(appName, csvFile);
     } catch (IllegalArgumentException iae) {
       WebLogger.getLogger(getAppName()).printStackTrace(iae);
-      Toast.makeText(this, getString(R.string.file_not_under_app_dir,
-              ODKFileUtils.getAppFolder(getAppName())), Toast.LENGTH_LONG).show();
+      Toast.makeText(this,
+          getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
+          Toast.LENGTH_LONG).show();
       return;
 
     }
@@ -209,23 +212,20 @@ public class ImportCSVActivity extends AbsBaseActivity {
       String name = csvFile.getName();
       String[] terms = name.split("\\.");
       if (terms.length < 2 || terms.length > 4) {
-        Toast
-            .makeText(
-                this,
-                "Import filename must be of the form tableId.csv, tableId.definition.csv, tableId.properties.csv or tableId.qualifier.csv",
-                Toast.LENGTH_LONG).show();
+        Toast.makeText(this,
+            "Import filename must be of the form tableId.csv, tableId.definition.csv, tableId.properties.csv or tableId.qualifier.csv",
+            Toast.LENGTH_LONG).show();
         return;
       } else {
         if (!terms[terms.length - 1].equals("csv")) {
           Toast.makeText(this, "Import filename must end in .csv", Toast.LENGTH_LONG).show();
           return;
         }
-        if (terms.length == 4 && !(terms[2].equals("properties") || terms[2].equals("definition"))) {
-          Toast
-              .makeText(
-                  this,
-                  "Import filename must be of the form tableId.qualifier.properties.csv or tableId.qualifier.definition.csv",
-                  Toast.LENGTH_LONG).show();
+        if (terms.length == 4 && !(terms[2].equals("properties") || terms[2]
+            .equals("definition"))) {
+          Toast.makeText(this,
+              "Import filename must be of the form tableId.qualifier.properties.csv or tableId.qualifier.definition.csv",
+              Toast.LENGTH_LONG).show();
           return;
         }
       }

@@ -21,7 +21,6 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.widget.Toast;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
@@ -58,8 +57,8 @@ public class LocationDialogFragment extends DialogFragment {
   public Dialog onCreateDialog(Bundle savedInstanceState) {
     Bundle bundle = getArguments();
     String location = bundle.getString(LOCATION_KEY);
-    final Map<String, Object> mapping = getElementKeyToValueMap(bundle.getString
-        (ELEMENT_KEY_TO_VALUE_MAP_KEY));
+    final Map<String, Object> mapping = getElementKeyToValueMap(
+        bundle.getString(ELEMENT_KEY_TO_VALUE_MAP_KEY));
     if (location != null) {
       // Use the Builder class for convenient dialog construction
       AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -68,20 +67,18 @@ public class LocationDialogFragment extends DialogFragment {
             public void onClick(DialogInterface dialog, int id) {
               AbsTableActivity activity = (AbsTableActivity) getActivity();
               try {
-                ActivityUtil.addRow(activity, activity.getAppName(), 
-                    activity.getTableId(),
-                    activity.getColumnDefinitions(),
-                    mapping);
+                ActivityUtil.addRow(activity, activity.getAppName(), activity.getTableId(),
+                    activity.getColumnDefinitions(), mapping);
               } catch (ServicesAvailabilityException e) {
                 WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
                 Toast.makeText(activity, "Unable to add row", Toast.LENGTH_LONG).show();
               }
             }
           }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-              // User cancelled the dialog
-            }
-          });
+        public void onClick(DialogInterface dialog, int id) {
+          // User cancelled the dialog
+        }
+      });
       return builder.create();
     }
     return null;
@@ -101,8 +98,9 @@ public class LocationDialogFragment extends DialogFragment {
    */
   private Map<String, Object> getElementKeyToValueMap(String jsonStringifyElementKeyToValue) {
     HashMap<String, Object> elementKeyToValue = new HashMap<String, Object>();
-    if ( jsonStringifyElementKeyToValue != null ) {
-      TypeReference<HashMap<String,Object>> ref = new TypeReference<HashMap<String, Object>>() { };
+    if (jsonStringifyElementKeyToValue != null) {
+      TypeReference<HashMap<String, Object>> ref = new TypeReference<HashMap<String, Object>>() {
+      };
       try {
         elementKeyToValue = ODKFileUtils.mapper.readValue(jsonStringifyElementKeyToValue, ref);
       } catch (IOException e) {

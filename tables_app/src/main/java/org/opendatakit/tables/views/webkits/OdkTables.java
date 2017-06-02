@@ -32,87 +32,82 @@ import java.lang.ref.WeakReference;
 
 public class OdkTables {
 
-   private static final String TAG = OdkTables.class.getSimpleName();
+  private static final String TAG = OdkTables.class.getSimpleName();
 
-   private WeakReference<ODKWebView> mWebView;
-   protected AbsBaseActivity mActivity;
+  private WeakReference<ODKWebView> mWebView;
+  protected AbsBaseActivity mActivity;
 
-   /**
-    *
-    * @param activity
-    *          the activity that will be holding the view
-    */
-   public OdkTables(AbsBaseActivity activity, ODKWebView webView) {
-      this.mActivity = activity;
-      this.mWebView = new WeakReference<ODKWebView>(webView);
-   }
+  /**
+   * @param activity the activity that will be holding the view
+   */
+  public OdkTables(AbsBaseActivity activity, ODKWebView webView) {
+    this.mActivity = activity;
+    this.mWebView = new WeakReference<ODKWebView>(webView);
+  }
 
-   public boolean isInactive() {
-      return (mWebView.get() == null) || mWebView.get().isInactive();
-   }
+  public boolean isInactive() {
+    return (mWebView.get() == null) || mWebView.get().isInactive();
+  }
 
-   public OdkTablesIf getJavascriptInterfaceWithWeakReference() {
-      return new OdkTablesIf(this);
-   }
+  public OdkTablesIf getJavascriptInterfaceWithWeakReference() {
+    return new OdkTablesIf(this);
+  }
 
-   /**
-    * Set the list view contents for a detail with list view
-    *
-    * @param tableId
-    * @param relativePath
-    *          the path relative to the app folder
-    * @param sqlWhereClause
-    * @param sqlSelectionArgs
-    * @return
-    */
-   public boolean helperSetSubListView(String tableId, String relativePath,
-       String sqlWhereClause, String[] sqlSelectionArgs,
-       String[] sqlGroupBy, String sqlHaving,
-       String sqlOrderByElementKey, String sqlOrderByDirection) {
-      return this.helperUpdateView(tableId, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
-          sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.SUB_LIST, relativePath);
-   }
+  /**
+   * Set the list view contents for a detail with list view
+   *
+   * @param tableId
+   * @param relativePath     the path relative to the app folder
+   * @param sqlWhereClause
+   * @param sqlSelectionArgs
+   * @return
+   */
+  public boolean helperSetSubListView(String tableId, String relativePath, String sqlWhereClause,
+      String[] sqlSelectionArgs, String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey,
+      String sqlOrderByDirection) {
+    return this.helperUpdateView(tableId, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
+        sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.SUB_LIST, relativePath);
+  }
 
-   /**
-    * Send a bundle to update a view without opening a new activity.
-    *
-    * @param tableId
-    * @param sqlWhereClause
-    * @param sqlSelectionArgs
-    * @param sqlGroupBy
-    * @param sqlHaving
-    * @param sqlOrderByElementKey
-    * @param sqlOrderByDirection
-    * @param viewType
-    * @param relativePath
-    * @return
-    * @throws IllegalArgumentException
-    *           if viewType is not a sub view
-    */
-   boolean helperUpdateView(String tableId, String sqlWhereClause, String[] sqlSelectionArgs,
-       String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey,
-       String sqlOrderByDirection, ViewFragmentType viewType, String relativePath) {
-      if (viewType != ViewFragmentType.SUB_LIST) {
-         throw new IllegalArgumentException("Cannot use this method to update a view that doesn't " +
-             "support updates. Currently only DetailWithListView's Sub List supports this action");
-      }
+  /**
+   * Send a bundle to update a view without opening a new activity.
+   *
+   * @param tableId
+   * @param sqlWhereClause
+   * @param sqlSelectionArgs
+   * @param sqlGroupBy
+   * @param sqlHaving
+   * @param sqlOrderByElementKey
+   * @param sqlOrderByDirection
+   * @param viewType
+   * @param relativePath
+   * @return
+   * @throws IllegalArgumentException if viewType is not a sub view
+   */
+  boolean helperUpdateView(String tableId, String sqlWhereClause, String[] sqlSelectionArgs,
+      String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey,
+      String sqlOrderByDirection, ViewFragmentType viewType, String relativePath) {
+    if (viewType != ViewFragmentType.SUB_LIST) {
+      throw new IllegalArgumentException("Cannot use this method to update a view that doesn't "
+          + "support updates. Currently only DetailWithListView's Sub List supports this action");
+    }
 
-      Bundle bundle = new Bundle();
-      IntentUtil.addSQLKeysToBundle(bundle, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
-          sqlOrderByElementKey, sqlOrderByDirection);
-      IntentUtil.addTableIdToBundle(bundle, tableId);
-      IntentUtil.addFragmentViewTypeToBundle(bundle, viewType);
-      IntentUtil.addFileNameToBundle(bundle, relativePath);
+    Bundle bundle = new Bundle();
+    IntentUtil.addSQLKeysToBundle(bundle, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
+        sqlOrderByElementKey, sqlOrderByDirection);
+    IntentUtil.addTableIdToBundle(bundle, tableId);
+    IntentUtil.addFragmentViewTypeToBundle(bundle, viewType);
+    IntentUtil.addFileNameToBundle(bundle, relativePath);
 
-      switch(viewType) {
-      case SUB_LIST:
-         TableDisplayActivity activity = (TableDisplayActivity) mActivity;
-         activity.updateFragment(Constants.FragmentTags.DETAIL_WITH_LIST_LIST, bundle);
-         break;
-      default: // This is unreachable
-         break;
-      }
-      return true;
-   }
+    switch (viewType) {
+    case SUB_LIST:
+      TableDisplayActivity activity = (TableDisplayActivity) mActivity;
+      activity.updateFragment(Constants.FragmentTags.DETAIL_WITH_LIST_LIST, bundle);
+      break;
+    default: // This is unreachable
+      break;
+    }
+    return true;
+  }
 
 }

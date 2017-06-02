@@ -15,9 +15,14 @@
  */
 package org.opendatakit.tables.views;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.Context;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.*;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.data.ColorRule.RuleType;
 import org.opendatakit.data.ColorRuleGroup;
@@ -26,19 +31,8 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.Context;
-import android.graphics.Color;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The dialog for managing the color rules for a column.
@@ -76,9 +70,8 @@ public class ColorRulesDialog extends Dialog {
     this.colName = colName;
     // get rid of the leading underscore, as this will probably confuse the
     // user. the underscore is just for us.
-    setTitle(c.getString(R.string.conditional_colors,displayName));
+    setTitle(c.getString(R.string.conditional_colors, displayName));
   }
-
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -90,7 +83,6 @@ public class ColorRulesDialog extends Dialog {
   public void onRestoreInstanceState(Bundle savedState) {
     refreshView();
   }
-
 
   /**
    * SS: This is a method I've made to clean up the state after they hit the ok
@@ -120,8 +112,7 @@ public class ColorRulesDialog extends Dialog {
     ll.setOrientation(LinearLayout.VERTICAL);
     final TableLayout tl = new TableLayout(getContext());
     LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     tl.setLayoutParams(tlp);
     for (int i = 0; i < colRules.size(); i++) {
       TableRow row = getEditRow(i);
@@ -133,7 +124,7 @@ public class ColorRulesDialog extends Dialog {
     addRuleButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-//        updateLastRowVal();
+        //        updateLastRowVal();
         // dp.addRule(colName, ' ', "", Color.BLACK, Color.WHITE);
         // refreshView();
         // SS: so, we don't want to add this row like they have done.
@@ -149,7 +140,7 @@ public class ColorRulesDialog extends Dialog {
     closeButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-//        updateLastRowVal(); // to save any changes that haven't been
+        //        updateLastRowVal(); // to save any changes that haven't been
         // clicked out of
         try {
           persistRows();
@@ -181,8 +172,7 @@ public class ColorRulesDialog extends Dialog {
     } else {
       // hmm, so i think the id is just the column in the db where the tableid
       // is located, or something? not clear to me.
-      rule = new ColorRule(colName, RuleType.NO_OP, "", Color.BLACK,
-          Color.WHITE);
+      rule = new ColorRule(colName, RuleType.NO_OP, "", Color.BLACK, Color.WHITE);
       // and now I think we need to add this rule to the list...
       colRules.add(rule);
     }
@@ -195,7 +185,7 @@ public class ColorRulesDialog extends Dialog {
       public void onClick(View v) {
         //updateLastRowVal();
         if (index != -1) {
-//          colorRuler.removeRule(rule);
+          //          colorRuler.removeRule(rule);
           // take it out of the set and the list.
           colRules.remove(index);
           // if it isn't a new row, this also means that we want to decrement
@@ -220,8 +210,7 @@ public class ColorRulesDialog extends Dialog {
     // preparing the text field
     EditText input = new EditText(getContext());
     if (index != -1) {
-      input.setText((rule.getOperator().getSymbol() + " "
-          + rule.getVal()).trim());
+      input.setText((rule.getOperator().getSymbol() + " " + rule.getVal()).trim());
     } else {
       input.setText(RuleType.NO_OP.getSymbol());
     }
@@ -241,9 +230,9 @@ public class ColorRulesDialog extends Dialog {
           }
           return;
         }
-//        } else {
-//          updateLastRowVal();
-//        }
+        //        } else {
+        //          updateLastRowVal();
+        //        }
       }
     });
     ruleInputFields.add(input);
@@ -257,15 +246,15 @@ public class ColorRulesDialog extends Dialog {
       public void onClick(View v) {
         updateLastRowVal();
         ColorPickerDialog.OnColorChangedListener ccl = new ColorPickerDialog.OnColorChangedListener() {
-			@Override
-			public void colorChanged(String key, int color) {
-	            rule.setForeground(color);
-	            colorRuler.updateRule(rule);
-	            refreshView();
-			}
+          @Override
+          public void colorChanged(String key, int color) {
+            rule.setForeground(color);
+            colorRuler.updateRule(rule);
+            refreshView();
+          }
         };
-        ColorPickerDialog cpd = new ColorPickerDialog(getContext(), ccl,
-            "", rule.getForeground(), rule.getForeground(), getContext().getString(R.string.pick_foreground_color));
+        ColorPickerDialog cpd = new ColorPickerDialog(getContext(), ccl, "", rule.getForeground(),
+            rule.getForeground(), getContext().getString(R.string.pick_foreground_color));
         cpd.show();
       }
     });
@@ -279,15 +268,15 @@ public class ColorRulesDialog extends Dialog {
       public void onClick(View v) {
         updateLastRowVal();
         ColorPickerDialog.OnColorChangedListener ccl = new ColorPickerDialog.OnColorChangedListener() {
-			@Override
-			public void colorChanged(String key, int color) {
-	            rule.setBackground(color);
-	            colorRuler.updateRule(rule);
-	            refreshView();
-			}
+          @Override
+          public void colorChanged(String key, int color) {
+            rule.setBackground(color);
+            colorRuler.updateRule(rule);
+            refreshView();
+          }
         };
-        ColorPickerDialog cpd = new ColorPickerDialog(getContext(), ccl,
-            "", rule.getBackground(), rule.getBackground(), getContext().getString(R.string.pick_background_color));
+        ColorPickerDialog cpd = new ColorPickerDialog(getContext(), ccl, "", rule.getBackground(),
+            rule.getBackground(), getContext().getString(R.string.pick_background_color));
         cpd.show();
       }
     });

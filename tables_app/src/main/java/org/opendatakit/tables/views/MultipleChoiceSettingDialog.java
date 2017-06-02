@@ -15,23 +15,6 @@
  */
 package org.opendatakit.tables.views;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.data.utilities.ColumnUtil;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
-import org.opendatakit.utilities.LocalizationUtils;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
-
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
@@ -39,7 +22,23 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A dialog for editing the multiple-choice options for a column.
@@ -83,8 +82,8 @@ public class MultipleChoiceSettingDialog extends Dialog {
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(appName);
-      choices = ColumnUtil.get().getDisplayChoicesList(
-          dbInterface, appName, db, tableId, cd.getElementKey());
+      choices = ColumnUtil.get()
+          .getDisplayChoicesList(dbInterface, appName, db, tableId, cd.getElementKey());
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       layout.removeAllViews();
@@ -112,9 +111,9 @@ public class MultipleChoiceSettingDialog extends Dialog {
     if (displayObj != null) {
       try {
         String asWrappedString = ODKFileUtils.mapper.writeValueAsString(displayObj);
-        return LocalizationUtils.getLocalizedDisplayName(appName, tableId,
-            userSelectedDefaultLocale, asWrappedString);
-      } catch ( JsonProcessingException e ) {
+        return LocalizationUtils
+            .getLocalizedDisplayName(appName, tableId, userSelectedDefaultLocale, asWrappedString);
+      } catch (JsonProcessingException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         WebLogger.getLogger(appName).e(TAG, "Unable to localize choice");
       }

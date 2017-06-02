@@ -15,17 +15,24 @@
  */
 package org.opendatakit.tables.fragments;
 
+import android.app.AlertDialog;
+import android.app.ListFragment;
+import android.content.ComponentName;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.*;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
@@ -37,29 +44,16 @@ import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableNameStruct;
 import org.opendatakit.tables.views.components.TableNameStructAdapter;
-import android.app.AlertDialog;
-import android.app.ListFragment;
-import android.content.ComponentName;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.ContextMenu;
-import android.view.LayoutInflater;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TableManagerFragment extends ListFragment implements DatabaseConnectionListener {
 
   private static final String TAG = TableManagerFragment.class.getSimpleName();
 
   private static final int ID = R.layout.fragment_table_list;
-  
+
   private TableNameStructAdapter mTpAdapter;
 
   @Override
@@ -68,7 +62,8 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
   }
 
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+  public View onCreateView(LayoutInflater inflater, ViewGroup container,
+      Bundle savedInstanceState) {
     WebLogger.getLogger(((AbsBaseActivity) getActivity()).getAppName()).d(TAG, "[onCreateView]");
     View view = inflater.inflate(ID, container, false);
     return view;
@@ -92,10 +87,10 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
    */
   protected void updateTableIdList() {
     AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
-    if ( baseActivity == null ) {
+    if (baseActivity == null) {
       return;
     }
-    
+
     String appName = baseActivity.getAppName();
 
     PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
@@ -106,39 +101,40 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
 
     List<TableNameStruct> tableNameStructs = new ArrayList<TableNameStruct>();
 
-    if ( Tables.getInstance().getDatabase() != null ) {
-      
+    if (Tables.getInstance().getDatabase() != null) {
+
       try {
         db = dbInterface.openDatabase(appName);
-  
+
         List<String> tableIds = dbInterface.getAllTableIds(appName, db);
-  
+
         for (String tableId : tableIds) {
-          String localizedDisplayName = TableUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
-              dbInterface, appName, db, tableId);
-  
+          String localizedDisplayName = TableUtil.get()
+              .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, appName, db,
+                  tableId);
+
           TableNameStruct tableNameStruct = new TableNameStruct(tableId, localizedDisplayName);
-  
+
           tableNameStructs.add(tableNameStruct);
         }
-        WebLogger.getLogger(baseActivity.getAppName()).e(TAG,
-            "got tableId list of size: " + tableNameStructs.size());
-      } catch ( ServicesAvailabilityException e ) {
-        WebLogger.getLogger(baseActivity.getAppName()).e(TAG,
-            "error while fetching tableId list: " + e.toString());
+        WebLogger.getLogger(baseActivity.getAppName())
+            .e(TAG, "got tableId list of size: " + tableNameStructs.size());
+      } catch (ServicesAvailabilityException e) {
+        WebLogger.getLogger(baseActivity.getAppName())
+            .e(TAG, "error while fetching tableId list: " + e.toString());
       } finally {
         if (db != null) {
           try {
             dbInterface.closeDatabase(appName, db);
           } catch (ServicesAvailabilityException e) {
-            WebLogger.getLogger(baseActivity.getAppName()).e(TAG,
-                "error while closing database: " + e.toString());
+            WebLogger.getLogger(baseActivity.getAppName())
+                .e(TAG, "error while closing database: " + e.toString());
           }
         }
       }
     }
 
-    if ( mTpAdapter == null ) {
+    if (mTpAdapter == null) {
       this.mTpAdapter = new TableNameStructAdapter(baseActivity, tableNameStructs);
       this.setListAdapter(this.mTpAdapter);
     } else {
@@ -146,11 +142,11 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       this.mTpAdapter.addAll(tableNameStructs);
     }
     // and set visibility of the no data vs. list
-    if ( this.getView() != null ) {
+    if (this.getView() != null) {
       TextView none = (TextView) this.getView().findViewById(android.R.id.empty);
       View listing = this.getView().findViewById(android.R.id.list);
-      if ( tableNameStructs.isEmpty() ) {
-        if ( Tables.getInstance().getDatabase() == null ) {
+      if (tableNameStructs.isEmpty()) {
+        if (Tables.getInstance().getDatabase() == null) {
           none.setText(R.string.database_unavailable);
         } else {
           none.setText(R.string.no_table_data);
@@ -198,7 +194,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     final String tableIdOfSelectedItem = selectedStruct.getTableId();
     final AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
     final String appName = baseActivity.getAppName();
-    
+
     String localizedDisplayName = selectedStruct.getLocalizedDisplayName();
 
     switch (item.getItemId()) {
@@ -206,8 +202,8 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       AlertDialog confirmDeleteAlert;
       // Prompt an alert box
       AlertDialog.Builder alert = new AlertDialog.Builder(this.getActivity());
-      alert.setTitle(getString(R.string.confirm_remove_table)).setMessage(
-          getString(R.string.are_you_sure_remove_table, localizedDisplayName));
+      alert.setTitle(getString(R.string.confirm_remove_table))
+          .setMessage(getString(R.string.are_you_sure_remove_table, localizedDisplayName));
       // OK Action => delete the table
       alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
@@ -216,7 +212,8 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
           try {
             try {
               db = Tables.getInstance().getDatabase().openDatabase(appName);
-              Tables.getInstance().getDatabase().deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
+              Tables.getInstance().getDatabase()
+                  .deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
             } finally {
               if (db != null) {
                 Tables.getInstance().getDatabase().closeDatabase(appName, db);

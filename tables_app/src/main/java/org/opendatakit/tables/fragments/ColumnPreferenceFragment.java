@@ -16,15 +16,18 @@
 package org.opendatakit.tables.fragments;
 
 import android.content.Context;
+import android.os.Bundle;
+import android.preference.EditTextPreference;
+import android.preference.Preference;
 import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
-import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
@@ -34,23 +37,18 @@ import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragm
 import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
 import org.opendatakit.tables.utils.PreferenceUtil;
 
-import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.Preference;
-
 public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
   String mElementKey = null;
   static String COL_ELEM_KEY = "COLUMN_ELEMENT_KEY";
 
-  private static final String TAG =
-      ColumnPreferenceFragment.class.getSimpleName();
+  private static final String TAG = ColumnPreferenceFragment.class.getSimpleName();
 
   public void onAttach(Context context) {
     super.onAttach(context);
     if (!(context instanceof TableLevelPreferencesActivity)) {
-      throw new IllegalStateException("fragment must be attached to "
-          + TableLevelPreferencesActivity.class.getSimpleName());
+      throw new IllegalStateException(
+          "fragment must be attached to " + TableLevelPreferencesActivity.class.getSimpleName());
     }
   }
 
@@ -59,15 +57,14 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
    * activity.
    */
   TableLevelPreferencesActivity retrieveTableLevelPreferenceActivity() {
-    TableLevelPreferencesActivity result =
-        (TableLevelPreferencesActivity) this.getActivity();
+    TableLevelPreferencesActivity result = (TableLevelPreferencesActivity) this.getActivity();
     return result;
   }
 
   /**
    * Retrieve the {@link ColumnDefinition} associated with the column this
    * activity is displaying.
-   * 
+   *
    * @return
    */
   ColumnDefinition retrieveColumnDefinition() {
@@ -80,11 +77,9 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
       OrderedColumns orderedDefns = activity.getColumnDefinitions();
       ColumnDefinition result = orderedDefns.find(elementKey);
       return result;
-    } catch ( IllegalArgumentException e ) {
-      WebLogger.getLogger(activity.getAppName()).e(
-          TAG,
-          "[retrieveColumnDefinition] did not find column for element key: " +
-              elementKey);
+    } catch (IllegalArgumentException e) {
+      WebLogger.getLogger(activity.getAppName())
+          .e(TAG, "[retrieveColumnDefinition] did not find column for element key: " + elementKey);
       return null;
     }
   }
@@ -133,10 +128,11 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());
-      rawDisplayName = ColumnUtil.get().getRawDisplayName(dbInterface, getAppName(),
-          db, getTableId(), this.retrieveColumnDefinition().getElementKey());
+      rawDisplayName = ColumnUtil.get()
+          .getRawDisplayName(dbInterface, getAppName(), db, getTableId(),
+              this.retrieveColumnDefinition().getElementKey());
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         dbInterface.closeDatabase(getAppName(), db);
       }
     }
@@ -152,8 +148,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   }
 
   private void initializeColumnType() {
-    EditTextPreference pref =
-        this.findEditTextPreference(Constants.PreferenceKeys.Column.TYPE);
+    EditTextPreference pref = this.findEditTextPreference(Constants.PreferenceKeys.Column.TYPE);
     ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(this.getAppName());
     ITypeManipulatorFragment r = m.getDefaultRenderer(this.retrieveColumnDefinition().getType());
     pref.setSummary(r.getElementTypeDisplayLabel());
@@ -168,53 +163,43 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   private void initializeColumnWidth() throws ServicesAvailabilityException {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
     final String appName = activity.getAppName();
-    final EditTextPreference pref =
-        this.findEditTextPreference(Constants.PreferenceKeys.Column.WIDTH);
-    int columnWidth = PreferenceUtil.getColumnWidth(getActivity(),
-        getAppName(), getTableId(),
+    final EditTextPreference pref = this
+        .findEditTextPreference(Constants.PreferenceKeys.Column.WIDTH);
+    int columnWidth = PreferenceUtil.getColumnWidth(getActivity(), getAppName(), getTableId(),
         retrieveColumnDefinition().getElementKey());
     pref.setSummary(Integer.toString(columnWidth));
 
-    pref.setOnPreferenceChangeListener(
-        new Preference.OnPreferenceChangeListener() {
+    pref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 
       @Override
-      public boolean onPreferenceChange(
-          Preference preference,
-          Object newValue) {
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
         String newValueStr = (String) newValue;
         Integer newWidth = Integer.parseInt(newValueStr);
         if (newWidth > LocalKeyValueStoreConstants.Spreadsheet.MAX_COL_WIDTH) {
           WebLogger.getLogger(appName).e(TAG, "column width bigger than allowed, doing nothing");
           return false;
         }
-        PreferenceUtil.setColumnWidth(
-            getActivity(), getAppName(), getTableId(),
-            retrieveColumnDefinition().getElementKey(),
-            newWidth);
+        PreferenceUtil.setColumnWidth(getActivity(), getAppName(), getTableId(),
+            retrieveColumnDefinition().getElementKey(), newWidth);
         pref.setSummary(Integer.toString(newWidth));
         return true;
       }
     });
 
   }
-  
+
   private void initializeColorRule() {
-    Preference pref =
-        this.findPreference(Constants.PreferenceKeys.Column.COLOR_RULES);
-    pref.setOnPreferenceClickListener(
-        new Preference.OnPreferenceClickListener() {
-      
+    Preference pref = this.findPreference(Constants.PreferenceKeys.Column.COLOR_RULES);
+    pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
       @Override
       public boolean onPreferenceClick(Preference preference) {
-        TableLevelPreferencesActivity activity =
-            (TableLevelPreferencesActivity) getActivity();
-        activity.showColorRuleListFragment(
-            retrieveColumnDefinition().getElementKey(),
+        TableLevelPreferencesActivity activity = (TableLevelPreferencesActivity) getActivity();
+        activity.showColorRuleListFragment(retrieveColumnDefinition().getElementKey(),
             ColorRuleGroup.Type.COLUMN);
         return true;
       }
-      
+
     });
   }
 

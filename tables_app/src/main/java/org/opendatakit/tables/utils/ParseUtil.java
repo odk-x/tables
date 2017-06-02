@@ -15,25 +15,26 @@
  */
 package org.opendatakit.tables.utils;
 
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
+import org.opendatakit.utilities.DateUtils;
+
 import java.util.ArrayList;
 import java.util.Map;
 
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.utilities.DateUtils;
-import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
-
 public class ParseUtil {
 
-  public static String validifyValue(String appName, DateUtils du, ArrayList<Map<String,Object>> choices, ColumnDefinition cd, String input) {
-      if ( input == null ) {
-        // TODO: should we check for required values?
-        // null values are always accepted (???)
-        return input;
-      }
-      ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(appName);
-      ITypeManipulatorFragment<?> r = m.getDefaultRenderer(cd.getType());
+  public static String validifyValue(String appName, DateUtils du,
+      ArrayList<Map<String, Object>> choices, ColumnDefinition cd, String input) {
+    if (input == null) {
+      // TODO: should we check for required values?
+      // null values are always accepted (???)
+      return input;
+    }
+    ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(appName);
+    ITypeManipulatorFragment<?> r = m.getDefaultRenderer(cd.getType());
 
-      return r.verifyValidityAndNormalizeValue(du, choices, input);
+    return r.verifyValidityAndNormalizeValue(du, choices, input);
   }
 
 }

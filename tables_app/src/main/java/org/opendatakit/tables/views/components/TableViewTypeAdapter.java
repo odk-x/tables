@@ -15,49 +15,39 @@
  */
 package org.opendatakit.tables.views.components;
 
+import android.content.Context;
+import android.widget.ArrayAdapter;
 import org.opendatakit.data.TableViewType;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 
-import android.content.Context;
-import android.widget.ArrayAdapter;
-
 /**
  * Adapter that displays {@see TableViewType} options.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
-  
+
   private static final String TAG = TableViewTypeAdapter.class.getSimpleName();
-  
+
   private PossibleTableViewTypes mPossibleViewTypes;
   private CharSequence[] mViewTypeValues;
   private final String mAppName;
 
-  public TableViewTypeAdapter(
-      Context context,
-      String appName,
-      int resource,
-      CharSequence[] entries,
-      CharSequence[] entryValues,
-      PossibleTableViewTypes viewTypes) {
+  public TableViewTypeAdapter(Context context, String appName, int resource, CharSequence[] entries,
+      CharSequence[] entryValues, PossibleTableViewTypes viewTypes) {
     super(context, resource, entries);
     this.mAppName = appName;
     this.mViewTypeValues = entryValues;
     this.mPossibleViewTypes = viewTypes;
   }
-  
+
   @Override
   public boolean areAllItemsEnabled() {
     // so we get asked about individual availability.
     return false;
   }
-  
-  
-  
-  
-  
+
   @Override
   public boolean isEnabled(int position) {
     if (this.mPossibleViewTypes == null) {

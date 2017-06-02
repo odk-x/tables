@@ -19,7 +19,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
@@ -36,13 +35,12 @@ public class DetailWithListDetailViewFragment extends AbsWebTableFragment {
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                           Bundle savedInstanceState) {
+      Bundle savedInstanceState) {
     View newView = super.onCreateView(inflater, container, savedInstanceState);
 
     ODKWebView webView = (OdkTablesWebView) newView.findViewById(R.id.webkit);
     if (webView == null) {
-      WebLogger.getLogger(getAppName()).e(TAG,
-          "[onCreateView] web view was null");
+      WebLogger.getLogger(getAppName()).e(TAG, "[onCreateView] web view was null");
       return newView;
     }
     webView.setContainerFragmentID(Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL);

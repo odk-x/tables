@@ -15,16 +15,13 @@
  */
 package org.opendatakit.tables.utils;
 
+import android.graphics.Color;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 
-import android.graphics.Color;
-
 /**
- *
  * @author sudar.sam@gmail.com
  * @author unknown
- *
  */
 public class Constants {
 
@@ -35,8 +32,8 @@ public class Constants {
     /**
      * The default HTML to be displayed if no file name has been set.
      */
-    public static final String NO_FILE_NAME = "<html><body>"
-        + "<p>No filename has been specified.</p>" + "</body></html>";
+    public static final String NO_FILE_NAME =
+        "<html><body>" + "<p>No filename has been specified.</p>" + "</body></html>";
   }
 
   public static class MimeTypes {
@@ -44,22 +41,27 @@ public class Constants {
   }
 
   public static class ExternalIntentStrings {
-    /** Survey's package name as declared in the manifest. */
+    /**
+     * Survey's package name as declared in the manifest.
+     */
     public static final String SYNC_PACKAGE_NAME = "org.opendatakit.sync";
   }
 
   /**
    * Intent keys to be used to communicate between activities.
-   * 
-   * @author sudar.sam@gmail.com
    *
+   * @author sudar.sam@gmail.com
    */
   public static class IntentKeys {
 
     public static final String ACTION_TABLE_ID = "actionTableId";
-    /** tables that have conflict rows */
+    /**
+     * tables that have conflict rows
+     */
     public static final String CONFLICT_TABLES = "conflictTables";
-    /** tables that have checkpoint rows */
+    /**
+     * tables that have checkpoint rows
+     */
     public static final String CHECKPOINT_TABLES = "checkpointTables";
 
     /**
@@ -68,8 +70,10 @@ public class Constants {
      */
     public static final String TABLE_DISPLAY_VIEW_TYPE = "tableDisplayViewType";
     public static final String FILE_NAME = "filename";
-// should be instanceID?    public static final String ROW_ID = "rowId";
-    /** The name of the graph view that should be displayed. */
+    // should be instanceID?    public static final String ROW_ID = "rowId";
+    /**
+     * The name of the graph view that should be displayed.
+     */
     public static final String ELEMENT_KEY = "elementKey";
     public static final String COLOR_RULE_TYPE = "colorRuleType";
     /**
@@ -110,7 +114,7 @@ public class Constants {
     /**
      * For most fragments, this is either the name() of {@link ScreenType} or
      * {@ViewFragmentType}.
-     * 
+     *
      * Others are listed here.
      */
 
@@ -144,9 +148,8 @@ public class Constants {
 
     /**
      * Preference keys for table-level preferences.
-     * 
-     * @author sudar.sam@gmail.com
      *
+     * @author sudar.sam@gmail.com
      */
     public static class Table {
       public static final String DISPLAY_NAME = "table_pref_display_name";
@@ -186,15 +189,21 @@ public class Constants {
     public static final int CHOOSE_DETAIL_FILE = 2;
     public static final int CHOOSE_LIST_FILE = 3;
     public static final int CHOOSE_MAP_FILE = 4;
-    /** A generic code for now. Can refactor to make more specific if needed. */
+    /**
+     * A generic code for now. Can refactor to make more specific if needed.
+     */
     public static final int LAUNCH_VIEW = 5;
     public static final int LAUNCH_DISPLAY_PREFS = 6;
     public static final int LAUNCH_IMPORT = 7;
     public static final int LAUNCH_SYNC = 8;
     public static final int LAUNCH_TABLE_MANAGER = 9;
-    /** For launching an HTML file not associated with a table. */
+    /**
+     * For launching an HTML file not associated with a table.
+     */
     public static final int LAUNCH_WEB_VIEW = 10;
-    /** For launching an intent to edit a table's properties. */
+    /**
+     * For launching an intent to edit a table's properties.
+     */
     public static final int LAUNCH_TABLE_PREFS = 11;
     public static final int LAUNCH_COLOR_RULE_LIST = 16;
     public static final int ADD_ROW_SURVEY = 17;
@@ -210,7 +219,6 @@ public class Constants {
    * object.
    *
    * @author sudar.sam@gmail.com
-   *
    */
   public static class JavaScriptHandles {
     public static final String ODK_TABLES_IF = "odkTablesIf";

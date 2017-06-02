@@ -15,13 +15,6 @@
  */
 package org.opendatakit.tables.preferences;
 
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsTableActivity;
-import org.opendatakit.tables.types.FormType;
-import org.opendatakit.utilities.ODKFileUtils;
-
 import android.app.Activity;
 import android.content.Context;
 import android.preference.DialogPreference;
@@ -31,6 +24,12 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsTableActivity;
+import org.opendatakit.tables.types.FormType;
+import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
 
@@ -53,8 +52,8 @@ public class EditFormDialogPreference extends DialogPreference {
     this.mContext = context;
     Activity activity = (Activity) getContext();
     if (!(activity instanceof AbsTableActivity)) {
-      throw new IllegalArgumentException("EditFormDialogPreference must "
-          + "be associated with an AbsTableActivity");
+      throw new IllegalArgumentException(
+          "EditFormDialogPreference must " + "be associated with an AbsTableActivity");
     }
     mActivity = (AbsTableActivity) activity;
   }
@@ -68,14 +67,14 @@ public class EditFormDialogPreference extends DialogPreference {
 
   /**
    * Retrieve the {@link FormType} for the table.
-   * 
+   *
    * @return
    * @throws ServicesAvailabilityException
    */
   FormType retrieveFormType() throws ServicesAvailabilityException {
     AbsTableActivity tableActivity = (AbsTableActivity) getContext();
-    return FormType.constructFormType(tableActivity, tableActivity.getAppName(),
-        tableActivity.getTableId());
+    return FormType
+        .constructFormType(tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
   }
 
   @Override
@@ -94,7 +93,7 @@ public class EditFormDialogPreference extends DialogPreference {
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(tableActivity.getAppName()).printStackTrace(e);
       Toast.makeText(getContext(), getContext().getString(R.string.unable_to_retrieve_form_type),
-              Toast.LENGTH_LONG).show();
+          Toast.LENGTH_LONG).show();
     }
     this.mFormId.setEnabled(true);
     this.mFormId.setText(mFormType.getFormId());
@@ -110,7 +109,8 @@ public class EditFormDialogPreference extends DialogPreference {
         return;
       }
 
-      String formDir = ODKFileUtils.getFormFolder(mActivity.getAppName(), mActivity.getTableId(), formId);
+      String formDir = ODKFileUtils
+          .getFormFolder(mActivity.getAppName(), mActivity.getTableId(), formId);
       File f = new File(formDir);
       File formDefJson = new File(f, ODKFileUtils.FORMDEF_JSON_FILENAME);
       if (!f.exists() || !f.isDirectory() || !formDefJson.exists() || !formDefJson.isFile()) {
@@ -120,11 +120,12 @@ public class EditFormDialogPreference extends DialogPreference {
       AbsTableActivity tableActivity = (AbsTableActivity) getContext();
 
       try {
-        this.mFormType.persist(tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
+        this.mFormType
+            .persist(tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(tableActivity.getAppName()).printStackTrace(e);
         Toast.makeText(getContext(), getContext().getString(R.string.unable_to_save_db_changes),
-                Toast.LENGTH_LONG).show();
+            Toast.LENGTH_LONG).show();
       }
     }
   }

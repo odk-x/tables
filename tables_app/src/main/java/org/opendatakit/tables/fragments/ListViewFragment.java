@@ -20,11 +20,11 @@ import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 
 /**
  * {@link Fragment} for displaying a List view.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class ListViewFragment extends AbsWebTableFragment {
-  
+
   private static final String TAG = ListViewFragment.class.getSimpleName();
 
   @Override

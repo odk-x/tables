@@ -15,20 +15,18 @@
  */
 package org.opendatakit.tables.fragments;
 
+import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
 
-import android.app.Activity;
-import android.app.Fragment;
-
 /**
  * Base class that all fragments should extend.
- * 
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public abstract class AbsBaseFragment extends Fragment implements DatabaseConnectionListener {
 
@@ -39,8 +37,9 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
   public void onAttach(Context context) {
     super.onAttach(context);
     if (!(context instanceof AbsBaseActivity)) {
-      throw new IllegalStateException(AbsBaseFragment.class.getSimpleName()
-          + " must be attached to an " + AbsBaseActivity.class.getSimpleName());
+      throw new IllegalStateException(
+          AbsBaseFragment.class.getSimpleName() + " must be attached to an " + AbsBaseActivity.class
+              .getSimpleName());
     }
     mAppName = ((AbsBaseActivity) context).getAppName();
   }
@@ -53,7 +52,7 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
 
   /**
    * Get the name of the app this fragment is operating under.
-   * 
+   *
    * @return
    */
   public String getAppName() {
@@ -65,13 +64,14 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
       Activity activity = getActivity();
       if (activity != null) {
         if (!(activity instanceof AbsBaseActivity)) {
-          throw new IllegalStateException(AbsBaseFragment.class.getSimpleName()
-              + " must be attached to an " + AbsBaseActivity.class.getSimpleName());
+          throw new IllegalStateException(
+              AbsBaseFragment.class.getSimpleName() + " must be attached to an "
+                  + AbsBaseActivity.class.getSimpleName());
         }
         mAppName = ((AbsBaseActivity) activity).getAppName();
       }
-      WebLogger.getLogger(mAppName).d(LOGTAG, "mAppName was null and has been set using the "
-          + "activity");
+      WebLogger.getLogger(mAppName)
+          .d(LOGTAG, "mAppName was null and has been set using the " + "activity");
     }
     return mAppName;
   }

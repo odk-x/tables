@@ -15,30 +15,26 @@
  */
 package org.opendatakit.tables.utils;
 
-import java.util.ArrayList;
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.aggregate.odktables.rest.ElementType;
-import org.opendatakit.utilities.DateUtils;
-import org.opendatakit.utilities.StaticStateManipulator;
-import org.opendatakit.utilities.StaticStateManipulator.IStaticFieldManipulator;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulator.InputView;
-import org.opendatakit.tables.utils.InputScreenUtil.DateInputView;
-import org.opendatakit.tables.utils.InputScreenUtil.DateRangeInputView;
-import org.opendatakit.tables.utils.InputScreenUtil.DateTimeInputView;
-import org.opendatakit.tables.utils.InputScreenUtil.GeneralInputView;
-import org.opendatakit.tables.utils.InputScreenUtil.TimeInputView;
+import org.opendatakit.tables.utils.InputScreenUtil.*;
+import org.opendatakit.utilities.DateUtils;
+import org.opendatakit.utilities.StaticStateManipulator;
+import org.opendatakit.utilities.StaticStateManipulator.IStaticFieldManipulator;
+
+import java.util.ArrayList;
+import java.util.Map;
 
 public class ElementTypeManipulatorFactory {
 
   private static class DateManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
-    
+
     DateManipulator(ElementType type) {
       this.type = type;
     }
@@ -46,10 +42,10 @@ public class ElementTypeManipulatorFactory {
     DateManipulator() {
       this.type = null;
     }
-    
+
     @Override
     public String getElementTypeDisplayLabel() {
-      if ( type != null ) {
+      if (type != null) {
         return StringUtils.capitalize(type.getElementType());
       } else {
         return "Date";
@@ -72,18 +68,17 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
-        String inValue) {
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyDateValue(inValue);
     }
 
     @Override
-    public Object parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<Object> clazz) {
+    public Object parseStringValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue, Class<Object> clazz) {
       // TODO: verify against choices list
-      throw new UnsupportedOperationException(
-          "DATE parsing not implemented!");
+      throw new UnsupportedOperationException("DATE parsing not implemented!");
     }
 
     @Override
@@ -95,7 +90,7 @@ public class ElementTypeManipulatorFactory {
   private static class DateTimeManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
-    
+
     DateTimeManipulator(ElementType type) {
       this.type = type;
     }
@@ -103,10 +98,10 @@ public class ElementTypeManipulatorFactory {
     DateTimeManipulator() {
       this.type = null;
     }
-    
+
     @Override
     public String getElementTypeDisplayLabel() {
-      if ( type != null ) {
+      if (type != null) {
         return StringUtils.capitalize(type.getElementType());
       } else {
         return "Date and Time";
@@ -129,18 +124,17 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
-        String inValue) {
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyDateTimeValue(inValue);
     }
 
     @Override
-    public Object parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<Object> clazz) {
+    public Object parseStringValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue, Class<Object> clazz) {
       // TODO: verify against choices list
-      throw new UnsupportedOperationException(
-          "DATETIME parsing not implemented!");
+      throw new UnsupportedOperationException("DATETIME parsing not implemented!");
     }
 
     @Override
@@ -149,11 +143,10 @@ public class ElementTypeManipulatorFactory {
     }
   }
 
-
   private static class TimeManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
-    
+
     TimeManipulator(ElementType type) {
       this.type = type;
     }
@@ -161,10 +154,10 @@ public class ElementTypeManipulatorFactory {
     TimeManipulator() {
       this.type = null;
     }
-    
+
     @Override
     public String getElementTypeDisplayLabel() {
-      if ( type != null ) {
+      if (type != null) {
         return StringUtils.capitalize(type.getElementType());
       } else {
         return "Time";
@@ -187,18 +180,17 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
-        String inValue) {
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyTimeValue(inValue);
     }
 
     @Override
-    public Object parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<Object> clazz) {
+    public Object parseStringValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue, Class<Object> clazz) {
       // TODO: verify against choices list
-      throw new UnsupportedOperationException(
-          "TIME parsing not implemented!");
+      throw new UnsupportedOperationException("TIME parsing not implemented!");
     }
 
     @Override
@@ -210,7 +202,7 @@ public class ElementTypeManipulatorFactory {
   private static class DateRangeManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
-    
+
     DateRangeManipulator(ElementType type) {
       this.type = type;
     }
@@ -218,10 +210,10 @@ public class ElementTypeManipulatorFactory {
     DateRangeManipulator() {
       this.type = null;
     }
-    
+
     @Override
     public String getElementTypeDisplayLabel() {
-      if ( type != null ) {
+      if (type != null) {
         return StringUtils.capitalize(type.getElementType());
       } else {
         return "Date Range";
@@ -244,18 +236,17 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
-        String inValue) {
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyDateRangeValue(inValue);
     }
 
     @Override
-    public Object parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<Object> clazz) {
+    public Object parseStringValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue, Class<Object> clazz) {
       // TODO: verify against choices list
-      throw new UnsupportedOperationException(
-          "DATE_RANGE parsing not implemented!");
+      throw new UnsupportedOperationException("DATE_RANGE parsing not implemented!");
     }
 
     @Override
@@ -267,7 +258,7 @@ public class ElementTypeManipulatorFactory {
   private static class IntegerManipulator implements ITypeManipulatorFragment<Integer> {
 
     ElementType type;
-    
+
     IntegerManipulator(ElementType type) {
       this.type = type;
     }
@@ -275,10 +266,10 @@ public class ElementTypeManipulatorFactory {
     IntegerManipulator() {
       this.type = null;
     }
-    
+
     @Override
     public String getElementTypeDisplayLabel() {
-      if ( type != null ) {
+      if (type != null) {
         return StringUtils.capitalize(type.getElementType());
       } else {
         return "Integer";
@@ -301,18 +292,17 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
-        String inValue) {
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyIntegerValue(inValue);
     }
 
     @Override
-    public Integer parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>>
-        displayChoicesList, String inValue,
-        Class<Integer> clazz) {
+    public Integer parseStringValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue, Class<Integer> clazz) {
       // TODO: verify against choices list
-      if ( inValue == null ) {
+      if (inValue == null) {
         return null;
       }
       int integerValue = Integer.parseInt(inValue);
@@ -328,7 +318,7 @@ public class ElementTypeManipulatorFactory {
   private static class NumberManipulator implements ITypeManipulatorFragment<Double> {
 
     ElementType type;
-    
+
     NumberManipulator(ElementType type) {
       this.type = type;
     }
@@ -336,10 +326,10 @@ public class ElementTypeManipulatorFactory {
     NumberManipulator() {
       this.type = null;
     }
-    
+
     @Override
     public String getElementTypeDisplayLabel() {
-      if ( type != null ) {
+      if (type != null) {
         return StringUtils.capitalize(type.getElementType());
       } else {
         return "Number";
@@ -362,17 +352,17 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
-        String inValue) {
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue) {
       // TODO: verify against choices list
       return dataUtil.validifyNumberValue(inValue);
     }
 
     @Override
-    public Double parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<Double> clazz) {
+    public Double parseStringValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue, Class<Double> clazz) {
       // TODO: verify against choices list
-      if ( inValue == null ) {
+      if (inValue == null) {
         return null;
       }
       double numberValue = Double.parseDouble(inValue);
@@ -388,7 +378,7 @@ public class ElementTypeManipulatorFactory {
   private static class BoolManipulator implements ITypeManipulatorFragment<Integer> {
 
     ElementType type;
-    
+
     BoolManipulator(ElementType type) {
       this.type = type;
     }
@@ -396,10 +386,10 @@ public class ElementTypeManipulatorFactory {
     BoolManipulator() {
       this.type = null;
     }
-    
+
     @Override
     public String getElementTypeDisplayLabel() {
-      if ( type != null ) {
+      if (type != null) {
         return StringUtils.capitalize(type.getElementType());
       } else {
         return "Boolean";
@@ -418,43 +408,43 @@ public class ElementTypeManipulatorFactory {
 
     @Override
     public String formatForCollect(DateUtils dataUtil, String databaseValue) {
-      if ( databaseValue == null ) {
+      if (databaseValue == null) {
         return null;
       }
       int intValue = Integer.parseInt(databaseValue);
-      if ( intValue == 0 ) {
+      if (intValue == 0) {
         return "false";
       }
       return "true";
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
-        String inValue) {
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue) {
       // TODO: verify against choices list
-      if ( inValue == null ) {
+      if (inValue == null) {
         return null;
       }
-      if ( inValue.equalsIgnoreCase("true") ) {
+      if (inValue.equalsIgnoreCase("true")) {
         return "true";
       }
-      if ( inValue.equalsIgnoreCase("false") ) {
+      if (inValue.equalsIgnoreCase("false")) {
         return "false";
       }
       throw new IllegalArgumentException("Unexpected boolean value: " + inValue);
     }
 
     @Override
-    public Integer parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<Integer> clazz) {
+    public Integer parseStringValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue, Class<Integer> clazz) {
       // TODO: verify against choices list
-      if ( inValue == null ) {
+      if (inValue == null) {
         return null;
       }
-      if ( inValue.equalsIgnoreCase("true") ) {
+      if (inValue.equalsIgnoreCase("true")) {
         return Integer.valueOf(1);
       }
-      if ( inValue.equalsIgnoreCase("false") ) {
+      if (inValue.equalsIgnoreCase("false")) {
         return Integer.valueOf(0);
       }
       throw new IllegalArgumentException("invalid boolean value: " + inValue);
@@ -469,7 +459,7 @@ public class ElementTypeManipulatorFactory {
   private static class StringManipulator implements ITypeManipulatorFragment<String> {
 
     ElementType type;
-    
+
     StringManipulator(ElementType type) {
       this.type = type;
     }
@@ -477,10 +467,10 @@ public class ElementTypeManipulatorFactory {
     StringManipulator() {
       this.type = null;
     }
-    
+
     @Override
     public String getElementTypeDisplayLabel() {
-      if ( type != null ) {
+      if (type != null) {
         return StringUtils.capitalize(type.getElementType());
       } else {
         return "Text";
@@ -503,15 +493,15 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
-        String inValue) {
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue) {
       // TODO: verify against choices list
       return inValue;
     }
 
     @Override
-    public String parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<String> clazz) {
+    public String parseStringValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue, Class<String> clazz) {
       // TODO: verify against choices list
       return inValue;
     }
@@ -525,11 +515,11 @@ public class ElementTypeManipulatorFactory {
   private static class ObjectManipulator implements ITypeManipulatorFragment<Object> {
 
     ElementType type;
-    
+
     ObjectManipulator(ElementType type) {
       this.type = type;
     }
-    
+
     @Override
     public String getElementTypeDisplayLabel() {
       return StringUtils.capitalize(type.getElementType());
@@ -551,14 +541,14 @@ public class ElementTypeManipulatorFactory {
     }
 
     @Override
-    public String verifyValidityAndNormalizeValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList,
-        String inValue) {
+    public String verifyValidityAndNormalizeValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue) {
       throw new UnsupportedOperationException("this should not be called");
     }
 
     @Override
-    public Object parseStringValue(DateUtils dataUtil, ArrayList<Map<String,Object>> displayChoicesList, String inValue,
-        Class<Object> clazz) {
+    public Object parseStringValue(DateUtils dataUtil,
+        ArrayList<Map<String, Object>> displayChoicesList, String inValue, Class<Object> clazz) {
       throw new UnsupportedOperationException("this should not be called");
     }
 
@@ -568,16 +558,16 @@ public class ElementTypeManipulatorFactory {
     }
   }
 
-//  public static final String IMAGEURI = "imageUri";
-//  public static final String AUDIOURI = "audioUri";
-//  public static final String VIDEOURI = "videoUri";
-//  public static final String MIMEURI = "mimeUri";
+  //  public static final String IMAGEURI = "imageUri";
+  //  public static final String AUDIOURI = "audioUri";
+  //  public static final String VIDEOURI = "videoUri";
+  //  public static final String MIMEURI = "mimeUri";
 
   static String gAppName = null;
   static ElementTypeManipulator gManipulator = null;
-  
+
   public static final synchronized ElementTypeManipulator getInstance(String appName) {
-    if ( gManipulator == null || (gAppName != null && !gAppName.equals(appName)) ) {
+    if (gManipulator == null || (gAppName != null && !gAppName.equals(appName))) {
       ElementTypeManipulator manipulator = new ElementTypeManipulator();
       manipulator.addTypeManipulatorFragment("date", new DateManipulator());
       manipulator.addTypeManipulatorFragment("dateTime", new DateTimeManipulator());
@@ -593,39 +583,40 @@ public class ElementTypeManipulatorFactory {
 
     return gManipulator;
   }
-  
+
   static {
     StaticStateManipulator.get().register(90, new IStaticFieldManipulator() {
       @Override
       public void reset() {
         gAppName = null;
         gManipulator = null;
-      }});
+      }
+    });
   }
-  
+
   static final ITypeManipulatorFragment getCustomManipulatorFragment(ElementType type) {
-    if ( type.getDataType() == ElementDataType.array ) {
+    if (type.getDataType() == ElementDataType.array) {
       return new ObjectManipulator(type);
     }
-    if ( type.getDataType() == ElementDataType.bool ) {
+    if (type.getDataType() == ElementDataType.bool) {
       return new BoolManipulator(type);
     }
-    if ( type.getDataType() == ElementDataType.configpath ) {
+    if (type.getDataType() == ElementDataType.configpath) {
       return new StringManipulator(type);
     }
-    if ( type.getDataType() == ElementDataType.integer ) {
+    if (type.getDataType() == ElementDataType.integer) {
       return new IntegerManipulator(type);
     }
-    if ( type.getDataType() == ElementDataType.number ) {
+    if (type.getDataType() == ElementDataType.number) {
       return new NumberManipulator(type);
     }
-    if ( type.getDataType() == ElementDataType.object ) {
+    if (type.getDataType() == ElementDataType.object) {
       return new ObjectManipulator(type);
     }
-    if ( type.getDataType() == ElementDataType.rowpath ) {
+    if (type.getDataType() == ElementDataType.rowpath) {
       return new StringManipulator(type);
     }
-    if ( type.getDataType() == ElementDataType.string ) {
+    if (type.getDataType() == ElementDataType.string) {
       return new StringManipulator(type);
     }
     throw new IllegalStateException("unknown ElementDataType: " + type.getDataType().name());

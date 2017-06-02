@@ -65,12 +65,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   private final SpreadsheetUserTable table;
   private final int fontSize;
   private final int completeColWidths[];
-  
+
   private final Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup;
 
   private final ColorRuleGroup mStatusColumnRuleGroup;
   private final ColorRuleGroup mTableColorRuleGroup;
-  
+
   // Keeping this for now in case someone else needs to work with the code
   // and relied on this variable.
   private LockableScrollView dataStatusScroll;
@@ -91,8 +91,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
   private CellInfo lastHighlightedCellId;
 
-  public SpreadsheetView(Context context, Controller controller, SpreadsheetUserTable table) throws
-      ServicesAvailabilityException {
+  public SpreadsheetView(Context context, Controller controller, SpreadsheetUserTable table)
+      throws ServicesAvailabilityException {
     super(context);
     this.context = context;
     this.controller = controller;
@@ -122,15 +122,15 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
         mElementKeyToColorRuleGroup.put(cd.getElementKey(),
             table.getColumnColorRuleGroup(dbInterface, db, cd.getElementKey(), adminColumns));
       }
-      mStatusColumnRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(dbInterface,
-          appName, db, table.getTableId(), adminColumns);
-      mTableColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(dbInterface,
-          appName, db, table.getTableId(), adminColumns);
+      mStatusColumnRuleGroup = ColorRuleGroup
+          .getStatusColumnRuleGroup(dbInterface, appName, db, table.getTableId(), adminColumns);
+      mTableColorRuleGroup = ColorRuleGroup
+          .getTableColorRuleGroup(dbInterface, appName, db, table.getTableId(), adminColumns);
       completeColWidths = getColumnWidths(db);
-      fontSize = TableUtil.get().getSpreadsheetViewFontSize(
-          getContext(), dbInterface, appName, db, table.getTableId());
+      fontSize = TableUtil.get()
+          .getSpreadsheetViewFontSize(getContext(), dbInterface, appName, db, table.getTableId());
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         dbInterface.closeDatabase(appName, db);
       }
     }
@@ -356,10 +356,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * an indexed table, the non-indexed columns of an indexed table, or the
    * entirety of an unindexed table.
    *
-   * @param indexElementKey
-   *          the column that is indexed (or null)
-   * @param isIndexed
-   *          whether this table is for the indexed column
+   * @param indexElementKey the column that is indexed (or null)
+   * @param isIndexed       whether this table is for the indexed column
    * @return a view including the header and body of the table
    */
   private View buildTable(String indexElementKey, boolean isIndexed) {
@@ -375,12 +373,16 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       elementKeysToDisplay.add(cd.getElementKey());
       colWidths = new int[1];
       colWidths[0] = completeColWidths[table.getColumnIndexOfElementKey(indexElementKey)];
-      dataTable = TabularView.getIndexDataTable(context, this, table, elementKeysToDisplay,
-          colWidths, fontSize, this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
-      headerTable = TabularView.getIndexHeaderTable(context, this, table, elementKeysToDisplay,
-          colWidths, fontSize, this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
+      dataTable = TabularView
+          .getIndexDataTable(context, this, table, elementKeysToDisplay, colWidths, fontSize,
+              this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
+      headerTable = TabularView
+          .getIndexHeaderTable(context, this, table, elementKeysToDisplay, colWidths, fontSize,
+              this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
     } else {
-      int width = (indexElementKey == null || indexElementKey.length() == 0) ? table.getWidth() : table.getWidth() - 1;
+      int width = (indexElementKey == null || indexElementKey.length() == 0) ?
+          table.getWidth() :
+          table.getWidth() - 1;
       colWidths = new int[width];
       int addIndex = 0;
       for (int i = 0; i < table.getWidth(); i++) {
@@ -392,10 +394,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
         colWidths[addIndex] = completeColWidths[i];
         addIndex++;
       }
-      dataTable = TabularView.getMainDataTable(context, this, table, elementKeysToDisplay,
-          colWidths, fontSize, this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
-      headerTable = TabularView.getMainHeaderTable(context, this, table, elementKeysToDisplay,
-          colWidths, fontSize, this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
+      dataTable = TabularView
+          .getMainDataTable(context, this, table, elementKeysToDisplay, colWidths, fontSize,
+              this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
+      headerTable = TabularView
+          .getMainHeaderTable(context, this, table, elementKeysToDisplay, colWidths, fontSize,
+              this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
     }
 
     LockableScrollView dataScroll;
@@ -429,16 +433,18 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     colWidths[0] = TabularView.DEFAULT_STATUS_COLUMN_WIDTH;
 
     dataStatusScroll = new LockableScrollView(context);
-    TabularView dataTable = TabularView.getStatusDataTable(context, this, table, colWidths,
-        fontSize, this.mElementKeyToColorRuleGroup, mStatusColumnRuleGroup);
+    TabularView dataTable = TabularView
+        .getStatusDataTable(context, this, table, colWidths, fontSize,
+            this.mElementKeyToColorRuleGroup, mStatusColumnRuleGroup);
     dataTable.setVerticalFadingEdgeEnabled(true);
     dataTable.setVerticalScrollBarEnabled(false);
-    dataStatusScroll.addView(dataTable, new ViewGroup.LayoutParams(dataTable.getTableWidth(),
-        dataTable.getTableHeight()));
+    dataStatusScroll.addView(dataTable,
+        new ViewGroup.LayoutParams(dataTable.getTableWidth(), dataTable.getTableHeight()));
     dataStatusScroll.setVerticalFadingEdgeEnabled(true);
     dataStatusScroll.setHorizontalFadingEdgeEnabled(true);
-    TabularView headerTable = TabularView.getStatusHeaderTable(context, this, table, colWidths,
-        fontSize, this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
+    TabularView headerTable = TabularView
+        .getStatusHeaderTable(context, this, table, colWidths, fontSize,
+            this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
     LinearLayout wrapper = new LinearLayout(context);
     wrapper.setOrientation(LinearLayout.VERTICAL);
     wrapper.addView(headerTable, headerTable.getTableWidth(), headerTable.getTableHeight());
@@ -485,8 +491,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG,
-          "Error accessing database: " + e.toString());
+      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
       Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
     }
   }
@@ -498,8 +503,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG,
-          "Error accessing database: " + e.toString());
+      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
       Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
     }
   }
@@ -511,8 +515,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG,
-          "Error accessing database: " + e.toString());
+      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
       Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
     }
   }
@@ -604,9 +607,9 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     int[] columnWidths = new int[numberOfDisplayColumns];
     String appName = table.getAppName();
 
-    Map<String, Integer> colWidths =
-            ColumnUtil.get().getColumnWidths(Tables.getInstance().getDatabase(),
-                appName, db, table.getTableId(), table.getColumnDefinitions());
+    Map<String, Integer> colWidths = ColumnUtil.get()
+        .getColumnWidths(Tables.getInstance().getDatabase(), appName, db, table.getTableId(),
+            table.getColumnDefinitions());
 
     for (int i = 0; i < numberOfDisplayColumns; i++) {
       ColumnDefinition cd = table.getColumnByIndex(i);

@@ -30,25 +30,19 @@ import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 /**
  * Base class for {@link Fragment}s that display information about a table
  * using a WebKit view.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
-public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
-    implements IWebFragment {
+public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implements IWebFragment {
 
   private static final String TAG = AbsWebTableFragment.class.getSimpleName();
 
   @Override
-  public View onCreateView(
-      LayoutInflater inflater,
-      ViewGroup container,
+  public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
     WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView]");
-    
-    ViewGroup v = (ViewGroup) inflater.inflate(
-        R.layout.web_view_container,
-        container,
-        false);
+
+    ViewGroup v = (ViewGroup) inflater.inflate(R.layout.web_view_container, container, false);
 
     return v;
   }
@@ -60,14 +54,14 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
 
   @Override
   public void setWebKitVisibility() {
-    if ( getView() == null ) {
+    if (getView() == null) {
       return;
     }
-    
+
     WebView webView = (WebView) getView().findViewById(R.id.webkit);
     TextView noDatabase = (TextView) getView().findViewById(android.R.id.empty);
-    
-    if ( Tables.getInstance().getDatabase() != null ) {
+
+    if (Tables.getInstance().getDatabase() != null) {
       webView.setVisibility(View.VISIBLE);
       noDatabase.setVisibility(View.GONE);
     } else {
@@ -79,7 +73,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   @Override
   public void databaseAvailable() {
 
-    if ( getView() != null ) {
+    if (getView() != null) {
       setWebKitVisibility();
       getWebKit().reloadPage();
     }
@@ -87,7 +81,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
 
   @Override
   public void databaseUnavailable() {
-    if ( getView() != null ) {
+    if (getView() != null) {
       setWebKitVisibility();
       getWebKit().setForceLoadDuringReload();
     }

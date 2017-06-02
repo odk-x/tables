@@ -45,9 +45,7 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
   protected static final String MAP_INDEX = "mapIndex";
 
   enum ColorRuleType {
-    TABLE,
-    COLUMN,
-    STATUS
+    TABLE, COLUMN, STATUS
   }
 
   public TableDataExecutorProcessor(ExecutorContext context, IOdkTablesActivity activity) {
@@ -59,8 +57,7 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
   protected void extendQueryMetadata(UserDbInterface dbInterface, DbHandle db,
       List<KeyValueStoreEntry> entries, UserTable userTable, Map<String, Object> metadata) {
     // TODO: construct color rule data here...
-    String [] adminCols = ADMIN_COLUMNS.toArray(new String[0]);
-
+    String[] adminCols = ADMIN_COLUMNS.toArray(new String[0]);
 
     ArrayList<RowColorObject> rowColors = new ArrayList<RowColorObject>();
     ArrayList<RowColorObject> statusColors = new ArrayList<RowColorObject>();
@@ -77,7 +74,7 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
 
       // Need to get column color rules working
       Object ekm = metadata.get("elementKeyMap");
-      if ( ekm instanceof Map ) {
+      if (ekm instanceof Map) {
         Map<String, Integer> elementKeyMap = (Map<String, Integer>) ekm;
         for (String elementKey : elementKeyMap.keySet()) {
           ArrayList<RowColorObject> colColorGuide = new ArrayList<RowColorObject>();
@@ -106,20 +103,25 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
   }
 
   private void constructRowColorObjects(UserDbInterface dbInterface, DbHandle db,
-      UserTable userTable, String[] adminCols, ArrayList<RowColorObject>colors,
-      ColorRuleType crType, String elementKey) throws
-      ServicesAvailabilityException {
+      UserTable userTable, String[] adminCols, ArrayList<RowColorObject> colors,
+      ColorRuleType crType, String elementKey) throws ServicesAvailabilityException {
     // Should reuse this code for column and status color rules
 
     ColorRuleGroup crg = null;
 
     // Get the table color rules and determine which rows are affected
     if (crType == ColorRuleType.TABLE) {
-      crg = ColorRuleGroup.getTableColorRuleGroup(dbInterface, userTable.getAppName(), db, userTable.getTableId(), adminCols);
+      crg = ColorRuleGroup
+          .getTableColorRuleGroup(dbInterface, userTable.getAppName(), db, userTable.getTableId(),
+              adminCols);
     } else if (crType == ColorRuleType.COLUMN) {
-      crg = ColorRuleGroup.getColumnColorRuleGroup(dbInterface, userTable.getAppName(), db, userTable.getTableId(), elementKey, adminCols);
+      crg = ColorRuleGroup
+          .getColumnColorRuleGroup(dbInterface, userTable.getAppName(), db, userTable.getTableId(),
+              elementKey, adminCols);
     } else if (crType == ColorRuleType.STATUS) {
-      crg = ColorRuleGroup.getStatusColumnRuleGroup(dbInterface, userTable.getAppName(), db, userTable.getTableId(), adminCols);
+      crg = ColorRuleGroup
+          .getStatusColumnRuleGroup(dbInterface, userTable.getAppName(), db, userTable.getTableId(),
+              adminCols);
 
     } else {
       return;

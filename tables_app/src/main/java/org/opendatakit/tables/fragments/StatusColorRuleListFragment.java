@@ -15,15 +15,19 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.util.Map;
-
+import android.app.ListFragment;
 import android.content.Context;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
@@ -32,35 +36,29 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.components.ColorRuleAdapter;
 
-import android.app.Activity;
-import android.app.ListFragment;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
+import java.util.Map;
 
 /**
  * Fragment for displaying a list of status color rules.
- *
  */
 public class StatusColorRuleListFragment extends ListFragment {
 
-  private static final String TAG =
-          StatusColorRuleListFragment.class.getSimpleName();
+  private static final String TAG = StatusColorRuleListFragment.class.getSimpleName();
 
-  /** The group of color rules being displayed by this list. */
+  /**
+   * The group of color rules being displayed by this list.
+   */
   ColorRuleGroup mColorRuleGroup;
   ColorRuleAdapter mColorRuleAdapter;
 
   /**
    * Retrieve a new instance of {@list StatusColorRuleListFragment} with the
    * appropriate values set in its arguments.
+   *
    * @param colorRuleType
    * @return
    */
-  public static StatusColorRuleListFragment newInstance(
-          ColorRuleGroup.Type colorRuleType) {
+  public static StatusColorRuleListFragment newInstance(ColorRuleGroup.Type colorRuleType) {
     StatusColorRuleListFragment result = new StatusColorRuleListFragment();
     Bundle bundle = new Bundle();
     IntentUtil.addColorRuleGroupTypeToBundle(bundle, colorRuleType);
@@ -73,20 +71,14 @@ public class StatusColorRuleListFragment extends ListFragment {
     super.onAttach(context);
     if (!(context instanceof TableLevelPreferencesActivity)) {
       throw new IllegalArgumentException(
-              "must be attached to a " +
-                      TableLevelPreferencesActivity.class.getSimpleName());
+          "must be attached to a " + TableLevelPreferencesActivity.class.getSimpleName());
     }
   }
 
   @Override
-  public View onCreateView(
-          LayoutInflater inflater,
-          ViewGroup container,
-          Bundle savedInstanceState) {
-    return inflater.inflate(
-            R.layout.fragment_color_rule_list,
-            container,
-            false);
+  public View onCreateView(LayoutInflater inflater, ViewGroup container,
+      Bundle savedInstanceState) {
+    return inflater.inflate(R.layout.fragment_color_rule_list, container, false);
   }
 
   @Override
@@ -101,20 +93,21 @@ public class StatusColorRuleListFragment extends ListFragment {
     try {
       db = dbInterface.openDatabase(getAppName());
 
-      tc = TableUtil.get().getTableColumns(userSelectedDefaultLocale, dbInterface,
-          getAppName(), db, getTableId());
+      tc = TableUtil.get()
+          .getTableColumns(userSelectedDefaultLocale, dbInterface, getAppName(), db, getTableId());
       this.mColorRuleGroup = this.retrieveColorRuleGroup(dbInterface, db, tc.adminColumns);
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       throw new IllegalStateException("Unable to access database");
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         try {
           dbInterface.closeDatabase(getAppName(), db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           WebLogger.getLogger(getAppName()).e(TAG, "Error while initializing color rule list");
-          Toast.makeText(getActivity(), "Error while initializing color rule list", Toast.LENGTH_LONG).show();
+          Toast.makeText(getActivity(), "Error while initializing color rule list",
+              Toast.LENGTH_LONG).show();
         }
       }
     }
@@ -123,37 +116,33 @@ public class StatusColorRuleListFragment extends ListFragment {
     this.registerForContextMenu(this.getListView());
   }
 
-  ColorRuleAdapter createColorRuleAdapter(String[] adminColumns, Map<String,String> colDisplayNames) {
+  ColorRuleAdapter createColorRuleAdapter(String[] adminColumns,
+      Map<String, String> colDisplayNames) {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
-    ColorRuleAdapter result = new ColorRuleAdapter(
-            (TableLevelPreferencesActivity) getActivity(),
-            getAppName(),
-            getTableId(),
-            R.layout.row_for_view_entry,
-            adminColumns, colDisplayNames,
-            this.mColorRuleGroup.getColorRules(),
-            type);
+    ColorRuleAdapter result = new ColorRuleAdapter((TableLevelPreferencesActivity) getActivity(),
+        getAppName(), getTableId(), R.layout.row_for_view_entry, adminColumns, colDisplayNames,
+        this.mColorRuleGroup.getColorRules(), type);
     return result;
   }
 
   /**
    * Retrieve the {@link ColorRuleGroup.Type} from the arguments passed to this
    * fragment.
+   *
    * @return
    */
   ColorRuleGroup.Type retrieveColorRuleType() {
-    ColorRuleGroup.Type result =
-            IntentUtil.retrieveColorRuleTypeFromBundle(this.getArguments());
+    ColorRuleGroup.Type result = IntentUtil.retrieveColorRuleTypeFromBundle(this.getArguments());
     return result;
   }
 
   /**
    * Retrieve the {@link TableLevelPreferencesActivity} hosting this fragment.
+   *
    * @return
    */
   TableLevelPreferencesActivity retrieveTableLevelPreferencesActivity() {
-    TableLevelPreferencesActivity result =
-            (TableLevelPreferencesActivity) this.getActivity();
+    TableLevelPreferencesActivity result = (TableLevelPreferencesActivity) this.getActivity();
     return result;
   }
 
@@ -167,19 +156,17 @@ public class StatusColorRuleListFragment extends ListFragment {
     return result.getTableId();
   }
 
-  ColorRuleGroup retrieveColorRuleGroup(UserDbInterface dbInterface, DbHandle db, String[]
-      adminColumns) throws
-      ServicesAvailabilityException {
+  ColorRuleGroup retrieveColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
+      String[] adminColumns) throws ServicesAvailabilityException {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
     ColorRuleGroup result = null;
     switch (type) {
-      case STATUS_COLUMN:
-        result = ColorRuleGroup.getStatusColumnRuleGroup(
-            dbInterface, getAppName(), db, getTableId(), adminColumns);
-        break;
-      default:
-        throw new IllegalArgumentException(
-                "unrecognized color rule group type: " + type);
+    case STATUS_COLUMN:
+      result = ColorRuleGroup
+          .getStatusColumnRuleGroup(dbInterface, getAppName(), db, getTableId(), adminColumns);
+      break;
+    default:
+      throw new IllegalArgumentException("unrecognized color rule group type: " + type);
     }
     return result;
   }

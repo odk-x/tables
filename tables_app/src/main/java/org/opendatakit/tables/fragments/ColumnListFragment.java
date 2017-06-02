@@ -15,51 +15,52 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import android.app.ListFragment;
 import android.content.Context;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 
-import android.app.Activity;
-import android.app.ListFragment;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Displays the columns in a table.
- * 
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class ColumnListFragment extends ListFragment {
 
   private static final String TAG = ColumnListFragment.class.getSimpleName();
 
-  /** The element keys of the columns. */
+  /**
+   * The element keys of the columns.
+   */
   private List<String> mElementKeys;
 
-  /** The display name of every column in the table. */
+  /**
+   * The display name of every column in the table.
+   */
   private List<String> mDisplayNames;
 
   @Override
   public void onAttach(Context context) {
     super.onAttach(context);
     if (!(context instanceof AbsTableActivity)) {
-      throw new IllegalStateException("must be attached to "
-          + AbsTableActivity.class.getSimpleName());
+      throw new IllegalStateException(
+          "must be attached to " + AbsTableActivity.class.getSimpleName());
     }
   }
 
@@ -90,12 +91,12 @@ public class ColumnListFragment extends ListFragment {
 
   /**
    * Retrieve all the element keys for the columns in the table.
-   * 
+   *
    * @return
    * @throws ServicesAvailabilityException
    */
   private void setElementKeysAndDisplayNames() throws ServicesAvailabilityException {
-    
+
     AbsTableActivity activity = retrieveTableActivity();
     String appName = activity.getAppName();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
@@ -106,10 +107,12 @@ public class ColumnListFragment extends ListFragment {
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(appName);
-      tc = TableUtil.get().getTableColumns(userSelectedDefaultLocale, dbInterface, appName, db, activity.getTableId());
+      tc = TableUtil.get().getTableColumns(userSelectedDefaultLocale, dbInterface, appName, db,
+          activity.getTableId());
 
       ArrayList<String> colOrder;
-      colOrder = TableUtil.get().getColumnOrder(dbInterface, appName, db, activity.getTableId(), orderedDefns);
+      colOrder = TableUtil.get()
+          .getColumnOrder(dbInterface, appName, db, activity.getTableId(), orderedDefns);
       this.mElementKeys = colOrder;
       List<String> displayNames = new ArrayList<String>();
       for (String elementKey : mElementKeys) {
@@ -118,7 +121,7 @@ public class ColumnListFragment extends ListFragment {
       }
       this.mDisplayNames = displayNames;
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         dbInterface.closeDatabase(appName, db);
       }
     }
@@ -126,7 +129,7 @@ public class ColumnListFragment extends ListFragment {
 
   /**
    * Retrieve the {@link AbsTableActivity} hosting this fragment.
-   * 
+   *
    * @return
    */
   AbsTableActivity retrieveTableActivity() {

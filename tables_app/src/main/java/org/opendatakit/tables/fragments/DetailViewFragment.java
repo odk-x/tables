@@ -20,8 +20,8 @@ import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 
 /**
  * {@link Fragment} for displaying a detail view.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class DetailViewFragment extends AbsWebTableFragment {
 

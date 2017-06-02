@@ -15,33 +15,31 @@
  */
 package org.opendatakit.tables.views;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
+import android.content.Context;
 import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.UserTable;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
-import android.content.Context;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Wrapper class for UserTable that presents the table in the way that the
  * configuration says the UserTable should be presented.
  *
  * @author Administrator
- *
  */
 public class SpreadsheetUserTable {
   @SuppressWarnings("unused")
@@ -52,7 +50,7 @@ public class SpreadsheetUserTable {
   private final String[] header;
   private final String[] spreadsheetIndexToElementKey;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
-  private final Map<String, ArrayList<Map<String,Object>>> elementKeyToDisplayChoicesList;
+  private final Map<String, ArrayList<Map<String, Object>>> elementKeyToDisplayChoicesList;
   UserTable userTable;
 
   public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws ServicesAvailabilityException {
@@ -66,31 +64,34 @@ public class SpreadsheetUserTable {
     try {
       db = dbInterface.openDatabase(frag.getAppName());
       userTable = getUserTable();
-      indexColumnElementKey = TableUtil.get().getIndexColumn(dbInterface, getAppName(), db, getTableId());
-      colOrder = TableUtil.get().getColumnOrder(dbInterface, frag.getAppName(), db, frag.getTableId(),
+      indexColumnElementKey = TableUtil.get()
+          .getIndexColumn(dbInterface, getAppName(), db, getTableId());
+      colOrder = TableUtil.get()
+          .getColumnOrder(dbInterface, frag.getAppName(), db, frag.getTableId(),
               frag.getColumnDefinitions());
 
       header = new String[colOrder.size()];
       spreadsheetIndexToElementKey = new String[colOrder.size()];
       elementKeyToSpreadsheetIndex = new HashMap<String, Integer>();
-      elementKeyToDisplayChoicesList = new HashMap<String, ArrayList<Map<String,Object>>>();
+      elementKeyToDisplayChoicesList = new HashMap<String, ArrayList<Map<String, Object>>>();
 
       for (int i = 0; i < colOrder.size(); ++i) {
         String elementKey = colOrder.get(i);
         String localizedDisplayName;
-        localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(userSelectedDefaultLocale,
-            dbInterface, getAppName(), db, frag.getTableId(), elementKey);
+        localizedDisplayName = ColumnUtil.get()
+            .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, getAppName(), db,
+                frag.getTableId(), elementKey);
 
         header[i] = localizedDisplayName;
         spreadsheetIndexToElementKey[i] = elementKey;
         elementKeyToSpreadsheetIndex.put(elementKey, i);
 
-        ArrayList<Map<String,Object>> choices =
-        ColumnUtil.get().getDisplayChoicesList(dbInterface, getAppName(), db, frag.getTableId(), elementKey);
+        ArrayList<Map<String, Object>> choices = ColumnUtil.get()
+            .getDisplayChoicesList(dbInterface, getAppName(), db, frag.getTableId(), elementKey);
         elementKeyToDisplayChoicesList.put(elementKey, choices);
       }
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         dbInterface.closeDatabase(frag.getAppName(), db);
       }
     }
@@ -108,32 +109,32 @@ public class SpreadsheetUserTable {
     return fragment.getColumnDefinitions();
   }
 
-  public ArrayList<Map<String,Object>> getColumnDisplayChoicesList(String elementKey) {
+  public ArrayList<Map<String, Object>> getColumnDisplayChoicesList(String elementKey) {
     return elementKeyToDisplayChoicesList.get(elementKey);
   }
 
-  public ColorRuleGroup getColumnColorRuleGroup(UserDbInterface dbInterface,
-      DbHandle db, String elementKey, String[] adminColumns) throws
-      ServicesAvailabilityException {
-    return ColorRuleGroup.getColumnColorRuleGroup(dbInterface,
-        getAppName(), db, getTableId(), elementKey, adminColumns);
+  public ColorRuleGroup getColumnColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
+      String elementKey, String[] adminColumns) throws ServicesAvailabilityException {
+    return ColorRuleGroup
+        .getColumnColorRuleGroup(dbInterface, getAppName(), db, getTableId(), elementKey,
+            adminColumns);
   }
 
-  public ColorRuleGroup getStatusColumnRuleGroup(UserDbInterface dbInterface,
-      DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
-    return ColorRuleGroup.getStatusColumnRuleGroup(dbInterface,
-        getAppName(), db, getTableId(), adminColumns);
+  public ColorRuleGroup getStatusColumnRuleGroup(UserDbInterface dbInterface, DbHandle db,
+      String[] adminColumns) throws ServicesAvailabilityException {
+    return ColorRuleGroup
+        .getStatusColumnRuleGroup(dbInterface, getAppName(), db, getTableId(), adminColumns);
   }
 
-  public ColorRuleGroup getTableColorRuleGroup(UserDbInterface dbInterface,
-      DbHandle db, String[] adminColumns) throws ServicesAvailabilityException {
-    return ColorRuleGroup.getTableColorRuleGroup(dbInterface,
-        getAppName(), db, getTableId(), adminColumns);
+  public ColorRuleGroup getTableColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
+      String[] adminColumns) throws ServicesAvailabilityException {
+    return ColorRuleGroup
+        .getTableColorRuleGroup(dbInterface, getAppName(), db, getTableId(), adminColumns);
   }
 
   int getNumberOfRows() {
     UserTable table = fragment.getUserTable();
-    if ( table == null ) {
+    if (table == null) {
       return 0;
     }
     return table.getNumberOfRows();
@@ -141,7 +142,7 @@ public class SpreadsheetUserTable {
 
   public Row getRowAtIndex(int index) {
     UserTable table = fragment.getUserTable();
-    if ( table == null ) {
+    if (table == null) {
       return null;
     }
     return table.getRowAtIndex(index);

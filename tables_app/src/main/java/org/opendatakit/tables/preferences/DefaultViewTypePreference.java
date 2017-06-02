@@ -15,30 +15,31 @@
  */
 package org.opendatakit.tables.preferences;
 
-import java.util.Arrays;
-
-import org.opendatakit.database.data.OrderedColumns;
+import android.app.AlertDialog.Builder;
+import android.content.Context;
+import android.preference.ListPreference;
+import android.util.AttributeSet;
+import android.widget.ListAdapter;
 import org.opendatakit.data.TableViewType;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 import org.opendatakit.tables.views.components.TableViewTypeAdapter;
 
-import android.app.AlertDialog.Builder;
-import android.content.Context;
-import android.preference.ListPreference;
-import android.util.AttributeSet;
-import android.widget.ListAdapter;
+import java.util.Arrays;
 
 public class DefaultViewTypePreference extends ListPreference {
 
-  /** The view types allowed for the table this preference will display. */
- //private TableProperties mTableProperties;
+  /**
+   * The view types allowed for the table this preference will display.
+   */
+  //private TableProperties mTableProperties;
   private PossibleTableViewTypes mPossibleViewTypes;
   private Context mContext;
   private final String mAppName;
@@ -46,17 +47,16 @@ public class DefaultViewTypePreference extends ListPreference {
 
   public DefaultViewTypePreference(Context context, AttributeSet attrs) {
     super(context, attrs);
-    AbsTableActivity activity = (AbsTableActivity) context; 
+    AbsTableActivity activity = (AbsTableActivity) context;
     this.mContext = context;
     this.mAppName = activity.getAppName();
   }
 
-  public void setFields(String tableId, OrderedColumns orderedDefns) throws
-      ServicesAvailabilityException {
-    
+  public void setFields(String tableId, OrderedColumns orderedDefns)
+      throws ServicesAvailabilityException {
+
     TableViewType defaultViewType = null;
-    this.mEntryValues = this.mContext.getResources().getTextArray(
-      R.array.table_view_types_values);
+    this.mEntryValues = this.mContext.getResources().getTextArray(R.array.table_view_types_values);
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
@@ -66,19 +66,19 @@ public class DefaultViewTypePreference extends ListPreference {
       // Let's set the currently selected one.
       defaultViewType = TableUtil.get().getDefaultViewType(dbInterface, mAppName, db, tableId);
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         dbInterface.closeDatabase(mAppName, db);
       }
     }
 
-    if (defaultViewType == null || !mPossibleViewTypes.getAllPossibleViewTypes().contains(defaultViewType)) {
+    if (defaultViewType == null || !mPossibleViewTypes.getAllPossibleViewTypes()
+        .contains(defaultViewType)) {
       // default to spreadsheet.
       defaultViewType = TableViewType.SPREADSHEET;
       this.setValueIndex(0);
     } else {
-      int index = Arrays.asList(this.mEntryValues)
-          .indexOf(defaultViewType.name());
-      if ( index < 0 ) {
+      int index = Arrays.asList(this.mEntryValues).indexOf(defaultViewType.name());
+      if (index < 0) {
         index = 0;
       }
       this.setValueIndex(index);
@@ -88,17 +88,11 @@ public class DefaultViewTypePreference extends ListPreference {
   @Override
   protected void onPrepareDialogBuilder(Builder builder) {
     // We want to enable/disable the correct list.
-    ListAdapter adapter = new TableViewTypeAdapter(
-        this.mContext,
-        this.mAppName,
-        android.R.layout.select_dialog_singlechoice,
-        this.getEntries(),
-        this.getEntryValues(),
+    ListAdapter adapter = new TableViewTypeAdapter(this.mContext, this.mAppName,
+        android.R.layout.select_dialog_singlechoice, this.getEntries(), this.getEntryValues(),
         this.mPossibleViewTypes);
     builder.setAdapter(adapter, this);
     super.onPrepareDialogBuilder(builder);
   }
-
-
 
 }

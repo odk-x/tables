@@ -34,7 +34,7 @@ public class Launcher extends BaseActivity {
   private static final String TAG = Launcher.class.getName();
 
   private String mAppName;
-  
+
   @Override
   public String getAppName() {
     return mAppName;
@@ -55,12 +55,13 @@ public class Launcher extends BaseActivity {
     Uri uri = intent.getData();
     if (uri != null) {
       final Uri uriTablesProvider = TablesProviderAPI.CONTENT_URI;
-      if (uri.getScheme().equalsIgnoreCase(uriTablesProvider.getScheme())
-          && uri.getAuthority().equalsIgnoreCase(uriTablesProvider.getAuthority())) {
+      if (uri.getScheme().equalsIgnoreCase(uriTablesProvider.getScheme()) && uri.getAuthority()
+          .equalsIgnoreCase(uriTablesProvider.getAuthority())) {
         List<String> segments = uri.getPathSegments();
         if (segments != null && segments.size() >= 1) {
-          if ( this.mAppName != null && !segments.get(0).equals(this.mAppName) ) {
-            Toast.makeText(this, "AppName in Intent does not match AppName in Tables URI", Toast.LENGTH_LONG).show();
+          if (this.mAppName != null && !segments.get(0).equals(this.mAppName)) {
+            Toast.makeText(this, "AppName in Intent does not match AppName in Tables URI",
+                Toast.LENGTH_LONG).show();
             finish();
             return;
           }
@@ -80,7 +81,6 @@ public class Launcher extends BaseActivity {
     }
 
     // Launch the TableManager.
-
 
     Intent i = new Intent(this, MainActivity.class);
     if (uri != null) {

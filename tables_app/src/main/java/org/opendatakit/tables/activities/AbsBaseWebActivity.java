@@ -6,35 +6,35 @@ import android.net.Uri;
 import android.os.Bundle;
 import org.json.JSONObject;
 import org.opendatakit.application.CommonApplication;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.DynamicPropertiesCallback;
 import org.opendatakit.properties.PropertyManager;
-import org.opendatakit.webkitserver.utilities.DoActionUtils;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.webkitserver.utilities.UrlUtils;
-import org.opendatakit.logging.WebLogger;
 import org.opendatakit.views.ExecutorContext;
 import org.opendatakit.views.ExecutorProcessor;
 import org.opendatakit.views.ODKWebView;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
+import org.opendatakit.webkitserver.utilities.DoActionUtils;
+import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 
 /**
  * @author mitchellsundt@gmail.com
- *
- * Derived classes must implement:
- *   public String getTableId();
- *   public String getInstanceId();
- *   public ODKWebView getWebKitView();
- *   public void databaseAvailable();
- *   public void databaseUnavailable();
- *   public void initializationCompleted();
+ *         <p>
+ *         Derived classes must implement:
+ *         public String getTableId();
+ *         public String getInstanceId();
+ *         public ODKWebView getWebKitView();
+ *         public void databaseAvailable();
+ *         public void databaseUnavailable();
+ *         public void initializationCompleted();
  */
 public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOdkTablesActivity {
   private static final String t = "AbsBaseWebActivity";
@@ -68,8 +68,9 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   private PropertyManager mPropertyManager;
 
   public abstract String getInstanceId();
+
   public abstract ODKWebView getWebKitView(String viewID);
-  
+
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -83,13 +84,13 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
     outState.putBundle(SESSION_VARIABLES, sessionVariables);
 
-    if ( !queuedActions.isEmpty() ) {
+    if (!queuedActions.isEmpty()) {
       String[] actionOutcomesArray = new String[queuedActions.size()];
       queuedActions.toArray(actionOutcomesArray);
       outState.putStringArray(QUEUED_ACTIONS, actionOutcomesArray);
     }
 
-    if ( !queueResponseJSON.isEmpty() ) {
+    if (!queueResponseJSON.isEmpty()) {
       String[] qra = queueResponseJSON.toArray(new String[queueResponseJSON.size()]);
       outState.putStringArray(RESPONSE_JSON, qra);
     }
@@ -104,11 +105,13 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     if (savedInstanceState != null) {
       // if we are restoring, assume that initialization has already occurred.
 
-      dispatchStringWaitingForData =
-          savedInstanceState.containsKey(DISPATCH_STRING_WAITING_FOR_DATA) ?
-              savedInstanceState.getString(DISPATCH_STRING_WAITING_FOR_DATA) : null;
-      actionWaitingForData = savedInstanceState.containsKey(ACTION_WAITING_FOR_DATA) ? savedInstanceState
-          .getString(ACTION_WAITING_FOR_DATA) : null;
+      dispatchStringWaitingForData = savedInstanceState
+          .containsKey(DISPATCH_STRING_WAITING_FOR_DATA) ?
+          savedInstanceState.getString(DISPATCH_STRING_WAITING_FOR_DATA) :
+          null;
+      actionWaitingForData = savedInstanceState.containsKey(ACTION_WAITING_FOR_DATA) ?
+          savedInstanceState.getString(ACTION_WAITING_FOR_DATA) :
+          null;
 
       if (savedInstanceState.containsKey(SESSION_VARIABLES)) {
         sessionVariables = savedInstanceState.getBundle(SESSION_VARIABLES);
@@ -140,9 +143,8 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   @Override
   public String getProperty(String propertyId) {
-    final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
-        getTableId(), getInstanceId(),
-        getActiveUser(), mProps.getUserSelectedDefaultLocale(),
+    final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(), getTableId(),
+        getInstanceId(), getActiveUser(), mProps.getUserSelectedDefaultLocale(),
         mProps.getProperty(CommonToolProperties.KEY_USERNAME),
         mProps.getProperty(CommonToolProperties.KEY_ACCOUNT));
 
@@ -174,18 +176,15 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     return sessionVariables.getString(elementPath);
   }
 
-
   /**
    * Invoked from within Javascript to launch an activity.
-   *
+   * <p>
    * See interface for argument spec.
    *
    * @return "OK" if successfully launched intent
    */
   @Override
-  public String doAction(
-      String dispatchStructAsJSONstring,
-      String action,
+  public String doAction(String dispatchStructAsJSONstring, String action,
       JSONObject valueContentMap) {
 
     // android.os.Debug.waitForDebugger();
@@ -195,10 +194,10 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
       return "IGNORE";
     }
 
-    Intent i = DoActionUtils.buildIntent(this, mPropertyManager, dispatchStructAsJSONstring, action,
-        valueContentMap);
+    Intent i = DoActionUtils
+        .buildIntent(this, mPropertyManager, dispatchStructAsJSONstring, action, valueContentMap);
 
-    if ( i == null ) {
+    if (i == null) {
       return "JSONException";
     }
 
@@ -222,8 +221,9 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
     if (requestCode == Constants.RequestCodes.LAUNCH_DOACTION) {
       try {
-        DoActionUtils.processActivityResult(this, view, resultCode, intent,
-            dispatchStringWaitingForData, actionWaitingForData);
+        DoActionUtils
+            .processActivityResult(this, view, resultCode, intent, dispatchStringWaitingForData,
+                actionWaitingForData);
       } finally {
         dispatchStringWaitingForData = null;
         actionWaitingForData = null;
@@ -246,34 +246,33 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     try {
       String jsonEncoded = ODKFileUtils.mapper.writeValueAsString(hash);
       queuedActions.addLast(jsonEncoded);
-    } catch ( Exception e ) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
   @Override
   public String viewFirstQueuedAction() {
-    String outcome =
-        queuedActions.isEmpty() ? null : queuedActions.getFirst();
+    String outcome = queuedActions.isEmpty() ? null : queuedActions.getFirst();
     return outcome;
   }
 
   @Override
   public void removeFirstQueuedAction() {
-    if ( !queuedActions.isEmpty() ) {
+    if (!queuedActions.isEmpty()) {
       queuedActions.removeFirst();
     }
   }
 
   @Override
   public void signalResponseAvailable(String responseJSON, String viewID) {
-    if ( responseJSON == null ) {
+    if (responseJSON == null) {
       WebLogger.getLogger(getAppName()).e(t, "signalResponseAvailable -- got null responseJSON!");
     } else {
-      WebLogger.getLogger(getAppName()).e(t, "signalResponseAvailable -- got "
-          + responseJSON.length() + " long responseJSON!");
+      WebLogger.getLogger(getAppName())
+          .e(t, "signalResponseAvailable -- got " + responseJSON.length() + " long responseJSON!");
     }
-    if ( responseJSON != null) {
+    if (responseJSON != null) {
       this.queueResponseJSON.push(responseJSON);
       final ODKWebView webView = getWebKitView(viewID);
       if (webView != null) {
@@ -287,28 +286,32 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     }
   }
 
-  @Override public String getResponseJSON() {
-    if ( queueResponseJSON.isEmpty() ) {
+  @Override
+  public String getResponseJSON() {
+    if (queueResponseJSON.isEmpty()) {
       return null;
     }
     String responseJSON = queueResponseJSON.removeFirst();
     return responseJSON;
   }
 
-  @Override public ExecutorProcessor newExecutorProcessor(ExecutorContext context) {
+  @Override
+  public ExecutorProcessor newExecutorProcessor(ExecutorContext context) {
     return new TableDataExecutorProcessor(context, this);
   }
 
-  @Override public void registerDatabaseConnectionBackgroundListener(
-      DatabaseConnectionListener listener) {
+  @Override
+  public void registerDatabaseConnectionBackgroundListener(DatabaseConnectionListener listener) {
     mIOdkDataDatabaseListener = listener;
   }
 
-  @Override public UserDbInterface getDatabase() {
+  @Override
+  public UserDbInterface getDatabase() {
     return ((CommonApplication) getApplication()).getDatabase();
   }
 
-  @Override public Bundle getIntentExtras() {
+  @Override
+  public Bundle getIntentExtras() {
     return this.getIntent().getExtras();
   }
 
@@ -316,7 +319,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   public void databaseAvailable() {
     super.databaseAvailable();
 
-    if ( mIOdkDataDatabaseListener != null ) {
+    if (mIOdkDataDatabaseListener != null) {
       mIOdkDataDatabaseListener.databaseAvailable();
     }
   }
@@ -325,7 +328,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   public void databaseUnavailable() {
     super.databaseUnavailable();
 
-    if ( mIOdkDataDatabaseListener != null ) {
+    if (mIOdkDataDatabaseListener != null) {
       mIOdkDataDatabaseListener.databaseUnavailable();
     }
   }

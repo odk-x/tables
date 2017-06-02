@@ -17,24 +17,23 @@ package org.opendatakit.tables.utils;
 
 /**
  * Associates a table id with its name.
- * 
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class TableNameStruct {
 
   private String mTableId;
   private String mLocalizedDisplayName;
-  
+
   public TableNameStruct(String tableId, String localizedDisplayName) {
     this.mTableId = tableId;
     this.mLocalizedDisplayName = localizedDisplayName;
   }
-  
+
   public String getTableId() {
     return this.mTableId;
   }
-  
+
   public String getLocalizedDisplayName() {
     return this.mLocalizedDisplayName;
   }
@@ -43,8 +42,8 @@ public class TableNameStruct {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result
-        + ((mLocalizedDisplayName == null) ? 0 : mLocalizedDisplayName.hashCode());
+    result =
+        prime * result + ((mLocalizedDisplayName == null) ? 0 : mLocalizedDisplayName.hashCode());
     result = prime * result + ((mTableId == null) ? 0 : mTableId.hashCode());
     return result;
   }
@@ -76,7 +75,5 @@ public class TableNameStruct {
     return "TableNameStruct [mTableId=" + mTableId + ", mLocalizedDisplayName="
         + mLocalizedDisplayName + "]";
   }
-  
-  
 
 }

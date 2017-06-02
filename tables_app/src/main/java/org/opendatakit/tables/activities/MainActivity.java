@@ -15,12 +15,8 @@
  */
 package org.opendatakit.tables.activities;
 
-import android.app.ActionBar;
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
+import android.app.*;
 import android.app.FragmentManager.BackStackEntry;
-import android.app.FragmentTransaction;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -29,18 +25,12 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
-
-import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.activities.IInitResumeActivity;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.listener.DatabaseConnectionListener;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.views.OdkData;
-import org.opendatakit.views.ViewDataQueryParams;
-import org.opendatakit.webkitserver.utilities.UrlUtils;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.views.ODKWebView;
+import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.InitializationFragment;
@@ -48,6 +38,11 @@ import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.fragments.WebFragment;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.views.ODKWebView;
+import org.opendatakit.views.OdkData;
+import org.opendatakit.views.ViewDataQueryParams;
+import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.io.File;
 import java.util.Collections;
@@ -55,11 +50,11 @@ import java.util.Collections;
 /**
  * The main activity for ODK Tables. It serves primarily as a holder for
  * fragments.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
-public class MainActivity extends AbsBaseWebActivity implements
-    DatabaseConnectionListener, IInitResumeActivity {
+public class MainActivity extends AbsBaseWebActivity
+    implements DatabaseConnectionListener, IInitResumeActivity {
 
   private static final String TAG = "MainActivity";
   private static final String CURRENT_FRAGMENT = "currentFragment";
@@ -69,10 +64,10 @@ public class MainActivity extends AbsBaseWebActivity implements
   public ODKWebView getWebKitView(String viewID) {
     // Don't use viewID as there is only one webkit to return
 
-    if ( activeScreenType == ScreenType.WEBVIEW_SCREEN ) {
+    if (activeScreenType == ScreenType.WEBVIEW_SCREEN) {
       FragmentManager mgr = this.getFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
-      if ( newFragment != null ) {
+      if (newFragment != null) {
         return ((WebFragment) newFragment).getWebKit();
       }
     }
@@ -82,12 +77,12 @@ public class MainActivity extends AbsBaseWebActivity implements
   @Override
   public String getUrlBaseLocation(boolean ifChanged, String fragmentID) {
     // TODO: do we need to track the ifChanged status?
-    if ( activeScreenType == ScreenType.WEBVIEW_SCREEN ) {
+    if (activeScreenType == ScreenType.WEBVIEW_SCREEN) {
       FragmentManager mgr = this.getFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
-      if ( newFragment != null && webFileToDisplay != null) {
+      if (newFragment != null && webFileToDisplay != null) {
         // Split off query parameter if it exists
-        String [] webFileStrs = checkForQueryParameter(webFileToDisplay);
+        String[] webFileStrs = checkForQueryParameter(webFileToDisplay);
         String filename = null;
         if (webFileStrs.length > 1) {
           File webFile = new File(webFileStrs[0]);
@@ -96,9 +91,10 @@ public class MainActivity extends AbsBaseWebActivity implements
           filename = ODKFileUtils.asRelativePath(mAppName, webFileToDisplay);
         }
 
-        if ( filename != null ) {
+        if (filename != null) {
           if (webFileStrs.length > 1) {
-            return UrlUtils.getAsWebViewUri(this, getAppName(), filename.concat(QUERY_START_PARAM).concat(webFileStrs[1]));
+            return UrlUtils.getAsWebViewUri(this, getAppName(),
+                filename.concat(QUERY_START_PARAM).concat(webFileStrs[1]));
           } else {
             return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
           }
@@ -108,16 +104,14 @@ public class MainActivity extends AbsBaseWebActivity implements
     return null;
   }
 
-  @Override public Integer getIndexOfSelectedItem() {
+  @Override
+  public Integer getIndexOfSelectedItem() {
     // never a map view -- no item selected
     return null;
   }
 
   public enum ScreenType {
-    INITIALIZATION_SCREEN,
-    TABLE_MANAGER_SCREEN,
-    ABOUT_SCREEN,
-    WEBVIEW_SCREEN
+    INITIALIZATION_SCREEN, TABLE_MANAGER_SCREEN, ABOUT_SCREEN, WEBVIEW_SCREEN
   }
 
   /**
@@ -126,37 +120,39 @@ public class MainActivity extends AbsBaseWebActivity implements
   ScreenType activeScreenType = ScreenType.TABLE_MANAGER_SCREEN;
 
   File webFileToDisplay = null;
-  
-  /** 
+
+  /**
    * used to determine whether we need to change the menu (action bar)
    * because of a change in the active fragment.
    */
   private ScreenType lastMenuType = null;
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.setContentView(R.layout.activity_main_activity);
 
     webFileToDisplay = getHomeScreen(savedInstanceState);
-    
-    if ( webFileToDisplay != null ) {
+
+    if (webFileToDisplay != null) {
       activeScreenType = ScreenType.WEBVIEW_SCREEN;
     }
 
     if (savedInstanceState != null) {
       // if we are restoring, assume that initialization has already occurred.
-      activeScreenType = ScreenType
-          .valueOf(savedInstanceState.containsKey(CURRENT_FRAGMENT) ? savedInstanceState
-              .getString(CURRENT_FRAGMENT) : activeScreenType.name());
+      activeScreenType = ScreenType.valueOf(savedInstanceState.containsKey(CURRENT_FRAGMENT) ?
+          savedInstanceState.getString(CURRENT_FRAGMENT) :
+          activeScreenType.name());
     }
   }
 
-  @Override public String getTableId() {
+  @Override
+  public String getTableId() {
     return null;
   }
 
-  @Override public String getInstanceId() {
+  @Override
+  public String getInstanceId() {
     return null;
   }
 
@@ -165,8 +161,9 @@ public class MainActivity extends AbsBaseWebActivity implements
     super.onSaveInstanceState(outState);
 
     outState.putString(CURRENT_FRAGMENT, activeScreenType.name());
-    if ( webFileToDisplay != null ) {
-      outState.putString(Constants.IntentKeys.FILE_NAME, ODKFileUtils.asRelativePath(mAppName, webFileToDisplay));
+    if (webFileToDisplay != null) {
+      outState.putString(Constants.IntentKeys.FILE_NAME,
+          ODKFileUtils.asRelativePath(mAppName, webFileToDisplay));
     }
   }
 
@@ -176,46 +173,46 @@ public class MainActivity extends AbsBaseWebActivity implements
 
     swapScreens(activeScreenType);
   }
-  
+
   /**
-   * Retrieve the app-relative file name from either the 
+   * Retrieve the app-relative file name from either the
    * saved instance state or the {@link Intent} that was
    * used to create the activity.
-   * 
+   * <p>
    * If none supplied, then return the default home screen
    * if we are configured to show it. If we are configured
    * to show it and it is not present, clear that flag.
-   * 
+   *
    * @return
    */
   protected File getHomeScreen(Bundle savedInstanceState) {
     Boolean setting = mProps.getBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN);
-    String relativeFileName = 
-        IntentUtil.retrieveFileNameFromSavedStateOrArguments(savedInstanceState, this.getIntent().getExtras());
+    String relativeFileName = IntentUtil
+        .retrieveFileNameFromSavedStateOrArguments(savedInstanceState,
+            this.getIntent().getExtras());
 
     File userHomeScreen = null;
-    if ( relativeFileName != null ) {
+    if (relativeFileName != null) {
       userHomeScreen = ODKFileUtils.asAppFile(mAppName, relativeFileName);
     } else {
       userHomeScreen = new File(ODKFileUtils.getTablesHomeScreenFile(this.mAppName));
     }
 
     // Make sure that query parameters are still passed through
-    String [] userHomeScreenUrlParts = checkForQueryParameter(userHomeScreen);
+    String[] userHomeScreenUrlParts = checkForQueryParameter(userHomeScreen);
     File userHomeScreenFile = userHomeScreen;
     if (userHomeScreenUrlParts.length > 1) {
       userHomeScreenFile = new File(userHomeScreenUrlParts[0]);
     }
 
-    if ((relativeFileName != null) ||
-        (setting == null ? false : setting) ||
-        (userHomeScreenFile.exists() && userHomeScreenFile.isFile())) {
+    if ((relativeFileName != null) || (setting == null ? false : setting) || (
+        userHomeScreenFile.exists() && userHomeScreenFile.isFile())) {
       return userHomeScreen;
     } else {
-      if ( (setting == null || setting == Boolean.TRUE) && relativeFileName == null ) {
+      if ((setting == null || setting == Boolean.TRUE) && relativeFileName == null) {
         // the home screen doesn't exist but we are requesting to show it -- clear the setting
-        mProps.setProperties(Collections.singletonMap(CommonToolProperties.KEY_USE_HOME_SCREEN,
-            Boolean.toString(false)));
+        mProps.setProperties(Collections
+            .singletonMap(CommonToolProperties.KEY_USE_HOME_SCREEN, Boolean.toString(false)));
       }
       return null;
     }
@@ -223,7 +220,7 @@ public class MainActivity extends AbsBaseWebActivity implements
 
   private String[] checkForQueryParameter(File webFile) {
     String webFileToDisplayPath = webFile.getPath();
-    String [] webFileStrs = webFileToDisplayPath.split("[" + QUERY_START_PARAM + "]", 2);
+    String[] webFileStrs = webFileToDisplayPath.split("[" + QUERY_START_PARAM + "]", 2);
     return webFileStrs;
   }
 
@@ -239,7 +236,7 @@ public class MainActivity extends AbsBaseWebActivity implements
       swapScreens(ScreenType.valueOf(entry.getName()));
     }
   }
-  
+
   @Override
   public void initializationCompleted() {
     popBackStack();
@@ -253,36 +250,37 @@ public class MainActivity extends AbsBaseWebActivity implements
   public ScreenType getCurrentScreenType() {
     return activeScreenType;
   }
-  
+
   public void swapScreens(ScreenType newScreenType) {
-    WebLogger.getLogger(getAppName()).i(TAG, "swapScreens: Transitioning from " + 
-        ((activeScreenType == null) ? "-none-" : activeScreenType.name()) +
-        " to " + newScreenType.name());
+    WebLogger.getLogger(getAppName()).i(TAG,
+        "swapScreens: Transitioning from " + ((activeScreenType == null) ?
+            "-none-" :
+            activeScreenType.name()) + " to " + newScreenType.name());
     FragmentManager mgr = this.getFragmentManager();
     FragmentTransaction trans = null;
     Fragment newFragment = null;
-    switch ( newScreenType ) {
+    switch (newScreenType) {
     case TABLE_MANAGER_SCREEN:
       newFragment = mgr.findFragmentByTag(newScreenType.name());
-      if ( newFragment == null ) {
+      if (newFragment == null) {
         newFragment = new TableManagerFragment();
       }
       break;
     case WEBVIEW_SCREEN:
       newFragment = mgr.findFragmentByTag(newScreenType.name());
-      if ( newFragment == null ) {
+      if (newFragment == null) {
         newFragment = new WebFragment();
       }
       break;
     case ABOUT_SCREEN:
       newFragment = mgr.findFragmentByTag(newScreenType.name());
-      if ( newFragment == null ) {
+      if (newFragment == null) {
         newFragment = new AboutMenuFragment();
       }
       break;
     case INITIALIZATION_SCREEN:
       newFragment = mgr.findFragmentByTag(newScreenType.name());
-      if ( newFragment == null ) {
+      if (newFragment == null) {
         newFragment = new InitializationFragment();
       }
       break;
@@ -293,15 +291,15 @@ public class MainActivity extends AbsBaseWebActivity implements
     boolean matchingBackStackEntry = false;
     for (int i = 0; i < mgr.getBackStackEntryCount(); ++i) {
       BackStackEntry e = mgr.getBackStackEntryAt(i);
-      WebLogger.getLogger(mAppName).i(TAG, "BackStackEntry["+i+"] " + e.getName());
+      WebLogger.getLogger(mAppName).i(TAG, "BackStackEntry[" + i + "] " + e.getName());
       if (e.getName().equals(newScreenType.name())) {
         matchingBackStackEntry = true;
       }
     }
 
     if (matchingBackStackEntry) {
-      if ( trans != null ) {
-        WebLogger.getLogger(mAppName).e(TAG,  "Unexpected active transaction when popping state!");
+      if (trans != null) {
+        WebLogger.getLogger(mAppName).e(TAG, "Unexpected active transaction when popping state!");
         trans = null;
       }
       // flush backward, to the screen we want to go back to
@@ -309,18 +307,19 @@ public class MainActivity extends AbsBaseWebActivity implements
       mgr.popBackStackImmediate(activeScreenType.name(), 0);
     } else {
       // add transaction to show the screen we want
-      if ( trans == null ) {
+      if (trans == null) {
         trans = mgr.beginTransaction();
       }
       activeScreenType = newScreenType;
       trans.replace(R.id.activity_main_activity, newFragment, activeScreenType.name());
       trans.addToBackStack(activeScreenType.name());
     }
-    
+
     // and see if we should re-initialize...
-    if ((activeScreenType != ScreenType.INITIALIZATION_SCREEN)
-        && Tables.getInstance().shouldRunInitializationTask(getAppName())) {
-      WebLogger.getLogger(getAppName()).i(TAG, "swapToFragmentView -- calling clearRunInitializationTask");
+    if ((activeScreenType != ScreenType.INITIALIZATION_SCREEN) && Tables.getInstance()
+        .shouldRunInitializationTask(getAppName())) {
+      WebLogger.getLogger(getAppName())
+          .i(TAG, "swapToFragmentView -- calling clearRunInitializationTask");
       // and immediately clear the should-run flag...
       Tables.getInstance().clearRunInitializationTask(getAppName());
       // OK we should swap to the InitializationFragment view
@@ -330,12 +329,12 @@ public class MainActivity extends AbsBaseWebActivity implements
       //
       // NOTE: this discards the uncommitted transaction.
       // Robolectric complains about a recursive state transition.
-      if ( trans != null ) {
+      if (trans != null) {
         trans.commit();
       }
       swapScreens(ScreenType.INITIALIZATION_SCREEN);
     } else {
-      if ( trans != null ) {
+      if (trans != null) {
         trans.commit();
       }
       invalidateOptionsMenu();
@@ -344,9 +343,9 @@ public class MainActivity extends AbsBaseWebActivity implements
 
   private void changeOptionsMenu(Menu menu) {
     MenuInflater menuInflater = this.getMenuInflater();
-    if ( activeScreenType == ScreenType.WEBVIEW_SCREEN ) {
+    if (activeScreenType == ScreenType.WEBVIEW_SCREEN) {
       menuInflater.inflate(R.menu.web_view_activity, menu);
-    } else if ( activeScreenType == ScreenType.TABLE_MANAGER_SCREEN ) {
+    } else if (activeScreenType == ScreenType.TABLE_MANAGER_SCREEN) {
       menuInflater.inflate(R.menu.table_manager, menu);
     }
     lastMenuType = activeScreenType;
@@ -354,7 +353,7 @@ public class MainActivity extends AbsBaseWebActivity implements
     ActionBar actionBar = getActionBar();
     actionBar.show();
   }
-  
+
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     changeOptionsMenu(menu);
@@ -363,7 +362,7 @@ public class MainActivity extends AbsBaseWebActivity implements
 
   @Override
   public boolean onPrepareOptionsMenu(Menu menu) {
-    if ( lastMenuType != activeScreenType ) {
+    if (lastMenuType != activeScreenType) {
       changeOptionsMenu(menu);
     }
     return super.onPrepareOptionsMenu(menu);
@@ -403,8 +402,8 @@ public class MainActivity extends AbsBaseWebActivity implements
     case R.id.menu_table_manager_sync:
       try {
         Intent syncIntent = new Intent();
-        syncIntent.setComponent(new ComponentName(IntentConsts.Sync.APPLICATION_NAME,
-            IntentConsts.Sync.ACTIVITY_NAME));
+        syncIntent.setComponent(
+            new ComponentName(IntentConsts.Sync.APPLICATION_NAME, IntentConsts.Sync.ACTIVITY_NAME));
         syncIntent.setAction(Intent.ACTION_DEFAULT);
         syncIntent.putExtras(bundle);
         this.startActivityForResult(syncIntent, Constants.RequestCodes.LAUNCH_SYNC);
@@ -426,29 +425,29 @@ public class MainActivity extends AbsBaseWebActivity implements
     String tableId = this.getActionTableId();
     if (tableId != null) {
       switch (requestCode) {
-        case Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
-        case Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER:
-          // don't let the user cancel out of these...
-          break;
-        // For now, we will just refresh the table if something could have
-        // changed.
-        case Constants.RequestCodes.ADD_ROW_SURVEY:
-        case Constants.RequestCodes.EDIT_ROW_SURVEY:
-          if (resultCode == Activity.RESULT_OK) {
-            WebLogger.getLogger(getAppName()).d(TAG,
-                    "[onActivityResult] result ok, refreshing backing table");
-          } else {
-            WebLogger.getLogger(getAppName()).d(TAG,
-                    "[onActivityResult] result canceled, refreshing backing table");
-          }
-          break;
+      case Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
+      case Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER:
+        // don't let the user cancel out of these...
+        break;
+      // For now, we will just refresh the table if something could have
+      // changed.
+      case Constants.RequestCodes.ADD_ROW_SURVEY:
+      case Constants.RequestCodes.EDIT_ROW_SURVEY:
+        if (resultCode == Activity.RESULT_OK) {
+          WebLogger.getLogger(getAppName())
+              .d(TAG, "[onActivityResult] result ok, refreshing backing table");
+        } else {
+          WebLogger.getLogger(getAppName())
+              .d(TAG, "[onActivityResult] result canceled, refreshing backing table");
+        }
+        break;
       }
     }
     super.onActivityResult(requestCode, resultCode, data);
   }
 
   @Override
-  public ViewDataQueryParams getViewQueryParams(String viewID){
+  public ViewDataQueryParams getViewQueryParams(String viewID) {
     // Ignore viewID, there is only one fragment
 
     Bundle bundle = this.getIntentExtras();

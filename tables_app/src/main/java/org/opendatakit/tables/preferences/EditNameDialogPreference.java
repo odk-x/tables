@@ -15,21 +15,19 @@
  */
 package org.opendatakit.tables.preferences;
 
-
-import org.opendatakit.tables.R;
-
 import android.content.Context;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.EditText;
+import org.opendatakit.tables.R;
 
 /**
  * Basic dialog to allow editing of a name of a list view.
  * <p>
  * Based on Android's EditTextPreference class.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class EditNameDialogPreference extends DialogPreference {
 
@@ -49,16 +47,15 @@ public class EditNameDialogPreference extends DialogPreference {
 
   /**
    * Set the calling activity as well as the listview name for this dialog.
+   *
    * @param callingActivity
    */
-  public void setCallingActivity(EditSavedViewEntryHandler
-      callingActivity) {
+  public void setCallingActivity(EditSavedViewEntryHandler callingActivity) {
     this.callingActivity = callingActivity;
     mText = callingActivity.getCurrentViewName();
     // Display the name to the user.
     this.setSummary(mText);
   }
-
 
   /**
    * We need to override this so that we can get at our edit text that we've
@@ -75,10 +72,9 @@ public class EditNameDialogPreference extends DialogPreference {
   @Override
   protected void onBindDialogView(View view) {
     super.onBindDialogView(view);
-	  int viewName = R.id.edit_view_name;
-	  mText = callingActivity.getCurrentViewName();
-    mEditText = (EditText)
-        view.findViewById(viewName);
+    int viewName = R.id.edit_view_name;
+    mText = callingActivity.getCurrentViewName();
+    mEditText = (EditText) view.findViewById(viewName);
     mEditText.setText(mText);
 
   }
@@ -86,6 +82,7 @@ public class EditNameDialogPreference extends DialogPreference {
   /**
    * Return the String that is currently in the dialog. NOT necessarily
    * what is in the EditText.
+   *
    * @return
    */
   public String getText() {
@@ -102,6 +99,7 @@ public class EditNameDialogPreference extends DialogPreference {
 
   /**
    * Get the EditText in the dialog.
+   *
    * @return
    */
   public EditText getEditText() {

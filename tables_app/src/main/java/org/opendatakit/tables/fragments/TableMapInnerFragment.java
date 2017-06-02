@@ -19,7 +19,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,12 +27,7 @@ import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-
+import com.google.android.gms.maps.model.*;
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
@@ -71,9 +65,13 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
   private static final int INVALID_INDEX = -1;
 
-  /** The default hue for markers if no color rules are applied. */
+  /**
+   * The default hue for markers if no color rules are applied.
+   */
   private static final float DEFAULT_MARKER_HUE = BitmapDescriptorFactory.HUE_AZURE;
-  /** The default hue for markers if no color rules are applied. */
+  /**
+   * The default hue for markers if no color rules are applied.
+   */
   private static final float DEFAULT_SELECTED_MARKER_HUE = BitmapDescriptorFactory.HUE_GREEN;
 
   /**
@@ -90,7 +88,9 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
    * saving the instance.
    */
   private static final String SAVE_TARGET_LONG = "saveTargetLong";
-  /** The zoom level of the camera. Used when saving the instance. */
+  /**
+   * The zoom level of the camera. Used when saving the instance.
+   */
   private static final String SAVE_ZOOM = "saveZoom";
 
   private static final float initCameraValue = -1;
@@ -118,7 +118,9 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
   }
 
-  /** The object that is listening in on events. */
+  /**
+   * The object that is listening in on events.
+   */
   public TableMapInnerFragmentListener listener;
 
   /**
@@ -126,22 +128,32 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
    */
   private Map<Marker, Integer> mMarkerIds;
 
-  /** A set of all the visible markers. */
+  /**
+   * A set of all the visible markers.
+   */
   private Set<Marker> mVisibleMarkers;
 
-  /** The currently selected marker. */
+  /**
+   * The currently selected marker.
+   */
   private Marker mCurrentMarker;
 
-  /** Used for coloring markers. */
+  /**
+   * Used for coloring markers.
+   */
   private ColorRuleGroup mColorGroup;
   private ColorGuideGroup mColorGuideGroup;
 
-  /** the latitide elementKey to use for plotting */
+  /**
+   * the latitide elementKey to use for plotting
+   */
   private String mLatitudeElementKey;
-  
-  /** the longitude elementKey to use for plotting */
+
+  /**
+   * the longitude elementKey to use for plotting
+   */
   private String mLongitudeElementKey;
-  
+
   /**
    * This value is only set after the activity was saved and then reinstated. It
    * is used to figure out which marker was selected before the activity was
@@ -173,8 +185,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     if (mCurrentMarker != null) {
       markerIndexToSave = mMarkerIds.get(mCurrentMarker);
     }
-    WebLogger.getLogger(activity.getAppName()).d(TAG,
-        "[onSaveInstanceState] saving markder index: " + markerIndexToSave);
+    WebLogger.getLogger(activity.getAppName())
+        .d(TAG, "[onSaveInstanceState] saving markder index: " + markerIndexToSave);
     outState.putInt(SAVE_KEY_INDEX, markerIndexToSave);
 
     if (map != null) {
@@ -207,13 +219,11 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       this.map = map;
 
       clearAndInitializeMap();
-      if (this.savedLatitude != this.initCameraValue
-              && this.savedLongitude != this.initCameraValue
-              && this.savedZoom != this.initCameraValue) {
-        this.map.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                new LatLng(savedLatitude, savedLongitude), savedZoom));
+      if (this.savedLatitude != this.initCameraValue && this.savedLongitude != this.initCameraValue
+          && this.savedZoom != this.initCameraValue) {
+        this.map.moveCamera(CameraUpdateFactory
+            .newLatLngZoom(new LatLng(savedLatitude, savedLongitude), savedZoom));
       }
-
 
       this.map.setMyLocationEnabled(true);
       this.map.setOnMapLongClickListener(getOnMapLongClickListener());
@@ -221,12 +231,13 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     }
   }
 
-  /** Re-initializes the map, including the markers. 
+  /**
+   * Re-initializes the map, including the markers.
    **/
   public void clearAndInitializeMap() {
     AbsBaseActivity activity = (AbsBaseActivity) getActivity();
     WebLogger.getLogger(activity.getAppName()).d(TAG, "[clearAndInitializeMap]");
-    if( map != null ) {
+    if (map != null) {
       map.clear();
     }
     try {
@@ -255,6 +266,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
   /**
    * Sets up the color properties used for color rules.
+   *
    * @throws ServicesAvailabilityException
    */
   public void resetColorProperties() throws ServicesAvailabilityException {
@@ -263,6 +275,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
   /**
    * Finds the color group that will be needed when making color rules.
+   *
    * @throws ServicesAvailabilityException
    */
   private void findColorGroupAndDbConfiguration() throws ServicesAvailabilityException {
@@ -280,19 +293,21 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
       String[] adminColumns = dbInterface.getAdminColumns();
 
-      TableUtil.MapViewColorRuleInfo colorRuleInfo =
-              TableUtil.get().getMapListViewColorRuleInfo(dbInterface, activity.getAppName(),
-                  db, activity.getTableId());
+      TableUtil.MapViewColorRuleInfo colorRuleInfo = TableUtil.get()
+          .getMapListViewColorRuleInfo(dbInterface, activity.getAppName(), db,
+              activity.getTableId());
 
       // Create a guide depending on what type of color rule is selected.
       mColorGroup = null;
       if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
-        mColorGroup = ColorRuleGroup.getTableColorRuleGroup(dbInterface, activity.getAppName(),
-            db, activity.getTableId(), adminColumns);
+        mColorGroup = ColorRuleGroup
+            .getTableColorRuleGroup(dbInterface, activity.getAppName(), db, activity.getTableId(),
+                adminColumns);
       }
       if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
-        mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(dbInterface, activity.getAppName(),
-            db, activity.getTableId(), adminColumns);
+        mColorGroup = ColorRuleGroup
+            .getStatusColumnRuleGroup(dbInterface, activity.getAppName(), db, activity.getTableId(),
+                adminColumns);
       }
 
       if (mColorGroup != null) {
@@ -300,7 +315,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
         mColorGuideGroup = new ColorGuideGroup(mColorGroup, userTableForColor);
       }
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         dbInterface.closeDatabase(activity.getAppName(), db);
       }
     }
@@ -333,7 +348,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
 
-    if ( table != null && orderedDefns != null ) {
+    if (table != null && orderedDefns != null) {
       // Try to find the map columns in the store.
       ColumnDefinition latitudeColumn = orderedDefns.find(mLatitudeElementKey);
       ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
@@ -366,15 +381,16 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
               .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
           mMarkerIds.put(marker, i);
           if (mCurrentIndex == i) {
-            WebLogger.getLogger(activity.getAppName()).d(TAG, "[setMarkers] selecting marker: " + i);
+            WebLogger.getLogger(activity.getAppName())
+                .d(TAG, "[setMarkers] selecting marker: " + i);
             selectMarker(marker);
           }
         }
       }
 
       if (firstLocation != null && map != null) {
-          map.moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
-          map.setOnMarkerClickListener(getOnMarkerClickListener());
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
+        map.setOnMarkerClickListener(getOnMarkerClickListener());
       }
     }
   }
@@ -383,10 +399,9 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
    * Retrieves the hue of the specified row depending on the current color
    * rules.
    *
-   * @param index
-   *          The index of the row to search for.
+   * @param index The index of the row to search for.
    * @return The hue depending on the color rules for this row, or the default
-   *         marker color if no rules apply to the row.
+   * marker color if no rules apply to the row.
    */
   private float getHueForRow(int index) {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
@@ -410,18 +425,18 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    String latitudeElementKey =
-            TableUtil.get().getMapListViewLatitudeElementKey(Tables.getInstance().getDatabase(),
-                activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
+    String latitudeElementKey = TableUtil.get()
+        .getMapListViewLatitudeElementKey(Tables.getInstance().getDatabase(), activity.getAppName(),
+            dbHandle, activity.getTableId(), orderedDefns);
     return latitudeElementKey;
   }
 
   private String getLongitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    String longitudeElementKey =
-            TableUtil.get().getMapListViewLongitudeElementKey(Tables.getInstance().getDatabase(),
-                activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
+    String longitudeElementKey = TableUtil.get()
+        .getMapListViewLongitudeElementKey(Tables.getInstance().getDatabase(),
+            activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
     return longitudeElementKey;
   }
 
@@ -436,8 +451,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       return new LatLng(Double.parseDouble(split[0]), Double.parseDouble(split[1]));
     } catch (Exception e) {
       AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-      WebLogger.getLogger(activity.getAppName()).e(TAG,
-          "The following location is not in the proper lat,lng form: " + location);
+      WebLogger.getLogger(activity.getAppName())
+          .e(TAG, "The following location is not in the proper lat,lng form: " + location);
     }
     return null;
   }
@@ -451,8 +466,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       return new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
     } catch (Exception e) {
       AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-      WebLogger.getLogger(activity.getAppName()).e(TAG,
-          "The following location did not parse correctly: " + latitude + "," + longitude);
+      WebLogger.getLogger(activity.getAppName())
+          .e(TAG, "The following location did not parse correctly: " + latitude + "," + longitude);
     }
     return null;
   }
@@ -483,20 +498,22 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
         // values in the location.
         Map<String, Object> elementKeyToValue = new HashMap<String, Object>();
 
-        elementKeyToValue.put(mLatitudeElementKey,location.latitude);
+        elementKeyToValue.put(mLatitudeElementKey, location.latitude);
         elementKeyToValue.put(mLongitudeElementKey, location.longitude);
 
         // To store the mapping in a bundle, JSON stringify it.
         String jsonStringifyElementKeyToValueMap = null;
         try {
-          jsonStringifyElementKeyToValueMap = ODKFileUtils.mapper.writeValueAsString(elementKeyToValue);
+          jsonStringifyElementKeyToValueMap = ODKFileUtils.mapper
+              .writeValueAsString(elementKeyToValue);
         } catch (JsonProcessingException e) {
           WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
           throw new IllegalStateException("should never happen");
         }
         // Bundle it all up for the fragment.
         Bundle b = new Bundle();
-        b.putString(LocationDialogFragment.ELEMENT_KEY_TO_VALUE_MAP_KEY, jsonStringifyElementKeyToValueMap);
+        b.putString(LocationDialogFragment.ELEMENT_KEY_TO_VALUE_MAP_KEY,
+            jsonStringifyElementKeyToValueMap);
         b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
         LocationDialogFragment dialog = new LocationDialogFragment();
         dialog.setArguments(b);
@@ -535,8 +552,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
    * Selects a marker, updating the marker list, and changing the marker's color
    * to green. Makes the marker the currently selected marker.
    *
-   * @param marker
-   *          The marker to be selected.
+   * @param marker The marker to be selected.
    */
   private void selectMarker(Marker marker) {
     if (mCurrentMarker == marker)
