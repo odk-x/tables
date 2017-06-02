@@ -21,6 +21,7 @@ import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 
@@ -49,6 +50,8 @@ public class ImportExportDialog extends DialogFragment {
   // can't use an enum because you can't (safely) put an enum in a bundle
   private static final int ALERT_DIALOG = 0;
   private static final int PROGRESS_DIALOG = 1;
+  // Used for logging
+  private String appName;
 
   /**
    * Public method that returns a new ImportExportDialog
@@ -97,6 +100,7 @@ public class ImportExportDialog extends DialogFragment {
     }
 
     ImportExportDialog frag = new ImportExportDialog();
+    frag.appName = act.getAppName(); // it's private
     // Stuff we put in args can be accessed from onCreateDialog by
     Bundle args = new Bundle();
     args.putString("message", message);
@@ -119,7 +123,11 @@ public class ImportExportDialog extends DialogFragment {
       @Override
       public void run() {
         Dialog d = getDialog();
-        if (getArguments().getInt("type") == PROGRESS_DIALOG && d != null) {
+        if (getArguments().getInt("type") == PROGRESS_DIALOG) {
+          if (d == null) {
+            WebLogger.getLogger(appName).a("IED", "Undismissable dialog was dismissed somehow!");
+            return;
+          }
           ((ProgressDialog) d).setMessage(status);
         }
       }
@@ -153,6 +161,8 @@ public class ImportExportDialog extends DialogFragment {
       dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
       dialog.setCancelable(false);
       dialog.setCanceledOnTouchOutside(getRetainInstance());
+      // Unfortunately they can still dismiss it by pressing the back button to disable the soft
+      // keyboard. Don't tell anyone
       return dialog;
     }
     AlertDialog.Builder builder = new ProgressDialog.Builder(getActivity());
@@ -166,5 +176,4 @@ public class ImportExportDialog extends DialogFragment {
         });
     return builder.create();
   }
-
 }
