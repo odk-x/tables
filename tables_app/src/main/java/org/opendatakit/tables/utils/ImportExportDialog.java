@@ -50,7 +50,17 @@ public class ImportExportDialog extends DialogFragment {
   // Used for logging
   private String appName;
 
+  // the active dialog holder. Dismissing it won't set this to null, so make sure it's still
+  // displayed when you go to change its message
   public static ImportExportDialog activeDialogFragment = null;
+  // both ImportCSVActivity and ExportCSVActivity set a valid fragment manager in their onCreate
+  // handlers. This means if an ImportTask or an ExportTask tries to create a dialog (i.e. an
+  // Import Complete alert), but their invoking ImportCSVActivity has been destroyed because the
+  // user rotated the screen while the import was in progress, it will have been populated with a
+  // new and valid fragment manager instead of trying to use the one saved off in context which
+  // will then be invalid. The only thing we keep context around for is getAppName which
+  // thankfully doesn't crash the app when you call it on a destroyed object, unlike
+  // getFragmentManager
   public static FragmentManager fragman = null;
 
   /**

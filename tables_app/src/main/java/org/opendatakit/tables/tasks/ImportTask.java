@@ -46,7 +46,7 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
   public boolean problemImportingKVSEntries = false;
 
   /**
-   * Constructor that stores off it's three arguments. Used by ImportCSVActivity
+   * Constructor that stores off its arguments. Used by ImportCSVActivity
    *
    * @param appName the app name
    * @param context the context that we need to give the progress dialog

@@ -43,8 +43,8 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
   /**
    * Constructor that stores off its arguments
    *
-   * @param appName                the app name
-   * @param context                the activity that the progress dialog is running in
+   * @param appName the app name
+   * @param context the activity that the progress dialog is running in
    */
   public ExportTask(String appName, AbsBaseActivity context) {
     this.appName = appName;
