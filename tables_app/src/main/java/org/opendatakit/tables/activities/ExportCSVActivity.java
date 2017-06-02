@@ -74,8 +74,8 @@ public class ExportCSVActivity extends AbsBaseActivity {
   private String[] tableIds;
   // the table name spinner
   private Spinner tableSpin;
-  // the text field for getting the filename
-  private EditText filenameValField;
+  // the text field where the user enters the qualifier
+  private EditText qualifierTextBox;
 
   /**
    * Called when the user navigates to this screen. Sets the app name and sets up the view
@@ -126,9 +126,9 @@ public class ExportCSVActivity extends AbsBaseActivity {
     TextView fnLabel = new TextView(this);
     fnLabel.setText(getString(R.string.export_file_qualifier));
     v.addView(fnLabel);
-    filenameValField = new EditText(this);
-    filenameValField.setId(R.id.FILENAMEVAL_ID);
-    v.addView(filenameValField);
+    qualifierTextBox = new EditText(this);
+    qualifierTextBox.setId(R.id.FILENAMEVAL_ID);
+    v.addView(qualifierTextBox);
     // Horizontal divider
     View ruler3 = new View(this);
     ruler3.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
@@ -153,11 +153,11 @@ public class ExportCSVActivity extends AbsBaseActivity {
     ExportTask task = new ExportTask(
         ImportExportDialog.newInstance(ImportExportDialog.EXPORT_IN_PROGRESS_DIALOG, this), appName,
         this);
-    task.execute(new ExportRequest(appName, tableId, filenameValField.getText().toString().trim()));
+    task.execute(new ExportRequest(appName, tableId, qualifierTextBox.getText().toString().trim()));
   }
 
   /**
-   * Called when the user selects which table they want to export. Sets filenameValField to the
+   * Called when the user selects which table they want to export. Sets qualifierTextBox to the
    * filename for the table that needs to be exported
    *
    * @param requestCode unused because there's only one activity
@@ -172,7 +172,7 @@ public class ExportCSVActivity extends AbsBaseActivity {
     Uri fileUri = data.getData();
     File filepath = new File(fileUri.getPath());
     String relativePath = ODKFileUtils.asRelativePath(appName, filepath);
-    filenameValField.setText(relativePath);
+    qualifierTextBox.setText(relativePath);
   }
 
   /**
