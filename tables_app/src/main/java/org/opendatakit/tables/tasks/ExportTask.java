@@ -35,8 +35,6 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
   private static final String TAG = ExportTask.class.getSimpleName();
   // The app name
   private final String appName;
-  // The progress dialog
-  private ImportExportDialog progressDialogFragment;
   // The context the progress dialog needs
   private AbsBaseActivity context;
   // This says whether or not the secondary entries in the key value store were written successfully
@@ -45,13 +43,10 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
   /**
    * Constructor that stores off its arguments
    *
-   * @param progressDialogFragment the "Export in progress.." progress dialog
    * @param appName                the app name
    * @param context                the activity that the progress dialog is running in
    */
-  public ExportTask(ImportExportDialog progressDialogFragment, String appName,
-      AbsBaseActivity context) {
-    this.progressDialogFragment = progressDialogFragment;
+  public ExportTask(String appName, AbsBaseActivity context) {
     this.appName = appName;
     this.context = context;
   }
@@ -120,7 +115,7 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
    * @param result
    */
   protected void onPostExecute(Boolean result) {
-    progressDialogFragment.dismiss();
+    ImportExportDialog.activeDialogFragment.dismiss();
     if (result) {
       if (keyValueStoreSuccessful) {
         ImportExportDialog.newInstance(ImportExportDialog.CSVEXPORT_SUCCESS_DIALOG, context);

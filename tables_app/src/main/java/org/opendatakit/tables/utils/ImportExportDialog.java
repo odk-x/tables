@@ -15,10 +15,7 @@
  */
 package org.opendatakit.tables.utils;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
-import android.app.ProgressDialog;
+import android.app.*;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import org.opendatakit.logging.WebLogger;
@@ -53,8 +50,12 @@ public class ImportExportDialog extends DialogFragment {
   // Used for logging
   private String appName;
 
+  public static ImportExportDialog activeDialogFragment = null;
+  public static FragmentManager fragman = null;
+
   /**
-   * Public method that returns a new ImportExportDialog
+   * Public method that returns a new ImportExportDialog. SET A FRAGMENT MANAGER BEFORE CALLING
+   * NEWINSTANCE
    *
    * @param id  which dialog to create
    * @param act an activity. We need to take an activity because you can't call getString from a
@@ -107,7 +108,14 @@ public class ImportExportDialog extends DialogFragment {
     args.putInt("which", id); // unused
     args.putInt("type", type);
     frag.setArguments(args);
-    frag.show(act.getFragmentManager(), "dialog");
+    if (fragman != null) {
+      frag.show(fragman, "dialog");
+    } else {
+      WebLogger.getLogger(frag.appName).a("IED", "Someone forgot to give me a fragment manager. "
+          + "Trying to use the one from context, but it will almost certainly crash if android "
+          + "reloaded it");
+      frag.show(act.getFragmentManager(), "dialog");
+    }
     return frag;
   }
 
@@ -118,17 +126,18 @@ public class ImportExportDialog extends DialogFragment {
    * @param status the message to set the dialog's text to
    */
   public void updateProgressDialogStatusString(AbsBaseActivity task, final String status) {
-    // new Runnable()? Remind me again why we can't use lambdas
     task.runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        Dialog d = getDialog();
+        Dialog d = activeDialogFragment.getDialog();
+        if (d == null) {
+          WebLogger.getLogger(appName).a("IED", "Undismissable dialog was dismissed somehow!");
+          return;
+        }
         if (getArguments().getInt("type") == PROGRESS_DIALOG) {
-          if (d == null) {
-            WebLogger.getLogger(appName).a("IED", "Undismissable dialog was dismissed somehow!");
-            return;
-          }
           ((ProgressDialog) d).setMessage(status);
+          getArguments().putString("message", status); // in case the screen is rotated and the
+          // dialog gets recreated, don't reset to the default message
         }
       }
     });
@@ -150,6 +159,8 @@ public class ImportExportDialog extends DialogFragment {
    * @return the dialog object to be displayed to the user.
    */
   public Dialog onCreateDialog(Bundle savedState) {
+    activeDialogFragment = this;
+    super.onCreateDialog(savedState);
     Bundle args = getArguments();
     if (args.getInt("type") == PROGRESS_DIALOG) {
       // This took a solid hour to figure out. For some reason a ProgressDialog.Buidler's build

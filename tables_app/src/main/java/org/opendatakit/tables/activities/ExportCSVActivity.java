@@ -83,6 +83,9 @@ public class ExportCSVActivity extends AbsBaseActivity {
    * @param savedInstanceState the state from before the app was suspended. Largely unused
    */
   public void onCreate(Bundle savedInstanceState) {
+    // We have to set the fragment manager here because if we don't, then the ImportTask will try
+    // to display an alert dialog by grabbing the fragment manager
+    ImportExportDialog.fragman = getFragmentManager();
     super.onCreate(savedInstanceState);
     appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (appName == null) {
@@ -150,9 +153,8 @@ public class ExportCSVActivity extends AbsBaseActivity {
    */
   private void exportSubmission() {
     String tableId = tableIds[tableSpin.getSelectedItemPosition()];
-    ExportTask task = new ExportTask(
-        ImportExportDialog.newInstance(ImportExportDialog.EXPORT_IN_PROGRESS_DIALOG, this), appName,
-        this);
+    ImportExportDialog.newInstance(ImportExportDialog.EXPORT_IN_PROGRESS_DIALOG, this);
+    ExportTask task = new ExportTask(appName, this);
     task.execute(new ExportRequest(appName, tableId, qualifierTextBox.getText().toString().trim()));
   }
 

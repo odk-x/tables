@@ -37,8 +37,6 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
 
   // the app name
   private final String appName;
-  // the dialog "Importing row xx..." progress dialog with the spinner
-  private ImportExportDialog progressDialogFragment;
   // a task that needs to be passed to progressDialogFragment so it can update the progress
   // dialog's message
   private AbsBaseActivity context;
@@ -50,13 +48,10 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
   /**
    * Constructor that stores off it's three arguments. Used by ImportCSVActivity
    *
-   * @param progressDialogFragment the (already opened) progress dialog
-   * @param appName                the app name
-   * @param context                the context that we need to give the progress dialog
+   * @param appName the app name
+   * @param context the context that we need to give the progress dialog
    */
-  public ImportTask(ImportExportDialog progressDialogFragment, String appName,
-      AbsBaseActivity context) {
-    this.progressDialogFragment = progressDialogFragment;
+  public ImportTask(String appName, AbsBaseActivity context) {
     this.appName = appName;
     this.context = context;
   }
@@ -104,7 +99,8 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
    */
   @Override
   public void updateProgressDetail(String progressString) {
-    progressDialogFragment.updateProgressDialogStatusString(context, progressString);
+    ImportExportDialog.activeDialogFragment
+        .updateProgressDialogStatusString(context, progressString);
   }
 
   /**
@@ -122,7 +118,7 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
    * message, or one of the three failure messages.
    */
   protected void onPostExecute(Boolean result) {
-    progressDialogFragment.dismiss();
+    ImportExportDialog.activeDialogFragment.dismiss();
     if (result) {
       ImportExportDialog.newInstance(ImportExportDialog.CSVIMPORT_SUCCESS_DIALOG, context);
     } else {
