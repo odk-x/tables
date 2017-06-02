@@ -40,26 +40,24 @@ import java.io.File;
  * An activity for importing CSV files to a table.
  */
 public class ImportCSVActivity extends AbsBaseActivity {
-
+  // Used for logging
   private static final String TAG = ImportCSVActivity.class.getSimpleName();
 
-  /**
-   * view IDs (for use in testing)
-   */
-  public static final int FILENAMEVAL_ID = 3;
-  public static final int IMPORTBUTTON_ID = 4;
-
-  /* the appName context within which we are running */
+  // the appName context within which we are running
   private String appName;
-  /* the text field for getting the filename */
+  // the text field for getting the filename
   private EditText filenameValField;
-  /* the button for selecting a file */
+  // the button for selecting a file
   private Button pickFileButton;
-  /**
-   * The button to import a table.
-   */
+  // The button to import a table.
   private Button mImportButton;
 
+  /**
+   * Sets the app name and sets the view (what clicking the buttons should do, etc..)
+   *
+   * @param savedInstanceState a bundle containing the state if it was suspended, used only by
+   *                           this classes parents
+   */
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
@@ -69,20 +67,34 @@ public class ImportCSVActivity extends AbsBaseActivity {
     setContentView(getView());
   }
 
+  /**
+   * standard getter for the app name
+   *
+   * @return the app name
+   */
   @Override
   public String getAppName() {
     return appName;
   }
 
-  protected class PickFileButtonListener implements OnClickListener {
-    String appName;
-    String title;
+  /**
+   * This class is used in getView, used for the onClick listener for the file picker
+   */
+  private class PickFileButtonListener implements OnClickListener {
+    private String appName;
+    private String title;
 
     public PickFileButtonListener(String appName, String title) {
       this.appName = appName;
       this.title = title;
     }
 
+    /**
+     * When the user clicks a file, try and open it. If it didn't exist, log the error and show a
+     * toast message about it
+     *
+     * @param v the view that contains the file picker that was clicked on. Unused
+     */
     @Override
     public void onClick(View v) {
       Intent intent = new Intent("org.openintents.action.PICK_FILE");
@@ -91,8 +103,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
       try {
         startActivityForResult(intent, 1);
       } catch (ActivityNotFoundException e) {
-        e.printStackTrace();
-        // TODO
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(ImportCSVActivity.this, getString(R.string.file_picker_not_found),
             Toast.LENGTH_LONG).show();
       }
@@ -100,7 +111,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
   }
 
   /**
-   * @return the view
+   * @return the view, with all the scrollbars, buttons, EditTexts and stuff
    */
   private View getView() {
     LinearLayout v = new LinearLayout(this);
@@ -139,7 +150,16 @@ public class ImportCSVActivity extends AbsBaseActivity {
   }
 
   /**
-   * Attempts to import a CSV file.
+   * Attempts to import a CSV file based on the filename in filenameValField.
+   * First, we get a path that's relative to the assets csv folder. If the filename starts with the
+   * assets csv folder, it's stripped off. So (assets csv folder)/test.csv becomes test.csv, but
+   * ../../test.csv stays the same.
+   * Then we split it by \. and try to parse the tableId and fileQualifier out of the filename.
+   * If it had too many dots (or not enough), we display a Toast notification that the filename
+   * was invalid and return.
+   * Then we make an ImportTask and pass it a new ImportExportDialog. The ImportTask will tell
+   * the ImportExportDialog to update the dialog text to "Importing row 5" and so on, and it will
+   * also handle closing the dialog and displaying a Completed or Failed dialog.
    */
   private void importSubmission() {
 
@@ -184,6 +204,16 @@ public class ImportCSVActivity extends AbsBaseActivity {
     task.execute(request);
   }
 
+  /**
+   * Despite what the name implies, it isn't called when the ImportTask completes, it's called
+   * after the user selects a file from the file picker. It validates the filename, determines
+   * the relative path to the filename and puts that path in the filenameValField. If the
+   * filename was invalid, it displays a Toast notification and returns
+   *
+   * @param requestCode unused because there's only one file picker/"activity"
+   * @param resultCode  whether the user canceled the file picker or not
+   * @param data        the path to the file the user selected
+   */
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     if (resultCode == RESULT_CANCELED) {
@@ -246,12 +276,18 @@ public class ImportCSVActivity extends AbsBaseActivity {
     }
   }
 
+  /**
+   * enables the import button if the database is available
+   */
   @Override
   public void databaseAvailable() {
     super.databaseAvailable();
     this.mImportButton.setEnabled(Tables.getInstance().getDatabase() != null);
   }
 
+  /**
+   * disables the import button if the database is not available
+   */
   @Override
   public void databaseUnavailable() {
     super.databaseUnavailable();

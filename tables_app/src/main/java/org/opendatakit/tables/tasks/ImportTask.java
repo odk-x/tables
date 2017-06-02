@@ -26,17 +26,33 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ImportExportDialog;
 
+/**
+ * A task that imports csv files
+ */
 public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
     implements ImportListener {
 
-  private static final String TAG = "ImportTask";
+  // Used for logging
+  private static final String TAG = ImportTask.class.getSimpleName();
 
+  // the app name
   private final String appName;
+  // the dialog "Importing row xx..." progress dialog with the spinner
   private ImportExportDialog progressDialogFragment;
+  // a task that needs to be passed to progressDialogFragment so it can update the progress
+  // dialog's message
   private AbsBaseActivity context;
 
+  // booleans used to keep track of whether there was an error
+  public boolean caughtDuplicateTableException = false;
+  public boolean problemImportingKVSEntries = false;
+
   /**
-   * @param TODO
+   * Constructor that stores off it's three arguments. Used by ImportCSVActivity
+   *
+   * @param progressDialogFragment the (already opened) progress dialog
+   * @param appName                the app name
+   * @param context                the context that we need to give the progress dialog
    */
   public ImportTask(ImportExportDialog progressDialogFragment, String appName,
       AbsBaseActivity context) {
@@ -45,9 +61,12 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
     this.context = context;
   }
 
-  public boolean caughtDuplicateTableException = false;
-  public boolean problemImportingKVSEntries = false;
-
+  /**
+   * tells services to import the csv file in the background
+   *
+   * @param importRequests which request to tell services to execute
+   * @return whether successful or not
+   */
   @Override
   protected Boolean doInBackground(ImportRequest... importRequests) {
     ImportRequest request = importRequests[0];
@@ -67,20 +86,41 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
     }
   }
 
+  /**
+   * called when the import is complete, records the result in probleImportingKVSEntries
+   *
+   * @param outcome whether the import was successful or not
+   */
   @Override
   public void importComplete(boolean outcome) {
     problemImportingKVSEntries = !outcome;
   }
 
+  /**
+   * Updates the open progress dialog with the new status
+   * just passes along the request to ImportExportDialog
+   *
+   * @param progressString the string to set in the window, like "Importing row 10"
+   */
   @Override
   public void updateProgressDetail(String progressString) {
     progressDialogFragment.updateProgressDialogStatusString(context, progressString);
   }
 
+  /**
+   * does nothing, but called when there's new progress
+   *
+   * @param progress unknown
+   */
   protected void onProgressUpdate(Integer... progress) {
     // do nothing.
   }
 
+  /**
+   * Called when the csv import is done.
+   * Dismisses the progress dialog fragment, and displays an alert dialog with either a success
+   * message, or one of the three failure messages.
+   */
   protected void onPostExecute(Boolean result) {
     progressDialogFragment.dismiss();
     if (result) {

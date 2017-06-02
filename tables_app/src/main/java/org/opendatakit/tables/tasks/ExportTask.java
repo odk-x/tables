@@ -31,16 +31,23 @@ import org.opendatakit.tables.utils.ImportExportDialog;
 public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     implements ExportListener {
 
-  private static final String TAG = "ExportTask";
-  /**
-   *
-   */
+  // Used for logging
+  private static final String TAG = ExportTask.class.getSimpleName();
+  // The app name
   private final String appName;
+  // The progress dialog
   private ImportExportDialog progressDialogFragment;
+  // The context the progress dialog needs
   private AbsBaseActivity context;
+  // This says whether or not the secondary entries in the key value store were written successfully
+  private boolean keyValueStoreSuccessful = true;
 
   /**
-   * @param appName
+   * Constructor that stores off its arguments
+   *
+   * @param progressDialogFragment the "Export in progress.." progress dialog
+   * @param appName                the app name
+   * @param context                the activity that the progress dialog is running in
    */
   public ExportTask(ImportExportDialog progressDialogFragment, String appName,
       AbsBaseActivity context) {
@@ -49,10 +56,12 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     this.context = context;
   }
 
-  // This says whether or not the secondary entries in the key value store
-  // were written successfully.
-  private boolean keyValueStoreSuccessful = true;
-
+  /**
+   * Tells services to export the csv file
+   *
+   * @param exportRequests what request to act on
+   * @return whether it was successful or not
+   */
   protected Boolean doInBackground(ExportRequest... exportRequests) {
     ExportRequest request = exportRequests[0];
     CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
@@ -65,9 +74,9 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     try {
       String tableId = request.getTableId();
       db = Tables.getInstance().getDatabase().openDatabase(appName);
-      OrderedColumns orderedDefns = Tables.getInstance().getDatabase()
+      OrderedColumns orderedDefinitions = Tables.getInstance().getDatabase()
           .getUserDefinedColumns(appName, db, tableId); // export goes to output/csv directory...
-      return cu.exportSeparable(this, db, tableId, orderedDefns, request.getFileQualifier());
+      return cu.exportSeparable(this, db, tableId, orderedDefinitions, request.getFileQualifier());
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG, "Unable to access database");
@@ -85,15 +94,31 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     }
   }
 
+  /**
+   * Called when the export is done
+   *
+   * @param outcome whether the export was successful or not
+   */
   @Override
   public void exportComplete(boolean outcome) {
     keyValueStoreSuccessful = outcome;
   }
 
+  /**
+   * does nothing
+   *
+   * @param progress unknown
+   */
   protected void onProgressUpdate(Integer... progress) {
     // do nothing
   }
 
+  /**
+   * Called when the export is done. Dismisses the "Import in progress..." dialog, and displays
+   * a success alert dialog or one of the failure alert dialogs, which will be dismissed by the user
+   *
+   * @param result
+   */
   protected void onPostExecute(Boolean result) {
     progressDialogFragment.dismiss();
     if (result) {
