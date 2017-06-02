@@ -119,7 +119,7 @@ public class ImportExportDialog extends DialogFragment {
       @Override
       public void run() {
         Dialog d = getDialog();
-        if (getArguments().getInt("type") == PROGRESS_DIALOG) {
+        if (getArguments().getInt("type") == PROGRESS_DIALOG && d != null) {
           ((ProgressDialog) d).setMessage(status);
         }
       }
@@ -151,6 +151,8 @@ public class ImportExportDialog extends DialogFragment {
       dialog.setMessage(args.getString("message"));
       dialog.setIndeterminate(true);
       dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+      dialog.setCancelable(false);
+      dialog.setCanceledOnTouchOutside(getRetainInstance());
       return dialog;
     }
     AlertDialog.Builder builder = new ProgressDialog.Builder(getActivity());
