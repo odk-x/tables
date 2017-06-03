@@ -15,31 +15,59 @@
  */
 package org.opendatakit.tables.tasks;
 
+/**
+ * Describes a request to import a csv file
+ */
 public class ImportRequest {
 
+  // The prefix for the csv file to import
   private final String fileQualifier;
-
+  // whether to create the table if it doesn't already exist
   private final boolean createTable;
+  // the id of the table to import
   private final String tableId;
 
+  /**
+   * forwards request to the three argument constructor
+   * @param tableId table id
+   * @param fileQualifier filename prefix
+   */
   public ImportRequest(String tableId, String fileQualifier) {
     this(true, tableId, fileQualifier);
   }
 
+  /**
+   * simple constructor that stores its three arguments
+   * @param createTable whether to create the table if it doesn't exist
+   * @param tableId the id of the table
+   * @param fileQualifier the prefix for the csv file to import
+   */
   public ImportRequest(boolean createTable, String tableId, String fileQualifier) {
     this.createTable = createTable;
     this.tableId = tableId;
     this.fileQualifier = fileQualifier;
   }
 
+  /**
+   * standard getter for whether we should create the table if it doesn't already exist
+   * @return whether we should create the table if it doesn't already exist
+   */
   public boolean getCreateTable() {
     return createTable;
   }
 
+  /**
+   * standard getter for the table id
+   * @return the table id
+   */
   public String getTableId() {
     return tableId;
   }
 
+  /**
+   * standard getter for the filename prefix
+   * @return the prefix for the filename
+   */
   public String getFileQualifier() {
     return fileQualifier;
   }
