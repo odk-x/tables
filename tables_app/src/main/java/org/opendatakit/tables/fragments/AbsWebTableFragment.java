@@ -49,6 +49,10 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implem
 
   @Override
   public OdkTablesWebView getWebKit() {
+    if (getView() == null) {
+      return null;
+    }
+
     return (OdkTablesWebView) getView().findViewById(R.id.webkit);
   }
 
