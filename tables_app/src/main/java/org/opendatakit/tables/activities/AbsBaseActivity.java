@@ -82,8 +82,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
 
     super.onCreate(savedInstanceState);
 
-    DependencyChecker dc = new DependencyChecker(this);
-    boolean dependable = dc.checkDependencies();
+    boolean dependable = DependencyChecker.checkDependencies(this);
     if (!dependable) { // dependencies missing
       return;
     }

@@ -74,8 +74,7 @@ public class Launcher extends BaseActivity {
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(this.mAppName);
 
-    DependencyChecker dc = new DependencyChecker(this);
-    boolean dependable = dc.checkDependencies();
+    boolean dependable = DependencyChecker.checkDependencies(this);
     if (!dependable) { // dependencies missing
       return;
     }
