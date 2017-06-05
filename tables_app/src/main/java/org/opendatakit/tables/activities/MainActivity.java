@@ -409,7 +409,8 @@ public class MainActivity extends AbsBaseWebActivity
    * Called when the user clicks on an option in the main menu, including the import/export
    * buttons at the top, the options menu with "Sync", "Preferences" and "About" in it and any of
    * those three options,
-   * @param item
+   *
+   * @param item The id of the item that the user clicked on
    * @return
    */
   @Override

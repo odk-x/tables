@@ -75,8 +75,10 @@ import java.lang.reflect.Array;
 public class TableDisplayActivity extends AbsBaseWebActivity
     implements TableMapInnerFragmentListener, IOdkTablesActivity {
 
-  private static final String TAG = "TableDisplayActivity";
+  // Used for logging
+  private static final String TAG = TableDisplayActivity.class.getSimpleName();
 
+  // Some keys for things that get saved to the instance state
   public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
   public static final String INTENT_KEY_CURRENT_FILE_NAME = "currentFileName";
   public static final String INTENT_KEY_CURRENT_SUB_FILE_NAME = "currentSubFileName";
@@ -110,7 +112,21 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   ViewDataQueryParams[] mQueries;
 
   /**
-   * @param savedInstanceState
+   * Cached data from database
+   */
+  private PossibleTableViewTypes mPossibleTableViewTypes = null;
+
+  /**
+   * The {@link UserTable} that is being displayed in this activity.
+   */
+  private UserTable mUserTable = null;
+
+  /**
+   * If we're being created for the first time, pull the display type (list, spreadsheet, map,
+   * etc..) and the original filename from the intent. Otherwise pull it from the saved instance
+   * state
+   *
+   * @param savedInstanceState the state we saved in onSaveInstanceState
    */
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -172,6 +188,12 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     this.setContentView(R.layout.activity_table_display_activity);
   }
 
+  /**
+   * Helps restore the saved instance state, along with onCreate. It tries to pull the current
+   * view type and display type, the file and sub-file names and their originals, and the queries
+   *
+   * @param savedInstanceState
+   */
   @Override
   protected void onRestoreInstanceState(Bundle savedInstanceState) {
     super.onRestoreInstanceState(savedInstanceState);
@@ -203,6 +225,15 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     }
   }
 
+  /**
+   * Casts an array of objects from Parcelable to a given class that extends Parcelable..
+   *
+   * @param clazz           the class to cast things in the array to
+   * @param parcelableArray an array of objects that all extend Parcelable and can be safely
+   *                        casted to clazz
+   * @param <T>             clazz
+   * @return parcelableArray except all the objects are of the type clazz
+   */
   @SuppressWarnings("unchecked")
   private static <T extends Parcelable> T[] castParcelableArray(Class<T> clazz,
       Parcelable[] parcelableArray) {
@@ -217,6 +248,10 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return array;
   }
 
+  /**
+   * Pulls all of the query parameters from the intent and puts them in mQueries[0
+   * @param in the intent that was used to launch this TableDisplayActivity
+   */
   private void readQueryFromIntent(Intent in) {
     if (mQueries == null) {
       mQueries = new ViewDataQueryParams[2]; // We currently can have a maximum of two fragments
@@ -251,6 +286,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     mQueries[0] = queryParams;
   }
 
+  /**
+   * Saves the queries, open fragment type, file and sub-file name and original filenames and
+   * fragment types to the state bundle so they can be restored later
+   * @param outState the state to be saved
+   */
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -276,6 +316,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     }
   }
 
+  /**
+   * Display the current fragment (which should still be around) when we resume
+   */
   @Override
   protected void onResume() {
     super.onResume();
@@ -284,15 +327,10 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Cached data from database
+   * Gets the default filename based on the passed fragment type
+   * @param fragmentType the type of fragment to be used to display the table
+   * @return the default filename to be used for that fragment type
    */
-  private PossibleTableViewTypes mPossibleTableViewTypes = null;
-
-  /**
-   * The {@link UserTable} that is being displayed in this activity.
-   */
-  private UserTable mUserTable = null;
-
   private String getDefaultFileNameForViewFragmentType(ViewFragmentType fragmentType) {
     if (mPossibleTableViewTypes == null || fragmentType == null) {
       return null;
@@ -315,9 +353,10 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Get the {@link UserTable} that is being held by this activity.
+   * Get the {@link UserTable} that is being held by this activity. AND CHANGES mUserTable! to
+   * be that table
    *
-   * @return
+   * @return the UserTable pulled from tables
    */
   public UserTable getUserTable() {
     if (mUserTable == null) {
@@ -340,15 +379,13 @@ public class TableDisplayActivity extends AbsBaseWebActivity
                     new String[] { sqlQueryStruct.orderByDirection }, null, null);
         mUserTable = result;
       } catch (ServicesAvailabilityException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
       } finally {
         if (db != null) {
           try {
             Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
           } catch (ServicesAvailabilityException e) {
             // ignore
-            e.printStackTrace();
           }
         }
       }
@@ -356,6 +393,13 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return mUserTable;
   }
 
+  /**
+   * If we're on a list view, pull the filename that the list view is using, otherwise return the
+   * filename if possible, or null if neither of those are set
+   * @param ifChanged unused
+   * @param fragmentID tells us whether we're looking at a list view or not
+   * @return a URI to the currently open file, or null
+   */
   @Override
   public String getUrlBaseLocation(boolean ifChanged, String fragmentID) {
     // TODO: do we need to track the ifChanged status?
@@ -372,6 +416,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return null;
   }
 
+  /**
+   * Forwards the request to the map list found via the fragment manager
+   * @return the index of the currently selected item in the map list, or null if no item was
+   * selected
+   */
   @Override
   public Integer getIndexOfSelectedItem() {
     MapListViewFragment mlvFragment = (MapListViewFragment) this.getFragmentManager()
@@ -383,6 +432,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return null;
   }
 
+  /**
+   * Gets the instance id from the intent's extras bundle if we're in a detail or detail with
+   * list view, otherwise returns null because we can't get an instance id from a map view
+   * @return the instance id
+   */
   @Override
   public String getInstanceId() {
     if (mCurrentFragmentType == ViewFragmentType.DETAIL
@@ -396,6 +450,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return null;
   }
 
+  /**
+   * Log the destroy event
+   */
   @Override
   protected void onDestroy() {
     super.onDestroy();

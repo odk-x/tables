@@ -504,7 +504,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       }
     }
 
-    menu.setHeaderTitle(localizedDisplayName);
+    // menu.setHeaderTitle(localizedDisplayName);
+    menu.setHeaderTitle(getString(R.string.row_actions));
 
     MenuItem mi;
     if (this.hasGroupBys()) {
