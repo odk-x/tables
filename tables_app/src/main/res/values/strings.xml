@@ -398,4 +398,8 @@
 
 	<string name="unable_to_save_db_changes">Unable to save database changes</string>
 	<string name="unable_to_retrieve_form_type">Unable to retrieve form type</string>
+
+	<!-- TODO should probably be "select app" or similar -->
+	<string name="select_odk_shortcut">Select ODK Shortcut</string>
+
 </resources>

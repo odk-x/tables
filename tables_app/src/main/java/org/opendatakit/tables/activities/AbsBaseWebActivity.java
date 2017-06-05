@@ -37,7 +37,8 @@ import java.util.LinkedList;
  *         public void initializationCompleted();
  */
 public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOdkTablesActivity {
-  private static final String t = "AbsBaseWebActivity";
+  // used for logging
+  private static final String TAG = AbsBaseWebActivity.class.getSimpleName();
 
   // tags for retained context
   private static final String DISPATCH_STRING_WAITING_FOR_DATA = "dispatchStringWaitingForData";
@@ -53,9 +54,9 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   private Bundle sessionVariables = new Bundle();
 
-  private LinkedList<String> queuedActions = new LinkedList<String>();
+  private LinkedList<String> queuedActions = new LinkedList<>();
 
-  LinkedList<String> queueResponseJSON = new LinkedList<String>();
+  LinkedList<String> queueResponseJSON = new LinkedList<>();
 
   /**
    * Member variables that do not need to be preserved across orientation
@@ -71,6 +72,12 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   public abstract ODKWebView getWebKitView(String viewID);
 
+  /**
+   * We need to save whether we were waiting for data (a json string), our session variables, our
+   * queued actions and the queue response.
+   *
+   * @param outState the state to be saved
+   */
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -96,6 +103,12 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     }
   }
 
+  /**
+   * Pulls out the things we saved earlier, including whether we were waiting for data, our
+   * session variables, our queued actions and the queued response
+   *
+   * @param savedInstanceState the state we saved in onSaveInstanceState
+   */
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -131,6 +144,11 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     }
   }
 
+  /**
+   * Tries to pull the active user from the database
+   *
+   * @return the active user according to the database, or anonymous if the database is down
+   */
   @Override
   public String getActiveUser() {
     try {
@@ -141,6 +159,12 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     }
   }
 
+  /**
+   * Tries to retrieve a property from the PropertyManager, if possible
+   *
+   * @param propertyId the property to get
+   * @return the value of the property
+   */
   @Override
   public String getProperty(String propertyId) {
     final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(), getTableId(),
@@ -152,6 +176,11 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     return value;
   }
 
+  /**
+   * Gets the URI of the current webview
+   *
+   * @return the URI of the current web view
+   */
   @Override
   public String getWebViewContentUri() {
     Uri u = UrlUtils.getWebViewContentUri(this);
@@ -190,7 +219,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     // android.os.Debug.waitForDebugger();
 
     if (isWaitingForBinaryData()) {
-      WebLogger.getLogger(getAppName()).w(t, "Already waiting for data -- ignoring");
+      WebLogger.getLogger(getAppName()).w(TAG, "Already waiting for data -- ignoring");
       return "IGNORE";
     }
 
@@ -208,7 +237,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
       startActivityForResult(i, Constants.RequestCodes.LAUNCH_DOACTION);
       return "OK";
     } catch (ActivityNotFoundException ex) {
-      WebLogger.getLogger(getAppName()).e(t, "Unable to launch activity: " + ex.toString());
+      WebLogger.getLogger(getAppName()).e(TAG, "Unable to launch activity: " + ex.toString());
       WebLogger.getLogger(getAppName()).printStackTrace(ex);
       return "Application not found";
     }
@@ -216,7 +245,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-    WebLogger.getLogger(getAppName()).i(t, "onActivityResult");
+    WebLogger.getLogger(getAppName()).i(TAG, "onActivityResult");
     ODKWebView view = getWebKitView(null);
 
     if (requestCode == Constants.RequestCodes.LAUNCH_DOACTION) {
@@ -267,10 +296,10 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   @Override
   public void signalResponseAvailable(String responseJSON, String viewID) {
     if (responseJSON == null) {
-      WebLogger.getLogger(getAppName()).e(t, "signalResponseAvailable -- got null responseJSON!");
+      WebLogger.getLogger(getAppName()).e(TAG, "signalResponseAvailable -- got null responseJSON!");
     } else {
-      WebLogger.getLogger(getAppName())
-          .e(t, "signalResponseAvailable -- got " + responseJSON.length() + " long responseJSON!");
+      WebLogger.getLogger(getAppName()).e(TAG,
+          "signalResponseAvailable -- got " + responseJSON.length() + " long responseJSON!");
     }
     if (responseJSON != null) {
       this.queueResponseJSON.push(responseJSON);

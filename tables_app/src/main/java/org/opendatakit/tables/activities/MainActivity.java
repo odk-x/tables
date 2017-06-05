@@ -48,18 +48,41 @@ import java.io.File;
 import java.util.Collections;
 
 /**
- * The main activity for ODK Tables. It serves primarily as a holder for
- * fragments.
+ * The main activity for ODK Tables. It serves primarily as a holder for fragments.
  *
  * @author sudar.sam@gmail.com
  */
 public class MainActivity extends AbsBaseWebActivity
     implements DatabaseConnectionListener, IInitResumeActivity {
 
-  private static final String TAG = "MainActivity";
+  // Used for logging
+  private static final String TAG = MainActivity.class.getSimpleName();
   private static final String CURRENT_FRAGMENT = "currentFragment";
   private static final String QUERY_START_PARAM = "?";
 
+  public enum ScreenType {
+    INITIALIZATION_SCREEN, TABLE_MANAGER_SCREEN, ABOUT_SCREEN, WEBVIEW_SCREEN
+  }
+
+  /**
+   * The active screen -- retained state
+   */
+  ScreenType activeScreenType = ScreenType.TABLE_MANAGER_SCREEN;
+
+  File webFileToDisplay = null;
+
+  /**
+   * used to determine whether we need to change the menu (action bar) because of a change in the
+   * active fragment.
+   */
+  private ScreenType lastMenuType = null;
+
+  /**
+   * Finds the webkit object in the fragment manager and returns it, if we're on a web view screen
+   *
+   * @param viewID unused
+   * @return the webkit view or null if there is no web view
+   */
   @Override
   public ODKWebView getWebKitView(String viewID) {
     // Don't use viewID as there is only one webkit to return
@@ -74,6 +97,15 @@ public class MainActivity extends AbsBaseWebActivity
     return null;
   }
 
+  /**
+   * Gets the web view out of the fragment manager, gets its uri and parses it into a filename
+   * and its query.
+   *
+   * @param ifChanged  unused
+   * @param fragmentID unused
+   * @return A URI that represents the current location of the web view, with query strings if
+   * needed
+   */
   @Override
   public String getUrlBaseLocation(boolean ifChanged, String fragmentID) {
     // TODO: do we need to track the ifChanged status?
@@ -110,23 +142,13 @@ public class MainActivity extends AbsBaseWebActivity
     return null;
   }
 
-  public enum ScreenType {
-    INITIALIZATION_SCREEN, TABLE_MANAGER_SCREEN, ABOUT_SCREEN, WEBVIEW_SCREEN
-  }
-
   /**
-   * The active screen -- retained state
+   * If the app is configured to use a home screen, then load that home screen in a webview.
+   * Otherwise, if we're restoring from a saved state, set the active screen type to the screen
+   * type we were using when we got saved.
+   *
+   * @param savedInstanceState the state we saved in onSaveInstanceState
    */
-  ScreenType activeScreenType = ScreenType.TABLE_MANAGER_SCREEN;
-
-  File webFileToDisplay = null;
-
-  /**
-   * used to determine whether we need to change the menu (action bar)
-   * because of a change in the active fragment.
-   */
-  private ScreenType lastMenuType = null;
-
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -156,6 +178,12 @@ public class MainActivity extends AbsBaseWebActivity
     return null;
   }
 
+  /**
+   * Saves the current screen type to the output state bundle, and if we're viewing a file in a
+   * webview, save that too.
+   *
+   * @param outState the state to be saved
+   */
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -251,6 +279,15 @@ public class MainActivity extends AbsBaseWebActivity
     return activeScreenType;
   }
 
+  /**
+   * Transitions the active screen to the passed argument. If the fragment manager already has a
+   * fragment of the requested type, we reuse that. If there is a matching fragment in the
+   * fragment manager's back stack, we switch to that using a fragment manager transaction.
+   * Otherwise we create a new one. However, if we need to reinitialize, we actually transition
+   * to the initialization screen.
+   *
+   * @param newScreenType what screen type to use
+   */
   public void swapScreens(ScreenType newScreenType) {
     WebLogger.getLogger(getAppName()).i(TAG,
         "swapScreens: Transitioning from " + ((activeScreenType == null) ?
@@ -368,6 +405,13 @@ public class MainActivity extends AbsBaseWebActivity
     return super.onPrepareOptionsMenu(menu);
   }
 
+  /**
+   * Called when the user clicks on an option in the main menu, including the import/export
+   * buttons at the top, the options menu with "Sync", "Preferences" and "About" in it and any of
+   * those three options,
+   * @param item
+   * @return
+   */
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     String appName = getAppName();

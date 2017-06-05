@@ -52,8 +52,13 @@ import java.util.List;
  */
 public abstract class AbsBaseActivity extends BaseActivity {
 
+  // used for logging
+  private static String TAG = AbsBaseActivity.class.getSimpleName();
+  // the app name
   protected String mAppName;
+  // Holds the account name and password for AbsBaseWebActivity, and the users locale
   protected PropertiesSingleton mProps;
+  // The id of the table that will be passed along to survey when it is started to add or edit a row
   protected String mActionTableId = null;
 
   Bundle mCheckpointTables = new Bundle();
@@ -82,10 +87,8 @@ public abstract class AbsBaseActivity extends BaseActivity {
 
     super.onCreate(savedInstanceState);
 
-    boolean dependable = DependencyChecker.checkDependencies(this);
-    if (!dependable) { // dependencies missing
-      return;
-    }
+    // Will finish() and close the app if we're missing dependencies
+    DependencyChecker.checkDependencies(this);
   }
 
   @Override
@@ -125,8 +128,8 @@ public abstract class AbsBaseActivity extends BaseActivity {
 
   public void scanAllTables() {
     long now = System.currentTimeMillis();
-    WebLogger.getLogger(getAppName()).i(this.getClass().getSimpleName(),
-        "scanAllTables -- searching for conflicts and checkpoints ");
+    WebLogger.getLogger(getAppName())
+        .i(TAG, "scanAllTables -- searching for conflicts and checkpoints ");
 
     CommonApplication app = (CommonApplication) getApplication();
     DbHandle db = null;
@@ -166,22 +169,21 @@ public abstract class AbsBaseActivity extends BaseActivity {
           app.getDatabase().closeDatabase(mAppName, db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
-          WebLogger.getLogger(getAppName())
-              .e(this.getClass().getSimpleName(), "Unable to close database");
+          WebLogger.getLogger(getAppName()).e(TAG, "Unable to close database");
         }
       }
     }
 
     long elapsed = System.currentTimeMillis() - now;
-    WebLogger.getLogger(getAppName()).i(this.getClass().getSimpleName(),
-        "scanAllTables -- full table scan completed: " + Long.toString(elapsed) + " ms");
+    WebLogger.getLogger(getAppName())
+        .i(TAG, "scanAllTables -- full table scan completed: " + Long.toString(elapsed) + " ms");
   }
 
+  /**
+   * Hijack the app here, after all screens have been resumed, to ensure that all checkpoints and
+   * conflicts have been resolved. If they haven't, we branch to the resolution activity.
+   */
   protected void resolveAnyConflicts() {
-    // Hijack the app here, after all screens have been resumed,
-    // to ensure that all checkpoints and conflicts have been
-    // resolved. If they haven't, we branch to the resolution
-    // activity.
 
     if ((mCheckpointTables == null || mCheckpointTables.isEmpty()) && (mConflictTables == null
         || mConflictTables.isEmpty())) {
@@ -202,8 +204,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
       try {
         this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
       } catch (ActivityNotFoundException e) {
-        WebLogger.getLogger(mAppName)
-            .e(this.getClass().getSimpleName(), "onPostResume: Unable to access ODK Sync");
+        WebLogger.getLogger(mAppName).e(TAG, "onPostResume: Unable to access ODK Sync");
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
           public void run() {
@@ -233,8 +234,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
       try {
         this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
       } catch (ActivityNotFoundException e) {
-        WebLogger.getLogger(mAppName)
-            .e(this.getClass().getSimpleName(), "onPostResume: Unable to access ODK Sync");
+        WebLogger.getLogger(mAppName).e(TAG, "onPostResume: Unable to access ODK Sync");
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
           public void run() {
@@ -252,10 +252,9 @@ public abstract class AbsBaseActivity extends BaseActivity {
   }
 
   /**
-   * Gets the app name from the Intent. If it is not present it returns a
-   * default app name.
+   * Gets the app name from the Intent. If it is not present it returns a default app name.
    *
-   * @return
+   * @return the app name the intent was for
    */
   String retrieveAppNameFromIntent() {
     String result = this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
@@ -268,7 +267,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
   /**
    * Get the app name that has been set for this activity.
    *
-   * @return
+   * @return the activity's app name
    */
   public String getAppName() {
     return this.mAppName;
@@ -279,7 +278,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
    * that can be expected to play nice with other activities. The class is not
    * set.
    *
-   * @return
+   * @return an intent object that has the app name from the activity
    */
   public Intent createNewIntentWithAppName() {
     Intent intent = new Intent();
@@ -287,6 +286,10 @@ public abstract class AbsBaseActivity extends BaseActivity {
     return intent;
   }
 
+  /**
+   * Called when the database becomes available. It tries to get a DatabaseConnectionListener out
+   * of the fragment manager and notify it that the database is available
+   */
   @Override
   public void databaseAvailable() {
     if (getAppName() != null) {
@@ -296,22 +299,24 @@ public abstract class AbsBaseActivity extends BaseActivity {
     int idxLast = mgr.getBackStackEntryCount() - 1;
     if (idxLast >= 0) {
       FragmentManager.BackStackEntry entry = mgr.getBackStackEntryAt(idxLast);
-      Fragment newFragment = null;
-      newFragment = mgr.findFragmentByTag(entry.getName());
+      Fragment newFragment = mgr.findFragmentByTag(entry.getName());
       if (newFragment instanceof DatabaseConnectionListener) {
         ((DatabaseConnectionListener) newFragment).databaseAvailable();
       }
     }
   }
 
+  /**
+   * Called when the database goes away. It tries to get the DatabaseConnectionListener from the
+   * fragment manager and notify it that the database has gone away
+   */
   @Override
   public void databaseUnavailable() {
     FragmentManager mgr = this.getFragmentManager();
     int idxLast = mgr.getBackStackEntryCount() - 1;
     if (idxLast >= 0) {
       FragmentManager.BackStackEntry entry = mgr.getBackStackEntryAt(idxLast);
-      Fragment newFragment = null;
-      newFragment = mgr.findFragmentByTag(entry.getName());
+      Fragment newFragment = mgr.findFragmentByTag(entry.getName());
       if (newFragment instanceof DatabaseConnectionListener) {
         ((DatabaseConnectionListener) newFragment).databaseUnavailable();
       }

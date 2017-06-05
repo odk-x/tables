@@ -29,10 +29,16 @@ import org.opendatakit.utilities.ODKFileUtils;
 
 import java.util.List;
 
+/**
+ * This is the activity that gets called when another app tries to launch tables. It gets the app
+ * name and then opens the table manager
+ */
 public class Launcher extends BaseActivity {
 
+  // Used for logging
   private static final String TAG = Launcher.class.getName();
 
+  // the app name
   private String mAppName;
 
   @Override
@@ -40,6 +46,14 @@ public class Launcher extends BaseActivity {
     return mAppName;
   }
 
+  /**
+   * Restores saved state if possible. Then it looks at the table name that it was launched for
+   * in the intent, and verifies that it matches the URI that tables was launched with. If they
+   * match, it sets the app name based on the URI. It then makes sure that the device has the
+   * right folders created, has the right dependencies installed (services and io file manager),
+   * and if everything is good, it makes an intent to launch the TableManager to the requested table
+   * @param savedInstanceState the bundle packed by onSaveInstanceState
+   */
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -93,10 +107,16 @@ public class Launcher extends BaseActivity {
     finish();
   }
 
+  /**
+   * Do nothing when the database becomes available, instead of running super.databaseAvailable
+   */
   @Override
   public void databaseAvailable() {
   }
 
+  /**
+   * Do nothing when the database goes away, instead of running super.databaseUnavailable
+   */
   @Override
   public void databaseUnavailable() {
   }

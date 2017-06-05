@@ -44,15 +44,14 @@ import java.io.File;
 import java.util.ArrayList;
 
 /**
- * Allows the user to create desktop shortcuts to any form currently avaiable to
- * Survey
+ * Allows the user to create desktop shortcuts to any form currently available to survey
+ * You add it to the menu via the "widgets" section of the app grid
  *
  * @author ctsims
  * @author carlhartung (modified for ODK)
  */
 public class AndroidShortcuts extends BaseActivity {
 
-  private AlertDialog mAlertDialog;
   private static final boolean EXIT = true;
 
   private class Choice {
@@ -71,48 +70,58 @@ public class AndroidShortcuts extends BaseActivity {
     }
   }
 
-  private ArrayList<Choice> choices = new ArrayList<Choice>();
+  private ArrayList<Choice> choices = new ArrayList<>();
 
+  /**
+   * Verifies that the sd card is available, and sets up our intent to let the user select from a
+   * list of "shortcuts" (widgets)
+   *
+   * @param savedInstanceState the saved state, largely unused
+   */
   @Override
-  public void onCreate(Bundle bundle) {
-    super.onCreate(bundle);
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
 
     // verify that the external SD Card is available.
     try {
       ODKFileUtils.verifyExternalStorageAvailability();
     } catch (RuntimeException e) {
-      createErrorDialog(e.getMessage(), EXIT);
+      createErrorDialog(e.getMessage(), EXIT); // Will finish() when the user clicks ok
       return;
     }
 
     final Intent intent = getIntent();
     final String action = intent.getAction();
 
-    // The Android needs to know what shortcuts are available, generate the
-    // list
+    // The Android needs to know what shortcuts are available, generate the list
     if (Intent.ACTION_CREATE_SHORTCUT.equals(action)) {
       buildMenuList();
     }
   }
 
   /**
-   * Builds a list of shortcuts
+   * Builds a list of shortcuts, one per form. This is for the "Survey App" widget
    */
   private void buildMenuList() {
     Bitmap appIcon = BitmapFactory.decodeResource(getResources(), R.drawable.tables_app);
     Bitmap tableIcon = BitmapFactory.decodeResource(getResources(), R.drawable.tables_table);
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("Select ODK Shortcut");
+    builder.setTitle(getString(R.string.select_odk_shortcut));
 
     choices.clear();
 
+    // Get a list of all the app names and iterate over them, adding one entry to choices for
+    // each form
     File[] directories = ODKFileUtils.getAppFolders();
     for (File app : directories) {
       String appName = app.getName();
       Uri uri = Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName);
+      // This will have the survey icon with a big red "App" on the top of it. The other
+      // shortcuts will just have the regular survey app icon
       choices.add(new Choice(R.drawable.tables_app, appIcon, uri, appName, appName));
 
+      // Iterate over all the tables in the app and add them to choices
       Cursor c = null;
       try {
         c = getContentResolver()
@@ -120,6 +129,7 @@ public class AndroidShortcuts extends BaseActivity {
                 null);
 
         if (c != null && c.getCount() > 0) {
+          // Move to one before the first entry so that moveToNext will put us at the first entry
           c.moveToPosition(-1);
           while (c.moveToNext()) {
             String tableName = app.getName() + " > " + CursorUtils
@@ -138,7 +148,6 @@ public class AndroidShortcuts extends BaseActivity {
     }
 
     builder.setAdapter(new ArrayAdapter<Choice>(this, R.layout.shortcut_item, choices) {
-
       @Override
       public View getView(int position, View convertView, ViewGroup parent) {
         View row;
@@ -166,12 +175,12 @@ public class AndroidShortcuts extends BaseActivity {
       }
     });
 
+    // If the user decides not to create a widget, finish() gracefully
     builder.setOnCancelListener(new OnCancelListener() {
       public void onCancel(DialogInterface dialog) {
         AndroidShortcuts sc = AndroidShortcuts.this;
         sc.setResult(RESULT_CANCELED);
         sc.finish();
-        return;
       }
     });
 
@@ -180,7 +189,7 @@ public class AndroidShortcuts extends BaseActivity {
   }
 
   /**
-   * Returns the results to the calling intent.
+   * Returns the results to the calling intent, called when the user clicks on a choice
    */
   private void returnShortcut(Choice choice) {
     Intent shortcutIntent = new Intent(Intent.ACTION_VIEW);
@@ -197,11 +206,16 @@ public class AndroidShortcuts extends BaseActivity {
 
     setResult(RESULT_OK, intent);
     finish();
-    return;
   }
 
+  /**
+   * Private helper method used to create a dialog. Doesn't use a dialog fragment, that's a TODO
+   *
+   * @param errorMsg   what message to display to the user
+   * @param shouldExit whether we should finish() the activity if the user clicks the "yes" button
+   */
   private void createErrorDialog(String errorMsg, final boolean shouldExit) {
-    mAlertDialog = new AlertDialog.Builder(this).create();
+    AlertDialog mAlertDialog = new AlertDialog.Builder(this).create();
     mAlertDialog.setIcon(android.R.drawable.ic_dialog_info);
     mAlertDialog.setMessage(errorMsg);
     DialogInterface.OnClickListener errorListener = new DialogInterface.OnClickListener() {
@@ -221,15 +235,26 @@ public class AndroidShortcuts extends BaseActivity {
     mAlertDialog.show();
   }
 
+  /**
+   * standard getter for the app name
+   *
+   * @return the app name
+   */
   @Override
   public String getAppName() {
     return Tables.getInstance().getToolName();
   }
 
+  /**
+   * do nothing when the database is up (rather than default to super.databaseAvailable)
+   */
   @Override
   public void databaseAvailable() {
   }
 
+  /**
+   * do nothing when the database is down (rather than default to super.databaseUnavailable)
+   */
   @Override
   public void databaseUnavailable() {
   }
