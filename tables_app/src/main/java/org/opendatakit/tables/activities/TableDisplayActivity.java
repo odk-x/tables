@@ -532,9 +532,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           (mPossibleTableViewTypes != null) && mPossibleTableViewTypes.listViewIsPossible());
       mapItem.setEnabled(
           (mPossibleTableViewTypes != null) && mPossibleTableViewTypes.mapViewIsPossible());
-      /**
-       * Set the checkbox highlight to the view type being displayed.
-       */
+      // Set the checkbox highlight to the view type being displayed.
       switch (mCurrentFragmentType) {
       case SPREADSHEET:
         spreadsheetItem.setChecked(true);

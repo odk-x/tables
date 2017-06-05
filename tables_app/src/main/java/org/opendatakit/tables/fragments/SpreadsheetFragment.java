@@ -484,27 +484,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   @Override
   public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo)
       throws ServicesAvailabilityException {
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
-    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
     this.mLastDataCellMenued = cellInfo;
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
-    String localizedDisplayName;
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
-    DbHandle db = null;
-    try {
-      db = dbInterface.openDatabase(getAppName());
-      localizedDisplayName = ColumnUtil.get()
-          .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, getAppName(), db,
-              getTableId(), cd.getElementKey());
-    } finally {
-      if (db != null) {
-        dbInterface.closeDatabase(getAppName(), db);
-      }
-    }
 
-    // menu.setHeaderTitle(localizedDisplayName);
     menu.setHeaderTitle(getString(R.string.row_actions));
 
     MenuItem mi;
@@ -534,7 +519,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // check a join association with this column; add a join... option if
     // it is applicable.
     ArrayList<JoinColumn> joinColumns;
-    db = null;
+    DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());
       joinColumns = ColumnUtil.get()

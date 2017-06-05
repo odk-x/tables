@@ -153,7 +153,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   private void initListeners() {
     // The logic here is a bit crazy.
     // header and data click listeners both receive the full
-    //
+    // TODO: the full what? Looks like someone forgot to finish this comment
     mainDataCellClickListener = new CellTouchListener() {
       @Override
       protected void takeDownAction(CellInfo cellId) {
@@ -174,6 +174,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
         controller.openDataContextMenu(mainData);
       }
 
+      /**
+       * This currently has a bug where if you click on once cell then quickly click a different
+       * cell, it acts like a double click on the second cell
+       * @param rawX the x coordinate that the user hit with their second tap
+       * @param rawY the y coordinate that the user hit with their second tap
+       */
       @Override
       protected void takeDoubleClickAction(int rawX, int rawY) {
         takeLongClickAction(rawX, rawY);
@@ -263,7 +269,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     wrapScroll = new HorizontalScrollView(context);
     wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
         LinearLayout.LayoutParams.MATCH_PARENT);
-    /*** this was all here before ***/
+    // this was all here before
     LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT);
     wrapLp.weight = 1;
