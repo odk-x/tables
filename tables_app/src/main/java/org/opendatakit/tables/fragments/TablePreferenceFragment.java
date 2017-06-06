@@ -23,6 +23,7 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
+import android.util.JsonReader;
 import android.view.ContextMenu;
 import android.widget.Toast;
 import org.opendatakit.data.ColorRuleGroup;
@@ -44,6 +45,8 @@ import org.opendatakit.tables.utils.PreferenceUtil;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
+import java.io.StringReader;
+import java.net.ProtocolException;
 
 /**
  * Displays preferences and information surrounding a table.
@@ -228,6 +231,16 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     String rawDisplayName = TableUtil.get()
         .getRawDisplayName(Tables.getInstance().getDatabase(), getAppName(), db, getTableId());
 
+    JsonReader parser = new JsonReader(new StringReader(rawDisplayName));
+    try {
+      parser.beginObject();
+      if (!parser.nextName().equals("text")) {
+        throw new ProtocolException();
+      }
+      rawDisplayName = parser.nextString();
+    } catch (Throwable e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+    }
     displayPref.setSummary(rawDisplayName);
   }
 
