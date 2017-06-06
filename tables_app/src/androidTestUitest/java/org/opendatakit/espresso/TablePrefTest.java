@@ -164,7 +164,7 @@ public class TablePrefTest {
   public void display_tableIdentifier() {
     //Check that display name and table id are shown correctly
     assertThat(EspressoUtils.getPrefSummary(TABLE_DISPLAY_NAME),
-        is("{\"text\":\"" + T_HOUSE_E_DISPLAY_NAME + "\"}"));
+        is(T_HOUSE_E_DISPLAY_NAME));
     assertThat(EspressoUtils.getPrefSummary(TABLE_ID), is(T_HOUSE_E_TABLE_ID));
   }
 
@@ -175,7 +175,7 @@ public class TablePrefTest {
     onData(withKey(COLUMNS_LIST)).perform(click());
     onData(is("House id")).perform(click());
 
-    assertThat(EspressoUtils.getPrefSummary(COL_DISPLAY_NAME), is("{\"text\":\"House id\"}"));
+    assertThat(EspressoUtils.getPrefSummary(COL_DISPLAY_NAME), is("House id"));
     assertThat(EspressoUtils.getPrefSummary(COL_KEY), is("House_id"));
   }
 

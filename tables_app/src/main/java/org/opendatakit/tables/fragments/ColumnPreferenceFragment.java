@@ -19,6 +19,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
+import android.util.JsonReader;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
@@ -36,6 +37,9 @@ import org.opendatakit.tables.utils.ElementTypeManipulator;
 import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
 import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
 import org.opendatakit.tables.utils.PreferenceUtil;
+
+import java.io.StringReader;
+import java.net.ProtocolException;
 
 public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
@@ -136,6 +140,18 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
         dbInterface.closeDatabase(getAppName(), db);
       }
     }
+
+    JsonReader parser = new JsonReader(new StringReader(rawDisplayName));
+    try {
+      parser.beginObject();
+      if (!parser.nextName().equals("text")) {
+        throw new ProtocolException();
+      }
+      rawDisplayName = parser.nextString();
+    } catch (Throwable e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+    }
+
 
     pref.setSummary(rawDisplayName);
 
