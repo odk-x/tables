@@ -66,8 +66,6 @@ Quick description of the content in the root folder:
 
                         |-- opendatakit
 
-                            |-- tables
+                            |-- tables     -- The most relevant Java code lives here
 
-                                |-- android     -- The most relevant Java code lives here
-                                
             |-- androidTest    -- Source tree for Android implementation tests
