@@ -403,6 +403,15 @@
 	<string name="select_odk_shortcut">Select ODK Shortcut</string>
 
 	<string name="row_actions">Row actions</string>
-
-
+	<string name="view_collection">View Collection</string>
+	<string name="unset_as_group_by">Unset as group by</string>
+	<string name="unset_as_sort">Unset as sort</string>
+	<string name="set_as_group_by">Set as group by</string>
+	<string name="set_as_sort">Set as sort</string>
+	<string name="unfreeze_column">Unfreeze column</string>
+	<string name="freeze_column">Freeze column</string>
+	<string name="add_group_by_fail">Unable to add column to Group By list</string>
+	<string name="remove_group_by_fail">Unable to remove column from Group By list</string>
+	<string name="set_sort_column_fail">Unable to set Sort Column</string>
+    <string name-"set_index_column_fail">Unable to set Index Column</string>
 </resources>
