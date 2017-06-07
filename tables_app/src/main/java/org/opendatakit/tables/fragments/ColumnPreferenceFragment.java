@@ -33,9 +33,6 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.ElementTypeManipulator;
-import org.opendatakit.tables.utils.ElementTypeManipulator.ITypeManipulatorFragment;
-import org.opendatakit.tables.utils.ElementTypeManipulatorFactory;
 import org.opendatakit.tables.utils.PreferenceUtil;
 
 import java.io.StringReader;
@@ -165,9 +162,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
   private void initializeColumnType() {
     EditTextPreference pref = this.findEditTextPreference(Constants.PreferenceKeys.Column.TYPE);
-    ElementTypeManipulator m = ElementTypeManipulatorFactory.getInstance(this.getAppName());
-    ITypeManipulatorFragment r = m.getDefaultRenderer(this.retrieveColumnDefinition().getType());
-    pref.setSummary(r.getElementTypeDisplayLabel());
+    pref.setSummary(retrieveColumnDefinition().getElementType()); // TODO: Convert to human readable format
   }
 
   private void initializeElementName() {
