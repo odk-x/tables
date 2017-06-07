@@ -135,7 +135,7 @@ dependencies {
                       classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
-    compile 'com.google.android.gms:play-services-maps:10.0.1'
+    compile 'com.google.android.gms:play-services-maps:10.2.6'
 
 //    compile 'com.google.android.gms:play-services:' + gpsVersion
  
