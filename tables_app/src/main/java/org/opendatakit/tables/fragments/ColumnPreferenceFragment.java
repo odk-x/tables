@@ -236,7 +236,13 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         String newValueStr = (String) newValue;
-        Integer newWidth = Integer.parseInt(newValueStr);
+        Integer newWidth;
+        try {
+          newWidth = Integer.parseInt(newValueStr);
+        } catch (NumberFormatException e) {
+          WebLogger.getLogger(appName).e(TAG, "column width not an integer, doing nothing");
+          return false;
+        }
         if (newWidth > LocalKeyValueStoreConstants.Spreadsheet.MAX_COL_WIDTH) {
           WebLogger.getLogger(appName).e(TAG, "column width bigger than allowed, doing nothing");
           return false;

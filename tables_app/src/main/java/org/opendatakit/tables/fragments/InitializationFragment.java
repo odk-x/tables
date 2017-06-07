@@ -363,7 +363,7 @@ public class InitializationFragment extends Fragment
   }
 
   /**
-   * Called when the database comes up. If we're in a "loading..." mode, tell Tables to initialze
+   * Called when the database comes up. If we're in a "loading..." mode, tell Tables to initialize
    * the app name
    */
   @Override

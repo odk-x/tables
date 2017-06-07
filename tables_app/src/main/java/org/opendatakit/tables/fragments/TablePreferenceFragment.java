@@ -31,6 +31,7 @@ import org.opendatakit.data.TableViewType;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
@@ -204,7 +205,13 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
   protected void initializeAllPreferences() throws ServicesAvailabilityException {
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      UserDbInterface temp = Tables.getInstance().getDatabase();
+      // This happens when the user clicks the back button in the file picker for some reason
+      if (temp == null) {
+        WebLogger.getLogger(getAppName()).a(TAG, "DbInterface is null. This shouldn't happen!");
+        return;
+      }
+      db = temp.openDatabase(getAppName());
 
       this.initializeDisplayNamePreference(db);
       this.initializeTableIdPreference();
@@ -238,6 +245,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         throw new ProtocolException();
       }
       rawDisplayName = parser.nextString();
+      parser.close();
     } catch (Throwable e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
