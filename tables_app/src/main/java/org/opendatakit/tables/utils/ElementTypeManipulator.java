@@ -25,6 +25,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A graveyard of a class
+ */
 public class ElementTypeManipulator {
   public static abstract class InputView extends LinearLayout {
 

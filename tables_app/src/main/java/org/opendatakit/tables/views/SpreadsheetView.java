@@ -59,6 +59,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
   // Used by onTouch to determine how long counts as a click vs how long counts as a long click
   private static final int MIN_CLICK_DURATION = 0;
+  private static final int MAX_DOUBLE_CLICK_TIME = 500;
   private static final int MIN_LONG_CLICK_DURATION = 1000;
 
   private final Context context;
@@ -360,7 +361,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     };
   }
 
+  /**
+   * Internal helper method to build a non indexed table, called by the SpreadsheetView constructor
+   * It constructs some views and sets the onTouch event for the main scroll view
+   */
   private void buildNonIndexedTable() {
+    // the false is to indicate that we're building a non-indexed table
     wrapper = buildTable(null, false);
     wrapScroll = new HorizontalScrollView(context);
     wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -393,9 +399,17 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     });
   }
 
+  /**
+   * This is also called by the SpreadsheetView constructor. It makes a non indexed table for the
+   * main wrapper, an indexed table for the index wrapper, and a status wrapper. It puts them in a
+   * scroll view and adds it, then it sets the on touch listener to get the x and y values from
+   * the scroll view and lock one of them while the other scrolls
+   */
   private void buildIndexedTable() {
     String indexElementKey = table.getIndexedColumnElementKey();
+    // build a non-indexed table for the main wrapper
     View mainWrapper = buildTable(indexElementKey, false);
+    // Here the true indicates that we are building an indexed table
     View indexWrapper = buildTable(indexElementKey, true);
     wrapScroll = new LockableHorizontalScrollView(context);
     wrapScroll.addView(mainWrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -424,21 +438,6 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
         return false;
       }
     });
-    indexScroll.setOnScrollStoppedListener(new LockableScrollView.OnScrollStoppedListener() {
-
-      @Override
-      public void onScrollStopped() {
-        // WebLogger.getLogger(table.getAppName()).i(TAG, "stopped in onStopped of indexScroll");
-      }
-    });
-    mainScroll.setOnScrollStoppedListener(new LockableScrollView.OnScrollStoppedListener() {
-
-      @Override
-      public void onScrollStopped() {
-        // WebLogger.getLogger(table.getAppName()).i(TAG, "stopped in onStopped of mainScroll");
-
-      }
-    });
     mainScroll.setOnTouchListener(new View.OnTouchListener() {
       @Override
       public boolean onTouch(View view, MotionEvent event) {
@@ -457,16 +456,15 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * Builds a (piece of a) table. The table may either be the indexed column of
    * an indexed table, the non-indexed columns of an indexed table, or the
    * entirety of an unindexed table.
+   * It returns a LinearLayout that contains all the relevant cells
    *
    * @param indexElementKey the column that is indexed (or null)
    * @param isIndexed       whether this table is for the indexed column
    * @return a view including the header and body of the table
    */
   private View buildTable(String indexElementKey, boolean isIndexed) {
-    // WebLogger.getLogger(table.getAppName()).i(TAG, 
-    //      "entering buildTable. indexedCol: " + indexedCol +
-    // "isIndexed: " + isIndexed);
-    List<String> elementKeysToDisplay = new ArrayList<String>();
+    // WebLogger.getLogger(table.getAppName()).i(TAG, "entering buildTable. indexedCol: " + indexedCol + "isIndexed: " + isIndexed);
+    List<String> elementKeysToDisplay = new ArrayList<>();
     int[] colWidths;
     TabularView dataTable;
     TabularView headerTable;
@@ -529,6 +527,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     return wrapper;
   }
 
+  /**
+   * Helper method to build a status table, used by both buildIndexedTable and buildNonIndexedTable
+   *
+   * @return a view that contains the TabularViews for the StatusDataTable and StatusHeaderTable
+   * in a wrapper
+   */
   private View buildStatusTable() {
     int[] colWidths;
     colWidths = new int[1];
@@ -563,13 +567,13 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * Gets the x translation of the scroll. This is in particular how far you
    * have scrolled to look at columns that do not begin onscreen.
    *
-   * @return
+   * @return the coordinate of where the user scrolled
    */
   @Override
   public int getMainScrollX() {
     // this is getting the correct x
-    int result = this.wrapScroll.getScrollX();
-    return result;
+    return wrapScroll.getScrollX();
+    // return from wrapScroll, because getMainScrollY uses mainScroll
   }
 
   /**
@@ -577,15 +581,21 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * for the actual scrolling of the rows, so that a positive offset will
    * indicate that you have scrolled to some non-zero row.
    *
-   * @return
+   * @return the y coordinate of where the user scrolled
    */
   @Override
   public int getMainScrollY() {
     // this is getting the correct y
-    int result = this.mainScroll.getScrollY();
-    return result;
+    return mainScroll.getScrollY();
+    // return from mainScroll, because getMainScrollX uses wrapScroll
   }
 
+  /**
+   * Called when someone with permission to edit the table double clicks or long clicks on a cell.
+   * Forwards the request to the controller, which is in fragments.SpreadsheetFragment
+   *
+   * @param menu the menu to be populated with items then displayed
+   */
   @Override
   public void onCreateMainDataContextMenu(ContextMenu menu) {
     try {
@@ -598,6 +608,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     }
   }
 
+  /**
+   * Called when someone with permission to edit the table double clicks or long clicks on an
+   * indexed cell. Forwards the request to the controller, which is in fragments.SpreadsheetFragment
+   *
+   * @param menu the menu to be populated with items then displayed
+   */
   @Override
   public void onCreateIndexDataContextMenu(ContextMenu menu) {
     try {
@@ -610,6 +626,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     }
   }
 
+  /**
+   * Called when someone with permission to edit the table double clicks or long clicks on a
+   * header cell. Forwards the request to the controller, which is in fragments.SpreadsheetFragment
+   *
+   * @param menu the menu to be populated with items then displayed
+   */
   @Override
   public void onCreateHeaderContextMenu(ContextMenu menu) {
     try {
@@ -622,20 +644,35 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     }
   }
 
+  /**
+   * An abstract helper class that gets anonymously extended about three or four times in
+   * initListeners. It extends an OnTouchListener and receives events when the user taps down and
+   * releases a tap from a cell, then it determines if they've clicked, double clicked, long
+   * clicked or done nothing (doing nothing is unsupported right now because MIN_CLICK_DURATION
+   * is zero), then forwards that on to one of its methods that should be overridden
+   */
   private abstract class CellTouchListener implements View.OnTouchListener {
 
-    private static final int MAX_DOUBLE_CLICK_TIME = 500;
+    // The last time the user tapped
+    private long lastDownTime = -1;
 
-    private long lastDownTime;
+    /**
+     * Constructor called by initListeners
+     */
+    private CellTouchListener() {}
 
-    public CellTouchListener() {
-      lastDownTime = -1;
-    }
-
+    /**
+     * Called when the user performs a tap action on a cell, including a "up" (user let go) event
+     * @param view the view that the user clicked on, expected to be a TabularView
+     * @param event The type of action that the user performed
+     * @return whether we could handle the event or not.
+     */
     @Override
     public boolean onTouch(View view, MotionEvent event) {
+      // Get where the user tapped out of the event
       int x = (Float.valueOf(event.getX())).intValue();
       int y = (Float.valueOf(event.getY())).intValue();
+      // Figure out which cell it was that they tapped on, and put it in a CellInfo object
       CellInfo cellId = null;
       if (view instanceof TabularView) {
         cellId = ((TabularView) view).getCellInfo(x, y);
@@ -645,6 +682,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       } else {
         WebLogger.getLogger(table.getAppName()).e(TAG, "Unexpected view type!");
       }
+      // Figure out what action the user took and call the correct helper method
       long duration = event.getEventTime() - event.getDownTime();
       if (event.getAction() == MotionEvent.ACTION_UP && duration >= MIN_CLICK_DURATION) {
         if (event.getEventTime() - lastDownTime < MAX_DOUBLE_CLICK_TIME) {
@@ -653,6 +691,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
         } else if (duration < MIN_LONG_CLICK_DURATION) {
           takeClickAction();
         } else {
+          // rawX and rawY are taken from the ending of the long click, not the beginning
+          // but rawX and rawY are unused anyways
           int rawX = (Float.valueOf(event.getRawX())).intValue();
           int rawY = (Float.valueOf(event.getRawY())).intValue();
           takeLongClickAction(rawX, rawY);
@@ -660,6 +700,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
         lastDownTime = event.getDownTime();
         return true;
       } else if (event.getAction() == MotionEvent.ACTION_DOWN) {
+        // cellId might be null!
         takeDownAction(cellId);
         return true;
       } else {
@@ -676,6 +717,9 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     protected abstract void takeDoubleClickAction(int rawX, int rawY);
   }
 
+  /**
+   * Implemented by fragments.SpreadsheetFragment
+   */
   public interface Controller {
 
     void headerCellClicked(CellInfo cellId);
@@ -698,8 +742,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * NB: If getting this from outside of spreadsheet view, you should really
    * consider if you need to be accessing column widths.
    *
-   * @return
-   * @throws ServicesAvailabilityException
+   * @return an array of the widths for each column, taken from the database
+   * @throws ServicesAvailabilityException if the database is down
    */
   public int[] getColumnWidths(DbHandle db) throws ServicesAvailabilityException {
     // So what we want to do is go through and get the column widths for each

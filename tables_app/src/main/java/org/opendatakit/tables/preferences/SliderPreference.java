@@ -23,6 +23,9 @@ import android.view.View;
 import android.widget.*;
 import org.opendatakit.tables.R;
 
+/**
+ * TODO this class doesn't appear to be used, and it has localization issues. Can we just remove it?
+ */
 public class SliderPreference extends Preference {
 
   private final SliderDialog mDialog;
@@ -123,7 +126,8 @@ public class SliderPreference extends Preference {
 
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-          seekLabel.setText((Integer.valueOf(progress)).toString());
+          // TODO find the current locale
+          seekLabel.setText(String.format("%d", progress));
           value = progress;
         }
       });
@@ -170,7 +174,8 @@ public class SliderPreference extends Preference {
 
     public void setSliderValue(int value) {
       this.value = value;
-      seekLabel.setText((Integer.valueOf(value)).toString());
+      // TODO find the current locale
+      seekLabel.setText(String.format("%d", value));
       seekBar.setProgress(value);
     }
 
