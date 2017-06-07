@@ -43,45 +43,43 @@ public class InitializationFragment extends Fragment
     implements InitializationListener, ConfirmAlertDialog, CancelProgressDialog,
     DatabaseConnectionListener {
 
-  private static final String t = "InitializationFragment";
+  // used for logging
+  private static final String TAG = InitializationFragment.class.getSimpleName();
+  private static String appName;
 
+  // The layout id, used for the view inflater
   private static final int ID = R.layout.copy_expansion_files_layout;
 
+  // The types of dialogs we handle
   private enum DialogState {
     Init, Progress, Alert, None
   }
 
   // keys for the data being retained
-
   private static final String DIALOG_TITLE = "dialogTitle";
   private static final String DIALOG_MSG = "dialogMsg";
   private static final String DIALOG_STATE = "dialogState";
 
-  // data to retain across orientation changes
-
+  // data to save across orientation changes
   private String mAlertTitle;
   private String mAlertMsg;
   private DialogState mDialogState = DialogState.Init;
+  // not saved
   private DialogState mPendingDialogState = DialogState.Init;
 
-  // data that is not retained
-
-  private View view;
-
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-  }
-
-  @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-  }
-
+  /**
+   * Called when we're recreated
+   *
+   * @param inflater           an inflater used to create the view
+   * @param container          also used to create the view
+   * @param savedInstanceState a bundle that we use to pull the dialog title, message and state from
+   * @return an inflated view
+   */
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
-    view = inflater.inflate(ID, container, false);
+    appName = ((IAppAwareActivity) getActivity()).getAppName();
+    View view = inflater.inflate(ID, container, false);
 
     if (savedInstanceState != null) {
 
@@ -113,11 +111,15 @@ public class InitializationFragment extends Fragment
     restoreProgressDialog();
 
     // launch the copy operation
-    WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName())
-        .i(t, "initializeAppName called ");
+    WebLogger.getLogger(appName).i(TAG, "initializeAppName called ");
     Tables.getInstance().initializeAppName(((IAppAwareActivity) getActivity()).getAppName(), this);
   }
 
+  /**
+   * Saves the alert title, message and state to the output bundle
+   *
+   * @param outState the bundle to be saved across lifetimes
+   */
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -130,13 +132,17 @@ public class InitializationFragment extends Fragment
     outState.putString(DIALOG_STATE, mDialogState.name());
   }
 
+  /**
+   * Called when we resume from a pause, sets up the app name if it wasn't already set up and
+   * restores the dialog if applicable, then attaches itself to the tables instance to receive
+   * task notifications
+   */
   @Override
   public void onResume() {
     super.onResume();
 
     if (mDialogState == DialogState.Init) {
-      WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName())
-          .i(t, "onResume -- calling initializeAppName");
+      WebLogger.getLogger(appName).i(TAG, "onResume -- calling initializeAppName");
       intializeAppName();
     } else {
 
@@ -151,12 +157,18 @@ public class InitializationFragment extends Fragment
     }
   }
 
+  /**
+   * Called on the first setup, just attaches to the tables instance to get task notifications
+   */
   @Override
   public void onStart() {
     super.onStart();
     Tables.getInstance().possiblyFireDatabaseCallback(getActivity(), this);
   }
 
+  /**
+   * Called when we're going to be paused, removes the dialogs and sets the state to none
+   */
   @Override
   public void onPause() {
     FragmentManager mgr = getFragmentManager();
@@ -175,13 +187,21 @@ public class InitializationFragment extends Fragment
     super.onPause();
   }
 
+  /**
+   * Called when we've successfully extracted all the files and are ready to open tables. Closes
+   * any open progress dialogs and creates an alert dialog showing the results to the user
+   *
+   * @param overallSuccess whether initializing tables worked
+   * @param result         a list of the tables we were able to create, forms we were able to
+   *                       extract, etc..
+   */
   @Override
   public void initializationComplete(boolean overallSuccess, ArrayList<String> result) {
     try {
       dismissProgressDialog();
     } catch (IllegalArgumentException e) {
-      WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName())
-          .i(t, "Attempting to close a dialog that was not previously opened");
+      WebLogger.getLogger(appName)
+          .i(TAG, "Attempting to close a dialog that was not previously opened");
     }
 
     Tables.getInstance().clearInitializationTask();
@@ -209,6 +229,10 @@ public class InitializationFragment extends Fragment
         getString(R.string.initialization_failed), b.toString().trim());
   }
 
+  /**
+   * Dismisses an alertDialog if it already exists, sets the message, title and state for an
+   * existing progress dialog if one exists, otherwise creates a new dialog and shows it
+   */
   private void restoreProgressDialog() {
     Fragment alert = getFragmentManager().findFragmentByTag("alertDialog");
     if (alert != null) {
@@ -234,6 +258,11 @@ public class InitializationFragment extends Fragment
     }
   }
 
+  /**
+   * Sets the alert title and message based on the passed message, then calls restoreProgressDialog
+   *
+   * @param message the message to show in the progress dialog
+   */
   private void updateProgressDialogMessage(String message) {
     if (mDialogState == DialogState.Progress) {
       mAlertTitle = getString(R.string.configuring_app,
@@ -243,6 +272,10 @@ public class InitializationFragment extends Fragment
     }
   }
 
+  /**
+   * Tries to find and dismiss a progressDialog, setting dialog state and pending dialog state to
+   * none in the process
+   */
   private void dismissProgressDialog() {
     if (mDialogState == DialogState.Progress) {
       mDialogState = DialogState.None;
@@ -254,6 +287,10 @@ public class InitializationFragment extends Fragment
     }
   }
 
+  /**
+   * Dismisses a progressDialog if it already exists, sets the message, title and state for an
+   * existing alert dialog if one exists, otherwise creates a new alert and shows it
+   */
   private void restoreAlertDialog() {
     Fragment progress = getFragmentManager().findFragmentByTag("progressDialog");
     if (progress != null) {
@@ -279,6 +316,9 @@ public class InitializationFragment extends Fragment
     }
   }
 
+  /**
+   * Called when the user clicks the ok button on an alert dialog
+   */
   @Override
   public void okAlertDialog() {
     mDialogState = DialogState.None;
@@ -289,8 +329,8 @@ public class InitializationFragment extends Fragment
    * Creates an alert dialog with the given tite and message. If shouldExit is
    * set to true, the activity will exit when the user clicks "ok".
    *
-   * @param title
-   * @param message
+   * @param title   the title for the dialog
+   * @param message the message for the dialog
    */
   private void createAlertDialog(String title, String message) {
     mAlertMsg = message;
@@ -298,15 +338,23 @@ public class InitializationFragment extends Fragment
     restoreAlertDialog();
   }
 
+  /**
+   * Called when the Tables object we attached to sends us a new event to display
+   *
+   * @param displayString the string to set the ProgressDialog's text to
+   */
   @Override
   public void initializationProgressUpdate(String displayString) {
     updateProgressDialogMessage(displayString);
   }
 
+  /**
+   * Called when someone presses the cancel button on the progress dialog, tell tables to cancel
+   * the import
+   */
   @Override
   public void cancelProgressDialog() {
-    WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName())
-        .i(t, "cancelProgressDialog -- calling cancelInitializationTask");
+    WebLogger.getLogger(appName).i(TAG, "cancelProgressDialog -- calling cancelInitializationTask");
     // signal the task that we want it to be cancelled.
     // but keep the notification path...
     // the task will call back with a copyExpansionFilesComplete()
@@ -314,19 +362,25 @@ public class InitializationFragment extends Fragment
     Tables.getInstance().cancelInitializationTask();
   }
 
+  /**
+   * Called when the database comes up. If we're in a "loading..." mode, tell Tables to initialze
+   * the app name
+   */
   @Override
   public void databaseAvailable() {
     if (mDialogState == DialogState.Progress) {
-      Tables.getInstance()
-          .initializeAppName(((IAppAwareActivity) getActivity()).getAppName(), this);
+      Tables.getInstance().initializeAppName(appName, this);
     }
   }
 
+  /**
+   * Called when the database goes away, if we're in a "loading..." mode, then update the
+   * progress dialog with an error message
+   */
   @Override
   public void databaseUnavailable() {
     if (mDialogState == DialogState.Progress) {
       updateProgressDialogMessage(getString(R.string.database_unavailable));
     }
   }
-
 }
