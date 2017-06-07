@@ -19,7 +19,7 @@ import org.opendatakit.tables.R;
 
 public class Tables extends CommonApplication {
 
-  public static final String t = "Tables";
+  public static final String TAG = Tables.class.getSimpleName();
 
   private static Tables singleton = null;
 

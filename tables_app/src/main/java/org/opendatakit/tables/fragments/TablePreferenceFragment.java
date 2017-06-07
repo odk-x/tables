@@ -48,6 +48,8 @@ import org.opendatakit.utilities.ODKFileUtils;
 import java.io.File;
 import java.io.StringReader;
 import java.net.ProtocolException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Displays preferences and information surrounding a table.
@@ -200,7 +202,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * {@link ContextMenu}, so must be called in or after
    * {@link TablePreferenceFragment#onActivityCreated(Bundle)}.
    *
-   * @throws ServicesAvailabilityException
+   * @throws ServicesAvailabilityException if the database is down
    */
   protected void initializeAllPreferences() throws ServicesAvailabilityException {
     DbHandle db = null;
@@ -209,9 +211,34 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       // This happens when the user clicks the back button in the file picker for some reason
       if (temp == null) {
         WebLogger.getLogger(getAppName()).a(TAG, "DbInterface is null. This shouldn't happen!");
+        // If the database hasn't been connected yet, wait until it has
+        // We have to wait using an extra thread because CommonApplication won't call
+        // doServiceConnected for the database until onCreate (and therefore this method) returns
+        Thread t = new Thread(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              Thread.sleep(100);
+              getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    // Recursive call
+                    TablePreferenceFragment.this.initializeAllPreferences();
+                  } catch (Throwable e) {
+                    WebLogger.getLogger(getAppName()).printStackTrace(e);
+                  }
+                }
+              });
+            } catch (Throwable e) {
+              WebLogger.getLogger(getAppName()).printStackTrace(e);
+            }
+          }
+        });
+        t.setDaemon(true);
+        t.start();
         return;
-      }
-      db = temp.openDatabase(getAppName());
+      } db = temp.openDatabase(getAppName());
 
       this.initializeDisplayNamePreference(db);
       this.initializeTableIdPreference();
@@ -437,9 +464,8 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
   }
 
   private String getRelativePathOfFile(String fullPath) {
-    String relativePath = ODKFileUtils
+    return ODKFileUtils
         .asRelativePath(((AbsBaseActivity) getActivity()).getAppName(), new File(fullPath));
-    return relativePath;
   }
 
 }
