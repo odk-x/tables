@@ -55,8 +55,9 @@ import java.util.Map;
  */
 public class SpreadsheetView extends LinearLayout implements TabularView.Controller {
 
-  private static final String TAG = "SpreadsheetView";
+  private static final String TAG = SpreadsheetView.class.getSimpleName();
 
+  // Used by onTouch to determine how long counts as a click vs how long counts as a long click
   private static final int MIN_CLICK_DURATION = 0;
   private static final int MIN_LONG_CLICK_DURATION = 1000;
 
@@ -90,7 +91,18 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   private View.OnTouchListener indexHeaderCellClickListener;
 
   private CellInfo lastHighlightedCellId;
+  private CellInfo lastLastHighlightedCellId;
 
+  /**
+   * Initializes a new spreadsheet view to the specified table. It pulls the app name out of the
+   * context, detects the correct font size, gets the column definitions from the database, and
+   * handles whether the table is indexed or not
+   *
+   * @param context    The context the spreadsheet is executing in, saved
+   * @param controller a SpreadsheetFragment
+   * @param table      the table to be displayed by the spreadsheet
+   * @throws ServicesAvailabilityException if the database is down
+   */
   public SpreadsheetView(Context context, Controller controller, SpreadsheetUserTable table)
       throws ServicesAvailabilityException {
     super(context);
@@ -98,20 +110,16 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     this.controller = controller;
     this.table = table;
 
-    // TODO: figure out if we can invalidate a screen region
-    // to get it to render the screen rather than
-    // disabling the hardware acceleration on this view.
-    // Disable it so that you don't have to tap the screen to
-    // after a scroll action to see the new portion of the
-    // spreadsheet.
+    // TODO: figure out if we can invalidate a screen region to get it to render the screen
+    // rather than disabling the hardware acceleration on this view. Disable it so that you don't
+    // have to tap the screen to after a scroll action to see the new portion of the spreadsheet.
     this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
-    // We have to initialize the items that will be shared across the
-    // TabularView objects.
-    this.mElementKeyToColorRuleGroup = new HashMap<String, ColorRuleGroup>();
+    // We have to initialize the items that will be shared across the TabularView objects.
+    this.mElementKeyToColorRuleGroup = new HashMap<>();
 
-    // if a custom font size is defined in the KeyValueStore, use that
-    // if not, use the general font size defined in preferences
+    // if a custom font size is defined in the KeyValueStore, use that if not, use the general
+    // font size defined in preferences
     String appName = table.getAppName();
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
@@ -148,46 +156,70 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   }
 
   /**
-   * Initializes the click listeners.
+   * Initializes the click listeners. There are four right now
    */
   private void initListeners() {
     // The logic here is a bit crazy.
     // header and data click listeners both receive the full
     // TODO: the full what? Looks like someone forgot to finish this comment
     mainDataCellClickListener = new CellTouchListener() {
+      /**
+       * Called when the user taps on a cell. Sets some variables and highlights it
+       * @param cellId the id of the cell that the user tapped
+       */
       @Override
       protected void takeDownAction(CellInfo cellId) {
+        lastLastHighlightedCellId = lastHighlightedCellId;
+        lastHighlightedCellId = cellId;
         if (table.isIndexed()) {
           indexData.highlight(null);
         }
-        lastHighlightedCellId = cellId;
         mainData.highlight(cellId);
       }
 
+      /**
+       * Called when the user has held down their tap for at least MIN_CLICK_DURATION
+       * milliseconds, currently zero
+       */
       @Override
       protected void takeClickAction() {
         controller.dataCellClicked(lastHighlightedCellId);
       }
 
+      /**
+       * Called when the user taps for at least MIN_LONG_CLICK_DURATION milliseconds. Opens the
+       * context menu to the selected row id
+       * @param rawX unused
+       * @param rawY unused
+       */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
         controller.openDataContextMenu(mainData);
       }
 
       /**
-       * This currently has a bug where if you click on once cell then quickly click a different
-       * cell, it acts like a double click on the second cell
-       * @param rawX the x coordinate that the user hit with their second tap
-       * @param rawY the y coordinate that the user hit with their second tap
+       * Checks if the user clicked on the same object twice, and if so, does the same thing as a
+       * long click action
+       * @param rawX unused
+       * @param rawY unused
        */
       @Override
       protected void takeDoubleClickAction(int rawX, int rawY) {
-        takeLongClickAction(rawX, rawY);
+        // Because the cellId.equals method is screwed up
+        if (lastHighlightedCellId.colPos == lastLastHighlightedCellId.colPos
+            && lastHighlightedCellId.rowId == lastLastHighlightedCellId.rowId) {
+          takeLongClickAction(rawX, rawY);
+        }
       }
     };
     mainHeaderCellClickListener = new CellTouchListener() {
+      /**
+       * Called when the user taps on a cell. Sets some variables and highlights it
+       * @param cellId the id of the cell that the user tapped
+       */
       @Override
       protected void takeDownAction(CellInfo cellId) {
+        lastLastHighlightedCellId = lastHighlightedCellId;
         if (table.isIndexed()) {
           indexData.highlight(null);
         }
@@ -195,71 +227,135 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
         mainData.highlight(null);
       }
 
+      /**
+       * Called when the user has held down their tap for at least MIN_CLICK_DURATION
+       * milliseconds, currently zero
+       */
       @Override
       protected void takeClickAction() {
         controller.headerCellClicked(lastHighlightedCellId);
       }
 
+      /**
+       * Called when the user taps for at least MIN_LONG_CLICK_DURATION milliseconds. Opens the
+       * context menu to the selected row id
+       * @param rawX unused
+       * @param rawY unused
+       */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
         controller.openHeaderContextMenu(mainHeader);
       }
 
       /**
-       * Make this do the same thing as a long click.
+       * Checks if the user clicked on the same object twice, and if so, does the same thing as a
+       * long click action
+       * @param rawX unused
+       * @param rawY unused
        */
       @Override
       protected void takeDoubleClickAction(int rawX, int rawY) {
-        takeLongClickAction(rawX, rawY);
+        // Because the cellId.equals method is screwed up
+        if (lastHighlightedCellId.colPos == lastLastHighlightedCellId.colPos
+            && lastHighlightedCellId.rowId == lastLastHighlightedCellId.rowId) {
+          takeLongClickAction(rawX, rawY);
+        }
       }
     };
     indexDataCellClickListener = new CellTouchListener() {
+      /**
+       * Called when the user taps on a cell. Sets some variables and highlights it
+       * @param cellId the id of the cell that the user tapped
+       */
       @Override
       protected void takeDownAction(CellInfo cellId) {
         mainData.highlight(null);
+        lastLastHighlightedCellId = lastHighlightedCellId;
         lastHighlightedCellId = cellId;
         indexData.highlight(cellId);
       }
 
+      /**
+       * Called when the user has held down their tap for at least MIN_CLICK_DURATION
+       * milliseconds, currently zero
+       */
       @Override
       protected void takeClickAction() {
         controller.dataCellClicked(lastHighlightedCellId);
       }
 
+      /**
+       * Called when the user taps for at least MIN_LONG_CLICK_DURATION milliseconds. Opens the
+       * context menu to the selected row id
+       * @param rawX unused
+       * @param rawY unused
+       */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
         controller.openDataContextMenu(indexData);
       }
 
+      /**
+       * Checks if the user clicked on the same object twice, and if so, does the same thing as a
+       * long click action
+       * @param rawX unused
+       * @param rawY unused
+       */
       @Override
       protected void takeDoubleClickAction(int rawX, int rawY) {
-        takeLongClickAction(rawX, rawY);
+        // Because the cellId.equals method is screwed up
+        if (lastHighlightedCellId.colPos == lastLastHighlightedCellId.colPos
+            && lastHighlightedCellId.rowId == lastLastHighlightedCellId.rowId) {
+          takeLongClickAction(rawX, rawY);
+        }
       }
     };
     indexHeaderCellClickListener = new CellTouchListener() {
+      /**
+       * Called when the user taps on a cell. Sets some variables and highlights it
+       * @param cellId the id of the cell that the user tapped
+       */
       @Override
       protected void takeDownAction(CellInfo cellId) {
         mainData.highlight(null);
         indexData.highlight(null);
+        lastLastHighlightedCellId = lastHighlightedCellId;
         lastHighlightedCellId = cellId;
       }
 
+      /**
+       * Called when the user has held down their tap for at least MIN_CLICK_DURATION
+       * milliseconds, currently zero
+       */
       @Override
       protected void takeClickAction() {
         controller.headerCellClicked(lastHighlightedCellId);
       }
 
+      /**
+       * Called when the user taps for at least MIN_LONG_CLICK_DURATION milliseconds. Opens the
+       * context menu to the selected row id
+       * @param rawX unused
+       * @param rawY unused
+       */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
         controller.openHeaderContextMenu(indexHeader);
       }
 
       /**
-       * Do the same thing as a long click.
+       * Checks if the user clicked on the same object twice, and if so, does the same thing as a
+       * long click action
+       * @param rawX unused
+       * @param rawY unused
        */
       @Override
       protected void takeDoubleClickAction(int rawX, int rawY) {
-        takeLongClickAction(rawX, rawY);
+        // Because the cellId.equals method is screwed up
+        if (lastHighlightedCellId.colPos == lastLastHighlightedCellId.colPos
+            && lastHighlightedCellId.rowId == lastLastHighlightedCellId.rowId) {
+          takeLongClickAction(rawX, rawY);
+        }
       }
     };
   }
