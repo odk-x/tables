@@ -28,9 +28,9 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 import org.opendatakit.tables.tasks.ImportRequest;
 import org.opendatakit.tables.tasks.ImportTask;
-import org.opendatakit.tables.utils.ImportExportDialog;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -59,7 +59,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
    *                           this classes parents
    */
   public void onCreate(Bundle savedInstanceState) {
-    ImportExportDialog.fragman = getFragmentManager();
+    ImportExportDialogFragment.fragman = getFragmentManager();
     super.onCreate(savedInstanceState);
     appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (appName == null) {
@@ -158,8 +158,8 @@ public class ImportCSVActivity extends AbsBaseActivity {
    * Then we split it by \. and try to parse the tableId and fileQualifier out of the filename.
    * If it had too many dots (or not enough), we display a Toast notification that the filename
    * was invalid and return.
-   * Then we make an ImportTask and pass it a new ImportExportDialog. The ImportTask will tell
-   * the ImportExportDialog to update the dialog text to "Importing row 5" and so on, and it will
+   * Then we make an ImportTask and pass it a new ImportExportDialogFragment. The ImportTask will tell
+   * the ImportExportDialogFragment to update the dialog text to "Importing row 5" and so on, and it will
    * also handle closing the dialog and displaying a Completed or Failed dialog.
    */
   private void importSubmission() {
@@ -199,7 +199,8 @@ public class ImportCSVActivity extends AbsBaseActivity {
       return;
     }
 
-    ImportExportDialog.newInstance(ImportExportDialog.IMPORT_IN_PROGRESS_DIALOG, this);
+    ImportExportDialogFragment
+        .newInstance(ImportExportDialogFragment.IMPORT_IN_PROGRESS_DIALOG, this);
     ImportTask task = new ImportTask(appName, this);
     task.execute(request);
   }

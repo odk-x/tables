@@ -31,6 +31,10 @@ import android.widget.ListView;
 import org.opendatakit.tables.R;
 
 public class TouchListView extends ListView {
+  public static final int FLING = 0;
+  public static final int SLIDE_RIGHT = 1;
+  public static final int SLIDE_LEFT = 2;
+  private final int mTouchSlop;
   private ImageView mDragView;
   private WindowManager mWindowManager;
   private WindowManager.LayoutParams mWindowParams;
@@ -46,13 +50,9 @@ public class TouchListView extends ListView {
   private int mLowerBound;
   private int mHeight;
   private GestureDetector mGestureDetector;
-  public static final int FLING = 0;
-  public static final int SLIDE_RIGHT = 1;
-  public static final int SLIDE_LEFT = 2;
   private int mRemoveMode = -1;
   private Rect mTempRect = new Rect();
   private Bitmap mDragBitmap;
-  private final int mTouchSlop;
   private int mItemHeightNormal = -1;
   private int mItemHeightExpanded = -1;
   private int grabberId = -1;

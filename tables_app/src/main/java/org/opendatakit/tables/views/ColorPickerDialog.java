@@ -34,22 +34,59 @@ import org.opendatakit.tables.views.components.WScrollView;
  */
 public class ColorPickerDialog extends Dialog {
 
+  private OnColorChangedListener mListener;
+  private int mInitialColor, mDefaultColor;
+  private String mKey;
+  public ColorPickerDialog(Context context, OnColorChangedListener listener, String key,
+      int initialColor, int defaultColor, String title) {
+    super(context);
+
+    mListener = listener;
+    mKey = key;
+    mInitialColor = initialColor;
+    mDefaultColor = defaultColor;
+    setTitle(title);
+  }
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    OnColorChangedListener l = new OnColorChangedListener() {
+      public void colorChanged(String key, int color) {
+        mListener.colorChanged(mKey, color);
+        dismiss();
+      }
+    };
+
+		/* BIDIRECTIONAL SCROLLVIEW */
+    ScrollView sv = new ScrollView(this.getContext());
+    WScrollView hsv = new WScrollView(this.getContext());
+    hsv.sv = sv;
+    /* END OF BIDIRECTIONAL SCROLLVIEW */
+
+    sv.addView(new ColorPickerView(getContext(), l, mInitialColor, mDefaultColor),
+        new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+    hsv.addView(sv, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
+    setContentView(hsv, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+
+    setCanceledOnTouchOutside(true);
+  }
+
   public interface OnColorChangedListener {
     void colorChanged(String key, int color);
   }
 
-  private OnColorChangedListener mListener;
-  private int mInitialColor, mDefaultColor;
-  private String mKey;
-
   private static class ColorPickerView extends View {
+    private final int[] mHueBarColors = new int[258];
     private Paint mPaint;
     private float mCurrentHue = 0;
     private int mCurrentX = 0, mCurrentY = 0;
     private int mCurrentColor, mDefaultColor;
-    private final int[] mHueBarColors = new int[258];
     private int[] mMainColors = new int[65536];
     private OnColorChangedListener mListener;
+    private boolean afterFirstDown = false;
+    private float startX;
+    private float startY;
 
     ColorPickerView(Context c, OnColorChangedListener l, int color, int defaultColor) {
       super(c);
@@ -237,10 +274,6 @@ public class ColorPickerDialog extends Dialog {
       setMeasuredDimension(276, 366);
     }
 
-    private boolean afterFirstDown = false;
-    private float startX;
-    private float startY;
-
     @Override
     public boolean onTouchEvent(MotionEvent event) {
       // allow scrolling...
@@ -323,40 +356,5 @@ public class ColorPickerDialog extends Dialog {
 
       return true;
     }
-  }
-
-  public ColorPickerDialog(Context context, OnColorChangedListener listener, String key,
-      int initialColor, int defaultColor, String title) {
-    super(context);
-
-    mListener = listener;
-    mKey = key;
-    mInitialColor = initialColor;
-    mDefaultColor = defaultColor;
-    setTitle(title);
-  }
-
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    OnColorChangedListener l = new OnColorChangedListener() {
-      public void colorChanged(String key, int color) {
-        mListener.colorChanged(mKey, color);
-        dismiss();
-      }
-    };
-
-		/* BIDIRECTIONAL SCROLLVIEW */
-    ScrollView sv = new ScrollView(this.getContext());
-    WScrollView hsv = new WScrollView(this.getContext());
-    hsv.sv = sv;
-    /* END OF BIDIRECTIONAL SCROLLVIEW */
-
-    sv.addView(new ColorPickerView(getContext(), l, mInitialColor, mDefaultColor),
-        new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-    hsv.addView(sv, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
-    setContentView(hsv, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-
-    setCanceledOnTouchOutside(true);
   }
 }

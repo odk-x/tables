@@ -30,21 +30,16 @@ import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
  * @author sudar.sam@gmail.com
  */
 public class FormType {
-  private static final String TAG = "FormType";
-
   public static final String KVS_PARTITION = "FormType";
   public static final String KVS_ASPECT = "default";
   public static final String KEY_FORM_TYPE = "FormType.formType";
-
-  /*
-   * Currently only a Survey form is valid.
-   */
-  public enum Type {
-    SURVEY
-  }
-
+  private static final String TAG = "FormType";
   private Type type;
   private SurveyFormParameters mSurveyParams;
+  public FormType(Context context, String appName, String tableId, SurveyFormParameters params) {
+    this.type = Type.SURVEY;
+    this.mSurveyParams = params;
+  }
 
   public static FormType constructFormType(Context context, String appName, String tableId)
       throws ServicesAvailabilityException {
@@ -75,11 +70,6 @@ public class FormType {
     }
   }
 
-  public FormType(Context context, String appName, String tableId, SurveyFormParameters params) {
-    this.type = Type.SURVEY;
-    this.mSurveyParams = params;
-  }
-
   public String getFormId() {
     return this.mSurveyParams.getFormId();
   }
@@ -94,6 +84,13 @@ public class FormType {
     } else {
       throw new IllegalStateException("Unexpected attempt to retrieve SurveyFormParameters");
     }
+  }
+
+  /*
+   * Currently only a Survey form is valid.
+   */
+  public enum Type {
+    SURVEY
   }
 
 }

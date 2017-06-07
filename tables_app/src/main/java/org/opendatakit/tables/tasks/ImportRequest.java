@@ -29,7 +29,8 @@ public class ImportRequest {
 
   /**
    * forwards request to the three argument constructor
-   * @param tableId table id
+   *
+   * @param tableId       table id
    * @param fileQualifier filename prefix
    */
   public ImportRequest(String tableId, String fileQualifier) {
@@ -38,8 +39,9 @@ public class ImportRequest {
 
   /**
    * simple constructor that stores its three arguments
-   * @param createTable whether to create the table if it doesn't exist
-   * @param tableId the id of the table
+   *
+   * @param createTable   whether to create the table if it doesn't exist
+   * @param tableId       the id of the table
    * @param fileQualifier the prefix for the csv file to import
    */
   public ImportRequest(boolean createTable, String tableId, String fileQualifier) {
@@ -50,6 +52,7 @@ public class ImportRequest {
 
   /**
    * standard getter for whether we should create the table if it doesn't already exist
+   *
    * @return whether we should create the table if it doesn't already exist
    */
   public boolean getCreateTable() {
@@ -58,6 +61,7 @@ public class ImportRequest {
 
   /**
    * standard getter for the table id
+   *
    * @return the table id
    */
   public String getTableId() {
@@ -66,6 +70,7 @@ public class ImportRequest {
 
   /**
    * standard getter for the filename prefix
+   *
    * @return the prefix for the filename
    */
   public String getFileQualifier() {

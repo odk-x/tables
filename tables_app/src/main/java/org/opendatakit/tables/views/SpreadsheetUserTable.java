@@ -176,14 +176,6 @@ public class SpreadsheetUserTable {
     return !(table == null || (header.length == 0));
   }
 
-  public static class SpreadsheetCell {
-    public int rowNum; // of the row
-    public Row row; // the row
-    public String elementKey; // of the column
-    public String displayText;
-    public String value;
-  }
-
   public SpreadsheetCell getSpreadsheetCell(Context context, CellInfo cellInfo) {
     SpreadsheetCell cell = new SpreadsheetCell();
     userTable = getUserTable();
@@ -222,5 +214,13 @@ public class SpreadsheetUserTable {
 
   String getHeader(int colNum) {
     return header[colNum];
+  }
+
+  public static class SpreadsheetCell {
+    public int rowNum; // of the row
+    public Row row; // the row
+    public String elementKey; // of the column
+    public String displayText;
+    public String value;
   }
 }

@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.util.JsonReader;
+import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
@@ -38,13 +39,28 @@ import org.opendatakit.tables.utils.PreferenceUtil;
 import java.io.StringReader;
 import java.net.ProtocolException;
 
+/**
+ * This class represents the preference pane you get from going to a table's preferences,
+ * clicking columns and then selecting a column. It shows the column's Display Name, ELement Key,
+ * Element Name and Column Type, and allows the user to edit the Column Width or edit the color
+ * rules
+ */
 public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
-  String mElementKey = null;
-  static String COL_ELEM_KEY = "COLUMN_ELEMENT_KEY";
+  // The element key
+  private String mElementKey = null;
 
+  // Tag used for putting things in the saved instance state bundle
+  private static String COL_ELEM_KEY = "COLUMN_ELEMENT_KEY";
+
+  // Used for logging
   private static final String TAG = ColumnPreferenceFragment.class.getSimpleName();
 
+  /**
+   * Called when the fragment is attached to a view, asserts that we were attached to a
+   * TableLevelPreferencesActivity so that we can get the table id and app name out of it
+   * @param context the context to execute in
+   */
   public void onAttach(Context context) {
     super.onAttach(context);
     if (!(context instanceof TableLevelPreferencesActivity)) {
@@ -56,17 +72,18 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   /**
    * Get the {@link TableLevelPreferencesActivity} associated with this
    * activity.
+   *
+   * @return the activity that we're attached to
    */
   TableLevelPreferencesActivity retrieveTableLevelPreferenceActivity() {
-    TableLevelPreferencesActivity result = (TableLevelPreferencesActivity) this.getActivity();
-    return result;
+    return (TableLevelPreferencesActivity) this.getActivity();
   }
 
   /**
    * Retrieve the {@link ColumnDefinition} associated with the column this
    * activity is displaying.
    *
-   * @return
+   * @return the column definitions for this table, taken from the activity we're attached to
    */
   ColumnDefinition retrieveColumnDefinition() {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
@@ -76,8 +93,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     }
     try {
       OrderedColumns orderedDefns = activity.getColumnDefinitions();
-      ColumnDefinition result = orderedDefns.find(elementKey);
-      return result;
+      return orderedDefns.find(elementKey);
     } catch (IllegalArgumentException e) {
       WebLogger.getLogger(activity.getAppName())
           .e(TAG, "[retrieveColumnDefinition] did not find column for element key: " + elementKey);
@@ -85,6 +101,10 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     }
   }
 
+  /**
+   * Called when we resume, restores mElementKey (which column we represent) from the saved bundle
+   * @param savedInstanceState a bundle that contains our saved element key
+   */
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -94,6 +114,9 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     this.addPreferencesFromResource(R.xml.preference_column);
   }
 
+  /**
+   * Also called when we resume, it initializes all properties if possible
+   */
   @Override
   public void onResume() {
     super.onResume();
@@ -104,6 +127,11 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     }
   }
 
+  /**
+   * Called when the activity is about to go away, saves the element key in the saved state so it
+   * can be restored when we're recreated
+   * @param outState a bundle that will be saved
+   */
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -111,6 +139,10 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     outState.putString(COL_ELEM_KEY, mElementKey);
   }
 
+  /**
+   * Internal helper method that sets up all of the preferences that get displayed to the user
+   * @throws ServicesAvailabilityException if the database is down
+   */
   void initializeAllPreferences() throws ServicesAvailabilityException {
     this.initializeColumnType();
     this.initializeColumnWidth();
@@ -120,6 +152,10 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     this.initializeColorRule();
   }
 
+  /**
+   * Handles initializing the "Display Name" preference to show to the user
+   * @throws ServicesAvailabilityException if the database is down
+   */
   private void initializeDisplayName() throws ServicesAvailabilityException {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
@@ -138,6 +174,8 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
       }
     }
 
+    // For some reason rawDisplayName comes in as {"text":"real display name here"} so we need to
+    // decode it
     JsonReader parser = new JsonReader(new StringReader(rawDisplayName));
     try {
       parser.beginObject();
@@ -145,32 +183,45 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
         throw new ProtocolException();
       }
       rawDisplayName = parser.nextString();
+      parser.close();
     } catch (Throwable e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
-
 
     pref.setSummary(rawDisplayName);
 
   }
 
+  /**
+   * Handles initializing the "Element Key" preference to show to the user
+   */
   private void initializeElementKey() {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.ELEMENT_KEY);
     pref.setSummary(this.retrieveColumnDefinition().getElementKey());
   }
 
+  /**
+   * Handles initializing the "Column Type" (really data type) preference to show to the user
+   */
   private void initializeColumnType() {
     EditTextPreference pref = this.findEditTextPreference(Constants.PreferenceKeys.Column.TYPE);
-    pref.setSummary(retrieveColumnDefinition().getElementType()); // TODO: Convert to human readable format
+    pref.setSummary(StringUtils.capitalize(retrieveColumnDefinition().getType().getElementType()));
   }
 
+  /**
+   * Handles initializing the "Element Name" preference to show to the user
+   */
   private void initializeElementName() {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.ELEMENT_NAME);
     pref.setSummary(this.retrieveColumnDefinition().getElementName());
   }
 
+  /**
+   * Handles initializing the (editable!) "Column Width" preference to show to the user
+   * @throws ServicesAvailabilityException if the database is down
+   */
   private void initializeColumnWidth() throws ServicesAvailabilityException {
     TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
     final String appName = activity.getAppName();
@@ -199,6 +250,9 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
   }
 
+  /**
+   * Initializes the color rule menu, which takes you to a different preferences fragment
+   */
   private void initializeColorRule() {
     Preference pref = this.findPreference(Constants.PreferenceKeys.Column.COLOR_RULES);
     pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {

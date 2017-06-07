@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.tables.R;
 import android.os.AsyncTask;
 import org.opendatakit.builder.CsvUtil;
 import org.opendatakit.builder.CsvUtilSupervisor;
@@ -25,9 +24,10 @@ import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.ExportListener;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.ImportExportDialog;
+import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 
 public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     implements ExportListener {
@@ -116,29 +116,31 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
    * @param result
    */
   protected void onPostExecute(Boolean result) {
-    ImportExportDialog.activeDialogFragment.dismiss();
+    ImportExportDialogFragment.activeDialogFragment.dismiss();
     if (result) {
       if (keyValueStoreSuccessful) {
-        ImportExportDialog.newInstance(ImportExportDialog.CSVEXPORT_SUCCESS_DIALOG, context);
+        ImportExportDialogFragment
+            .newInstance(ImportExportDialogFragment.CSVEXPORT_SUCCESS_DIALOG, context);
       } else {
-        ImportExportDialog
-            .newInstance(ImportExportDialog.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG,
-                context);
+        ImportExportDialogFragment.newInstance(
+            ImportExportDialogFragment.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG,
+            context);
       }
     } else {
-      ImportExportDialog.newInstance(ImportExportDialog.CSVEXPORT_FAIL_DIALOG, context);
+      ImportExportDialogFragment
+          .newInstance(ImportExportDialogFragment.CSVEXPORT_FAIL_DIALOG, context);
     }
   }
 
   /**
    * Updates the open progress dialog with the new status
-   * just passes along the request to ImportExportDialog
+   * just passes along the request to ImportExportDialogFragment
    *
    * @param row the string to set in the window, like "Exporting row 10"
    */
   @Override
   public void updateProgressDetail(int row) {
-    ImportExportDialog.activeDialogFragment
+    ImportExportDialogFragment.activeDialogFragment
         .updateProgressDialogStatusString(context, R.string.export_in_progress_row, row);
   }
 

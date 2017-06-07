@@ -94,66 +94,39 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
   private static final String SAVE_ZOOM = "saveZoom";
 
   private static final float initCameraValue = -1;
-
-  private GoogleMap map;
-  private double savedLatitude = initCameraValue;
-  private double savedLongitude = initCameraValue;
-  private float savedZoom = initCameraValue;
-
-  /**
-   * Interface for listening to different events that may be triggered by this
-   * inner fragment.
-   */
-  public interface TableMapInnerFragmentListener {
-
-    /**
-     * Set the index of the marker that has been selected.
-     */
-    void onSetSelectedItemIndex(int i);
-
-    /**
-     * Sets that no item is selected.
-     */
-    void setNoItemSelected();
-
-  }
-
   /**
    * The object that is listening in on events.
    */
   public TableMapInnerFragmentListener listener;
-
+  private GoogleMap map;
+  private double savedLatitude = initCameraValue;
+  private double savedLongitude = initCameraValue;
+  private float savedZoom = initCameraValue;
   /**
    * A mapping of all markers to index to determine which marker is selected.
    */
   private Map<Marker, Integer> mMarkerIds;
-
   /**
    * A set of all the visible markers.
    */
   private Set<Marker> mVisibleMarkers;
-
   /**
    * The currently selected marker.
    */
   private Marker mCurrentMarker;
-
   /**
    * Used for coloring markers.
    */
   private ColorRuleGroup mColorGroup;
   private ColorGuideGroup mColorGuideGroup;
-
   /**
    * the latitide elementKey to use for plotting
    */
   private String mLatitudeElementKey;
-
   /**
    * the longitude elementKey to use for plotting
    */
   private String mLongitudeElementKey;
-
   /**
    * This value is only set after the activity was saved and then reinstated. It
    * is used to figure out which marker was selected before the activity was
@@ -573,5 +546,23 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     mCurrentMarker.setIcon(BitmapDescriptorFactory.defaultMarker(getHueForRow(index)));
     mCurrentMarker = null;
     listener.setNoItemSelected();
+  }
+
+  /**
+   * Interface for listening to different events that may be triggered by this
+   * inner fragment.
+   */
+  public interface TableMapInnerFragmentListener {
+
+    /**
+     * Set the index of the marker that has been selected.
+     */
+    void onSetSelectedItemIndex(int i);
+
+    /**
+     * Sets that no item is selected.
+     */
+    void setNoItemSelected();
+
   }
 }

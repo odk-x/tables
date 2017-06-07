@@ -47,8 +47,6 @@ import java.util.Map;
  */
 public class OutputUtil {
 
-  private static final String TAG = OutputUtil.class.getSimpleName();
-
   /**
    * The filename of the control object that will be written out.
    */
@@ -57,7 +55,6 @@ public class OutputUtil {
    * The suffix of the name for each data object that will be written.
    */
   public static final String DATA_FILE_SUFFIX = "_data.json";
-
   public static final String CTRL_KEY_TABLE_ID_TO_DISPLAY_NAME = "tableIdToDisplayName";
   public static final String CTRL_KEY_TABLE_INFO = "tables";
   /**
@@ -68,7 +65,6 @@ public class OutputUtil {
    * The key for the default list view file in the table.
    */
   public static final String CTRL_KEY_DEFAULT_LIST_FILE = "defaultListFile";
-
   // These are keys we'll be outputting for use in debugging when we write
   // this object to a file.
   public static final String DATA_KEY_IN_COLLECTION_MODE = "inCollectionMode";
@@ -79,12 +75,11 @@ public class OutputUtil {
   public static final String DATA_KEY_COLUMN_DATA = "columnData";
   public static final String DATA_KEY_TABLE_ID = "tableId";
   public static final String DATA_KEY_ROW_IDS = "rowIds";
-
   // Keys for the table object contained within control objects.
   public static final String CTRL_TABLE_KEY_ELEMENT_PATH_TO_KEY = "pathToKey";
   public static final String CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME = "pathToName";
-
   public static final int NUM_ROWS_IN_DATA_OBJECT = 10;
+  private static final String TAG = OutputUtil.class.getSimpleName();
 
   /**
    * Gets a string containing information necessary for the control object's

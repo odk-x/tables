@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.tables.utils;
+package org.opendatakit.tables.fragments;
 
 import android.app.*;
 import android.content.DialogInterface;
@@ -29,7 +29,7 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
  * @author sudar.sam@gmail.com
  * @author unknown
  */
-public class ImportExportDialog extends DialogFragment {
+public class ImportExportDialogFragment extends DialogFragment {
 
   // dialog IDs, passed in to newInstance
   public static final int CSVEXPORT_SUCCESS_DIALOG = 1;
@@ -52,7 +52,7 @@ public class ImportExportDialog extends DialogFragment {
 
   // the active dialog holder. Dismissing it won't set this to null, so make sure it's still
   // displayed when you go to change its message
-  public static ImportExportDialog activeDialogFragment = null;
+  public static ImportExportDialogFragment activeDialogFragment = null;
   // both ImportCSVActivity and ExportCSVActivity set a valid fragment manager in their onCreate
   // handlers. This means if an ImportTask or an ExportTask tries to create a dialog (i.e. an
   // Import Complete alert), but their invoking ImportCSVActivity has been destroyed because the
@@ -64,16 +64,16 @@ public class ImportExportDialog extends DialogFragment {
   public static FragmentManager fragman = null;
 
   /**
-   * Public method that returns a new ImportExportDialog. SET A FRAGMENT MANAGER BEFORE CALLING
+   * Public method that returns a new ImportExportDialogFragment. SET A FRAGMENT MANAGER BEFORE CALLING
    * NEWINSTANCE
    *
    * @param id  which dialog to create
    * @param act an activity. We need to take an activity because you can't call getString from a
    *            static method
-   * @return a new ImportExportDialog that has already been shown. If it's a progress dialog,
+   * @return a new ImportExportDialogFragment that has already been shown. If it's a progress dialog,
    * the caller is expected to dismiss it. If it's an AlertDialog, the user can dismiss it
    */
-  public static ImportExportDialog newInstance(int id, AbsBaseActivity act) {
+  public static ImportExportDialogFragment newInstance(int id, AbsBaseActivity act) {
     String message;
     int type = ALERT_DIALOG;
     switch (id) {
@@ -110,7 +110,7 @@ public class ImportExportDialog extends DialogFragment {
       throw new IllegalArgumentException();
     }
 
-    ImportExportDialog frag = new ImportExportDialog();
+    ImportExportDialogFragment frag = new ImportExportDialogFragment();
     frag.appName = act.getAppName(); // it's private
     // Stuff we put in args can be accessed from onCreateDialog by
     Bundle args = new Bundle();
@@ -159,8 +159,8 @@ public class ImportExportDialog extends DialogFragment {
    * DO NOT CALL THIS METHOD
    * It's called automatically by the parent class. Even though there's no @Override tag. I don't
    * know how that works
-   * If you do call this method on a new ImportExportDialog(), args will be empty and you'll get
-   * a null pointer exception. If you call this method on an ImportExportDialog created with
+   * If you do call this method on a new ImportExportDialogFragment(), args will be empty and you'll get
+   * a null pointer exception. If you call this method on an ImportExportDialogFragment created with
    * newInstance you'll get a dialog that you'll have to manage yourself, defeating the purpose
    * of using a DialogFragment in the first place.
    * <p>

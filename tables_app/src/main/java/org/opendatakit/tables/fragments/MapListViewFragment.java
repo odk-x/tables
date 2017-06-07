@@ -31,18 +31,16 @@ import org.opendatakit.tables.views.webkits.OdkTablesWebView;
  */
 public class MapListViewFragment extends ListViewFragment implements IMapListViewCallbacks {
 
+  public static final int INVALID_INDEX = -1;
   private static final String TAG = MapListViewFragment.class.getSimpleName();
-
   /**
    * Saves the index of the element that was selected.
    */
   private static final String INTENT_KEY_SELECTED_INDEX = "keySelectedIndex";
-
   /**
    * The index of an item that has been selected by the user.
    */
   protected int mSelectedItemIndex;
-  public static final int INVALID_INDEX = -1;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -101,18 +99,6 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   }
 
   /**
-   * Sets the index of the list view, which will be the row of the data wanting
-   * to be displayed.
-   */
-  @Override
-  public void setIndexOfSelectedItem(final int index) {
-    this.mSelectedItemIndex = index;
-    // TODO: Make map index work with async API
-    //this.mTableDataReference.setSelectedMapIndex(index);
-    this.resetView();
-  }
-
-  /**
    * Informs the list view that no item is selected. Resets the state after a
    * call to {@link #setIndexOfSelectedItem(int)}.
    */
@@ -126,6 +112,18 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
 
   public int getIndexOfSelectedItem() {
     return this.mSelectedItemIndex;
+  }
+
+  /**
+   * Sets the index of the list view, which will be the row of the data wanting
+   * to be displayed.
+   */
+  @Override
+  public void setIndexOfSelectedItem(final int index) {
+    this.mSelectedItemIndex = index;
+    // TODO: Make map index work with async API
+    //this.mTableDataReference.setSelectedMapIndex(index);
+    this.resetView();
   }
 
 }

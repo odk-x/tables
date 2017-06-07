@@ -340,6 +340,49 @@ public class SurveyUtil {
     }
 
     /**
+     * Construct a SurveyFormParameters object from the given tableId.
+     * The object is determined to have custom parameters if a formId can be
+     * retrieved from the tableId. Otherwise the default addrow
+     * parameters are set.
+     * <p>
+     * The display name of the row will be the display name of the table.
+     *
+     * @param context unused
+     * @param appName the app name
+     * @param tableId the id of the table to add/edit a row in
+     * @return a SurveyFormParameters object that contains information about what form survey
+     * should open
+     * @throws ServicesAvailabilityException if the database is down
+     */
+    public static SurveyFormParameters constructSurveyFormParameters(Context context,
+        String appName, String tableId) throws ServicesAvailabilityException {
+      String formId;
+      DbHandle db = null;
+      try {
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        List<KeyValueStoreEntry> kvsList = Tables.getInstance().getDatabase()
+            .getTableMetadata(appName, db, tableId,
+                LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,
+                LocalKeyValueStoreConstants.DefaultSurveyForm.ASPECT,
+                LocalKeyValueStoreConstants.DefaultSurveyForm.KEY_FORM_ID, null).getEntries();
+        if (kvsList.size() != 1) {
+          formId = null;
+        } else {
+          formId = KeyValueStoreUtils.getString(appName, kvsList.get(0));
+        }
+      } finally {
+        if (db != null) {
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
+        }
+      }
+      if (formId == null) {
+        return new SurveyFormParameters(false, getDefaultAddRowFormId(tableId), null);
+      }
+      // Else we know it is custom.
+      return new SurveyFormParameters(true, formId, null);
+    }
+
+    /**
      * standard getter for the form id
      *
      * @return the form id
@@ -393,49 +436,6 @@ public class SurveyUtil {
      */
     public void setIsUserDefined(boolean isUserDefined) {
       this.mIsUserDefined = isUserDefined;
-    }
-
-    /**
-     * Construct a SurveyFormParameters object from the given tableId.
-     * The object is determined to have custom parameters if a formId can be
-     * retrieved from the tableId. Otherwise the default addrow
-     * parameters are set.
-     * <p>
-     * The display name of the row will be the display name of the table.
-     *
-     * @param context unused
-     * @param appName the app name
-     * @param tableId the id of the table to add/edit a row in
-     * @return a SurveyFormParameters object that contains information about what form survey
-     * should open
-     * @throws ServicesAvailabilityException if the database is down
-     */
-    public static SurveyFormParameters constructSurveyFormParameters(Context context,
-        String appName, String tableId) throws ServicesAvailabilityException {
-      String formId;
-      DbHandle db = null;
-      try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        List<KeyValueStoreEntry> kvsList = Tables.getInstance().getDatabase()
-            .getTableMetadata(appName, db, tableId,
-                LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,
-                LocalKeyValueStoreConstants.DefaultSurveyForm.ASPECT,
-                LocalKeyValueStoreConstants.DefaultSurveyForm.KEY_FORM_ID, null).getEntries();
-        if (kvsList.size() != 1) {
-          formId = null;
-        } else {
-          formId = KeyValueStoreUtils.getString(appName, kvsList.get(0));
-        }
-      } finally {
-        if (db != null) {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
-        }
-      }
-      if (formId == null) {
-        return new SurveyFormParameters(false, getDefaultAddRowFormId(tableId), null);
-      }
-      // Else we know it is custom.
-      return new SurveyFormParameters(true, formId, null);
     }
 
     public void persist(String appName, DbHandle db, String tableId)

@@ -645,6 +645,54 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   }
 
   /**
+   * Get the column widths for the table. The values in the array match the
+   * order specified in the column order.
+   * <p>
+   * NB: If getting this from outside of spreadsheet view, you should really
+   * consider if you need to be accessing column widths.
+   *
+   * @return an array of the widths for each column, taken from the database
+   * @throws ServicesAvailabilityException if the database is down
+   */
+  public int[] getColumnWidths(DbHandle db) throws ServicesAvailabilityException {
+    // So what we want to do is go through and get the column widths for each
+    // column. A problem here is that there is no caching, and if you have a
+    // lot of columns you're really working the gut of the database.
+    int numberOfDisplayColumns = table.getNumberOfDisplayColumns();
+    int[] columnWidths = new int[numberOfDisplayColumns];
+    String appName = table.getAppName();
+
+    Map<String, Integer> colWidths = ColumnUtil.get()
+        .getColumnWidths(Tables.getInstance().getDatabase(), appName, db, table.getTableId(),
+            table.getColumnDefinitions());
+
+    for (int i = 0; i < numberOfDisplayColumns; i++) {
+      ColumnDefinition cd = table.getColumnByIndex(i);
+      String elementKey = cd.getElementKey();
+      columnWidths[i] = colWidths.get(elementKey);
+    }
+    return columnWidths;
+  }
+
+  /**
+   * Implemented by fragments.SpreadsheetFragment
+   */
+  public interface Controller {
+
+    void headerCellClicked(CellInfo cellId);
+
+    void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
+
+    void openHeaderContextMenu(View view);
+
+    void dataCellClicked(CellInfo cellId);
+
+    void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
+
+    void openDataContextMenu(View view);
+  }
+
+  /**
    * An abstract helper class that gets anonymously extended about three or four times in
    * initListeners. It extends an OnTouchListener and receives events when the user taps down and
    * releases a tap from a cell, then it determines if they've clicked, double clicked, long
@@ -659,11 +707,13 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     /**
      * Constructor called by initListeners
      */
-    private CellTouchListener() {}
+    private CellTouchListener() {
+    }
 
     /**
      * Called when the user performs a tap action on a cell, including a "up" (user let go) event
-     * @param view the view that the user clicked on, expected to be a TabularView
+     *
+     * @param view  the view that the user clicked on, expected to be a TabularView
      * @param event The type of action that the user performed
      * @return whether we could handle the event or not.
      */
@@ -715,53 +765,5 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     protected abstract void takeLongClickAction(int rawX, int rawY);
 
     protected abstract void takeDoubleClickAction(int rawX, int rawY);
-  }
-
-  /**
-   * Implemented by fragments.SpreadsheetFragment
-   */
-  public interface Controller {
-
-    void headerCellClicked(CellInfo cellId);
-
-    void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
-
-    void openHeaderContextMenu(View view);
-
-    void dataCellClicked(CellInfo cellId);
-
-    void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
-
-    void openDataContextMenu(View view);
-  }
-
-  /**
-   * Get the column widths for the table. The values in the array match the
-   * order specified in the column order.
-   * <p>
-   * NB: If getting this from outside of spreadsheet view, you should really
-   * consider if you need to be accessing column widths.
-   *
-   * @return an array of the widths for each column, taken from the database
-   * @throws ServicesAvailabilityException if the database is down
-   */
-  public int[] getColumnWidths(DbHandle db) throws ServicesAvailabilityException {
-    // So what we want to do is go through and get the column widths for each
-    // column. A problem here is that there is no caching, and if you have a
-    // lot of columns you're really working the gut of the database.
-    int numberOfDisplayColumns = table.getNumberOfDisplayColumns();
-    int[] columnWidths = new int[numberOfDisplayColumns];
-    String appName = table.getAppName();
-
-    Map<String, Integer> colWidths = ColumnUtil.get()
-        .getColumnWidths(Tables.getInstance().getDatabase(), appName, db, table.getTableId(),
-            table.getColumnDefinitions());
-
-    for (int i = 0; i < numberOfDisplayColumns; i++) {
-      ColumnDefinition cd = table.getColumnByIndex(i);
-      String elementKey = cd.getElementKey();
-      columnWidths[i] = colWidths.get(elementKey);
-    }
-    return columnWidths;
   }
 }

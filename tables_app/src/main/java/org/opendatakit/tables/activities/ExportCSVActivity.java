@@ -33,9 +33,9 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
-import org.opendatakit.tables.utils.ImportExportDialog;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -85,7 +85,7 @@ public class ExportCSVActivity extends AbsBaseActivity {
   public void onCreate(Bundle savedInstanceState) {
     // We have to set the fragment manager here because if we don't, then the ImportTask will try
     // to display an alert dialog by grabbing the fragment manager
-    ImportExportDialog.fragman = getFragmentManager();
+    ImportExportDialogFragment.fragman = getFragmentManager();
     super.onCreate(savedInstanceState);
     appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (appName == null) {
@@ -153,7 +153,8 @@ public class ExportCSVActivity extends AbsBaseActivity {
    */
   private void exportSubmission() {
     String tableId = tableIds[tableSpin.getSelectedItemPosition()];
-    ImportExportDialog.newInstance(ImportExportDialog.EXPORT_IN_PROGRESS_DIALOG, this);
+    ImportExportDialogFragment
+        .newInstance(ImportExportDialogFragment.EXPORT_IN_PROGRESS_DIALOG, this);
     ExportTask task = new ExportTask(appName, this);
     task.execute(new ExportRequest(appName, tableId, qualifierTextBox.getText().toString().trim()));
   }

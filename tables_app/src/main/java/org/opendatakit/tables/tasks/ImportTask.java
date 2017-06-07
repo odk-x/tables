@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.tables.R;
 import android.os.AsyncTask;
 import org.opendatakit.builder.CsvUtil;
 import org.opendatakit.builder.CsvUtilSupervisor;
@@ -23,9 +22,10 @@ import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.ImportListener;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.ImportExportDialog;
+import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 
 /**
  * A task that imports csv files
@@ -38,13 +38,12 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
 
   // the app name
   private final String appName;
-  // a task that needs to be passed to progressDialogFragment so it can update the progress
-  // dialog's message
-  private AbsBaseActivity context;
-
   // booleans used to keep track of whether there was an error
   public boolean caughtDuplicateTableException = false;
   public boolean problemImportingKVSEntries = false;
+  // a task that needs to be passed to progressDialogFragment so it can update the progress
+  // dialog's message
+  private AbsBaseActivity context;
 
   /**
    * Constructor that stores off its arguments. Used by ImportCSVActivity
@@ -94,13 +93,13 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
 
   /**
    * Updates the open progress dialog with the new status
-   * just passes along the request to ImportExportDialog
+   * just passes along the request to ImportExportDialogFragment
    *
    * @param row the row we're currently importing
    */
   @Override
   public void updateProgressDetail(int row) {
-    ImportExportDialog.activeDialogFragment
+    ImportExportDialogFragment.activeDialogFragment
         .updateProgressDialogStatusString(context, R.string.import_in_progress_row, row);
   }
 
@@ -119,18 +118,21 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
    * message, or one of the three failure messages.
    */
   protected void onPostExecute(Boolean result) {
-    ImportExportDialog.activeDialogFragment.dismiss();
+    ImportExportDialogFragment.activeDialogFragment.dismiss();
     if (result) {
-      ImportExportDialog.newInstance(ImportExportDialog.CSVIMPORT_SUCCESS_DIALOG, context);
+      ImportExportDialogFragment
+          .newInstance(ImportExportDialogFragment.CSVIMPORT_SUCCESS_DIALOG, context);
     } else {
       if (caughtDuplicateTableException) {
-        ImportExportDialog.newInstance(ImportExportDialog.CSVIMPORT_FAIL_DUPLICATE_TABLE, context);
+        ImportExportDialogFragment
+            .newInstance(ImportExportDialogFragment.CSVIMPORT_FAIL_DUPLICATE_TABLE, context);
       } else if (problemImportingKVSEntries) {
-        ImportExportDialog
-            .newInstance(ImportExportDialog.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG,
-                context);
+        ImportExportDialogFragment.newInstance(
+            ImportExportDialogFragment.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG,
+            context);
       } else {
-        ImportExportDialog.newInstance(ImportExportDialog.CSVIMPORT_FAIL_DIALOG, context);
+        ImportExportDialogFragment
+            .newInstance(ImportExportDialogFragment.CSVIMPORT_FAIL_DIALOG, context);
       }
     }
   }

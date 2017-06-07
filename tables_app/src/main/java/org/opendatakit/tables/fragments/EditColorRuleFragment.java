@@ -47,16 +47,14 @@ import java.util.Arrays;
 public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     implements OnColorChangedListener {
 
-  private static final String TAG = EditColorRuleFragment.class.getSimpleName();
-
-  public static class IntentKeys {
-    public static final String RULE_POSITION = "rulePosition";
-  }
-
   // The keys for communicating with EditColorPreference.
   public static final String COLOR_PREF_KEY_TEXT = "textKey";
   public static final String COLOR_PREF_KEY_BACKGROUND = "backgroundKey";
-
+  /**
+   * A value signifying the fragment is being used to add a new rule.
+   */
+  public static final int INVALID_RULE_POSITION = -1;
+  private static final String TAG = EditColorRuleFragment.class.getSimpleName();
   // These are the fields that define the rule.
   private String mElementKey;
   private String mRuleValue;
@@ -74,11 +72,6 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
    */
   private int mRulePosition;
   private ColorRuleGroup.Type mColorRuleGroupType;
-
-  /**
-   * A value signifying the fragment is being used to add a new rule.
-   */
-  public static final int INVALID_RULE_POSITION = -1;
 
   /**
    * @param colorRuleGroupType
@@ -484,6 +477,10 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
   TableLevelPreferencesActivity retrieveTableLevelPreferenceActivity() {
     TableLevelPreferencesActivity result = (TableLevelPreferencesActivity) this.getActivity();
     return result;
+  }
+
+  public static class IntentKeys {
+    public static final String RULE_POSITION = "rulePosition";
   }
 
 }

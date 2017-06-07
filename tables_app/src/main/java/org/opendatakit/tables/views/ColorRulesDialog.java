@@ -47,7 +47,10 @@ import java.util.List;
 public class ColorRulesDialog extends Dialog {
 
   public static final String TAG = "DisplayPrefsDialog";
-
+  // the number of original rules. this is so we know if we need to call
+  // update or add.
+  int numOriginalRules;
+  int lastFocusedRow;
   private String appName;
   private String colName;
   private ColorRuleGroup colorRuler;
@@ -56,11 +59,7 @@ public class ColorRulesDialog extends Dialog {
   // and then the new ones we add. and then those only committed to the db
   // if they are valid rules.
   private List<ColorRule> colRules = null;
-  // the number of original rules. this is so we know if we need to call
-  // update or add.
-  int numOriginalRules;
   private List<EditText> ruleInputFields;
-  int lastFocusedRow;
 
   ColorRulesDialog(Context c, String appName, ColorRuleGroup ruler, String colName,
       String displayName) {

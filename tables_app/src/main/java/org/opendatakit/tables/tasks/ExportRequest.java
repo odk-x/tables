@@ -26,11 +26,12 @@ public class ExportRequest {
   private final String tableId;
   // the prefix for the filename of the exported csv files
   private final String fileQualifier;
+
   /**
    * All the actual exporting is handled by androidlibrary/builder/CsvUtil
    *
-   * @param appName the app name
-   * @param tableId the id of the table to export
+   * @param appName       the app name
+   * @param tableId       the id of the table to export
    * @param fileQualifier the prefix for the filename of the exported csv files
    */
   public ExportRequest(String appName, String tableId, String fileQualifier) {
@@ -41,6 +42,7 @@ public class ExportRequest {
 
   /**
    * standard getter for the app name
+   *
    * @return the app name
    */
   public String getAppName() {
@@ -49,6 +51,7 @@ public class ExportRequest {
 
   /**
    * standard getter for the table id
+   *
    * @return the id of the table to export
    */
   public String getTableId() {
@@ -57,6 +60,7 @@ public class ExportRequest {
 
   /**
    * standard getter for the file qualifier
+   *
    * @return the prefix for the csv filenames
    */
   public String getFileQualifier() {

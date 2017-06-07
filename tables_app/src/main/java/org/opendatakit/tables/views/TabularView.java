@@ -43,48 +43,30 @@ import java.util.*;
 class TabularView extends View {
 
   public static final String TAG = "TabularView";
-
-  enum TableLayoutType {
-    // NB: After the change to use SpreadsheetUserTable more heavily, there is
-    // essentially no difference between the MAIN and INDEX table types. They
-    // remain for now just for ease of debugging if for some reason it matters 
-    // in a way I don't yet see. They will probably be safe to consolidate in the
-    // future.
-    MAIN_DATA, MAIN_HEADER, INDEX_DATA, INDEX_HEADER, STATUS_DATA, STATUS_HEADER
-  }
-
+  public static final int DEFAULT_STATUS_COLUMN_WIDTH = 10;
   /**
    * The value that appears in the spreadsheet of the status column.
    */
   private static final String DEFAULT_STATUS_COLUMN_VALUE = " ";
-  public static final int DEFAULT_STATUS_COLUMN_WIDTH = 10;
   // These are the default colors for the various standard table types.
   private static final int DEFAULT_FOREGROUND_COLOR = Color.BLACK;
   private static final int DEFAULT_DATA_BACKGROUND_COLOR = Color.WHITE;
   private static final int DEFAULT_BORDER_COLOR = Color.GRAY;
   private static final int DEFAULT_HEADER_BACKGROUND_COLOR = Color.CYAN;
-
   private static final int ROW_HEIGHT_PADDING = 14;
   private static final int HORIZONTAL_CELL_PADDING = 5;
   private static final int VERTICAL_CELL_PADDING = 9;
   private static final int BORDER_WIDTH = 1;
-
   private final Controller controller;
   private final int defaultBackgroundColor;
   private final int defaultForegroundColor;
   private final int[] columnWidths;
   private final TableLayoutType type;
   private final int rowHeight;
-
-  private int totalHeight;
-  private int totalWidth;
-  private CellInfo highlightedCellInfo;
-
   private final Paint textPaint;
   private final Paint bgPaint;
   private final Paint borderPaint;
   private final Paint highlightPaint;
-
   /**
    * The abstraction of the table onto which this {@link TabularView} is
    * providing a view.
@@ -95,7 +77,11 @@ class TabularView extends View {
    * displaying. It is a (not strict) subset.
    */
   private final List<String> mElementKeys;
-
+  // trying to get the dimensions of the screen
+  private final DisplayMetrics metrics;
+  private int totalHeight;
+  private int totalWidth;
+  private CellInfo highlightedCellInfo;
   /**
    * The map of element key to {@link ColorRuleGroup} objects for the columns of
    * the table. This will be responsible for coloring the cells of a column.
@@ -108,10 +94,6 @@ class TabularView extends View {
    */
   private ColorRuleGroup mRowColorRuleGroup;
   private ColorGuideGroup mRowColorGuideGroup;
-
-  // trying to get the dimensions of the screen
-  private final DisplayMetrics metrics;
-
   // this should hold the x location of the column. so xs[12] should hold the
   // x displacement of the left side of that column.
   private int[] xs;
@@ -122,6 +104,123 @@ class TabularView extends View {
   // change based on the TableType. For instance, data objects will be all the
   // data rows of the table; the header has one row.
   private int mNumberOfRows;
+  /**
+   * Construct a TabularView. Most uses will likely be able to use one of the
+   * static factory methods.
+   * <p>
+   * A TabularView is essentially a view onto the data contained in the
+   * SpreadsheetUserTable pointed to by the table parameter. The columns it
+   * displays are must be all or a strict subset of the columns contained in the
+   * SpreadsheetUserTable. The columns it is responsible for displaying are
+   * specified by the elementKeys parameter.
+   *
+   * @param context
+   * @param controller
+   * @param tp
+   * @param table                        the {@link SpreadsheetUserTable} into which this TabularView is
+   *                                     providing a view.
+   * @param elementKeys                  the list of element keys which this tabular view is responsible
+   *                                     for displaying. E.g. if it is a data column without any frozen
+   *                                     columns, it would be the entire column order. If it was a single
+   *                                     frozen column, it would be just that element key. Must be nonzero
+   *                                     length.
+   * @param defaultForegroundColor
+   * @param defaultBackgroundColor
+   * @param borderColor
+   * @param columnWidths
+   * @param type
+   * @param fontSize
+   * @param elementKeyToColumnProperties mapping of element key to the corresponding
+   *                                     {@link ColumnDefinition} object. Must be all the columns, NOT just
+   *                                     those displayed in thie TabularView.
+   * @param elementKeyToColorRuleGroup   mapping of element key to their corresponding
+   *                                     {@link ColorRuleGroup} objects.
+   */
+  private TabularView(Context context, Controller controller, SpreadsheetUserTable table,
+      List<String> elementKeys, int defaultForegroundColor, int defaultBackgroundColor,
+      int borderColor, int[] columnWidths, TableLayoutType type, int fontSize,
+      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
+    super(context);
+    this.controller = controller;
+    this.mTable = table;
+    this.mElementKeys = elementKeys;
+    this.defaultBackgroundColor = defaultBackgroundColor;
+    this.defaultForegroundColor = defaultForegroundColor;
+    this.columnWidths = columnWidths;
+    this.type = type;
+    if (this.type == TableLayoutType.INDEX_DATA || this.type == TableLayoutType.MAIN_DATA
+        || this.type == TableLayoutType.STATUS_DATA) {
+      this.mNumberOfRows = this.mTable.getNumberOfRows();
+    } else if (this.type == TableLayoutType.INDEX_HEADER || this.type == TableLayoutType.MAIN_HEADER
+        || this.type == TableLayoutType.STATUS_HEADER) {
+      this.mNumberOfRows = 1;
+    } else {
+      WebLogger.getLogger(this.mTable.getAppName())
+          .e(TAG, "Unrecognized TableType in constructor: " + this.type.name());
+      this.mNumberOfRows = this.mTable.getNumberOfRows();
+    }
+    this.mColumnColorRules = elementKeyToColorRuleGroup;
+
+    this.mRowColorRuleGroup = rowColorRuleGroup;
+
+    // Initialized the ColorGuideGroups
+    if (mTable != null) {
+      this.mRowColorGuideGroup = new ColorGuideGroup(mRowColorRuleGroup, mTable.getUserTable());
+
+      Set<String> keys = elementKeyToColorRuleGroup.keySet();
+      for (String key : keys) {
+        ColorRuleGroup crg = elementKeyToColorRuleGroup.get(key);
+        if (crg != null) {
+          if (this.mColumnColorGuideGroup == null) {
+            this.mColumnColorGuideGroup = new TreeMap<String, ColorGuideGroup>();
+          }
+          this.mColumnColorGuideGroup.put(key, new ColorGuideGroup(crg, mTable.getUserTable()));
+        }
+      }
+    }
+
+    rowHeight = fontSize + ROW_HEIGHT_PADDING;
+    highlightedCellInfo = null;
+    textPaint = new Paint();
+    textPaint.setAntiAlias(true);
+    textPaint.setTextSize(fontSize);
+    bgPaint = new Paint();
+    bgPaint.setColor(defaultBackgroundColor);
+    borderPaint = new Paint();
+    borderPaint.setColor(borderColor);
+    highlightPaint = new Paint();
+    highlightPaint.setColor(Color.CYAN);
+    highlightPaint.setStrokeWidth(3);
+    totalHeight = (rowHeight + BORDER_WIDTH) * this.mNumberOfRows + BORDER_WIDTH;
+    totalWidth = BORDER_WIDTH;
+    for (int i = 0; i < columnWidths.length; i++) {
+      totalWidth += columnWidths[i] + BORDER_WIDTH;
+    }
+    setVerticalScrollBarEnabled(true);
+    setVerticalFadingEdgeEnabled(true);
+    setHorizontalFadingEdgeEnabled(true);
+    setMinimumHeight(totalHeight);
+    setMinimumWidth(totalWidth);
+    setClickable(true);
+    this.metrics = getResources().getDisplayMetrics();
+    if (this.mNumberOfRows > 0) {
+      this.xs = new int[this.mElementKeys.size()];
+      xs[0] = BORDER_WIDTH;
+      for (int i = 0; i < this.mElementKeys.size() - 1; i++) {
+        xs[i + 1] = xs[i] + columnWidths[i] + BORDER_WIDTH;
+      }
+    } else {
+      this.xs = new int[0];
+    }
+    this.spans = new int[xs.length];
+    if (spans.length > 0) {
+      int total = 0;
+      for (int i = 0; i < this.spans.length; i++) {
+        spans[i] = total;
+        total += BORDER_WIDTH + columnWidths[i];
+      }
+    }
+  }
 
   /**
    * Construct the data portion of the main portion of the table. Default colors
@@ -285,124 +384,6 @@ class TabularView extends View {
         TableLayoutType.STATUS_HEADER, fontSize, elementKeyToColorRuleGroup, rowColorRuleGroup);
   }
 
-  /**
-   * Construct a TabularView. Most uses will likely be able to use one of the
-   * static factory methods.
-   * <p>
-   * A TabularView is essentially a view onto the data contained in the
-   * SpreadsheetUserTable pointed to by the table parameter. The columns it
-   * displays are must be all or a strict subset of the columns contained in the
-   * SpreadsheetUserTable. The columns it is responsible for displaying are
-   * specified by the elementKeys parameter.
-   *
-   * @param context
-   * @param controller
-   * @param tp
-   * @param table                        the {@link SpreadsheetUserTable} into which this TabularView is
-   *                                     providing a view.
-   * @param elementKeys                  the list of element keys which this tabular view is responsible
-   *                                     for displaying. E.g. if it is a data column without any frozen
-   *                                     columns, it would be the entire column order. If it was a single
-   *                                     frozen column, it would be just that element key. Must be nonzero
-   *                                     length.
-   * @param defaultForegroundColor
-   * @param defaultBackgroundColor
-   * @param borderColor
-   * @param columnWidths
-   * @param type
-   * @param fontSize
-   * @param elementKeyToColumnProperties mapping of element key to the corresponding
-   *                                     {@link ColumnDefinition} object. Must be all the columns, NOT just
-   *                                     those displayed in thie TabularView.
-   * @param elementKeyToColorRuleGroup   mapping of element key to their corresponding
-   *                                     {@link ColorRuleGroup} objects.
-   */
-  private TabularView(Context context, Controller controller, SpreadsheetUserTable table,
-      List<String> elementKeys, int defaultForegroundColor, int defaultBackgroundColor,
-      int borderColor, int[] columnWidths, TableLayoutType type, int fontSize,
-      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup, ColorRuleGroup rowColorRuleGroup) {
-    super(context);
-    this.controller = controller;
-    this.mTable = table;
-    this.mElementKeys = elementKeys;
-    this.defaultBackgroundColor = defaultBackgroundColor;
-    this.defaultForegroundColor = defaultForegroundColor;
-    this.columnWidths = columnWidths;
-    this.type = type;
-    if (this.type == TableLayoutType.INDEX_DATA || this.type == TableLayoutType.MAIN_DATA
-        || this.type == TableLayoutType.STATUS_DATA) {
-      this.mNumberOfRows = this.mTable.getNumberOfRows();
-    } else if (this.type == TableLayoutType.INDEX_HEADER || this.type == TableLayoutType.MAIN_HEADER
-        || this.type == TableLayoutType.STATUS_HEADER) {
-      this.mNumberOfRows = 1;
-    } else {
-      WebLogger.getLogger(this.mTable.getAppName())
-          .e(TAG, "Unrecognized TableType in constructor: " + this.type.name());
-      this.mNumberOfRows = this.mTable.getNumberOfRows();
-    }
-    this.mColumnColorRules = elementKeyToColorRuleGroup;
-
-    this.mRowColorRuleGroup = rowColorRuleGroup;
-
-    // Initialized the ColorGuideGroups
-    if (mTable != null) {
-      this.mRowColorGuideGroup = new ColorGuideGroup(mRowColorRuleGroup, mTable.getUserTable());
-
-      Set<String> keys = elementKeyToColorRuleGroup.keySet();
-      for (String key : keys) {
-        ColorRuleGroup crg = elementKeyToColorRuleGroup.get(key);
-        if (crg != null) {
-          if (this.mColumnColorGuideGroup == null) {
-            this.mColumnColorGuideGroup = new TreeMap<String, ColorGuideGroup>();
-          }
-          this.mColumnColorGuideGroup.put(key, new ColorGuideGroup(crg, mTable.getUserTable()));
-        }
-      }
-    }
-
-    rowHeight = fontSize + ROW_HEIGHT_PADDING;
-    highlightedCellInfo = null;
-    textPaint = new Paint();
-    textPaint.setAntiAlias(true);
-    textPaint.setTextSize(fontSize);
-    bgPaint = new Paint();
-    bgPaint.setColor(defaultBackgroundColor);
-    borderPaint = new Paint();
-    borderPaint.setColor(borderColor);
-    highlightPaint = new Paint();
-    highlightPaint.setColor(Color.CYAN);
-    highlightPaint.setStrokeWidth(3);
-    totalHeight = (rowHeight + BORDER_WIDTH) * this.mNumberOfRows + BORDER_WIDTH;
-    totalWidth = BORDER_WIDTH;
-    for (int i = 0; i < columnWidths.length; i++) {
-      totalWidth += columnWidths[i] + BORDER_WIDTH;
-    }
-    setVerticalScrollBarEnabled(true);
-    setVerticalFadingEdgeEnabled(true);
-    setHorizontalFadingEdgeEnabled(true);
-    setMinimumHeight(totalHeight);
-    setMinimumWidth(totalWidth);
-    setClickable(true);
-    this.metrics = getResources().getDisplayMetrics();
-    if (this.mNumberOfRows > 0) {
-      this.xs = new int[this.mElementKeys.size()];
-      xs[0] = BORDER_WIDTH;
-      for (int i = 0; i < this.mElementKeys.size() - 1; i++) {
-        xs[i + 1] = xs[i] + columnWidths[i] + BORDER_WIDTH;
-      }
-    } else {
-      this.xs = new int[0];
-    }
-    this.spans = new int[xs.length];
-    if (spans.length > 0) {
-      int total = 0;
-      for (int i = 0; i < this.spans.length; i++) {
-        spans[i] = total;
-        total += BORDER_WIDTH + columnWidths[i];
-      }
-    }
-  }
-
   public int getTableHeight() {
     return totalHeight;
   }
@@ -458,32 +439,32 @@ class TabularView extends View {
      * tabular views. The base case for an un-indexed table is composed of a
      * main_header, main_data. It can also include an index_header, index_data,
      * if it is indexed.
-     * 
+     *
      * We want to support drawing this table efficiently. We are going to do
      * this as follows. The SpreadsheetView object contains methods to get the
      * appropriate x and y offsets of the scrolls. They are getMainScroll x and
      * y. These are coming from two different views, and are rather confusing,
      * so we will just think about them as individual entities.
-     * 
+     *
      * When we draw a table, we want always to draw the header at the top.
-     * 
+     *
      * We do not want to draw the whole spreadsheet, as this would be slower and
      * slower the more data you add. Instead we want to only draw the necessary
      * bits for the screen to display. We have the dimensions of the screen in
      * the metrics field, which is a DisplayMetrics object. We are currently
      * drawing the whole canvas. This seems ok, and we might even need to do
      * that for clipping rects.
-     * 
+     *
      * In the diagram below, we have a phone (the asterisks) viewing a small set
      * of the table. I am not bothering to draw all the rows that would fall
      * between the header and the end of table. We want to draw as little as
      * possible to still cover all that the phone would see.
-     * 
+     *
      * The arrow marked "X,Y" points to the X and y offset returned by the
      * getMainScroll methods. X is it's displacement from the left, Y is from
      * the top (of the whole canvas, I'm pretty sure). These apparently can be
      * negative during bounceback, so I am including a check to set them >= 0.
-     * 
+     *
      * To draw efficiently, there are several other things we need to know.
      * First, we need to see the leftmost column which must be drawn. The left
      * border of this column is pointed at with an L in the diagram below. We
@@ -492,7 +473,7 @@ class TabularView extends View {
      * also important to note that we need to know where the right borders of
      * these columns are, as we must tell the canvas from top left to bottom
      * right how to draw the rectangle that will become the cell.
-     * 
+     *
      * This information is stored in two separate arrays. One is the xs[] array
      * of integers, which tells where each column begins. xs[0] is the x
      * location of the zeroth column. This should always be 0 (the absolute left
@@ -501,18 +482,18 @@ class TabularView extends View {
      * each of the columns (excluding the borders, from what I can tell). At the
      * time of this writing I do not think you can alter column width, but you
      * should theoretically be able to, so we are programming it as such.
-     * 
+     *
      * The dimensions of column 7 would thus be from xs[7] to columnWidths[7],
      * and it's height would be rowHeight.
-     * 
+     *
      * It is also important to note that atm borders and cells are being drawn
      * separately. This is not ideal, but when I tried to fix it I got weird
      * behavior so for now I'm going to leave it.
-     * 
+     *
      * The header must always be drawn at location 0, as it always needs to stay
      * in the top part of the screen at location 0, even when the data
      * TabularView object is scrolling under it.
-     * 
+     *
      * We also want only to draw as many rows as necessary. These begin at the
      * top of the topmost row, the arrow labeled topTopmost in the diagram
      * below. Similarly, we need to know the top of the bottommost row, labeled
@@ -523,39 +504,39 @@ class TabularView extends View {
      * means you might have one with only 5 pixels on screen and the rest hidden
      * beneath the header, I am not sure, but it seems likely. This could
      * possibly create drawing problems? I'm not sure.)
-     * 
+     *
      * Also note that there is something not working using cell highlighting
      * when tables are indexed. It seems to only affect the right hand columns,
      * and I'm not sure why, but it is not currently a priority. TODO: fix cell
      * highlighting discussed in the previous paragraph.
-     * 
+     *
      * In the code the X,Y arrow is stored in two variables: xScroll yScroll.
-     * 
+     *
      * The leftmost column is called leftmost, and the rightmost, rightmost.
      * These are 0-indexed ints representing the ordinality of the column. The
      * fifth column (4 in a 0-indexed system) would then be in 4. leftmost
      * rightmost
-     * 
+     *
      * The left border of this column and the left border of the rightmost
      * column are thus: leftLeftmost (the L arrow) leftRightmost (the R arrow)
-     * 
+     *
      * Topmost is the topmost row, bottommost is the most bottom. topmost
      * bottommost
-     * 
+     *
      * The other two variables we need to maintain are the topmost border and
      * the leftmost border. We will draw them until we are off the screen and
      * then stop. topmostBorder leftmostBorder These are assumed to be (and are
      * by definition, I believe) xs[col] - BORDER_WIDTH.
-     * 
+     *
      * We also need to know the righthand border of the rightmost column, as
      * this is where we will be stopping drawing. rightRightmost. The definition
      * of rightRightmost is defined in the code below, but I think it is
      * basically xs[rightmost] + columnWidths[rightmost] + BORDER_WIDTH.
-     * 
+     *
      * Both leftLefmost and rightRightmost might be off the screen. In the
      * diagram below, both would be when drawing the data. The header, however,
      * never would be.
-     * 
+     *
      * ______________________________________________________________ | | |
      * |rightmost | | | | |topTopmost
      * |_______|_____|______|___________V_______________________________ |
@@ -795,6 +776,15 @@ class TabularView extends View {
     case STATUS_HEADER:
       break;
     }
+  }
+
+  enum TableLayoutType {
+    // NB: After the change to use SpreadsheetUserTable more heavily, there is
+    // essentially no difference between the MAIN and INDEX table types. They
+    // remain for now just for ease of debugging if for some reason it matters
+    // in a way I don't yet see. They will probably be safe to consolidate in the
+    // future.
+    MAIN_DATA, MAIN_HEADER, INDEX_DATA, INDEX_HEADER, STATUS_DATA, STATUS_HEADER
   }
 
   interface ColorDecider {
