@@ -104,6 +104,7 @@ class TabularView extends View {
   // change based on the TableType. For instance, data objects will be all the
   // data rows of the table; the header has one row.
   private int mNumberOfRows;
+
   /**
    * Construct a TabularView. Most uses will likely be able to use one of the
    * static factory methods.

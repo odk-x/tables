@@ -52,6 +52,7 @@ public class Launcher extends BaseActivity {
    * match, it sets the app name based on the URI. It then makes sure that the device has the
    * right folders created, has the right dependencies installed (services and io file manager),
    * and if everything is good, it makes an intent to launch the TableManager to the requested table
+   *
    * @param savedInstanceState the bundle packed by onSaveInstanceState
    */
   @Override

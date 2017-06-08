@@ -30,16 +30,6 @@ import org.opendatakit.tables.utils.IntentUtil;
  */
 public class TableLevelPreferencesActivity extends AbsTableActivity {
 
-  /**
-   * Fragment types this activity could be displaying. Used in restoring
-   * instance state.
-   *
-   * @author sudar.sam@gmail.com
-   */
-  public enum FragmentType {
-    TABLE_PREFERENCE, COLUMN_LIST, COLUMN_PRFERENCE, COLOR_RULE_LIST, STATUS_COLOR_RULE_LIST
-  }
-
   FragmentType mCurrentFragmentType;
   /**
    * The element key of the column we're displaying, if this activity is
@@ -352,6 +342,16 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
       result = this.getIntent().getStringExtra(Constants.IntentKeys.ELEMENT_KEY);
     }
     return result;
+  }
+
+  /**
+   * Fragment types this activity could be displaying. Used in restoring
+   * instance state.
+   *
+   * @author sudar.sam@gmail.com
+   */
+  public enum FragmentType {
+    TABLE_PREFERENCE, COLUMN_LIST, COLUMN_PRFERENCE, COLOR_RULE_LIST, STATUS_COLOR_RULE_LIST
   }
 
 }

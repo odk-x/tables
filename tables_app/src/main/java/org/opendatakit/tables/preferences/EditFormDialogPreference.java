@@ -35,48 +35,50 @@ import java.io.File;
 
 public class EditFormDialogPreference extends DialogPreference {
 
+  // Used for logging
   private static final String TAG = EditFormDialogPreference.class.getName();
 
+  // The context and activity we're running in
   private Context mContext;
-  private String mText;
-  // This is the Activity that calls this object.
-  private EditSavedViewEntryHandler callingActivity;
-  // The view that will be shown in the dialog.
-  private View mDialogView;
-  private FormType mFormType;
-  private EditText mFormId;
   private AbsTableActivity mActivity;
+  private FormType mFormType;
+  // The EditText that the user actually types in
+  private EditText mFormId;
 
+  /**
+   * Sets up the activity and makes sure that we're executing in a TableActivity
+   *
+   * @param context saved
+   * @param attrs   unused
+   */
   public EditFormDialogPreference(Context context, AttributeSet attrs) {
     super(context, attrs);
     this.mContext = context;
     Activity activity = (Activity) getContext();
     if (!(activity instanceof AbsTableActivity)) {
       throw new IllegalArgumentException(
-          "EditFormDialogPreference must " + "be associated with an AbsTableActivity");
+          "EditFormDialogPreference must be associated with an AbsTableActivity");
     }
     mActivity = (AbsTableActivity) activity;
   }
 
   /**
-   * A wrapper around {@link DialogPreference#showDialog}. For use in testing.
-   */
-  void showDialog() {
-    this.showDialog(getExtras());
-  }
-
-  /**
    * Retrieve the {@link FormType} for the table.
    *
-   * @return
-   * @throws ServicesAvailabilityException
+   * @return the form from the table activity
+   * @throws ServicesAvailabilityException if the database is down
    */
-  FormType retrieveFormType() throws ServicesAvailabilityException {
+  private FormType retrieveFormType() throws ServicesAvailabilityException {
     AbsTableActivity tableActivity = (AbsTableActivity) getContext();
     return FormType
         .constructFormType(tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
   }
 
+  /**
+   * Called to create a dialog view to let the user select a form
+   *
+   * @return The dialog to be displayed to the user
+   */
   @Override
   protected View onCreateDialogView() {
     AbsTableActivity tableActivity = (AbsTableActivity) getContext();
@@ -86,7 +88,6 @@ public class EditFormDialogPreference extends DialogPreference {
     LinearLayout view = (LinearLayout) inflater
         .inflate(R.layout.edit_default_form_preference, null);
     mFormId = (EditText) view.findViewById(R.id.edit_form_id);
-    this.mDialogView = view;
 
     try {
       this.mFormType = retrieveFormType();
@@ -97,25 +98,34 @@ public class EditFormDialogPreference extends DialogPreference {
     }
     this.mFormId.setEnabled(true);
     this.mFormId.setText(mFormType.getFormId());
-    return mDialogView;
+
+    return view;
   }
 
+  /**
+   * Called when the user clicks either ok or cancel
+   *
+   * @param positiveResult whether the user clicked ok or cancel
+   */
   protected void onDialogClosed(boolean positiveResult) {
     super.onDialogClosed(positiveResult);
     if (positiveResult) {
       String formId = this.mFormId.getText().toString();
-      if (formId.length() == 0) { // TODO: actually check that the form doesn't exist
-        // TODO: should throw an error or prevent the close?
+      if (formId.length() == 0) {
+        alertInvalidForm();
         return;
       }
 
+      // TODO there's a better way to do this
       String formDir = ODKFileUtils
           .getFormFolder(mActivity.getAppName(), mActivity.getTableId(), formId);
       File f = new File(formDir);
       File formDefJson = new File(f, ODKFileUtils.FORMDEF_JSON_FILENAME);
       if (!f.exists() || !f.isDirectory() || !formDefJson.exists() || !formDefJson.isFile()) {
+        alertInvalidForm();
         return;
       }
+
       this.mFormType.setFormId(formId);
       AbsTableActivity tableActivity = (AbsTableActivity) getContext();
 
@@ -128,5 +138,12 @@ public class EditFormDialogPreference extends DialogPreference {
             Toast.LENGTH_LONG).show();
       }
     }
+  }
+
+  /**
+   * Helper method to warn the user about having typed a form id for a form that doesn't exist
+   */
+  private void alertInvalidForm() {
+    Toast.makeText(mContext, mActivity.getString(R.string.invalid_form), Toast.LENGTH_LONG).show();
   }
 }

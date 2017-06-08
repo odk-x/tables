@@ -414,4 +414,6 @@
 	<string name="remove_group_by_fail">Unable to remove column from Group By list</string>
 	<string name="set_sort_column_fail">Unable to set Sort Column</string>
     <string name="set_index_column_fail">Unable to set Index Column</string>
+
+	<string name="invalid_form">That form id doesn\'t exist</string>
 </resources>

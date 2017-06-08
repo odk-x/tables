@@ -47,9 +47,6 @@ public class ImportExportDialogFragment extends DialogFragment {
   // can't use an enum because you can't (safely) put an enum in a bundle
   private static final int ALERT_DIALOG = 0;
   private static final int PROGRESS_DIALOG = 1;
-  // Used for logging
-  private String appName;
-
   // the active dialog holder. Dismissing it won't set this to null, so make sure it's still
   // displayed when you go to change its message
   public static ImportExportDialogFragment activeDialogFragment = null;
@@ -62,6 +59,8 @@ public class ImportExportDialogFragment extends DialogFragment {
   // thankfully doesn't crash the app when you call it on a destroyed object, unlike
   // getFragmentManager
   public static FragmentManager fragman = null;
+  // Used for logging
+  private String appName;
 
   /**
    * Public method that returns a new ImportExportDialogFragment. SET A FRAGMENT MANAGER BEFORE CALLING

@@ -59,18 +59,11 @@ public class MainActivity extends AbsBaseWebActivity
   private static final String TAG = MainActivity.class.getSimpleName();
   private static final String CURRENT_FRAGMENT = "currentFragment";
   private static final String QUERY_START_PARAM = "?";
-
-  public enum ScreenType {
-    INITIALIZATION_SCREEN, TABLE_MANAGER_SCREEN, ABOUT_SCREEN, WEBVIEW_SCREEN
-  }
-
   /**
    * The active screen -- retained state
    */
   ScreenType activeScreenType = ScreenType.TABLE_MANAGER_SCREEN;
-
   File webFileToDisplay = null;
-
   /**
    * used to determine whether we need to change the menu (action bar) because of a change in the
    * active fragment.
@@ -360,7 +353,7 @@ public class MainActivity extends AbsBaseWebActivity
       // and immediately clear the should-run flag...
       Tables.getInstance().clearRunInitializationTask(getAppName());
       // OK we should swap to the InitializationFragment view
-      // this will skip the transition to whatever screen we were trying to 
+      // this will skip the transition to whatever screen we were trying to
       // go to and will instead show the InitializationFragment view. We
       // restore to the desired screen via the setFragmentToShowNext()
       //
@@ -514,6 +507,10 @@ public class MainActivity extends AbsBaseWebActivity
         groupBy, havingClause, orderByElemKey, orderByDir);
 
     return params;
+  }
+
+  public enum ScreenType {
+    INITIALIZATION_SCREEN, TABLE_MANAGER_SCREEN, ABOUT_SCREEN, WEBVIEW_SCREEN
   }
 
 }

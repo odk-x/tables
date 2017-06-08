@@ -33,9 +33,8 @@ import java.lang.ref.WeakReference;
 public class OdkTables {
 
   private static final String TAG = OdkTables.class.getSimpleName();
-
-  private WeakReference<ODKWebView> mWebView;
   protected AbsBaseActivity mActivity;
+  private WeakReference<ODKWebView> mWebView;
 
   /**
    * @param activity the activity that will be holding the view

@@ -36,6 +36,7 @@ public class FormType {
   private static final String TAG = "FormType";
   private Type type;
   private SurveyFormParameters mSurveyParams;
+
   public FormType(Context context, String appName, String tableId, SurveyFormParameters params) {
     this.type = Type.SURVEY;
     this.mSurveyParams = params;

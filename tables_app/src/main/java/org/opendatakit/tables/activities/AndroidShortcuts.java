@@ -53,23 +53,6 @@ import java.util.ArrayList;
 public class AndroidShortcuts extends BaseActivity {
 
   private static final boolean EXIT = true;
-
-  private class Choice {
-    public final int iconResourceId;
-    public final Bitmap icon;
-    public final Uri command;
-    public final String name;
-    public final String appName;
-
-    public Choice(int iconResourceId, Bitmap icon, Uri command, String name, String appName) {
-      this.iconResourceId = iconResourceId;
-      this.icon = icon;
-      this.command = command;
-      this.name = name;
-      this.appName = appName;
-    }
-  }
-
   private ArrayList<Choice> choices = new ArrayList<>();
 
   /**
@@ -257,6 +240,22 @@ public class AndroidShortcuts extends BaseActivity {
    */
   @Override
   public void databaseUnavailable() {
+  }
+
+  private class Choice {
+    public final int iconResourceId;
+    public final Bitmap icon;
+    public final Uri command;
+    public final String name;
+    public final String appName;
+
+    public Choice(int iconResourceId, Bitmap icon, Uri command, String name, String appName) {
+      this.iconResourceId = iconResourceId;
+      this.icon = icon;
+      this.command = command;
+      this.name = name;
+      this.appName = appName;
+    }
   }
 
 }

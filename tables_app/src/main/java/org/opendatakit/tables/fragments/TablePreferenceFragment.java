@@ -23,7 +23,6 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
-import android.util.JsonReader;
 import android.view.ContextMenu;
 import android.widget.Toast;
 import org.opendatakit.data.ColorRuleGroup;
@@ -34,20 +33,19 @@ import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.preferences.DefaultViewTypePreference;
-import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.preferences.FileSelectorPreference;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.PreferenceUtil;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
-import java.io.StringReader;
-import java.net.ProtocolException;
 
 /**
  * Displays preferences and information surrounding a table.
@@ -56,8 +54,14 @@ import java.net.ProtocolException;
  */
 public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
 
+  // Used for logging
   private static final String TAG = TablePreferenceFragment.class.getSimpleName();
 
+  /**
+   * Called when the user opens the fragment or the fragment is resumed
+   *
+   * @param savedInstanceState the bundle that we saved when being destroyed/paused
+   */
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -66,11 +70,10 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     this.addPreferencesFromResource(R.xml.table_preference);
   }
 
-  @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-  }
-
+  /**
+   * Called when we resume. Try to initialize all the preferences in the fragment, or show a
+   * message if we can't
+   */
   @Override
   public void onResume() {
     super.onResume();
@@ -85,10 +88,17 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     }
   }
 
+  /**
+   * Called when an activity returns the UI to us.
+   *
+   * @param requestCode Which activity they're returning from
+   * @param resultCode  whether it was a success or whether it was canceled
+   * @param data        the intent that we used to start the activity
+   */
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    String fullPath = null;
-    String relativePath = null;
+    String fullPath;
+    String relativePath;
     WebLogger.getLogger(getAppName()).d(TAG, "[onActivityResult]");
 
     switch (requestCode) {
@@ -142,19 +152,18 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
   /**
    * Return the full path of the file selected from the intent.
    *
-   * @param intent
-   * @return
+   * @param intent the intent to pull the path out of
+   * @return the path
    */
   private String getFullPathFromIntent(Intent intent) {
     Uri uri = intent.getData();
-    String fullPath = uri.getPath();
-    return fullPath;
+    return uri.getPath();
   }
 
   /**
    * Sets the file name for the list view of this table.
    *
-   * @param relativePath
+   * @param relativePath the path to set the list view file to
    */
   void setListViewFileName(String relativePath) {
     try {
@@ -169,7 +178,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
   /**
    * Sets the file name for the detail view of this table.
    *
-   * @param relativePath
+   * @param relativePath the path to set the detail view file to
    */
   void setDetailViewFileName(String relativePath) {
     try {
@@ -183,7 +192,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
   /**
    * Sets the file name for the list view to be displayed in the map.
    *
-   * @param relativePath
+   * @param relativePath the path to be used to view the table on a map
    */
   void setMapListViewFileName(String relativePath) {
     try {
@@ -257,33 +266,43 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     }
   }
 
+  /**
+   * Sets up the (not editable) table display name preference's text
+   *
+   * @param db the database to pull the display name out of
+   * @throws ServicesAvailabilityException if the database is down
+   */
   private void initializeDisplayNamePreference(DbHandle db) throws ServicesAvailabilityException {
     EditTextPreference displayPref = this
         .findEditTextPreference(Constants.PreferenceKeys.Table.DISPLAY_NAME);
 
-    String rawDisplayName = TableUtil.get()
-        .getRawDisplayName(Tables.getInstance().getDatabase(), getAppName(), db, getTableId());
+    /*
+     * String rawDisplayName = TableUtil.get().getRawDisplayName(Tables.getInstance().getDatabase(), getAppName(), db, getTableId());
+     */
 
-    JsonReader parser = new JsonReader(new StringReader(rawDisplayName));
-    try {
-      parser.beginObject();
-      if (!parser.nextName().equals("text")) {
-        throw new ProtocolException();
-      }
-      rawDisplayName = parser.nextString();
-      parser.close();
-    } catch (Throwable e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-    }
-    displayPref.setSummary(rawDisplayName);
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+    String localizedDisplayName = TableUtil.get()
+        .getLocalizedDisplayName(userSelectedDefaultLocale, Tables.getInstance().getDatabase(),
+            getAppName(), db, getTableId());
+    displayPref.setSummary(localizedDisplayName);
+
   }
 
+  /**
+   * Sets up the (not editable) table id preference's text
+   */
   private void initializeTableIdPreference() {
     EditTextPreference idPref = this
         .findEditTextPreference(Constants.PreferenceKeys.Table.TABLE_ID);
     idPref.setSummary(getTableId());
   }
 
+  /**
+   * Sets up the (editable) dropdown menu for the default view type, either Spreadsheet, List or Map
+   *
+   * @throws ServicesAvailabilityException if the database is down
+   */
   private void initializeDefaultViewType() throws ServicesAvailabilityException {
     // We have to set the current default view and disable the entries that
     // don't apply to this table.
@@ -304,12 +323,15 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     });
   }
 
+  /**
+   * Does nothing, this is handled in EditFormDialogPreference
+   */
   private void initializeDefaultForm() {
-    EditFormDialogPreference formPref = (EditFormDialogPreference) this
-        .findPreference(Constants.PreferenceKeys.Table.DEFAULT_FORM);
-    // TODO:
   }
 
+  /**
+   * Sets the onClick listener for the Table Color Rules menu
+   */
   private void initializeTableColorRules() {
     Preference tableColorPref = this
         .findPreference(Constants.PreferenceKeys.Table.TABLE_COLOR_RULES);
@@ -325,6 +347,12 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     });
   }
 
+  /**
+   * Sets up the file picker option to select the list file to use
+   *
+   * @param db the database to use
+   * @throws ServicesAvailabilityException if the database is down
+   */
   private void initializeListFile(DbHandle db) throws ServicesAvailabilityException {
     FileSelectorPreference listPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.LIST_FILE);
@@ -334,6 +362,12 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         .getListViewFilename(Tables.getInstance().getDatabase(), getAppName(), db, getTableId()));
   }
 
+  /**
+   * Sets up the file picker option to select the map file to use
+   *
+   * @param db the database to use
+   * @throws ServicesAvailabilityException if the database is down
+   */
   private void initializeMapListFile(DbHandle db) throws ServicesAvailabilityException {
     FileSelectorPreference mapListPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.MAP_LIST_FILE);
@@ -346,6 +380,12 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     mapListPref.setSummary(mapListViewFileName);
   }
 
+  /**
+   * Sets up the file picker option to select the detail view file to use
+   *
+   * @param db the database to use
+   * @throws ServicesAvailabilityException if the database is down
+   */
   private void initializeDetailFile(DbHandle db) throws ServicesAvailabilityException {
     FileSelectorPreference detailPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.DETAIL_FILE);
@@ -355,6 +395,9 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         .getDetailViewFilename(Tables.getInstance().getDatabase(), getAppName(), db, getTableId()));
   }
 
+  /**
+   * Sets up the onclick listener for the (view only) Column Status Color Rules menu
+   */
   private void initializeStatusColorRules() {
     Preference statusColorPref = this
         .findPreference(Constants.PreferenceKeys.Table.STATUS_COLOR_RULES);
@@ -370,6 +413,13 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     });
   }
 
+  /**
+   * Handles the (editable) "Color Rule for Map" dropdown, with options "None", "Table Color
+   * Rules" and "Status Column Color Rules"
+   *
+   * @param db the database to use
+   * @throws ServicesAvailabilityException if the database is down
+   */
   private void initializeMapColorRule(DbHandle db) throws ServicesAvailabilityException {
     ListPreference mapColorPref = this
         .findListPreference(Constants.PreferenceKeys.Table.MAP_COLOR_RULE);
@@ -378,15 +428,19 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         .getMapListViewColorRuleInfo(Tables.getInstance().getDatabase(), getAppName(), db,
             getTableId());
 
-    String initColorType = null;
+    String initColorType;
 
     if (mvcri != null && mvcri.colorType != null) {
-      if (mvcri.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
+      switch (mvcri.colorType) {
+      case LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS:
         initColorType = getString(R.string.color_rule_type_values_status);
-      } else if (mvcri.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
+        break;
+      case LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE:
         initColorType = getString(R.string.color_rule_type_values_table);
-      } else {
+        break;
+      default:
         initColorType = getString(R.string.color_rule_type_values_none);
+        break;
       }
 
       mapColorPref.setValue(initColorType);
@@ -400,7 +454,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         WebLogger.getLogger(getAppName())
             .e(TAG, "[onPreferenceChange] for map color rule preference. Pref is: " + newValue);
         DbHandle db = null;
-        String colorRuleType = null;
+        String colorRuleType;
         try {
           String selectedValue = newValue.toString();
 
@@ -410,7 +464,6 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
 
           // Support for selectable color rules seems to have been removed
           // This should just be taken out of Tables for now
-          String colorElementKey = null;
           if (selectedValue.equals(getString(R.string.color_rule_type_values_status))) {
             colorRuleType = LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS;
           } else if (selectedValue.equals(getString(R.string.color_rule_type_values_table))) {
@@ -448,6 +501,9 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     });
   }
 
+  /**
+   * Sets up the onclick listener for opening the "Columns" list
+   */
   private void initializeColumns() {
     Preference columnPref = this.findPreference(Constants.PreferenceKeys.Table.COLUMNS);
     columnPref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
@@ -462,6 +518,12 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     });
   }
 
+  /**
+   * Helper method to get the relative path of a file from the full path
+   *
+   * @param fullPath the path to the file
+   * @return the relative path to fullPath
+   */
   private String getRelativePathOfFile(String fullPath) {
     return ODKFileUtils
         .asRelativePath(((AbsBaseActivity) getActivity()).getAppName(), new File(fullPath));

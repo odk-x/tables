@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.views;
 
-import android.content.Context;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
@@ -42,16 +41,17 @@ import java.util.Map;
  * @author Administrator
  */
 public class SpreadsheetUserTable {
-  @SuppressWarnings("unused")
-  private static final String TAG = "SpreadsheetUserTable";
-
+  // A fragment that has the ability to display a table
   private final AbsTableDisplayFragment fragment;
+
+  // Which column is indexed, if any
   private final String indexColumnElementKey;
+  // The localized display names for the columns of the table
   private final String[] header;
+  //
   private final String[] spreadsheetIndexToElementKey;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
-  private final Map<String, ArrayList<Map<String, Object>>> elementKeyToDisplayChoicesList;
-  UserTable userTable;
+  private UserTable userTable;
 
   public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws ServicesAvailabilityException {
     this.fragment = frag;
@@ -72,8 +72,7 @@ public class SpreadsheetUserTable {
 
       header = new String[colOrder.size()];
       spreadsheetIndexToElementKey = new String[colOrder.size()];
-      elementKeyToSpreadsheetIndex = new HashMap<String, Integer>();
-      elementKeyToDisplayChoicesList = new HashMap<String, ArrayList<Map<String, Object>>>();
+      elementKeyToSpreadsheetIndex = new HashMap<>();
 
       for (int i = 0; i < colOrder.size(); ++i) {
         String elementKey = colOrder.get(i);
@@ -85,10 +84,6 @@ public class SpreadsheetUserTable {
         header[i] = localizedDisplayName;
         spreadsheetIndexToElementKey[i] = elementKey;
         elementKeyToSpreadsheetIndex.put(elementKey, i);
-
-        ArrayList<Map<String, Object>> choices = ColumnUtil.get()
-            .getDisplayChoicesList(dbInterface, getAppName(), db, frag.getTableId(), elementKey);
-        elementKeyToDisplayChoicesList.put(elementKey, choices);
       }
     } finally {
       if (db != null) {
@@ -109,27 +104,11 @@ public class SpreadsheetUserTable {
     return fragment.getColumnDefinitions();
   }
 
-  public ArrayList<Map<String, Object>> getColumnDisplayChoicesList(String elementKey) {
-    return elementKeyToDisplayChoicesList.get(elementKey);
-  }
-
-  public ColorRuleGroup getColumnColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
+  ColorRuleGroup getColumnColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
       String elementKey, String[] adminColumns) throws ServicesAvailabilityException {
     return ColorRuleGroup
         .getColumnColorRuleGroup(dbInterface, getAppName(), db, getTableId(), elementKey,
             adminColumns);
-  }
-
-  public ColorRuleGroup getStatusColumnRuleGroup(UserDbInterface dbInterface, DbHandle db,
-      String[] adminColumns) throws ServicesAvailabilityException {
-    return ColorRuleGroup
-        .getStatusColumnRuleGroup(dbInterface, getAppName(), db, getTableId(), adminColumns);
-  }
-
-  public ColorRuleGroup getTableColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
-      String[] adminColumns) throws ServicesAvailabilityException {
-    return ColorRuleGroup
-        .getTableColorRuleGroup(dbInterface, getAppName(), db, getTableId(), adminColumns);
   }
 
   int getNumberOfRows() {
@@ -148,18 +127,17 @@ public class SpreadsheetUserTable {
     return table.getRowAtIndex(index);
   }
 
-  public UserTable getUserTable() {
+  UserTable getUserTable() {
     return fragment.getUserTable();
   }
 
-  public UserTable getCachedUserTable() {
+  UserTable getCachedUserTable() {
     return userTable;
   }
 
-  // ///////////////////////////////////////////////////////////////////////////
   // Whether or not we have a frozen column...
 
-  public String getIndexedColumnElementKey() {
+  String getIndexedColumnElementKey() {
     return indexColumnElementKey;
   }
 
@@ -168,7 +146,6 @@ public class SpreadsheetUserTable {
     return elementKey != null && elementKey.length() != 0;
   }
 
-  // ///////////////////////////////////
   // These need to be re-worked...
 
   public boolean hasData() {
@@ -176,7 +153,7 @@ public class SpreadsheetUserTable {
     return !(table == null || (header.length == 0));
   }
 
-  public SpreadsheetCell getSpreadsheetCell(Context context, CellInfo cellInfo) {
+  public SpreadsheetCell getSpreadsheetCell(CellInfo cellInfo) {
     SpreadsheetCell cell = new SpreadsheetCell();
     userTable = getUserTable();
     cell.rowNum = cellInfo.rowId;
@@ -191,7 +168,7 @@ public class SpreadsheetUserTable {
     return cell;
   }
 
-  public ColumnDefinition getColumnByIndex(int headerCellNum) {
+  ColumnDefinition getColumnByIndex(int headerCellNum) {
     return getColumnByElementKey(spreadsheetIndexToElementKey[headerCellNum]);
   }
 
@@ -208,7 +185,7 @@ public class SpreadsheetUserTable {
     return elementKeyToSpreadsheetIndex.get(elementKey);
   }
 
-  public int getNumberOfDisplayColumns() {
+  int getNumberOfDisplayColumns() {
     return header.length;
   }
 
@@ -217,10 +194,10 @@ public class SpreadsheetUserTable {
   }
 
   public static class SpreadsheetCell {
-    public int rowNum; // of the row
     public Row row; // the row
     public String elementKey; // of the column
-    public String displayText;
     public String value;
+    int rowNum; // of the row
+    String displayText;
   }
 }

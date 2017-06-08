@@ -37,16 +37,11 @@ import java.util.Map;
  */
 public class TableDataExecutorProcessor extends ExecutorProcessor {
 
-  private IOdkTablesActivity mActivity;
-
   protected static final String ROW_COLORS = "rowColors";
   protected static final String STATUS_COLORS = "statusColors";
   protected static final String COLUMN_COLORS = "columnColors";
   protected static final String MAP_INDEX = "mapIndex";
-
-  enum ColorRuleType {
-    TABLE, COLUMN, STATUS
-  }
+  private IOdkTablesActivity mActivity;
 
   public TableDataExecutorProcessor(ExecutorContext context, IOdkTablesActivity activity) {
     super(context);
@@ -142,5 +137,9 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
         colors.add(rco);
       }
     }
+  }
+
+  enum ColorRuleType {
+    TABLE, COLUMN, STATUS
   }
 }

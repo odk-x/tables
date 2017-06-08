@@ -179,16 +179,6 @@ public class ExportCSVActivity extends AbsBaseActivity {
   }
 
   /**
-   * Used in the view, passed to the export button
-   */
-  private class ExportButtonListener implements OnClickListener {
-    @Override
-    public void onClick(View v) {
-      exportSubmission();
-    }
-  }
-
-  /**
    * Called when the database becomes available. Sets the tableIds and tableNames
    */
   @Override
@@ -238,6 +228,16 @@ public class ExportCSVActivity extends AbsBaseActivity {
   @Override
   public void databaseUnavailable() {
     super.databaseUnavailable();
+  }
+
+  /**
+   * Used in the view, passed to the export button
+   */
+  private class ExportButtonListener implements OnClickListener {
+    @Override
+    public void onClick(View v) {
+      exportSubmission();
+    }
   }
 
 }

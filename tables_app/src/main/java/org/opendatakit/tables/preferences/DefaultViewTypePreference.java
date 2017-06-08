@@ -36,13 +36,13 @@ import java.util.Arrays;
 
 public class DefaultViewTypePreference extends ListPreference {
 
+  private final String mAppName;
   /**
    * The view types allowed for the table this preference will display.
    */
   //private TableProperties mTableProperties;
   private PossibleTableViewTypes mPossibleViewTypes;
   private Context mContext;
-  private final String mAppName;
   private CharSequence[] mEntryValues;
 
   public DefaultViewTypePreference(Context context, AttributeSet attrs) {

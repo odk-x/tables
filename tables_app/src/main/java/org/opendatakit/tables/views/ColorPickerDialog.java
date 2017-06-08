@@ -37,6 +37,7 @@ public class ColorPickerDialog extends Dialog {
   private OnColorChangedListener mListener;
   private int mInitialColor, mDefaultColor;
   private String mKey;
+
   public ColorPickerDialog(Context context, OnColorChangedListener listener, String key,
       int initialColor, int defaultColor, String title) {
     super(context);

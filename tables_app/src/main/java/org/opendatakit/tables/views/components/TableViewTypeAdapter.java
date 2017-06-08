@@ -29,10 +29,9 @@ import org.opendatakit.tables.data.PossibleTableViewTypes;
 public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
 
   private static final String TAG = TableViewTypeAdapter.class.getSimpleName();
-
+  private final String mAppName;
   private PossibleTableViewTypes mPossibleViewTypes;
   private CharSequence[] mViewTypeValues;
-  private final String mAppName;
 
   public TableViewTypeAdapter(Context context, String appName, int resource, CharSequence[] entries,
       CharSequence[] entryValues, PossibleTableViewTypes viewTypes) {

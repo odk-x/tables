@@ -483,26 +483,9 @@ public class TablePropertiesManager extends BasePreferenceActivity
     finish();
   }
 
-  private final class TableDisplayNameChangeListener implements OnPreferenceChangeListener {
-    @Override
-    public boolean onPreferenceChange(Preference preference, Object newValue) {
-      String localizedDisplayName;
-      PropertiesSingleton props = CommonToolProperties.get(getApplicationContext(), getAppName());
-      try {
-        localizedDisplayName = LocalizationUtils
-            .getLocalizedDisplayName(appName, tableId, props.getUserSelectedDefaultLocale(),
-                TableUtil.get()
-                    .atomicSetRawDisplayName(Tables.getInstance().getDatabase(), appName, tableId,
-                        (String) newValue));
-      } catch (ServicesAvailabilityException e) {
-        Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
-        init();
-        return false;
-      }
-      setTitle(getString(R.string.table_manager_title, localizedDisplayName));
-      init();
-      return false;
-    }
+  @Override
+  public void databaseAvailable() {
+    createFromDatabase();
   }
 
   // This functionality should be revisited!!
@@ -570,6 +553,34 @@ public class TablePropertiesManager extends BasePreferenceActivity
   //      return false;
   //    }
   //  }
+
+  @Override
+  public void databaseUnavailable() {
+    // TODO Auto-generated method stub
+
+  }
+
+  private final class TableDisplayNameChangeListener implements OnPreferenceChangeListener {
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object newValue) {
+      String localizedDisplayName;
+      PropertiesSingleton props = CommonToolProperties.get(getApplicationContext(), getAppName());
+      try {
+        localizedDisplayName = LocalizationUtils
+            .getLocalizedDisplayName(appName, tableId, props.getUserSelectedDefaultLocale(),
+                TableUtil.get()
+                    .atomicSetRawDisplayName(Tables.getInstance().getDatabase(), appName, tableId,
+                        (String) newValue));
+      } catch (ServicesAvailabilityException e) {
+        Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
+        init();
+        return false;
+      }
+      setTitle(getString(R.string.table_manager_title, localizedDisplayName));
+      init();
+      return false;
+    }
+  }
 
   private final class DefaultViewTypeChangeListener implements OnPreferenceChangeListener {
     @Override
@@ -644,17 +655,6 @@ public class TablePropertiesManager extends BasePreferenceActivity
           .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
       return (list.size() > 0);
     }
-  }
-
-  @Override
-  public void databaseAvailable() {
-    createFromDatabase();
-  }
-
-  @Override
-  public void databaseUnavailable() {
-    // TODO Auto-generated method stub
-
   }
 
 }

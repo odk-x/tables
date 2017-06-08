@@ -36,19 +36,23 @@ import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import java.util.Map;
 
+/**
+ * Some utilities, mostly used for launching survey
+ */
 public class ActivityUtil {
 
+  // Used for logging
   private static final String TAG = ActivityUtil.class.getSimpleName();
 
   /**
-   * Edit a row in SpreadsheetFragment
+   * Switch to survey to edit a row in SpreadsheetFragment
    *
-   * @param activity
-   * @param appName
-   * @param tableId
-   * @param orderedDefns
-   * @param row
-   * @throws ServicesAvailabilityException
+   * @param activity     the activity to use to get the intent to switch to survey
+   * @param appName      the app name
+   * @param tableId      the id for the table that contains the row to edit
+   * @param orderedDefns the columns of the table, unused
+   * @param row          the exact row to edit
+   * @throws ServicesAvailabilityException if the database is down
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
       OrderedColumns orderedDefns, Row row) throws ServicesAvailabilityException {
@@ -73,9 +77,12 @@ public class ActivityUtil {
   /**
    * Edit a row using the form specified by tableProperties. Currently used by TableDisplayActivity
    *
-   * @param activity the activity that should await the return
-   * @param rowId
-   * @throws ServicesAvailabilityException
+   * @param activity     the activity to use to make the survey form parameters
+   * @param appName      the app name
+   * @param tableId      the id of the table that contains the row to edit
+   * @param orderedDefns the columns in the table. unused
+   * @param rowId        the id of the row to edit
+   * @throws ServicesAvailabilityException if the database is down
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId,
       OrderedColumns orderedDefns, String rowId) throws ServicesAvailabilityException {
@@ -99,12 +106,12 @@ public class ActivityUtil {
    * settings will be used.  Currently used by TableDisplayActivity and LocationDialogFragment
    *
    * @param activity           the activity to launch and await the return
-   * @param appName
-   * @param tableId
-   * @param orderedDefns
+   * @param appName            the app name
+   * @param tableId            the id of the table to add a row to
+   * @param orderedDefns       the columns of the table. unused
    * @param prepopulatedValues a map of elementKey to value with which the new row should be
    *                           prepopulated.
-   * @throws ServicesAvailabilityException
+   * @throws ServicesAvailabilityException if the database is down
    */
   public static void addRow(AbsBaseActivity activity, String appName, String tableId,
       OrderedColumns orderedDefns, Map<String, Object> prepopulatedValues)
@@ -130,10 +137,10 @@ public class ActivityUtil {
    * Launches with request code
    * {@link Constants.RequestCodes#LAUNCH_TABLE_PREFS}.
    *
-   * @param activity
-   * @param appName
-   * @param tableId
-   * @param fragmentTypeToDisplay
+   * @param activity              the activity to start
+   * @param appName               the app name
+   * @param tableId               the id of the table to edit the preferences of
+   * @param fragmentTypeToDisplay put in the bundle
    */
   public static void launchTableLevelPreferencesActivity(Activity activity, String appName,
       String tableId, TableLevelPreferencesActivity.FragmentType fragmentTypeToDisplay) {
@@ -151,10 +158,10 @@ public class ActivityUtil {
    * color rules. Launches with request code
    * {@link Constants.RequestCodes#LAUNCH_COLOR_RULE_LIST}.
    *
-   * @param activity
-   * @param appName
-   * @param tableId
-   * @param elementKey
+   * @param activity   the activity to launch
+   * @param appName    the app name
+   * @param tableId    the id of the table to edit
+   * @param elementKey put in the bundle
    */
   public static void launchTablePreferenceActivityToEditColumnColorRules(Activity activity,
       String appName, String tableId, String elementKey) {
@@ -171,6 +178,7 @@ public class ActivityUtil {
   }
 
   /**
+   * This method is unused
    * Checks if the device is a tablet or a phone
    *
    * @param activityContext The Activity Context.
@@ -191,7 +199,6 @@ public class ActivityUtil {
       // DENSITY_TV=213, DENSITY_XHIGH=320
       if (metrics.densityDpi == DisplayMetrics.DENSITY_DEFAULT
           || metrics.densityDpi == DisplayMetrics.DENSITY_HIGH
-          || metrics.densityDpi == DisplayMetrics.DENSITY_MEDIUM
           || metrics.densityDpi == DisplayMetrics.DENSITY_TV
           || metrics.densityDpi == DisplayMetrics.DENSITY_XHIGH) {
         // Yes, this is a tablet!

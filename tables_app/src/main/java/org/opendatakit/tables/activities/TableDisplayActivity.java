@@ -75,24 +75,18 @@ import java.lang.reflect.Array;
 public class TableDisplayActivity extends AbsBaseWebActivity
     implements TableMapInnerFragmentListener, IOdkTablesActivity {
 
-  // Used for logging
-  private static final String TAG = TableDisplayActivity.class.getSimpleName();
-
   // Some keys for things that get saved to the instance state
   public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
   public static final String INTENT_KEY_CURRENT_FILE_NAME = "currentFileName";
   public static final String INTENT_KEY_CURRENT_SUB_FILE_NAME = "currentSubFileName";
   public static final String INTENT_KEY_QUERIES = "queries";
-
+  // Used for logging
+  private static final String TAG = TableDisplayActivity.class.getSimpleName();
   /**
-   * The fragment types this activity could be displaying.
-   *
-   * @author sudar.sam@gmail.com
+   * Keep references to all queries used to populate all fragments. Use the array index as the
+   * viewID.
    */
-  public enum ViewFragmentType {
-    SPREADSHEET, LIST, MAP, DETAIL, DETAIL_WITH_LIST, SUB_LIST
-  }
-
+  ViewDataQueryParams[] mQueries;
   /**
    * The type of fragment that is currently being displayed.
    */
@@ -104,22 +98,37 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    */
   private ViewFragmentType mOriginalFragmentType;
   private String mOriginalFileName;
-
-  /**
-   * Keep references to all queries used to populate all fragments. Use the array index as the
-   * viewID.
-   */
-  ViewDataQueryParams[] mQueries;
-
   /**
    * Cached data from database
    */
   private PossibleTableViewTypes mPossibleTableViewTypes = null;
-
   /**
    * The {@link UserTable} that is being displayed in this activity.
    */
   private UserTable mUserTable = null;
+
+  /**
+   * Casts an array of objects from Parcelable to a given class that extends Parcelable..
+   *
+   * @param clazz           the class to cast things in the array to
+   * @param parcelableArray an array of objects that all extend Parcelable and can be safely
+   *                        casted to clazz
+   * @param <T>             clazz
+   * @return parcelableArray except all the objects are of the type clazz
+   */
+  @SuppressWarnings("unchecked")
+  private static <T extends Parcelable> T[] castParcelableArray(Class<T> clazz,
+      Parcelable[] parcelableArray) {
+    if (parcelableArray == null) {
+      return null;
+    }
+    final int length = parcelableArray.length;
+    final T[] array = (T[]) Array.newInstance(clazz, length);
+    for (int i = 0; i < length; i++) {
+      array[i] = (T) parcelableArray[i];
+    }
+    return array;
+  }
 
   /**
    * If we're being created for the first time, pull the display type (list, spreadsheet, map,
@@ -192,7 +201,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * Helps restore the saved instance state, along with onCreate. It tries to pull the current
    * view type and display type, the file and sub-file names and their originals, and the queries
    *
-   * @param savedInstanceState
+   * @param savedInstanceState the instance state that we saved out when we were being
+   *                           paused/destroyed
    */
   @Override
   protected void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -226,30 +236,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Casts an array of objects from Parcelable to a given class that extends Parcelable..
-   *
-   * @param clazz           the class to cast things in the array to
-   * @param parcelableArray an array of objects that all extend Parcelable and can be safely
-   *                        casted to clazz
-   * @param <T>             clazz
-   * @return parcelableArray except all the objects are of the type clazz
-   */
-  @SuppressWarnings("unchecked")
-  private static <T extends Parcelable> T[] castParcelableArray(Class<T> clazz,
-      Parcelable[] parcelableArray) {
-    if (parcelableArray == null) {
-      return null;
-    }
-    final int length = parcelableArray.length;
-    final T[] array = (T[]) Array.newInstance(clazz, length);
-    for (int i = 0; i < length; i++) {
-      array[i] = (T) parcelableArray[i];
-    }
-    return array;
-  }
-
-  /**
    * Pulls all of the query parameters from the intent and puts them in mQueries[0
+   *
    * @param in the intent that was used to launch this TableDisplayActivity
    */
   private void readQueryFromIntent(Intent in) {
@@ -289,6 +277,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   /**
    * Saves the queries, open fragment type, file and sub-file name and original filenames and
    * fragment types to the state bundle so they can be restored later
+   *
    * @param outState the state to be saved
    */
   @Override
@@ -328,6 +317,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
   /**
    * Gets the default filename based on the passed fragment type
+   *
    * @param fragmentType the type of fragment to be used to display the table
    * @return the default filename to be used for that fragment type
    */
@@ -366,7 +356,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         SQLQueryStruct sqlQueryStruct = IntentUtil
             .getSQLQueryStructFromBundle(this.getIntent().getExtras());
         String[] emptyArray = {};
-        UserTable result = Tables.getInstance().getDatabase()
+        mUserTable = Tables.getInstance().getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
                 sqlQueryStruct.whereClause,
                 (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs,
@@ -377,7 +367,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
                 (sqlQueryStruct.orderByDirection == null) ?
                     emptyArray :
                     new String[] { sqlQueryStruct.orderByDirection }, null, null);
-        mUserTable = result;
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
       } finally {
@@ -396,7 +385,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   /**
    * If we're on a list view, pull the filename that the list view is using, otherwise return the
    * filename if possible, or null if neither of those are set
-   * @param ifChanged unused
+   *
+   * @param ifChanged  unused
    * @param fragmentID tells us whether we're looking at a list view or not
    * @return a URI to the currently open file, or null
    */
@@ -418,6 +408,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
   /**
    * Forwards the request to the map list found via the fragment manager
+   *
    * @return the index of the currently selected item in the map list, or null if no item was
    * selected
    */
@@ -435,14 +426,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   /**
    * Gets the instance id from the intent's extras bundle if we're in a detail or detail with
    * list view, otherwise returns null because we can't get an instance id from a map view
+   *
    * @return the instance id
    */
   @Override
   public String getInstanceId() {
     if (mCurrentFragmentType == ViewFragmentType.DETAIL
         || mCurrentFragmentType == ViewFragmentType.DETAIL_WITH_LIST) {
-      String rowId = IntentUtil.retrieveRowIdFromBundle(this.getIntent().getExtras());
-      return rowId;
+      return IntentUtil.retrieveRowIdFromBundle(this.getIntent().getExtras());
     }
     // map views are not considered to have a specific instanceId.
     // While one of the items happens to be distinguished, the view
@@ -459,6 +450,15 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     WebLogger.getLogger(getAppName()).d(TAG, "[onDestroy]");
   }
 
+  /**
+   * Gets the webkit object out of the fragment if we're in a list, map, detail or detail with
+   * list/sublist fragment, but not if we're in a spreadsheet fragment
+   *
+   * @param viewID used to determine which webkit object to get if we're in a list with
+   *               detail/sublist view
+   * @return the webkit object if we have one open, the specifically requested webkit object if
+   * we're in a view that has multiple webkit objects, or null if we have no webkit object open
+   */
   @Override
   public ODKWebView getWebKitView(String viewID) {
 
@@ -496,7 +496,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         if (detailWithListDetailViewFragment != null) {
           return detailWithListDetailViewFragment.getWebKit();
         }
-      } else if (viewID != null && viewID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
+      } else if (viewID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
         // webkit to get
         DetailWithListListViewFragment subListViewFragment = (DetailWithListListViewFragment) fragmentManager
             .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
@@ -510,6 +510,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return null;
   }
 
+  /**
+   * Called when the user clicks the icon with the four horizontal lines in the bar on the top.
+   * Populates the list of available view types (Spreadsheet, List and Map for most tables) and
+   * sets some options to disabled if no files are set up to be used to view like that
+   *
+   * @param menu The menu to be opened
+   * @return {@link AbsBaseActivity::onCreateOptionsMenu}
+   */
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     // clear the menu so that we don't double inflate
@@ -647,6 +655,13 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     }
   }
 
+  /**
+   * Called when an activity returns to this activity. Handles add and edit row actions
+   *
+   * @param requestCode Which activity is being returned from
+   * @param resultCode  whether the activity was successful or not
+   * @param data        The intent we used to open it
+   */
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     // for most returns, we just refresh the data set and redraw the page
@@ -675,8 +690,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     }
   }
 
+  /**
+   * Refreshes the data in the fragment
+   */
   public void refreshDataAndDisplayFragment() {
-    WebLogger.getLogger(getAppName()).d(TAG, "[refreshDataAndDisplayFragment]");
+    WebLogger.getLogger(getAppName()).d(TAG, "refreshDataAndDisplayFragment called");
     // drop cached table, if any...
     mUserTable = null;
     // drop default filenames...
@@ -688,8 +706,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * Set the current type of fragment that is being displayed.
    * Called when mocking interface.
    *
-   * @param requestedType
-   * @param fileName
+   * @param requestedType The type of fragment, a SpreadsheetFragment or something
+   * @param fileName      Used for list/map/detail/etc.. views, just stored for later
+   * @param subFileName   Used for list/map/detail/etc.. views, just stored for later
    */
   public void setCurrentFragmentType(ViewFragmentType requestedType, String fileName,
       String subFileName) {
@@ -703,6 +722,10 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     showCurrentDisplayFragment(false);
   }
 
+  /**
+   * Used in showCurrentDisplayFragment, tries to pull the possible table view types from the
+   * database and set up the default filename and sub-filename if possible
+   */
   private void possiblySupplyDefaults() {
 
     if (mPossibleTableViewTypes == null && Tables.getInstance().getDatabase() != null) {
@@ -714,7 +737,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         WebLogger.getLogger(getAppName()).e(TAG, "[databaseAvailable] unable to access database");
-        Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.error_accessing_database), Toast.LENGTH_LONG)
+            .show();
       } finally {
         if (db != null) {
           try {
@@ -723,7 +747,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName())
                 .e(TAG, "[databaseAvailable] unable to access database");
-            Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.error_accessing_database), Toast.LENGTH_LONG)
+                .show();
           }
         }
       }
@@ -932,6 +957,12 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     invalidateOptionsMenu();
   }
 
+  /**
+   * Gives new arguments to an existing fragment
+   *
+   * @param fragmentID The id of the fragment to search the fragment manager for
+   * @param args       the arguments to give to the fragment
+   */
   public void updateFragment(String fragmentID, Bundle args) {
     if (!fragmentID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
       WebLogger.getLogger(getAppName())
@@ -973,6 +1004,13 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     fragmentTransaction.commit();
   }
 
+  /**
+   * Gets the view parameters being used with that fragment
+   *
+   * @param fragmentID which fragment to get the query parameters from
+   * @return the query parameters for that fragment
+   * @throws IllegalArgumentException if the database is down
+   */
   @Override
   public ViewDataQueryParams getViewQueryParams(String fragmentID) throws IllegalArgumentException {
 
@@ -994,7 +1032,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * required due to the fact that not all the fragments make use of the same
    * children views within the activity.
    *
-   * @param viewFragmentType
+   * @param viewFragmentType the type of fragment to update
    */
   void updateChildViewVisibility(ViewFragmentType viewFragmentType) {
     // The map fragments occupy a different view than the single pane
@@ -1040,7 +1078,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     if (mapListViewFragment == null) {
       WebLogger.getLogger(getAppName())
           .e(TAG, "[onSetIndex] mapListViewFragment is null! Returning");
-      return;
     } else {
       mapListViewFragment.setIndexOfSelectedItem(i);
     }
@@ -1057,15 +1094,25 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     if (mapListViewFragment == null) {
       WebLogger.getLogger(getAppName())
           .e(TAG, "[setNoItemSelected] mapListViewFragment is null! Returning");
-      return;
     } else {
       mapListViewFragment.setNoItemSelected();
     }
   }
 
+  /**
+   * Do nothing when initialization is completed
+   */
   @Override
   public void initializationCompleted() {
+  }
 
+  /**
+   * The fragment types this activity could be displaying.
+   *
+   * @author sudar.sam@gmail.com
+   */
+  public enum ViewFragmentType {
+    SPREADSHEET, LIST, MAP, DETAIL, DETAIL_WITH_LIST, SUB_LIST
   }
 
 }

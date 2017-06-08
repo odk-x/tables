@@ -34,8 +34,6 @@ import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ActionNotAuthorizedException;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
@@ -56,16 +54,16 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Fragment responsible for displaying a spreadsheet view. This class is a
- * hideous monstrosity that was copied over largely from
- * SpreadsheetDisplayActivity in the old code. A major rewrite needs to take
- * place.
+ * Fragment responsible for displaying a spreadsheet view. This class is a hideous monstrosity
+ * that was copied over largely from SpreadsheetDisplayActivity in the old code. A major rewrite
+ * needs to take place.
  *
  * @author sudar.sam@gmail.com
  */
 public class SpreadsheetFragment extends AbsTableDisplayFragment
     implements SpreadsheetView.Controller {
 
+  // Used for logging
   private static final String TAG = SpreadsheetFragment.class.getSimpleName();
 
   // used in onContextItemSelected
@@ -249,7 +247,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
         s.append("(").append(sqlWhereClause).append(") AND ");
       }
-      List<String> newSelectionArgs = new ArrayList<String>();
+      List<String> newSelectionArgs = new ArrayList<>();
       if (sqlSelectionArgs != null) {
         newSelectionArgs.addAll(Arrays.asList(sqlSelectionArgs));
       }
@@ -317,9 +315,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   @Override
   public boolean onContextItemSelected(MenuItem item) {
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
-    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
 
     SpreadsheetCell cell;
@@ -330,13 +325,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // table has group buys, then this option is displayed in the drop down menu. It opens a
     // collection
     case MENU_ITEM_ID_HISTORY_IN:
-      cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
       openCollectionView(cell);
       return true;
     // This is in the Row Actions menu that pops up when you double click or long tap on a cell
     // if you have the permissions to open the menu
     case MENU_ITEM_ID_DELETE_ROW:
-      cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
       AlertDialog confirmDeleteAlert;
       // Prompt an alert box
       final String rowId = cell.row.getDataByKey(DataTableColumns.ID);
@@ -376,7 +371,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // This is in the same Row Actions menu as delete row
     case MENU_ITEM_ID_EDIT_ROW:
-      cell = spreadsheetTable.getSpreadsheetCell(activity, this.mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
       // It is possible that a custom form has been defined for this table.
       // We will get the strings we need, and then set the parameter object.
       try {
@@ -392,7 +387,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // Also in the row actions menu, but only if applicable
     case MENU_ITEM_ID_OPEN_JOIN_TABLE:
-      cell = spreadsheetTable.getSpreadsheetCell(getActivity(), this.mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
       ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
       // Get the JoinColumn.
       ArrayList<JoinColumn> joinColumns;
@@ -419,8 +414,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       }
 
       AlertDialog.Builder badJoinDialog;
-      // TODO should check for valid table properties and
-      // column properties here. or rather valid ids and keys.
+      // TODO should check for valid table properties and column properties here. or rather valid
+      // ids and keys.
       if (joinColumns == null || joinColumns.size() == 0) {
         badJoinDialog = new AlertDialog.Builder(this.getActivity());
         badJoinDialog.setTitle("Bad Join");
@@ -450,15 +445,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
               "Bad elementKey or tableId in open join " + "table. tableId: " + joinColumn
                   .getTableId() + " elementKey: " + joinColumn.getElementKey());
         } else {
-          String tableId = joinColumn.getTableId();
-          String elementKey = joinColumn.getElementKey();
-          String joinedColTableDisplayName;
           db = null;
           try {
             db = dbInterface.openDatabase(getAppName());
-            joinedColTableDisplayName = ColumnUtil.get()
-                .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, getAppName(), db,
-                    tableId, elementKey);
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
             WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
@@ -484,8 +473,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
           IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
           intent.putExtras(extras);
           getActivity().startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
-          // Controller.launchTableActivity(context, joinedTable,
-          // joinedTable.getDefaultViewType());
         }
       }
       return true;
@@ -578,6 +565,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
     String access = spreadsheetTable.getRowAtIndex(cellInfo.rowId)
         .getDataByKey(DataTableColumns.EFFECTIVE_ACCESS);
+    if (access == null)
+      access = "";
 
     if (access.contains("d")) {
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE,
@@ -698,7 +687,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   @Override
   public void dataCellClicked(CellInfo cellInfo) {
-    // noop
   }
 
   /**
@@ -708,7 +696,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   @Override
   public void headerCellClicked(CellInfo cellInfo) {
-    // noop
   }
 
 }

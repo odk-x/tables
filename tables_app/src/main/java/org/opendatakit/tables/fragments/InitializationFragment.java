@@ -45,21 +45,13 @@ public class InitializationFragment extends Fragment
 
   // used for logging
   private static final String TAG = InitializationFragment.class.getSimpleName();
-  private static String appName;
-
   // The layout id, used for the view inflater
   private static final int ID = R.layout.copy_expansion_files_layout;
-
-  // The types of dialogs we handle
-  private enum DialogState {
-    Init, Progress, Alert, None
-  }
-
   // keys for the data being retained
   private static final String DIALOG_TITLE = "dialogTitle";
   private static final String DIALOG_MSG = "dialogMsg";
   private static final String DIALOG_STATE = "dialogState";
-
+  private static String appName;
   // data to save across orientation changes
   private String mAlertTitle;
   private String mAlertMsg;
@@ -382,5 +374,10 @@ public class InitializationFragment extends Fragment
     if (mDialogState == DialogState.Progress) {
       updateProgressDialogMessage(getString(R.string.database_unavailable));
     }
+  }
+
+  // The types of dialogs we handle
+  private enum DialogState {
+    Init, Progress, Alert, None
   }
 }

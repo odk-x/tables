@@ -79,39 +79,6 @@ public class ImportCSVActivity extends AbsBaseActivity {
   }
 
   /**
-   * This class is used in getView, used for the onClick listener for the file picker
-   */
-  private class PickFileButtonListener implements OnClickListener {
-    private String appName;
-    private String title;
-
-    public PickFileButtonListener(String appName, String title) {
-      this.appName = appName;
-      this.title = title;
-    }
-
-    /**
-     * When the user clicks a file, try and open it. If it didn't exist, log the error and show a
-     * toast message about it
-     *
-     * @param v the view that contains the file picker that was clicked on. Unused
-     */
-    @Override
-    public void onClick(View v) {
-      Intent intent = new Intent("org.openintents.action.PICK_FILE");
-      intent.setData(Uri.parse("file://" + ODKFileUtils.getAssetsCsvFolder(appName)));
-      intent.putExtra("org.openintents.extra.TITLE", title);
-      try {
-        startActivityForResult(intent, 1);
-      } catch (ActivityNotFoundException e) {
-        WebLogger.getLogger(getAppName()).printStackTrace(e);
-        Toast.makeText(ImportCSVActivity.this, getString(R.string.file_picker_not_found),
-            Toast.LENGTH_LONG).show();
-      }
-    }
-  }
-
-  /**
    * @return the view, with all the scrollbars, buttons, EditTexts and stuff
    */
   private View getView() {
@@ -268,16 +235,6 @@ public class ImportCSVActivity extends AbsBaseActivity {
   }
 
   /**
-   * A listener for the import button. Calls importSubmission() on click.
-   */
-  private class ImportButtonListener implements OnClickListener {
-    @Override
-    public void onClick(View v) {
-      importSubmission();
-    }
-  }
-
-  /**
    * enables the import button if the database is available
    */
   @Override
@@ -293,6 +250,49 @@ public class ImportCSVActivity extends AbsBaseActivity {
   public void databaseUnavailable() {
     super.databaseUnavailable();
     this.mImportButton.setEnabled(Tables.getInstance().getDatabase() != null);
+  }
+
+  /**
+   * This class is used in getView, used for the onClick listener for the file picker
+   */
+  private class PickFileButtonListener implements OnClickListener {
+    private String appName;
+    private String title;
+
+    public PickFileButtonListener(String appName, String title) {
+      this.appName = appName;
+      this.title = title;
+    }
+
+    /**
+     * When the user clicks a file, try and open it. If it didn't exist, log the error and show a
+     * toast message about it
+     *
+     * @param v the view that contains the file picker that was clicked on. Unused
+     */
+    @Override
+    public void onClick(View v) {
+      Intent intent = new Intent("org.openintents.action.PICK_FILE");
+      intent.setData(Uri.parse("file://" + ODKFileUtils.getAssetsCsvFolder(appName)));
+      intent.putExtra("org.openintents.extra.TITLE", title);
+      try {
+        startActivityForResult(intent, 1);
+      } catch (ActivityNotFoundException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+        Toast.makeText(ImportCSVActivity.this, getString(R.string.file_picker_not_found),
+            Toast.LENGTH_LONG).show();
+      }
+    }
+  }
+
+  /**
+   * A listener for the import button. Calls importSubmission() on click.
+   */
+  private class ImportButtonListener implements OnClickListener {
+    @Override
+    public void onClick(View v) {
+      importSubmission();
+    }
   }
 
 }

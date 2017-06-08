@@ -19,7 +19,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
-import android.util.JsonReader;
 import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
@@ -30,14 +29,13 @@ import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.PreferenceUtil;
-
-import java.io.StringReader;
-import java.net.ProtocolException;
 
 /**
  * This class represents the preference pane you get from going to a table's preferences,
@@ -47,18 +45,17 @@ import java.net.ProtocolException;
  */
 public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
-  // The element key
-  private String mElementKey = null;
-
-  // Tag used for putting things in the saved instance state bundle
-  private static String COL_ELEM_KEY = "COLUMN_ELEMENT_KEY";
-
   // Used for logging
   private static final String TAG = ColumnPreferenceFragment.class.getSimpleName();
+  // Tag used for putting things in the saved instance state bundle
+  private static String COL_ELEM_KEY = "COLUMN_ELEMENT_KEY";
+  // The element key
+  private String mElementKey = null;
 
   /**
    * Called when the fragment is attached to a view, asserts that we were attached to a
    * TableLevelPreferencesActivity so that we can get the table id and app name out of it
+   *
    * @param context the context to execute in
    */
   public void onAttach(Context context) {
@@ -103,6 +100,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
   /**
    * Called when we resume, restores mElementKey (which column we represent) from the saved bundle
+   *
    * @param savedInstanceState a bundle that contains our saved element key
    */
   @Override
@@ -130,6 +128,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
   /**
    * Called when the activity is about to go away, saves the element key in the saved state so it
    * can be restored when we're recreated
+   *
    * @param outState a bundle that will be saved
    */
   @Override
@@ -141,6 +140,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
   /**
    * Internal helper method that sets up all of the preferences that get displayed to the user
+   *
    * @throws ServicesAvailabilityException if the database is down
    */
   void initializeAllPreferences() throws ServicesAvailabilityException {
@@ -154,6 +154,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
   /**
    * Handles initializing the "Display Name" preference to show to the user
+   *
    * @throws ServicesAvailabilityException if the database is down
    */
   private void initializeDisplayName() throws ServicesAvailabilityException {
@@ -161,35 +162,20 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
-    String rawDisplayName;
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());
-      rawDisplayName = ColumnUtil.get()
-          .getRawDisplayName(dbInterface, getAppName(), db, getTableId(),
-              this.retrieveColumnDefinition().getElementKey());
+      PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+      String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+      String localizedDisplayName = ColumnUtil.get()
+          .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, getAppName(), db,
+              getTableId(), retrieveColumnDefinition().getElementKey());
+      pref.setSummary(localizedDisplayName);
     } finally {
       if (db != null) {
         dbInterface.closeDatabase(getAppName(), db);
       }
     }
-
-    // For some reason rawDisplayName comes in as {"text":"real display name here"} so we need to
-    // decode it
-    JsonReader parser = new JsonReader(new StringReader(rawDisplayName));
-    try {
-      parser.beginObject();
-      if (!parser.nextName().equals("text")) {
-        throw new ProtocolException();
-      }
-      rawDisplayName = parser.nextString();
-      parser.close();
-    } catch (Throwable e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-    }
-
-    pref.setSummary(rawDisplayName);
-
   }
 
   /**
@@ -220,6 +206,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
 
   /**
    * Handles initializing the (editable!) "Column Width" preference to show to the user
+   *
    * @throws ServicesAvailabilityException if the database is down
    */
   private void initializeColumnWidth() throws ServicesAvailabilityException {
