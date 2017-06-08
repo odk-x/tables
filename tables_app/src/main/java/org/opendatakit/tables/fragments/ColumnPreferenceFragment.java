@@ -19,6 +19,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
+import android.widget.Toast;
 import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
@@ -210,7 +211,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
    * @throws ServicesAvailabilityException if the database is down
    */
   private void initializeColumnWidth() throws ServicesAvailabilityException {
-    TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
+    final TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
     final String appName = activity.getAppName();
     final EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.WIDTH);
@@ -228,6 +229,8 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
           newWidth = Integer.parseInt(newValueStr);
         } catch (NumberFormatException e) {
           WebLogger.getLogger(appName).e(TAG, "column width not an integer, doing nothing");
+          Toast.makeText(activity.getApplicationContext(), getString(R.string.invalid_integer),
+              Toast.LENGTH_LONG).show();
           return false;
         }
         if (newWidth > LocalKeyValueStoreConstants.Spreadsheet.MAX_COL_WIDTH) {
