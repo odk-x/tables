@@ -48,8 +48,6 @@ import org.opendatakit.utilities.ODKFileUtils;
 import java.io.File;
 import java.io.StringReader;
 import java.net.ProtocolException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Displays preferences and information surrounding a table.
@@ -238,7 +236,8 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         t.setDaemon(true);
         t.start();
         return;
-      } db = temp.openDatabase(getAppName());
+      }
+      db = temp.openDatabase(getAppName());
 
       this.initializeDisplayNamePreference(db);
       this.initializeTableIdPreference();
