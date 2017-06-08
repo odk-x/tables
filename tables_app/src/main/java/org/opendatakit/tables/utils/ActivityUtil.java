@@ -23,7 +23,6 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.widget.Toast;
 import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
@@ -47,15 +46,14 @@ public class ActivityUtil {
   /**
    * Switch to survey to edit a row in SpreadsheetFragment
    *
-   * @param activity     the activity to use to get the intent to switch to survey
-   * @param appName      the app name
-   * @param tableId      the id for the table that contains the row to edit
-   * @param orderedDefns the columns of the table, unused
-   * @param row          the exact row to edit
+   * @param activity the activity to use to get the intent to switch to survey
+   * @param appName  the app name
+   * @param tableId  the id for the table that contains the row to edit
+   * @param row      the exact row to edit
    * @throws ServicesAvailabilityException if the database is down
    */
-  public static void editRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, Row row) throws ServicesAvailabilityException {
+  public static void editRow(AbsBaseActivity activity, String appName, String tableId, Row row)
+      throws ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit
@@ -77,15 +75,14 @@ public class ActivityUtil {
   /**
    * Edit a row using the form specified by tableProperties. Currently used by TableDisplayActivity
    *
-   * @param activity     the activity to use to make the survey form parameters
-   * @param appName      the app name
-   * @param tableId      the id of the table that contains the row to edit
-   * @param orderedDefns the columns in the table. unused
-   * @param rowId        the id of the row to edit
+   * @param activity the activity to use to make the survey form parameters
+   * @param appName  the app name
+   * @param tableId  the id of the table that contains the row to edit
+   * @param rowId    the id of the row to edit
    * @throws ServicesAvailabilityException if the database is down
    */
-  public static void editRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, String rowId) throws ServicesAvailabilityException {
+  public static void editRow(AbsBaseActivity activity, String appName, String tableId, String rowId)
+      throws ServicesAvailabilityException {
     WebLogger.getLogger(appName).d(TAG, "[editRow] using survey form");
     SurveyFormParameters surveyFormParameters = SurveyFormParameters
         .constructSurveyFormParameters(activity, appName, tableId);
@@ -108,13 +105,11 @@ public class ActivityUtil {
    * @param activity           the activity to launch and await the return
    * @param appName            the app name
    * @param tableId            the id of the table to add a row to
-   * @param orderedDefns       the columns of the table. unused
    * @param prepopulatedValues a map of elementKey to value with which the new row should be
    *                           prepopulated.
    * @throws ServicesAvailabilityException if the database is down
    */
-  public static void addRow(AbsBaseActivity activity, String appName, String tableId,
-      OrderedColumns orderedDefns, Map<String, Object> prepopulatedValues)
+  public static void addRow(AbsBaseActivity activity, String appName, String tableId, Map<String, Object> prepopulatedValues)
       throws ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 
@@ -184,6 +179,7 @@ public class ActivityUtil {
    * @param activityContext The Activity Context.
    * @return Returns true if the device is a Tablet
    */
+  @SuppressWarnings("unused")
   public static boolean isTabletDevice(Context activityContext) {
     // Verifies if the Generalized Size of the device is XLARGE to be
     // considered a Tablet
@@ -197,13 +193,7 @@ public class ActivityUtil {
       activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
       // MDPI=160, DEFAULT=160, DENSITY_HIGH=240, DENSITY_MEDIUM=160,
       // DENSITY_TV=213, DENSITY_XHIGH=320
-      if (metrics.densityDpi == DisplayMetrics.DENSITY_DEFAULT
-          || metrics.densityDpi == DisplayMetrics.DENSITY_HIGH
-          || metrics.densityDpi == DisplayMetrics.DENSITY_TV
-          || metrics.densityDpi == DisplayMetrics.DENSITY_XHIGH) {
-        // Yes, this is a tablet!
-        return true;
-      }
+      return metrics.densityDpi >= DisplayMetrics.DENSITY_DEFAULT;
     }
     // No, this is not a tablet!
     return false;

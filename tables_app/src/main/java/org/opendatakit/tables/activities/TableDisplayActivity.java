@@ -599,7 +599,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       WebLogger.getLogger(getAppName()).d(TAG, "[onOptionsItemSelected] add selected");
       try {
         ActivityUtil
-            .addRow(this, this.getAppName(), this.getTableId(), this.getColumnDefinitions(), null);
+            .addRow(this, this.getAppName(), this.getTableId(), null);
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
@@ -622,8 +622,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       }
       try {
         ActivityUtil
-            .editRow(this, this.getAppName(), this.getTableId(), this.getColumnDefinitions(),
-                rowId);
+            .editRow(this, this.getAppName(), this.getTableId(), rowId);
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();

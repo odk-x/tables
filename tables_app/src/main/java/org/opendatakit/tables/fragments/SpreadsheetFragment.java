@@ -375,8 +375,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       // It is possible that a custom form has been defined for this table.
       // We will get the strings we need, and then set the parameter object.
       try {
-        ActivityUtil.editRow(activity, activity.getAppName(), activity.getTableId(),
-            activity.getColumnDefinitions(), cell.row);
+        ActivityUtil.editRow(activity, activity.getAppName(), activity.getTableId(), cell.row);
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
         WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");

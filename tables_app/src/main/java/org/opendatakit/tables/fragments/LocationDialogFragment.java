@@ -67,8 +67,7 @@ public class LocationDialogFragment extends DialogFragment {
             public void onClick(DialogInterface dialog, int id) {
               AbsTableActivity activity = (AbsTableActivity) getActivity();
               try {
-                ActivityUtil.addRow(activity, activity.getAppName(), activity.getTableId(),
-                    activity.getColumnDefinitions(), mapping);
+                ActivityUtil.addRow(activity, activity.getAppName(), activity.getTableId(), mapping);
               } catch (ServicesAvailabilityException e) {
                 WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
                 Toast.makeText(activity, "Unable to add row", Toast.LENGTH_LONG).show();
