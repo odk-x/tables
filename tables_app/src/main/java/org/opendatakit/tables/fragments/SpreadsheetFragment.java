@@ -23,6 +23,7 @@ import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.opendatakit.data.JoinColumn;
@@ -108,14 +109,29 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   @Override
   public View onCreateView(android.view.LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
+    theView = new LinearLayout(getActivity());
+    TextView textView = new TextView(getActivity());
+    textView.setText(getString(R.string.error_accessing_database));
+    theView.addView(textView);
+    return theView;
+  }
+  private LinearLayout theView;
+
+  /**
+   * Does nothing when the database becomes available, rather than calling super.databaseAvailable
+   */
+  @Override
+  public void databaseAvailable() {
     try {
       spreadsheetTable = new SpreadsheetUserTable(this);
       if (!spreadsheetTable.hasData()) {
         TextView textView = new TextView(getActivity());
         textView.setText(getString(R.string.no_data));
-        return textView;
+        theView.removeAllViews();
+        theView.addView(textView);
       } else {
-        return this.buildSpreadsheetView();
+        theView.removeAllViews();
+        theView.addView(buildSpreadsheetView());
       }
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
@@ -123,15 +139,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
           .e(TAG, "Error while constructing spreadsheet view: " + e.toString());
       TextView textView = new TextView(getActivity());
       textView.setText(getString(R.string.error_accessing_database));
-      return textView;
+      theView.removeAllViews();
+      theView.addView(textView);
     }
-  }
-
-  /**
-   * Does nothing when the database becomes available, rather than calling super.databaseAvailable
-   */
-  @Override
-  public void databaseAvailable() {
   }
 
   /**
