@@ -70,6 +70,8 @@ public class InitializationFragment extends Fragment
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
+    WebLogger.getLogger(appName).d(TAG, "in public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle "
+        + "savedInstanceState) {");
     appName = ((IAppAwareActivity) getActivity()).getAppName();
     View view = inflater.inflate(ID, container, false);
 
@@ -94,6 +96,7 @@ public class InitializationFragment extends Fragment
    * Starts the download task and shows the progress dialog.
    */
   private void intializeAppName() {
+    WebLogger.getLogger(appName).d(TAG, "in private void intializeAppName() {");
     // set up the first dialog, but don't show it...
     mAlertTitle = getString(R.string.configuring_app,
         getString(Tables.getInstance().getApkDisplayNameResourceId()));
@@ -114,6 +117,7 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void onSaveInstanceState(Bundle outState) {
+    WebLogger.getLogger(appName).d(TAG, "in public void onSaveInstanceState(Bundle outState) {");
     super.onSaveInstanceState(outState);
     if (mAlertTitle != null) {
       outState.putString(DIALOG_TITLE, mAlertTitle);
@@ -131,6 +135,7 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void onResume() {
+    WebLogger.getLogger(appName).d(TAG, "in public void onResume() {");
     super.onResume();
 
     if (mDialogState == DialogState.Init) {
@@ -154,6 +159,7 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void onStart() {
+    WebLogger.getLogger(appName).d(TAG, "in public void onStart() {");
     super.onStart();
     Tables.getInstance().possiblyFireDatabaseCallback(getActivity(), this);
   }
@@ -163,6 +169,7 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void onPause() {
+    WebLogger.getLogger(appName).d(TAG, "in public void onPause() {");
     FragmentManager mgr = getFragmentManager();
 
     // dismiss dialogs...
@@ -189,6 +196,8 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void initializationComplete(boolean overallSuccess, ArrayList<String> result) {
+    WebLogger.getLogger(appName).d(TAG,
+        "in public void initializationComplete(boolean overallSuccess, ArrayList<String> result) {");
     try {
       dismissProgressDialog();
     } catch (IllegalArgumentException e) {
@@ -226,6 +235,7 @@ public class InitializationFragment extends Fragment
    * existing progress dialog if one exists, otherwise creates a new dialog and shows it
    */
   private void restoreProgressDialog() {
+    WebLogger.getLogger(appName).d(TAG, "in private void restoreProgressDialog() {");
     Fragment alert = getFragmentManager().findFragmentByTag("alertDialog");
     if (alert != null) {
       ((AlertDialogFragment) alert).dismiss();
@@ -256,6 +266,7 @@ public class InitializationFragment extends Fragment
    * @param message the message to show in the progress dialog
    */
   private void updateProgressDialogMessage(String message) {
+    WebLogger.getLogger(appName).d(TAG, "in private void updateProgressDialogMessage(String message) {");
     if (mDialogState == DialogState.Progress) {
       mAlertTitle = getString(R.string.configuring_app,
           getString(Tables.getInstance().getApkDisplayNameResourceId()));
@@ -269,6 +280,7 @@ public class InitializationFragment extends Fragment
    * none in the process
    */
   private void dismissProgressDialog() {
+    WebLogger.getLogger(appName).d(TAG, "in private void dismissProgressDialog() {");
     if (mDialogState == DialogState.Progress) {
       mDialogState = DialogState.None;
     }
@@ -284,6 +296,7 @@ public class InitializationFragment extends Fragment
    * existing alert dialog if one exists, otherwise creates a new alert and shows it
    */
   private void restoreAlertDialog() {
+    WebLogger.getLogger(appName).d(TAG, "in private void restoreAlertDialog() {");
     Fragment progress = getFragmentManager().findFragmentByTag("progressDialog");
     if (progress != null) {
       ((ProgressDialogFragment) progress).dismiss();
@@ -313,6 +326,7 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void okAlertDialog() {
+    WebLogger.getLogger(appName).d(TAG, "in public void okAlertDialog() {");
     mDialogState = DialogState.None;
     ((IInitResumeActivity) getActivity()).initializationCompleted();
   }
@@ -325,6 +339,7 @@ public class InitializationFragment extends Fragment
    * @param message the message for the dialog
    */
   private void createAlertDialog(String title, String message) {
+    WebLogger.getLogger(appName).d(TAG, "in private void createAlertDialog(String title, String message) {");
     mAlertMsg = message;
     mAlertTitle = title;
     restoreAlertDialog();
@@ -337,6 +352,7 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void initializationProgressUpdate(String displayString) {
+    WebLogger.getLogger(appName).d(TAG, "in public void initializationProgressUpdate(String displayString) {");
     updateProgressDialogMessage(displayString);
   }
 
@@ -346,6 +362,7 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void cancelProgressDialog() {
+    WebLogger.getLogger(appName).d(TAG, "in public void cancelProgressDialog() {");
     WebLogger.getLogger(appName).i(TAG, "cancelProgressDialog -- calling cancelInitializationTask");
     // signal the task that we want it to be cancelled.
     // but keep the notification path...
@@ -360,6 +377,7 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void databaseAvailable() {
+    WebLogger.getLogger(appName).d(TAG, "in public void databaseAvailable() {");
     if (mDialogState == DialogState.Progress) {
       Tables.getInstance().initializeAppName(appName, this);
     }
@@ -371,6 +389,7 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void databaseUnavailable() {
+    WebLogger.getLogger(appName).d(TAG, "in public void databaseUnavailable() {");
     if (mDialogState == DialogState.Progress) {
       updateProgressDialogMessage(getString(R.string.database_unavailable));
     }
@@ -378,6 +397,6 @@ public class InitializationFragment extends Fragment
 
   // The types of dialogs we handle
   private enum DialogState {
-    Init, Progress, Alert, None
+    Init,Progress,Alert,None
   }
 }
