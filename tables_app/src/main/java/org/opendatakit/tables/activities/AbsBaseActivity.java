@@ -69,9 +69,6 @@ public abstract class AbsBaseActivity extends BaseActivity {
     this.mAppName = retrieveAppNameFromIntent();
     this.mProps = CommonToolProperties.get(this, mAppName);
     if (savedInstanceState != null) {
-      savedInstanceState
-          .setClassLoader(org.opendatakit.views.ViewDataQueryParams.class.getClassLoader());
-      // That didn't fix it
       if (savedInstanceState.containsKey(Constants.IntentKeys.ACTION_TABLE_ID)) {
         mActionTableId = savedInstanceState.getString(Constants.IntentKeys.ACTION_TABLE_ID);
         if (mActionTableId != null && mActionTableId.length() == 0) {
