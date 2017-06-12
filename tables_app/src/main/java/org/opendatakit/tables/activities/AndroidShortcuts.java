@@ -229,14 +229,14 @@ public class AndroidShortcuts extends BaseActivity {
   }
 
   /**
-   * do nothing when the database is up (rather than default to super.databaseAvailable)
+   * We have to have this method because we implement DatabaseConnectionListener
    */
   @Override
   public void databaseAvailable() {
   }
 
   /**
-   * do nothing when the database is down (rather than default to super.databaseUnavailable)
+   * We have to have this method because we implement DatabaseConnectionListener
    */
   @Override
   public void databaseUnavailable() {

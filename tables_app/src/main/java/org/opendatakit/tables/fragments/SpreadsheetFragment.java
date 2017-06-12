@@ -98,13 +98,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   }
 
   /**
-   * Called when the view needs to be displayed to the user. It returns a SpreadsheetUserTable if
-   * possible, but returns a TextView with an error message if possible
+   * Called when the view needs to be displayed to the user. Since it might called before the
+   * database is up, it just displays an error message that will be replaced when
+   * databaseAvailable is called.
    *
    * @param inflater           unused
    * @param container          unused
    * @param savedInstanceState unused
-   * @return The view to be displayed to the user
+   * @return A view with an error message
    */
   @Override
   public View onCreateView(android.view.LayoutInflater inflater, ViewGroup container,
@@ -118,7 +119,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   private LinearLayout theView;
 
   /**
-   * Does nothing when the database becomes available, rather than calling super.databaseAvailable
+   * When the database becomes available, replace the existing view with a new
+   * SpreadsheetUserTable, or an error message if we can't
    */
   @Override
   public void databaseAvailable() {

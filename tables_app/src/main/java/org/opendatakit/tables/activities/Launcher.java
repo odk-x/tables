@@ -109,14 +109,14 @@ public class Launcher extends BaseActivity {
   }
 
   /**
-   * Do nothing when the database becomes available, instead of running super.databaseAvailable
+   * We have to have this method because we implement DatabaseConnectionListener
    */
   @Override
   public void databaseAvailable() {
   }
 
   /**
-   * Do nothing when the database goes away, instead of running super.databaseUnavailable
+   * We have to have this method because we implement DatabaseConnectionListener
    */
   @Override
   public void databaseUnavailable() {
