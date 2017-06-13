@@ -24,6 +24,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.provider.ContactsContract;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -33,6 +34,7 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
@@ -73,7 +75,7 @@ import java.lang.reflect.Array;
  * @author sudar.sam@gmail.com
  */
 public class TableDisplayActivity extends AbsBaseWebActivity
-    implements TableMapInnerFragmentListener, IOdkTablesActivity {
+    implements TableMapInnerFragmentListener, IOdkTablesActivity, DatabaseConnectionListener {
 
   // Some keys for things that get saved to the instance state
   public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
@@ -305,14 +307,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     }
   }
 
-  /**
-   * Display the current fragment (which should still be around) when we resume
-   */
-  @Override
-  protected void onResume() {
-    super.onResume();
+  @Override public void databaseUnavailable() {}
 
-    showCurrentDisplayFragment(false);
+  /**
+   * Display the current fragment (which should already be around) when we resume
+   */
+  @Override public void databaseAvailable() {
+    showCurrentDisplayFragment(true);
+    WebLogger.getLogger(getAppName()).i(TAG, "databaseAvailable called");
   }
 
   /**
