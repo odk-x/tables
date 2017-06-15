@@ -91,7 +91,7 @@ public class OdkTables {
           + "support updates. Currently only DetailWithListView's Sub List supports this action");
     }
 
-    Bundle bundle = new Bundle();
+    final Bundle bundle = new Bundle();
     IntentUtil.addSQLKeysToBundle(bundle, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
         sqlOrderByElementKey, sqlOrderByDirection);
     IntentUtil.addTableIdToBundle(bundle, tableId);
@@ -100,8 +100,14 @@ public class OdkTables {
 
     switch (viewType) {
     case SUB_LIST:
-      TableDisplayActivity activity = (TableDisplayActivity) mActivity;
-      activity.updateFragment(Constants.FragmentTags.DETAIL_WITH_LIST_LIST, bundle);
+      final TableDisplayActivity activity = (TableDisplayActivity) mActivity;
+      // Run on ui thread to try and prevent a race condition with the two webkits
+      activity.runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          activity.updateFragment(Constants.FragmentTags.DETAIL_WITH_LIST_LIST, bundle);
+        }
+      });
       break;
     default: // This is unreachable
       break;

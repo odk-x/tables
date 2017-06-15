@@ -2,6 +2,8 @@ package org.opendatakit.tables.views.webkits;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.View;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.activities.IOdkTablesActivity;
 import org.opendatakit.tables.utils.Constants;
@@ -11,15 +13,18 @@ import org.opendatakit.views.ODKWebView;
  * @author mitchellsundt@gmail.com
  */
 public class OdkTablesWebView extends ODKWebView {
-  private static final String t = "OdkTablesWebView";
+  // Used for logging
+  private static final String TAG = OdkTablesWebView.class.getSimpleName();
 
+  // IGNORE THE WARNINGS
+  // This has to be a class property, or it will get garbage collected while the javascript is
+  // still trying to use it
   private OdkTables tables;
 
   public OdkTablesWebView(Context context, AttributeSet attrs) {
     super(context, attrs);
-
+    setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     AbsBaseWebActivity activity = (AbsBaseWebActivity) context;
-
     // stomp on the odkTablesIf object...
     tables = new OdkTables(activity, this);
     addJavascriptInterface(tables.getJavascriptInterfaceWithWeakReference(),
@@ -43,17 +48,19 @@ public class OdkTablesWebView extends ODKWebView {
      * NOTE: Reload the web framework only if it has changed.
      */
 
-    log.i(t, "loadPage: current loadPageUrl: " + getLoadPageUrl());
+    log.i(TAG, "loadPage: current loadPageUrl: " + getLoadPageUrl());
     String baseUrl = ((IOdkTablesActivity) getContext())
         .getUrlBaseLocation(hasPageFrameworkFinishedLoading() && getLoadPageUrl() != null,
             getContainerFragmentID());
 
     if (baseUrl != null) {
       loadPageOnUiThread(baseUrl, getContainerFragmentID(), false);
-    } else if (hasPageFrameworkFinishedLoading()) {
-      log.w(t, "loadPage: framework was loaded -- but no URL -- don't load anything!");
     } else {
-      log.w(t, "loadPage: framework did not load -- cannot load anything!");
+      if (!hasPageFrameworkFinishedLoading()) {
+        log.w(TAG, "Page framework hasn't finished loading, can't load!");
+      } else if (!hasPageFramework()) {
+        log.w(TAG, "No page framework and baseUrl is null - can't load!");
+      }
     }
 
   }
@@ -66,14 +73,14 @@ public class OdkTablesWebView extends ODKWebView {
   @Override
   public void reloadPage() {
 
-    log.i(t, "reloadPage: current loadPageUrl: " + getLoadPageUrl());
+    log.i(TAG, "reloadPage: current loadPageUrl: " + getLoadPageUrl());
     String baseUrl = ((IOdkTablesActivity) getContext())
         .getUrlBaseLocation(false, getContainerFragmentID());
 
     if (baseUrl != null) {
       loadPageOnUiThread(baseUrl, getContainerFragmentID(), true);
     } else {
-      log.w(t, "reloadPage: framework did not load -- cannot load anything!");
+      log.w(TAG, "reloadPage: framework did not load -- cannot load anything!");
     }
 
   }
