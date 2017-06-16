@@ -139,6 +139,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     theView.addView(textView);
     return theView;
   }
+
   private LinearLayout theView;
 
   /**
@@ -602,7 +603,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
           R.string.view_collection);
       mi.setIcon(R.drawable.ic_view_headline_black_24dp);
     }
-    // TODO: display value and use edit icon...
+    // Dead code, we removed the ability to edit a cell directly in tables
     //    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE,
     //        getString(R.string.edit_cell, viewString));
     //    mi.setIcon(R.drawable.ic_action_edit);
@@ -699,7 +700,16 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
 
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
-    if (groupByColumns.contains(cd.getElementKey())) {
+
+    ArrayList<String> elementKeys = TableUtil.get()
+        .getGroupByColumns(Tables.getInstance().getDatabase(), mAppName, db, getTableId());
+    //WebLogger.getLogger(mAppName).i(TAG, cd.getElementKey());
+    //WebLogger.getLogger(mAppName).i(TAG, String.format("%d", elementKeys.size()));
+    //for (String x : elementKeys) {
+      //WebLogger.getLogger(mAppName).i(TAG, x);
+    //}
+
+    if (elementKeys.contains(cd.getElementKey())) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
           getString(R.string.unset_as_group_by));
     } else if ((sortColumn != null) && cellInfo.elementKey.equals(sortColumn)) {
