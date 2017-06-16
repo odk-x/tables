@@ -31,6 +31,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.utilities.CursorUtils;
@@ -97,37 +98,40 @@ public class AndroidShortcuts extends BaseActivity {
     // Get a list of all the app names and iterate over them, adding one entry to choices for
     // each form
     File[] directories = ODKFileUtils.getAppFolders();
-    for (File app : directories) {
-      String appName = app.getName();
-      Uri uri = Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName);
-      // This will have the survey icon with a big red "App" on the top of it. The other
-      // shortcuts will just have the regular survey app icon
-      choices.add(new Choice(R.drawable.tables_app, appIcon, uri, appName, appName));
+    if (directories != null) {
+      for (File app : directories) {
+        String appName = app.getName();
+        Uri uri = Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName);
+        // This will have the survey icon with a big red "App" on the top of it. The other
+        // shortcuts will just have the regular survey app icon
+        choices.add(new Choice(R.drawable.tables_app, appIcon, uri, appName, appName));
 
-      // Iterate over all the tables in the app and add them to choices
-      Cursor c = null;
-      try {
-        c = getContentResolver()
-            .query(Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName), null, null, null,
-                null);
+        // Iterate over all the tables in the app and add them to choices
+        Cursor c = null;
+        try {
+          c = getContentResolver()
+              .query(Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName), null, null, null,
+                  null);
 
-        if (c != null && c.getCount() > 0) {
-          // Move to one before the first entry so that moveToNext will put us at the first entry
-          c.moveToPosition(-1);
-          while (c.moveToNext()) {
-            String tableName = app.getName() + " > " + CursorUtils
-                .getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
-            uri = Uri.withAppendedPath(Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
-                CursorUtils
-                    .getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
-            choices.add(new Choice(R.drawable.tables_table, tableIcon, uri, tableName, appName));
+          if (c != null && c.getCount() > 0) {
+            // Move to one before the first entry so that moveToNext will put us at the first entry
+            c.moveToPosition(-1);
+            while (c.moveToNext()) {
+              String tableName = app.getName() + " > " + CursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
+              uri = Uri.withAppendedPath(Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
+                  CursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
+              choices.add(new Choice(R.drawable.tables_table, tableIcon, uri, tableName, appName));
+            }
+          }
+        } finally {
+          if (c != null) {
+            c.close();
           }
         }
-      } finally {
-        if (c != null) {
-          c.close();
-        }
       }
+    } else {
+      Toast.makeText(getApplicationContext(), getString(R.string.file_not_under_app_dir,
+          "OpenDataKit"), Toast.LENGTH_LONG).show();
     }
 
     builder.setAdapter(new ArrayAdapter<Choice>(this, R.layout.shortcut_item, choices) {
