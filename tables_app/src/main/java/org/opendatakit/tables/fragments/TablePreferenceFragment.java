@@ -32,6 +32,7 @@ import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
@@ -52,7 +53,9 @@ import java.io.File;
  *
  * @author sudar.sam@gmail.com
  */
-public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
+public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
+    implements DatabaseConnectionListener // not really
+{
 
   // Used for logging
   private static final String TAG = TablePreferenceFragment.class.getSimpleName();
@@ -96,10 +99,49 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
    * @param data        the intent that we used to start the activity
    */
   @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+  public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+    // If the database isn't up, defer handling of the result until later because
+    // setListViewFileName calls atomicSetListViewFilename which needs the database to be up to work
+    /* this is the old way to do it, which sucked
+    if (!dbUp) {
+      if (savedIntent != null) {
+        // crash tables :(
+        throw new IllegalStateException("only queueing one activity result at a time");
+      }
+      savedReq = requestCode; savedRes = resultCode; savedIntent = data;
+      return;
+    } else {
+      savedIntent = null;
+    }
+    */
+    // this way still sucks, just slightly less
+    if (Tables.getInstance().getDatabase() == null) {
+      //WebLogger.getLogger(getAppName()).i(TAG, "Database not up yet! Sleeping");
+      Thread t = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          // sleep 100ms then hope the database is up and recurse. if it isn't, we'll sleep again
+          try {
+            Thread.sleep(100);
+          } catch (InterruptedException e) {
+          }
+          getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              onActivityResult(requestCode, resultCode, data);
+            }
+          });
+        }
+      });
+      t.setDaemon(true);
+      t.start();
+      return;
+    }
+    //WebLogger.getLogger(getAppName()).i(TAG, "Database now up, attempting");
     String fullPath;
     String relativePath;
-    WebLogger.getLogger(getAppName()).d(TAG, "[onActivityResult]");
+    // temp
+    //WebLogger.getLogger(getAppName()).i(TAG, String.format(Locale.getDefault(), "%d", requestCode));
 
     switch (requestCode) {
     case Constants.RequestCodes.CHOOSE_LIST_FILE:
@@ -107,8 +149,11 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         try {
           fullPath = getFullPathFromIntent(data);
           relativePath = getRelativePathOfFile(fullPath);
+          //WebLogger.getLogger(getAppName()).i(TAG, "Setting list file to " + relativePath);
           this.setListViewFileName(relativePath);
+          //WebLogger.getLogger(getAppName()).i(TAG, "success");
         } catch (IllegalArgumentException e) {
+          //WebLogger.getLogger(getAppName()).e(TAG, "failure");
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           Toast.makeText(getActivity(),
               getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
@@ -147,6 +192,15 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     default:
       super.onActivityResult(requestCode, resultCode, data);
     }
+    try {
+      WebLogger.getLogger(getAppName()).i(TAG, "Attempting to reinit prefs");
+      this.initializeAllPreferences();
+    } catch (ServicesAvailabilityException e) {
+      WebLogger.getLogger(getAppName()).e(TAG, "failed");
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
+    }
+
   }
 
   /**
@@ -529,4 +583,21 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         .asRelativePath(((AbsBaseActivity) getActivity()).getAppName(), new File(fullPath));
   }
 
+  //private boolean dbUp;
+  //private int savedReq, savedRes; private Intent savedIntent = null;
+  @Override
+  public void databaseAvailable() { // NOT BEING CALLED!
+    // I honestly have no idea why databaseAvailable is never being called, even down to
+    // AbsBaseActivity it should be getting this fragment from the backstack and calling it
+    WebLogger.getLogger(getAppName()).i(TAG, "databaseAvailable called!");
+    //if (!dbUp) {
+    //onActivityResult(savedReq, savedRes, savedIntent);
+    //}
+    //dbUp = true;
+  }
+
+  @Override
+  public void databaseUnavailable() {
+    //dbUp = false;
+  }
 }
