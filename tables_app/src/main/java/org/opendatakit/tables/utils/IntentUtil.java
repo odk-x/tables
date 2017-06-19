@@ -87,6 +87,19 @@ public class IntentUtil {
   }
 
   /**
+   * Thin wrapper for addSQLKeysToBundle
+   *
+   * @param bundle
+   * @param queryStruct
+   */
+  public static void addSQLQueryStructToBundle(Bundle bundle, SQLQueryStruct queryStruct) {
+    IntentUtil.addSQLKeysToBundle(bundle, queryStruct.whereClause, queryStruct.selectionArgs,
+        queryStruct.groupBy, queryStruct.having, queryStruct.orderByElementKey,
+        queryStruct.orderByDirection);
+
+  }
+
+  /**
    * Return the file name from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
    * {@link Constants.IntentKeys#FILE_NAME}.

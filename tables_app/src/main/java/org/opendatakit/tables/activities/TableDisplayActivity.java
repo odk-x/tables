@@ -31,6 +31,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -50,6 +51,7 @@ import org.opendatakit.views.ViewDataQueryParams;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 /**
  * Displays information about a table. List, Map, and Detail views are all
@@ -374,14 +376,26 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         SQLQueryStruct sqlQueryStruct = IntentUtil
             .getSQLQueryStructFromBundle(this.getIntent().getExtras());
         String[] emptyArray = {};
+
+        ArrayList<String> dbGroupBy = TableUtil.get().getGroupByColumns(Tables.getInstance()
+            .getDatabase(), getAppName(), db, getTableId());
+        String[] groupBy = dbGroupBy.toArray(new String[dbGroupBy.size()]);
+        if (groupBy.length == 0 || getIntentExtras().containsKey("intentOverridesDatabase")) {
+          groupBy = sqlQueryStruct.groupBy;
+        }
+
+        String sort = TableUtil.get().getSortColumn(Tables.getInstance()
+            .getDatabase(), getAppName(), db, getTableId());
+        if (sort == null || sort.length() == 0 || getIntentExtras().containsKey("intentOverridesDatabase")) {
+          sort = sqlQueryStruct.orderByElementKey;
+        }
+
         mUserTable = Tables.getInstance().getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
                 sqlQueryStruct.whereClause,
                 (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs,
-                (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
-                sqlQueryStruct.having, (sqlQueryStruct.orderByElementKey == null) ?
-                    emptyArray :
-                    new String[] { sqlQueryStruct.orderByElementKey },
+                (groupBy == null) ? emptyArray : groupBy,
+                sqlQueryStruct.having, (sort == null) ? emptyArray : new String[] { sort },
                 (sqlQueryStruct.orderByDirection == null) ?
                     emptyArray :
                     new String[] { sqlQueryStruct.orderByDirection }, null, null);

@@ -200,16 +200,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   void addGroupByColumn(ColumnDefinition cd) {
     try {
-      // This should work, but doesn't
       TableUtil.get()
           .atomicAddGroupByColumn(Tables.getInstance().getDatabase(), getAppName(), getTableId(),
               cd.getElementKey());
-      // This doesn't work at all
-      SQLQueryStruct queryStruct = IntentUtil
-          .getSQLQueryStructFromBundle(getActivity().getIntent().getExtras());
-      IntentUtil.addSQLKeysToBundle(getActivity().getIntent().getExtras(),
-          queryStruct.whereClause, queryStruct.selectionArgs, new String[] {cd.getElementKey()}, //<
-          queryStruct.having, queryStruct.orderByElementKey, queryStruct.orderByDirection);
     } catch (ServicesAvailabilityException e) {
       Toast.makeText(getActivity(), getString(R.string.add_group_by_fail), Toast.LENGTH_LONG)
           .show();
@@ -270,14 +263,26 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    * @param cell the cell that the user had to double tap on to get the menu open to call this
    *             method
    */
-  private void openCollectionView(SpreadsheetCell cell) {
+  private void openCollectionView(SpreadsheetCell cell) throws ServicesAvailabilityException {
     Bundle intentExtras = this.getActivity().getIntent().getExtras();
     String sqlWhereClause = intentExtras.getString(IntentKeys.SQL_WHERE);
     String[] sqlSelectionArgs = null;
     if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
       sqlSelectionArgs = intentExtras.getStringArray(IntentKeys.SQL_SELECTION_ARGS);
     }
-    String[] sqlGroupBy = intentExtras.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS);
+
+    //String[] sqlGroupBy = intentExtras.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS);
+    //TableUtil.get().getGroupByColumns(dbInterface, mAppName, dbInterface.openDatabase(mAppName),
+        //getTableId());
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    ArrayList<String> dbGroupBy = TableUtil.get().getGroupByColumns(dbInterface, getAppName(),
+        dbInterface.openDatabase(mAppName), getTableId());
+    String[] sqlGroupBy = dbGroupBy.toArray(new String[dbGroupBy.size()]);
+    if (sqlGroupBy.length == 0) {
+      sqlGroupBy = intentExtras.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS);
+    }
+
     String sqlHaving = null;
     if (sqlGroupBy != null && sqlGroupBy.length != 0) {
       sqlHaving = intentExtras.getString(IntentKeys.SQL_HAVING);
@@ -319,10 +324,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
     Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
     Bundle extras = new Bundle();
-    IntentUtil.addSQLKeysToBundle(extras, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
-        sqlOrderByElementKey, sqlOrderByDirection);
+    IntentUtil.addSQLKeysToBundle(extras, sqlWhereClause, sqlSelectionArgs, new String[0],
+        sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
     IntentUtil.addAppNameToBundle(extras, this.getAppName());
+    IntentUtil.addTableIdToBundle(extras, getTableId());
+    extras.putString("intentOverridesDatabase", "");
     intent.putExtras(extras);
     this.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
   }
@@ -382,7 +389,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // collection
     case MENU_ITEM_ID_HISTORY_IN:
       cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
-      openCollectionView(cell);
+      try {
+        openCollectionView(cell);
+      } catch (ServicesAvailabilityException e) {
+        WebLogger.getLogger(mAppName).printStackTrace(e);
+      }
       return true;
     // This is in the Row Actions menu that pops up when you double click or long tap on a cell
     // if you have the permissions to open the menu
@@ -584,10 +595,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    *
    * @return Whether group bys are displayed
    */
-  private boolean hasGroupBys() {
+  private boolean hasGroupBys() throws ServicesAvailabilityException {
     SQLQueryStruct queryStruct = IntentUtil
         .getSQLQueryStructFromBundle(this.getActivity().getIntent().getExtras());
-    return queryStruct.groupBy != null;
+    if (queryStruct.groupBy != null) return true;
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    return TableUtil.get().getGroupByColumns(dbInterface, mAppName, dbInterface.openDatabase
+        (mAppName), getTableId()).size() > 0;
   }
 
   /**
