@@ -26,6 +26,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.JoinColumn;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
@@ -199,9 +200,16 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   void addGroupByColumn(ColumnDefinition cd) {
     try {
+      // This should work, but doesn't
       TableUtil.get()
           .atomicAddGroupByColumn(Tables.getInstance().getDatabase(), getAppName(), getTableId(),
               cd.getElementKey());
+      // This doesn't work at all
+      SQLQueryStruct queryStruct = IntentUtil
+          .getSQLQueryStructFromBundle(getActivity().getIntent().getExtras());
+      IntentUtil.addSQLKeysToBundle(getActivity().getIntent().getExtras(),
+          queryStruct.whereClause, queryStruct.selectionArgs, new String[] {cd.getElementKey()}, //<
+          queryStruct.having, queryStruct.orderByElementKey, queryStruct.orderByDirection);
     } catch (ServicesAvailabilityException e) {
       Toast.makeText(getActivity(), getString(R.string.add_group_by_fail), Toast.LENGTH_LONG)
           .show();
