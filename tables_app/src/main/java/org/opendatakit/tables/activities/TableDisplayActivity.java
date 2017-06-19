@@ -313,7 +313,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * Display the current fragment (which should already be around) when we resume
    */
   @Override public void databaseAvailable() {
-    showCurrentDisplayFragment(true);
+    showCurrentDisplayFragment(false);
     WebLogger.getLogger(getAppName()).i(TAG, "databaseAvailable called");
   }
 

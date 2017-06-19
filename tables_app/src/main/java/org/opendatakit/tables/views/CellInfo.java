@@ -32,7 +32,6 @@ public class CellInfo implements Parcelable {
     this.colPos = colPos;
     this.rowId = rowId;
   }
-  // TEMP code to try and fix the crash on returning then editing a row
   @Override
   public int describeContents() {
     return 0;
@@ -63,5 +62,4 @@ public class CellInfo implements Parcelable {
       return new CellInfo[size];
     }
   };
-  // end temp
 }

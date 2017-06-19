@@ -19,7 +19,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -88,7 +87,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   private CellInfo mLastDataCellMenued;
   private CellInfo mLastHeaderCellMenued;
 
-  // TEMP code to try and fix the crash on returning then editing a row
   @Override
   public void onSaveInstanceState(Bundle out) {
     super.onSaveInstanceState(out);
@@ -101,14 +99,15 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     if (savedInstanceState != null) {
       if (savedInstanceState.containsKey("data")) {
         mLastDataCellMenued = savedInstanceState.getParcelable("data");
-        Log.i(TAG, "Restoring data cell!");
+        WebLogger.getLogger(mAppName).i(TAG, "Restoring data cell!");
       }
       if (savedInstanceState.containsKey("header")) {
         mLastHeaderCellMenued = savedInstanceState.getParcelable("header");
       }
+    } else {
+      WebLogger.getLogger(mAppName).i(TAG, "First instantiation");
     }
   }
-  // end temp
 
   /**
    * returns spreadsheet
@@ -414,7 +413,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // This is in the same Row Actions menu as delete row
     case MENU_ITEM_ID_EDIT_ROW:
-      Log.i(TAG, "spreadsheetTable is " + (spreadsheetTable == null ? "null" : "not null") + " "
+      WebLogger.getLogger(mAppName).i(TAG, "spreadsheetTable is " + (spreadsheetTable == null ? "null" : "not null") + " "
           + "and lastDataCellMenu'd is " + (mLastDataCellMenued == null ? "null" : "not null"));
       cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
       // It is possible that a custom form has been defined for this table.
@@ -589,7 +588,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       throws ServicesAvailabilityException {
 
     this.mLastDataCellMenued = cellInfo;
-    Log.i(TAG, "setting lastDataCellMenu'd to " + (mLastDataCellMenued == null ? "null" : mLastDataCellMenued.toString()));
+    WebLogger.getLogger(mAppName).i(TAG, "setting lastDataCellMenu'd to " + (mLastDataCellMenued == null ? "null" : mLastDataCellMenued.toString()));
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
