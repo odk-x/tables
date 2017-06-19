@@ -38,6 +38,7 @@ import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.fragments.WebFragment;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.views.ODKWebView;
 import org.opendatakit.views.OdkData;
@@ -490,21 +491,18 @@ public class MainActivity extends AbsBaseWebActivity
 
     Bundle bundle = this.getIntentExtras();
 
-    String tableId = bundle.getString(OdkData.IntentKeys.TABLE_ID);
+    String tableId = IntentUtil.retrieveTableIdFromBundle(bundle);
+    String rowId = IntentUtil.retrieveRowIdFromBundle(bundle);
     if (tableId == null || tableId.isEmpty()) {
       throw new IllegalArgumentException("Tables view launched without tableId specified");
     }
 
-    String rowId = bundle.getString(IntentConsts.INTENT_KEY_INSTANCE_ID);
-    String whereClause = bundle.getString(Constants.IntentKeys.SQL_WHERE);
-    String[] selArgs = bundle.getStringArray(Constants.IntentKeys.SQL_SELECTION_ARGS);
-    String[] groupBy = bundle.getStringArray(Constants.IntentKeys.SQL_GROUP_BY_ARGS);
-    String havingClause = bundle.getString(Constants.IntentKeys.SQL_HAVING);
-    String orderByElemKey = bundle.getString(Constants.IntentKeys.SQL_ORDER_BY_ELEMENT_KEY);
-    String orderByDir = bundle.getString(Constants.IntentKeys.SQL_ORDER_BY_DIRECTION);
+    SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(bundle);
 
-    ViewDataQueryParams params = new ViewDataQueryParams(tableId, rowId, whereClause, selArgs,
-        groupBy, havingClause, orderByElemKey, orderByDir);
+    ViewDataQueryParams params = new ViewDataQueryParams(tableId, rowId,
+        sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
+        sqlQueryStruct.groupBy, sqlQueryStruct.having,
+        sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
 
     return params;
   }

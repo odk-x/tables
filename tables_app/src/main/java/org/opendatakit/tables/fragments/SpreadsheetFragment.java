@@ -30,6 +30,7 @@ import org.opendatakit.data.JoinColumn;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ActionNotAuthorizedException;
@@ -49,6 +50,7 @@ import org.opendatakit.tables.views.CellInfo;
 import org.opendatakit.tables.views.SpreadsheetUserTable;
 import org.opendatakit.tables.views.SpreadsheetUserTable.SpreadsheetCell;
 import org.opendatakit.tables.views.SpreadsheetView;
+import org.opendatakit.views.ViewDataQueryParams;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -237,36 +239,18 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   private void openCollectionView(SpreadsheetCell cell) {
     Bundle intentExtras = this.getActivity().getIntent().getExtras();
-    String sqlWhereClause = intentExtras.getString(IntentKeys.SQL_WHERE);
-    String[] sqlSelectionArgs = null;
-    if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
-      sqlSelectionArgs = intentExtras.getStringArray(IntentKeys.SQL_SELECTION_ARGS);
-    }
-    String[] sqlGroupBy = intentExtras.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS);
-    String sqlHaving = null;
-    if (sqlGroupBy != null && sqlGroupBy.length != 0) {
-      sqlHaving = intentExtras.getString(IntentKeys.SQL_HAVING);
-    }
-    String sqlOrderByElementKey = intentExtras.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY);
-    String sqlOrderByDirection = null;
-    if (sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0) {
-      sqlOrderByDirection = intentExtras.getString(IntentKeys.SQL_ORDER_BY_DIRECTION);
-      if (sqlOrderByDirection == null || sqlOrderByDirection.length() == 0) {
-        sqlOrderByDirection = "ASC";
-      }
-    }
 
-    if (sqlGroupBy != null && sqlGroupBy.length != 0) {
+    SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(intentExtras);
+
+    if (sqlQueryStruct.groupBy != null && sqlQueryStruct.groupBy.length != 0) {
       StringBuilder s = new StringBuilder();
-      if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
-        s.append("(").append(sqlWhereClause).append(") AND ");
+      if (sqlQueryStruct.whereClause != null && sqlQueryStruct.whereClause.length() != 0) {
+        s.append("(").append(sqlQueryStruct.whereClause).append(") AND ");
       }
-      List<String> newSelectionArgs = new ArrayList<>();
-      if (sqlSelectionArgs != null) {
-        newSelectionArgs.addAll(Arrays.asList(sqlSelectionArgs));
-      }
+      ArrayList<Object> newSelectionArgs = new ArrayList<Object>();
+      newSelectionArgs.addAll(Arrays.asList(sqlQueryStruct.selectionArgs.bindArgs));
       boolean first = true;
-      for (String groupByColumn : sqlGroupBy) {
+      for (String groupByColumn : sqlQueryStruct.groupBy) {
         if (!first) {
           s.append(", ");
         }
@@ -279,15 +263,19 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
           newSelectionArgs.add(value);
         }
       }
-      sqlWhereClause = s.toString();
-      sqlSelectionArgs = newSelectionArgs.toArray(new String[newSelectionArgs.size()]);
+      sqlQueryStruct.whereClause = s.toString();
+      sqlQueryStruct.selectionArgs =
+          new BindArgs(newSelectionArgs.toArray(new Object[newSelectionArgs.size()]));
     }
+
     Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
     Bundle extras = new Bundle();
-    IntentUtil.addSQLKeysToBundle(extras, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
-        sqlOrderByElementKey, sqlOrderByDirection);
-    IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
     IntentUtil.addAppNameToBundle(extras, this.getAppName());
+    IntentUtil.addTableIdToBundle(extras, this.getTableId());
+    IntentUtil.addSQLKeysToBundle(extras, sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
+        sqlQueryStruct.groupBy, sqlQueryStruct.having,
+        sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
+    IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
     intent.putExtras(extras);
     this.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
   }

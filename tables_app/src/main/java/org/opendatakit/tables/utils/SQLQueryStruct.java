@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.utils;
 
+import org.opendatakit.database.queries.BindArgs;
+
 /**
  * Basic holder for the components of a SQL query.
  *
@@ -23,13 +25,13 @@ package org.opendatakit.tables.utils;
 public class SQLQueryStruct {
 
   public String whereClause;
-  public String[] selectionArgs;
+  public BindArgs selectionArgs;
   public String[] groupBy;
   public String having;
   public String orderByElementKey;
   public String orderByDirection;
 
-  public SQLQueryStruct(String whereClause, String[] selectionArgs, String[] groupBy, String having,
+  public SQLQueryStruct(String whereClause, BindArgs selectionArgs, String[] groupBy, String having,
       String orderByElementKey, String orderByDirection) {
     this.whereClause = whereClause;
     this.selectionArgs = selectionArgs;

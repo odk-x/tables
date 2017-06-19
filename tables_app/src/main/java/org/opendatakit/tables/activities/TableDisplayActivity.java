@@ -246,33 +246,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     if (mQueries == null) {
       mQueries = new ViewDataQueryParams[2]; // We currently can have a maximum of two fragments
     }
-    String tableId = in.hasExtra(IntentConsts.INTENT_KEY_TABLE_ID) ?
-        in.getStringExtra(IntentConsts.INTENT_KEY_TABLE_ID) :
-        null;
-    String rowId = in.hasExtra(IntentConsts.INTENT_KEY_INSTANCE_ID) ?
-        in.getStringExtra(IntentConsts.INTENT_KEY_INSTANCE_ID) :
-        null;
-    String whereClause = in.hasExtra(Constants.IntentKeys.SQL_WHERE) ?
-        in.getStringExtra(Constants.IntentKeys.SQL_WHERE) :
-        null;
-    String[] selArgs = in.hasExtra(Constants.IntentKeys.SQL_SELECTION_ARGS) ?
-        in.getStringArrayExtra(Constants.IntentKeys.SQL_SELECTION_ARGS) :
-        null;
-    String[] groupBy = in.hasExtra(Constants.IntentKeys.SQL_GROUP_BY_ARGS) ?
-        in.getStringArrayExtra(Constants.IntentKeys.SQL_GROUP_BY_ARGS) :
-        null;
-    String having = in.hasExtra(Constants.IntentKeys.SQL_HAVING) ?
-        in.getStringExtra(Constants.IntentKeys.SQL_HAVING) :
-        null;
-    String orderByElemKey = in.hasExtra(Constants.IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) ?
-        in.getStringExtra(Constants.IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) :
-        null;
-    String orderByDir = in.hasExtra(Constants.IntentKeys.SQL_ORDER_BY_DIRECTION) ?
-        in.getStringExtra(Constants.IntentKeys.SQL_ORDER_BY_DIRECTION) :
-        null;
+    String tableId = IntentUtil.retrieveTableIdFromBundle(in.getExtras());
+    String rowId = IntentUtil.retrieveRowIdFromBundle(in.getExtras());
+    SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(in.getExtras());
 
-    ViewDataQueryParams queryParams = new ViewDataQueryParams(tableId, rowId, whereClause, selArgs,
-        groupBy, having, orderByElemKey, orderByDir);
+    ViewDataQueryParams queryParams = new ViewDataQueryParams(tableId, rowId,
+        sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
+        sqlQueryStruct.groupBy, sqlQueryStruct.having, sqlQueryStruct.orderByElementKey,
+        sqlQueryStruct.orderByDirection);
     mQueries[0] = queryParams;
   }
 
@@ -982,6 +963,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     String rowId = IntentUtil.retrieveRowIdFromBundle(args);
     mCurrentSubFileName = IntentUtil.retrieveFileNameFromBundle(args);
     SQLQueryStruct query = IntentUtil.getSQLQueryStructFromBundle(args);
+
     ViewDataQueryParams queryParams = new ViewDataQueryParams(tableId, rowId, query.whereClause,
         query.selectionArgs, query.groupBy, query.having, query.orderByElementKey,
         query.orderByElementKey);

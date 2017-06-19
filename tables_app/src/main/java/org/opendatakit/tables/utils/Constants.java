@@ -87,8 +87,11 @@ public class Constants {
      * to the expectations of simpleQuery() AIDL.
      */
     public static final String SQL_WHERE = "sqlWhereClause";
+
     /**
-     * An array of strings for restricting the rows displayed in the table.
+     * A JSON serialization of an array of bind parameters.
+     * This allows for integer, numeric, boolean and string values to be
+     * passed through to the SQLite layer.
      */
     public static final String SQL_SELECTION_ARGS = "sqlSelectionArgs";
     /**

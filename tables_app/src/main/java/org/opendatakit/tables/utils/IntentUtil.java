@@ -18,6 +18,7 @@ package org.opendatakit.tables.utils;
 import android.os.Bundle;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
@@ -63,25 +64,38 @@ public class IntentUtil {
    * @return
    */
   public static SQLQueryStruct getSQLQueryStructFromBundle(Bundle bundle) {
-    String sqlWhereClause = bundle.getString(IntentKeys.SQL_WHERE);
-    String[] sqlSelectionArgs = null;
-    if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
-      sqlSelectionArgs = bundle.getStringArray(IntentKeys.SQL_SELECTION_ARGS);
+    String sqlWhereClause = bundle.containsKey(IntentKeys.SQL_WHERE) ?
+              bundle.getString(IntentKeys.SQL_WHERE) : null;
+
+    BindArgs sqlBindArgs;
+    {
+      String sqlSelectionArgsString = null;
+      if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
+        sqlSelectionArgsString = bundle.containsKey(IntentKeys.SQL_SELECTION_ARGS) ?
+            bundle.getString(IntentKeys.SQL_SELECTION_ARGS) :
+            null;
+      }
+      sqlBindArgs = new BindArgs(sqlSelectionArgsString);
     }
-    String[] sqlGroupBy = bundle.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS);
+
+    String[] sqlGroupBy = bundle.containsKey(IntentKeys.SQL_GROUP_BY_ARGS) ?
+        bundle.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS) : null;
     String sqlHaving = null;
     if (sqlGroupBy != null && sqlGroupBy.length != 0) {
-      sqlHaving = bundle.getString(IntentKeys.SQL_HAVING);
+      sqlHaving = bundle.containsKey(IntentKeys.SQL_HAVING) ?
+          bundle.getString(IntentKeys.SQL_HAVING) : null;
     }
-    String sqlOrderByElementKey = bundle.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY);
+    String sqlOrderByElementKey = bundle.containsKey(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) ?
+        bundle.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) : null;
     String sqlOrderByDirection = null;
     if (sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0) {
-      sqlOrderByDirection = bundle.getString(IntentKeys.SQL_ORDER_BY_DIRECTION);
+      sqlOrderByDirection = bundle.containsKey(IntentKeys.SQL_ORDER_BY_DIRECTION) ?
+          bundle.getString(IntentKeys.SQL_ORDER_BY_DIRECTION) : null;
       if (sqlOrderByDirection == null || sqlOrderByDirection.length() == 0) {
         sqlOrderByDirection = "ASC";
       }
     }
-    SQLQueryStruct result = new SQLQueryStruct(sqlWhereClause, sqlSelectionArgs, sqlGroupBy,
+    SQLQueryStruct result = new SQLQueryStruct(sqlWhereClause, sqlBindArgs, sqlGroupBy,
         sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     return result;
   }
@@ -268,7 +282,7 @@ public class IntentUtil {
    * @param orderByElementKey
    * @param orderByDirection
    */
-  public static void addSQLKeysToBundle(Bundle bundle, String whereClause, String[] selectionArgs,
+  public static void addSQLKeysToBundle(Bundle bundle, String whereClause, BindArgs selectionArgs,
       String[] groupBy, String having, String orderByElementKey, String orderByDirection) {
     addWhereClauseToBundle(bundle, whereClause);
     addSelectionArgsToBundle(bundle, selectionArgs);
@@ -327,9 +341,9 @@ public class IntentUtil {
    * @param bundle
    * @param selectionArgs
    */
-  public static void addSelectionArgsToBundle(Bundle bundle, String[] selectionArgs) {
+  public static void addSelectionArgsToBundle(Bundle bundle, BindArgs selectionArgs) {
     if (bundle != null && selectionArgs != null) {
-      bundle.putStringArray(IntentKeys.SQL_SELECTION_ARGS, selectionArgs);
+      bundle.putString(IntentKeys.SQL_SELECTION_ARGS, selectionArgs.asJSON());
     }
   }
 
