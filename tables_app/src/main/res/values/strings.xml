@@ -403,6 +403,7 @@
 	<string name="select_odk_shortcut">Select ODK Shortcut</string>
 
 	<string name="row_actions">Row actions</string>
+	<string name="column_actions">Column actions</string>
 	<string name="view_collection">View Collection</string>
 	<string name="unset_as_group_by">Unset as group by</string>
 	<string name="unset_as_sort">Unset as sort</string>

@@ -147,6 +147,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   @Override
   public void databaseAvailable() {
+    WebLogger.getLogger(getAppName()).i(TAG, "SpreadsheetFragment databaseAvailable called");
     try {
       spreadsheetTable = new SpreadsheetUserTable(this);
       if (!spreadsheetTable.hasData()) {
@@ -167,6 +168,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       theView.removeAllViews();
       theView.addView(textView);
     }
+  }
+
+  @Override public void onResume() {
+    super.onResume();
+    WebLogger.getLogger(mAppName).i(TAG, "onResume done being called");
   }
 
   /**
@@ -690,25 +696,24 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       indexColumn = TableUtil.get()
           .getIndexColumn(Tables.getInstance().getDatabase(), getAppName(), db, getTableId());
       groupByColumns = TableUtil.get()
-          .getColumnOrder(Tables.getInstance().getDatabase(), getAppName(), db, getTableId(),
-              spreadsheetTable.getColumnDefinitions());
+          .getGroupByColumns(Tables.getInstance().getDatabase(), mAppName, db, getTableId());
     } finally {
       if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
 
+    menu.setHeaderTitle(getString(R.string.column_actions));
+
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
 
-    ArrayList<String> elementKeys = TableUtil.get()
-        .getGroupByColumns(Tables.getInstance().getDatabase(), mAppName, db, getTableId());
     //WebLogger.getLogger(mAppName).i(TAG, cd.getElementKey());
     //WebLogger.getLogger(mAppName).i(TAG, String.format("%d", elementKeys.size()));
-    //for (String x : elementKeys) {
+    //for (String x : groupByColumns) {
       //WebLogger.getLogger(mAppName).i(TAG, x);
     //}
 
-    if (elementKeys.contains(cd.getElementKey())) {
+    if (groupByColumns.contains(cd.getElementKey())) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
           getString(R.string.unset_as_group_by));
     } else if ((sortColumn != null) && cellInfo.elementKey.equals(sortColumn)) {

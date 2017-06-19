@@ -313,8 +313,24 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * Display the current fragment (which should already be around) when we resume
    */
   @Override public void databaseAvailable() {
-    showCurrentDisplayFragment(false);
     WebLogger.getLogger(getAppName()).i(TAG, "databaseAvailable called");
+    showCurrentDisplayFragment(false);
+
+    /*
+     * super.databaseAvailable() should find the top fragment on the back stack and call
+     * databaseAvailable on it, but sometimes the back stack takes a while to populate with the
+     * new fragment, so instead of calling super.databaseAvailable() here we just get the
+     * fragment by its ID and call it ourselves
+     */
+    this.runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        Fragment f = getFragmentManager().findFragmentByTag(mCurrentFragmentType.name());
+        if (f instanceof DatabaseConnectionListener) {
+          ((DatabaseConnectionListener) f).databaseAvailable();
+        }
+      }
+    });
   }
 
   /**
@@ -700,6 +716,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     mUserTable = null;
     // drop default filenames...
     mPossibleTableViewTypes = null;
+    // destroy and recreate fragment
     showCurrentDisplayFragment(true);
   }
 
@@ -846,15 +863,17 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       if (spreadsheetFragment == null || createNew) {
         if (spreadsheetFragment != null) {
           WebLogger.getLogger(getAppName())
-              .d(TAG, "[showSpreadsheetFragment] removing existing fragment");
+              .i(TAG, "[showSpreadsheetFragment] removing existing fragment");
           // Get rid of the existing fragment
           fragmentTransaction.remove(spreadsheetFragment);
         }
+        WebLogger.getLogger(getAppName()).i(TAG, "Creating NEW spreadsheet fragment");
         spreadsheetFragment = new SpreadsheetFragment();
         fragmentTransaction
             .add(R.id.activity_table_display_activity_one_pane_content, spreadsheetFragment,
                 mCurrentFragmentType.name());
       } else {
+        WebLogger.getLogger(getAppName()).i(TAG, "Showing existing spreadsheet fragment");
         fragmentTransaction.show(spreadsheetFragment);
       }
       break;
