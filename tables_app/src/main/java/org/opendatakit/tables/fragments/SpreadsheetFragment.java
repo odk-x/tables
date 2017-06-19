@@ -19,6 +19,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -84,9 +85,30 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
   private SpreadsheetUserTable spreadsheetTable;
 
-  private static CellInfo mLastDataCellMenued;
-  private static CellInfo mLastHeaderCellMenued;
+  private CellInfo mLastDataCellMenued;
+  private CellInfo mLastHeaderCellMenued;
 
+  // TEMP code to try and fix the crash on returning then editing a row
+  @Override
+  public void onSaveInstanceState(Bundle out) {
+    super.onSaveInstanceState(out);
+    out.putParcelable("data", mLastDataCellMenued);
+    out.putParcelable("header", mLastHeaderCellMenued);
+  }
+
+  @Override public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    if (savedInstanceState != null) {
+      if (savedInstanceState.containsKey("data")) {
+        mLastDataCellMenued = savedInstanceState.getParcelable("data");
+        Log.i(TAG, "Restoring data cell!");
+      }
+      if (savedInstanceState.containsKey("header")) {
+        mLastHeaderCellMenued = savedInstanceState.getParcelable("header");
+      }
+    }
+  }
+  // end temp
 
   /**
    * returns spreadsheet
@@ -332,11 +354,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
 
     // TEMP code to try and fix the crash on return-edit
-    //if (spreadsheetTable == null) {
-      //if (dbInterface == null) return false;
-      //databaseAvailable();
-      //if (spreadsheetTable == null) return false;
-    //}
+    if (spreadsheetTable == null) {
+      if (dbInterface == null) return false;
+      databaseAvailable();
+      if (spreadsheetTable == null) return false;
+    }
     // end temp
     SpreadsheetCell cell;
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
@@ -346,13 +368,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // table has group buys, then this option is displayed in the drop down menu. It opens a
     // collection
     case MENU_ITEM_ID_HISTORY_IN:
-      cell = spreadsheetTable.getSpreadsheetCell(mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
       openCollectionView(cell);
       return true;
     // This is in the Row Actions menu that pops up when you double click or long tap on a cell
     // if you have the permissions to open the menu
     case MENU_ITEM_ID_DELETE_ROW:
-      cell = spreadsheetTable.getSpreadsheetCell(mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
       AlertDialog confirmDeleteAlert;
       // Prompt an alert box
       final String rowId = cell.row.getDataByKey(DataTableColumns.ID);
@@ -392,9 +414,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // This is in the same Row Actions menu as delete row
     case MENU_ITEM_ID_EDIT_ROW:
-      //Log.i(TAG, "spreadsheetTable is " + (spreadsheetTable == null ? "null" : "not null") + " "
-          //+ "and lastDataCellMenu'd is " + (mLastDataCellMenued == null ? "null" : "not null"));
-      cell = spreadsheetTable.getSpreadsheetCell(mLastDataCellMenued);
+      Log.i(TAG, "spreadsheetTable is " + (spreadsheetTable == null ? "null" : "not null") + " "
+          + "and lastDataCellMenu'd is " + (mLastDataCellMenued == null ? "null" : "not null"));
+      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
       // It is possible that a custom form has been defined for this table.
       // We will get the strings we need, and then set the parameter object.
       try {
@@ -409,7 +431,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // Also in the row actions menu, but only if applicable
     case MENU_ITEM_ID_OPEN_JOIN_TABLE:
-      cell = spreadsheetTable.getSpreadsheetCell(mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
       ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
       // Get the JoinColumn.
       ArrayList<JoinColumn> joinColumns;
@@ -502,19 +524,19 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // shows up as "Unset as Group By". It's in the red cross issue tracker
     case MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY:
       addGroupByColumn(
-          spreadsheetTable.getColumnByElementKey(mLastHeaderCellMenued.elementKey));
+          spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
       init();
       return true;
     // In the same context menu you get from double tapping on a column heading
     case MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY:
       removeGroupByColumn(
-          spreadsheetTable.getColumnByElementKey(mLastHeaderCellMenued.elementKey));
+          spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
       init();
       return true;
     // In the same context menu you get from double tapping on a column heading
     case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
       setColumnAsSort(
-          spreadsheetTable.getColumnByElementKey(mLastHeaderCellMenued.elementKey));
+          spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
       init();
       return true;
     // In the same context menu
@@ -524,7 +546,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     case MENU_ITEM_ID_SET_AS_INDEXED_COL:
       setColumnAsIndexedCol(
-          spreadsheetTable.getColumnByElementKey(mLastHeaderCellMenued.elementKey));
+          spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
       init();
       return true;
     case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
@@ -533,7 +555,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // In the same context menu you get from double tapping on a column heading
     case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
-      String elementKey =mLastHeaderCellMenued.elementKey;
+      String elementKey = this.mLastHeaderCellMenued.elementKey;
       ActivityUtil
           .launchTablePreferenceActivityToEditColumnColorRules(this.getActivity(), getAppName(),
               getTableId(), elementKey);
@@ -566,8 +588,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo)
       throws ServicesAvailabilityException {
 
-    mLastDataCellMenued = cellInfo;
-    //Log.i(TAG, "setting lastDataCellMenu'd to " + (mLastDataCellMenued == null ? "null" : mLastDataCellMenued.toString()));
+    this.mLastDataCellMenued = cellInfo;
+    Log.i(TAG, "setting lastDataCellMenu'd to " + (mLastDataCellMenued == null ? "null" : mLastDataCellMenued.toString()));
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
@@ -656,7 +678,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   @Override
   public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo)
       throws ServicesAvailabilityException {
-    mLastHeaderCellMenued = cellInfo;
+    this.mLastHeaderCellMenued = cellInfo;
 
     String sortColumn;
     String indexColumn;
