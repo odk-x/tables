@@ -117,9 +117,11 @@ public class AndroidShortcuts extends BaseActivity {
             // Move to one before the first entry so that moveToNext will put us at the first entry
             c.moveToPosition(-1);
             while (c.moveToNext()) {
-              String tableName = app.getName() + " > " + CursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
+              String tableId =  CursorUtils.getIndexAsString(c, c.getColumnIndex
+                  (TableDefinitionsColumns.TABLE_ID));
+              String tableName = app.getName() + " > " + tableId;
               uri = Uri.withAppendedPath(Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
-                  CursorUtils.getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID)));
+                  tableId);
               choices.add(new Choice(R.drawable.tables_table, tableIcon, uri, tableName, appName));
             }
           }

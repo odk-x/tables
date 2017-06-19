@@ -48,7 +48,6 @@ public class OdkTablesIf {
    * @return true if the open succeeded
    */
   @android.webkit.JavascriptInterface
-  @SuppressWarnings("unused")
   public boolean setSubListView(String tableId, String whereClause, String[] selectionArgs,
       String relativePath) {
     if (isInactive())

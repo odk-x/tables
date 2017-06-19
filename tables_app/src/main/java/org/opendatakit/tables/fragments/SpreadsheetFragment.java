@@ -669,8 +669,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       indexColumn = TableUtil.get()
           .getIndexColumn(Tables.getInstance().getDatabase(), getAppName(), db, getTableId());
       groupByColumns = TableUtil.get()
-          .getColumnOrder(Tables.getInstance().getDatabase(), getAppName(), db, getTableId(),
-              spreadsheetTable.getColumnDefinitions());
+          .getGroupByColumns(Tables.getInstance().getDatabase(), getAppName(), db, getTableId());
     } finally {
       if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
@@ -679,15 +678,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
 
-    ArrayList<String> elementKeys = TableUtil.get()
-        .getGroupByColumns(Tables.getInstance().getDatabase(), mAppName, db, getTableId());
-    //WebLogger.getLogger(mAppName).i(TAG, cd.getElementKey());
-    //WebLogger.getLogger(mAppName).i(TAG, String.format("%d", elementKeys.size()));
-    //for (String x : elementKeys) {
-      //WebLogger.getLogger(mAppName).i(TAG, x);
-    //}
-
-    if (elementKeys.contains(cd.getElementKey())) {
+    if (groupByColumns.contains(cd.getElementKey())) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
           getString(R.string.unset_as_group_by));
     } else if ((sortColumn != null) && cellInfo.elementKey.equals(sortColumn)) {
