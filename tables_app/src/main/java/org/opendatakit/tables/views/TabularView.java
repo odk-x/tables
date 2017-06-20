@@ -726,10 +726,11 @@ class TabularView extends View {
             backgroundColor = rowGuide.getBackground();
           }
         }
-        if (type == TableLayoutType.MAIN_HEADER) {
+        if (type == TableLayoutType.MAIN_HEADER || type == TableLayoutType.INDEX_HEADER || type
+            == TableLayoutType.STATUS_HEADER) {
           if (groupByColumns.contains(columnKey)) {
             backgroundColor = GROUP_BY_COLOR;
-          } else if (columnKey.equals(sort)) {
+          } else if (columnKey != null && columnKey.equals(sort)) {
             backgroundColor = SORT_COLOR;
           }
         }
