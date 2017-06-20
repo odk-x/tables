@@ -164,6 +164,8 @@
 	<string name="unset_collection_view_column">Unset as Collection View based on this column</string>
 	<string name="set_collection_view_column">Set as Collection View based on this column</string>
 	<string name="set_sort_column">Set as Sort Column</string>
+	<string name="sort_asc">Sort ascending</string>
+	<string name="sort_desc">Sort descending</string>
 	<string name="delete_column">Delete Column</string>
 	<string name="info_bar_plain_title">Table: %1$s</string>
 	<string name="info_bar_list_title">Table: %1$s (List)</string>
@@ -414,6 +416,7 @@
 	<string name="add_group_by_fail">Unable to add column to Group By list</string>
 	<string name="remove_group_by_fail">Unable to remove column from Group By list</string>
 	<string name="set_sort_column_fail">Unable to set Sort Column</string>
+	<string name="set_sort_direction_fail">Unable to set Sort order</string>
     <string name="set_index_column_fail">Unable to set Index Column</string>
 
 	<string name="invalid_form">That form id doesn\'t exist</string>

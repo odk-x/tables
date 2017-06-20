@@ -784,8 +784,7 @@ class TabularView extends View {
     } else {
       bgPaint.setColor(this.defaultBackgroundColor);
     }
-    int row_height_real = rowHeight;
-    canvas.drawRect(x, y, x + columnWidth, y + row_height_real, bgPaint);
+    canvas.drawRect(x, y, x + columnWidth, y + rowHeight, bgPaint);
     canvas.save(Canvas.ALL_SAVE_FLAG);
     canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y, x + columnWidth - (2 * HORIZONTAL_CELL_PADDING),
         y + rowHeight);

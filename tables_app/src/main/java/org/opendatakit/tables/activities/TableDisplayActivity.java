@@ -354,6 +354,12 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           sqlQueryStruct.orderByElementKey = sort;
         }
 
+        String order = TableUtil.get().getSortOrder(Tables.getInstance().getDatabase(),
+            getAppName(), db, getTableId());
+        if (!(order == null || order.length() == 0)) {
+          sqlQueryStruct.orderByDirection = order;
+        }
+
         String[] emptyArray = {};
         mUserTable = Tables.getInstance().getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
