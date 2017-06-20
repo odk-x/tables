@@ -58,12 +58,14 @@ class TabularView extends View {
   private static final int DEFAULT_DATA_BACKGROUND_COLOR = Color.WHITE;
   private static final int DEFAULT_BORDER_COLOR = Color.GRAY;
   private static final int DEFAULT_HEADER_BACKGROUND_COLOR = Color.CYAN;
-  private static final int GROUP_BY_COLOR = Color.argb(0xff, 0xaa, 0xc3, 0x6c);
-  private static final int SORT_COLOR = Color.argb(0xff, 0xff, 0x80, 0x80);
+  private static final int GROUP_BY_COLOR = Color.rgb(0xaa, 0xc3, 0x6c);
+  private static final int SORT_COLOR = Color.rgb(0xff, 0x80, 0x80);
+  private static final int NULL_COLOR = Color.rgb(127, 127, 127);
   private static final int ROW_HEIGHT_PADDING = 14;
   private static final int HORIZONTAL_CELL_PADDING = 5;
   private static final int VERTICAL_CELL_PADDING = 9;
   private static final int BORDER_WIDTH = 1;
+  private static final String NULL_DATA_TEXT = "(NULL)";
   private final Controller controller;
   private final int defaultBackgroundColor;
   private final int defaultForegroundColor;
@@ -638,14 +640,19 @@ class TabularView extends View {
     leftRightmost = xs[indexOfRightmostColumn];
     // i believe at the end, then, this should be total width, once it is all on the column?
     rightRightmostBorder = leftRightmost + columnWidths[indexOfRightmostColumn] + BORDER_WIDTH;
+    // draw horizontal borders
     int yCoord = topmostBorder;
     for (int i = topmost; i < bottommost + 1; i++) {
       canvas.drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + BORDER_WIDTH,
           borderPaint);
       yCoord += rowHeight + BORDER_WIDTH;
     }
+    // This line is here because without it, the bottom border somehow never gets drawn, and an
+    // extra scanline of blue/white gets drawn instead, which makes sorted or grouped by columns
+    // look really awkward, and vertical borders extend down by one too few pixels
     canvas.drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + BORDER_WIDTH,
         borderPaint);
+    // draw vertical borders
     int xCoord = leftmostBorder;
     for (int i = indexOfLeftmostColumn; i < indexOfRightmostColumn + 1; i++) {
       canvas.drawRect(xCoord, topmostBorder, xCoord + BORDER_WIDTH, bottomBottommost, borderPaint);
@@ -733,13 +740,13 @@ class TabularView extends View {
         }
         // Override any of that if the data is actually null
         if (datum == null) {
-          foregroundColor = Color.rgb(127, 127, 127); // grey
-          datum = "(NULL)";
+          datum = NULL_DATA_TEXT;
+          foregroundColor = NULL_COLOR;
         }
         drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor, columnWidths[j]);
       }
       y += rowHeight + BORDER_WIDTH;
-      /** adding to try and fix draw **/
+      // adding to try and fix draw
     }
     // highlighting cell (if necessary)
     if (highlightedCellInfo != null) {

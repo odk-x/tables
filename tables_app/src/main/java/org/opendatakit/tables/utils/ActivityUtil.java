@@ -173,6 +173,27 @@ public class ActivityUtil {
   }
 
   /**
+   * Launch {@link TableLevelPreferencesActivity} to edit a column's preferences. Launches with
+   * request code {@link Constants.RequestCodes#LAUNCH_COLUMN_PREFS}.
+   *
+   * @param activity   the activity to launch
+   * @param appName    the app name
+   * @param tableId    the id of the table to edit
+   * @param elementKey put in the bundle
+   */
+  public static void launchTablePreferenceActivityToEditColumn(Activity activity,
+      String appName, String tableId, String elementKey) {
+    Intent intent = new Intent(activity, TableLevelPreferencesActivity.class);
+    Bundle extras = new Bundle();
+    IntentUtil.addTablePreferenceFragmentTypeToBundle(extras,
+        TableLevelPreferencesActivity.FragmentType.COLUMN_PRFERENCE);
+    IntentUtil.addAppNameToBundle(extras, appName);
+    IntentUtil.addTableIdToBundle(extras, tableId);
+    IntentUtil.addElementKeyToBundle(extras, elementKey);
+    intent.putExtras(extras);
+    activity.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_COLOR_RULE_LIST);
+  }
+  /**
    * This method is unused
    * Checks if the device is a tablet or a phone
    *

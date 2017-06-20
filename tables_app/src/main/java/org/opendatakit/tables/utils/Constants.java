@@ -215,6 +215,7 @@ public class Constants {
     public static final int LAUNCH_CONFLICT_RESOLVER = 20;
     public static final int LAUNCH_EXPORT = 21;
     public static final int LAUNCH_DOACTION = 22;
+    public static final int LAUNCH_COLUMN_PREFS = 23;
   }
 
   /**

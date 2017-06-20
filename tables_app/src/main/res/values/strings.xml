@@ -413,6 +413,7 @@
 	<string name="set_as_sort">Set as sort</string>
 	<string name="unfreeze_column">Unfreeze column</string>
 	<string name="freeze_column">Freeze column</string>
+	<string name="column_prefs">Column preferences</string>
 	<string name="add_group_by_fail">Unable to add column to Group By list</string>
 	<string name="remove_group_by_fail">Unable to remove column from Group By list</string>
 	<string name="set_sort_column_fail">Unable to set Sort Column</string>

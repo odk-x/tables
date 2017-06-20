@@ -26,6 +26,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.JoinColumn;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
@@ -40,6 +41,7 @@ import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
@@ -82,6 +84,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES = 11;
   private static final int MENU_ITEM_ID_SORT_ASC = 12;
   private static final int MENU_ITEM_ID_SORT_DESC = 13;
+  private static final int MENU_ITEM_ID_PREFS = 14;
 
   private SpreadsheetUserTable spreadsheetTable;
 
@@ -588,12 +591,20 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       ActivityUtil
           .launchTablePreferenceActivityToEditColumnColorRules(this.getActivity(), getAppName(),
               getTableId(), elementKey);
+      init();
+      return true;
     case MENU_ITEM_ID_SORT_ASC:
       setSortOrder("ASC");
       init();
       return true;
     case MENU_ITEM_ID_SORT_DESC:
       setSortOrder("DESC");
+      init();
+      return true;
+    case MENU_ITEM_ID_PREFS:
+      ActivityUtil
+          .launchTablePreferenceActivityToEditColumn(this.getActivity(), getAppName(),
+              getTableId(), mLastHeaderCellMenued.elementKey);
       init();
       return true;
     default:
@@ -781,6 +792,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_AS_INDEXED_COL, ContextMenu.NONE,
           getString(R.string.freeze_column));
     }
+
+    menu.add(ContextMenu.NONE, MENU_ITEM_ID_PREFS, ContextMenu.NONE,
+        getString(R.string.column_prefs));
 
     menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES, ContextMenu.NONE,
         getString(R.string.edit_column_color_rules));
