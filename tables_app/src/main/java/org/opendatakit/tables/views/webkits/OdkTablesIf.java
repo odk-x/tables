@@ -41,19 +41,20 @@ public class OdkTablesIf {
    *
    * @param tableId       the tableId of the table to open
    * @param whereClause   If null will not restrict the results.
-   * @param selectionArgs an array of selection arguments, one for each "?" in whereClause.
+   * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
+   *                             numeric, boolean and string types, one for each "?" in whereClause.
    *                      If null will not restrict the results.
    * @param relativePath  the name of the file specifying the list view, relative to the app
    *                      folder.
    * @return true if the open succeeded
    */
   @android.webkit.JavascriptInterface
-  public boolean setSubListView(String tableId, String whereClause, String[] selectionArgs,
+  public boolean setSubListView(String tableId, String whereClause, String sqlSelectionArgsJSON,
       String relativePath) {
     if (isInactive())
       return false;
     return weakControl.get()
-        .helperSetSubListView(tableId, relativePath, whereClause, selectionArgs, null, null, null,
-            null);
+        .helperSetSubListView(tableId, relativePath, whereClause, sqlSelectionArgsJSON,
+            null, null, null, null);
   }
 }

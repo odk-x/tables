@@ -342,7 +342,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         mUserTable = Tables.getInstance().getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
                 sqlQueryStruct.whereClause,
-                (sqlQueryStruct.selectionArgs == null) ? emptyArray : sqlQueryStruct.selectionArgs,
+                sqlQueryStruct.selectionArgs,
                 (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
                 sqlQueryStruct.having, (sqlQueryStruct.orderByElementKey == null) ?
                     emptyArray :

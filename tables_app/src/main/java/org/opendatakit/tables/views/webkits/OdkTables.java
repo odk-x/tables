@@ -17,6 +17,7 @@
 package org.opendatakit.tables.views.webkits;
 
 import android.os.Bundle;
+import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
@@ -58,13 +59,14 @@ public class OdkTables {
    * @param tableId
    * @param relativePath     the path relative to the app folder
    * @param sqlWhereClause
-   * @param sqlSelectionArgs
+   * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
+   *                             numeric, boolean and string types.
    * @return
    */
   public boolean helperSetSubListView(String tableId, String relativePath, String sqlWhereClause,
-      String[] sqlSelectionArgs, String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey,
+      String sqlSelectionArgsJSON, String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey,
       String sqlOrderByDirection) {
-    return this.helperUpdateView(tableId, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
+    return this.helperUpdateView(tableId, sqlWhereClause, sqlSelectionArgsJSON, sqlGroupBy, sqlHaving,
         sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.SUB_LIST, relativePath);
   }
 
@@ -73,7 +75,8 @@ public class OdkTables {
    *
    * @param tableId
    * @param sqlWhereClause
-   * @param sqlSelectionArgs
+   * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
+   *                             numeric, boolean and string types.
    * @param sqlGroupBy
    * @param sqlHaving
    * @param sqlOrderByElementKey
@@ -83,16 +86,16 @@ public class OdkTables {
    * @return
    * @throws IllegalArgumentException if viewType is not a sub view
    */
-  boolean helperUpdateView(String tableId, String sqlWhereClause, String[] sqlSelectionArgs,
+  boolean helperUpdateView(String tableId, String sqlWhereClause, String sqlSelectionArgsJSON,
       String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey,
       String sqlOrderByDirection, ViewFragmentType viewType, String relativePath) {
     if (viewType != ViewFragmentType.SUB_LIST) {
       throw new IllegalArgumentException("Cannot use this method to update a view that doesn't "
           + "support updates. Currently only DetailWithListView's Sub List supports this action");
     }
-
+    BindArgs bindArgs = new BindArgs(sqlSelectionArgsJSON);
     final Bundle bundle = new Bundle();
-    IntentUtil.addSQLKeysToBundle(bundle, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
+    IntentUtil.addSQLKeysToBundle(bundle, sqlWhereClause, bindArgs, sqlGroupBy, sqlHaving,
         sqlOrderByElementKey, sqlOrderByDirection);
     IntentUtil.addTableIdToBundle(bundle, tableId);
     IntentUtil.addFragmentViewTypeToBundle(bundle, viewType);
