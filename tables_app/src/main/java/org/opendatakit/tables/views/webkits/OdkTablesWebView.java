@@ -3,7 +3,6 @@ package org.opendatakit.tables.views.webkits;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
-import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseWebActivity;
 import org.opendatakit.tables.activities.IOdkTablesActivity;
 import org.opendatakit.tables.utils.Constants;

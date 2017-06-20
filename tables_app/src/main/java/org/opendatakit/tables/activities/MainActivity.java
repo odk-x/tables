@@ -41,7 +41,6 @@ import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.views.ODKWebView;
-import org.opendatakit.views.OdkData;
 import org.opendatakit.views.ViewDataQueryParams;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 
@@ -499,9 +498,8 @@ public class MainActivity extends AbsBaseWebActivity
 
     SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(bundle);
 
-    ViewDataQueryParams params = new ViewDataQueryParams(tableId, rowId,
-        sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
-        sqlQueryStruct.groupBy, sqlQueryStruct.having,
+    ViewDataQueryParams params = new ViewDataQueryParams(tableId, rowId, sqlQueryStruct.whereClause,
+        sqlQueryStruct.selectionArgs, sqlQueryStruct.groupBy, sqlQueryStruct.having,
         sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
 
     return params;

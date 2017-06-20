@@ -27,10 +27,8 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.JoinColumn;
 import org.opendatakit.data.utilities.ColumnUtil;
-import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.database.service.DbHandle;
@@ -54,7 +52,6 @@ import org.opendatakit.tables.views.SpreadsheetView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Fragment responsible for displaying a spreadsheet view. This class is a hideous monstrosity
@@ -91,7 +88,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
   private CellInfo mLastDataCellMenued;
   private CellInfo mLastHeaderCellMenued;
-
+  private LinearLayout theView;
 
   @Override
   public void onSaveInstanceState(Bundle out) {
@@ -100,7 +97,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     out.putParcelable("header", mLastHeaderCellMenued);
   }
 
-  @Override public void onCreate(Bundle savedInstanceState) {
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     if (savedInstanceState != null) {
       if (savedInstanceState.containsKey("data")) {
@@ -142,8 +140,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     return theView;
   }
 
-  private LinearLayout theView;
-
   /**
    * When the database becomes available, replace the existing view with a new
    * SpreadsheetUserTable, or an error message if we can't
@@ -175,7 +171,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
   }
 
-  @Override public void onResume() {
+  @Override
+  public void onResume() {
     super.onResume();
     WebLogger.getLogger(mAppName).i(TAG, "onResume done being called");
   }
@@ -230,6 +227,34 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
   }
 
+  private String getSortOrder() {
+    Activity act = getActivity();
+    String sortOrder = null;
+    if (act instanceof TableDisplayActivity) {
+      sortOrder = ((TableDisplayActivity) act).props.getSortOrder();
+    }
+    if (sortOrder == null || sortOrder.length() == 0) {
+      return "ASC";
+    }
+    return sortOrder;
+  }
+
+  private void setSortOrder(String order) {
+    Activity act = getActivity();
+    if (act instanceof TableDisplayActivity) {
+      ((TableDisplayActivity) act).props.setSortOrder(order);
+    }
+  }
+
+  private String getSort() {
+    Activity act = getActivity();
+    String sort = null;
+    if (act instanceof TableDisplayActivity) {
+      sort = ((TableDisplayActivity) act).props.getSort();
+    }
+    return sort;
+  }
+
   /**
    * Sorts the table by a column
    *
@@ -246,23 +271,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
   }
 
-  private void setSortOrder(String order) {
+  private String getFrozen() {
     Activity act = getActivity();
+    String frozen = null;
     if (act instanceof TableDisplayActivity) {
-      ((TableDisplayActivity) act).props.setSortOrder(order);
+      frozen = ((TableDisplayActivity) act).props.getFrozen();
     }
-  }
-
-  private String getSortOrder() {
-    Activity act = getActivity();
-    String sortOrder = null;
-    if (act instanceof TableDisplayActivity) {
-      sortOrder = ((TableDisplayActivity) act).props.getSortOrder();
-    }
-    if (sortOrder == null || sortOrder.length() == 0) {
-      return "ASC";
-    }
-    return sortOrder;
+    return frozen;
   }
 
   /**
@@ -281,39 +296,22 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
   }
 
-  private String getSort() {
-    Activity act = getActivity();
-    String sort = null;
-    if (act instanceof TableDisplayActivity) {
-      sort = ((TableDisplayActivity) act).props.getSort();
-    }
-    return sort;
-  }
-  private String getFrozen() {
-    Activity act = getActivity();
-    String frozen = null;
-    if (act instanceof TableDisplayActivity) {
-      frozen = ((TableDisplayActivity) act).props.getFrozen();
-    }
-    return frozen;
-  }
-
-
-  void setGroupBy(String[] groupBy) {
-    Activity act = getActivity();
-    if (act instanceof TableDisplayActivity) {
-      ((TableDisplayActivity) act).props.setGroupBy(groupBy);
-    }
-  }
-
   String[] getGroupBy() {
     Activity act = getActivity();
     String[] groupBy = null;
     if (act instanceof TableDisplayActivity) {
       groupBy = ((TableDisplayActivity) act).props.getGroupBy();
     }
-    if (groupBy == null) return new String[0];
+    if (groupBy == null)
+      return new String[0];
     return groupBy;
+  }
+
+  void setGroupBy(String[] groupBy) {
+    Activity act = getActivity();
+    if (act instanceof TableDisplayActivity) {
+      ((TableDisplayActivity) act).props.setGroupBy(groupBy);
+    }
   }
 
   /**
@@ -351,8 +349,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       }
     }
     sqlQueryStruct.whereClause = s.toString();
-    sqlQueryStruct.selectionArgs =
-        new BindArgs(newSelectionArgs.toArray(new Object[newSelectionArgs.size()]));
+    sqlQueryStruct.selectionArgs = new BindArgs(
+        newSelectionArgs.toArray(new Object[newSelectionArgs.size()]));
 
     Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
     Bundle extras = new Bundle();
@@ -411,9 +409,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
     // TEMP code to try and fix the crash on return-edit
     if (spreadsheetTable == null) {
-      if (dbInterface == null) return false;
+      if (dbInterface == null)
+        return false;
       databaseAvailable();
-      if (spreadsheetTable == null) return false;
+      if (spreadsheetTable == null)
+        return false;
     }
     // end temp
     SpreadsheetCell cell;
@@ -474,8 +474,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // This is in the same Row Actions menu as delete row
     case MENU_ITEM_ID_EDIT_ROW:
-      WebLogger.getLogger(mAppName).i(TAG, "spreadsheetTable is " + (spreadsheetTable == null ? "null" : "not null") + " "
-          + "and lastDataCellMenu'd is " + (mLastDataCellMenued == null ? "null" : "not null"));
+      WebLogger.getLogger(mAppName).i(TAG,
+          "spreadsheetTable is " + (spreadsheetTable == null ? "null" : "not null") + " "
+              + "and lastDataCellMenu'd is " + (mLastDataCellMenued == null ? "null" : "not null"));
       cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
       // It is possible that a custom form has been defined for this table.
       // We will get the strings we need, and then set the parameter object.
@@ -595,8 +596,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // In the same context menu you get from double tapping on a column heading
     case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-      setSort(
-          spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey).getElementKey());
+      setSort(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey)
+          .getElementKey());
       init();
       return true;
     // In the same context menu
@@ -605,8 +606,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       init();
       return true;
     case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-      setFrozen(
-          spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
+      setFrozen(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
       init();
       return true;
     case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
@@ -631,8 +631,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     case MENU_ITEM_ID_PREFS:
       ActivityUtil
-          .launchTablePreferenceActivityToEditColumn(this.getActivity(), getAppName(),
-              getTableId(), mLastHeaderCellMenued.elementKey);
+          .launchTablePreferenceActivityToEditColumn(this.getActivity(), getAppName(), getTableId(),
+              mLastHeaderCellMenued.elementKey);
       init();
       return true;
     default:
@@ -663,7 +663,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       throws ServicesAvailabilityException {
 
     this.mLastDataCellMenued = cellInfo;
-    WebLogger.getLogger(mAppName).i(TAG, "setting lastDataCellMenu'd to " + (mLastDataCellMenued == null ? "null" : mLastDataCellMenued.toString()));
+    WebLogger.getLogger(mAppName).i(TAG,
+        "setting lastDataCellMenu'd to " + (mLastDataCellMenued == null ?
+            "null" :
+            mLastDataCellMenued.toString()));
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();

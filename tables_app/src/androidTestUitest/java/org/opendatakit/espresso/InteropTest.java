@@ -3,15 +3,14 @@ package org.opendatakit.espresso;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
+import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
-import android.support.test.filters.LargeTest;
-
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -20,17 +19,15 @@ import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.views.SpreadsheetView;
+import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
-import org.opendatakit.util.DisableAnimationsRule;
 
 import java.net.MalformedURLException;
 
 import static android.support.test.espresso.Espresso.*;
-import static android.support.test.espresso.action.ViewActions.clearText;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.typeText;
+import static android.support.test.espresso.action.ViewActions.*;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.*;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
@@ -44,13 +41,10 @@ import static org.opendatakit.util.TestConstants.*;
 @LargeTest
 public class InteropTest {
   private static final int WAIT = 1000;
-
-  private Boolean initSuccess = null;
-  private UiDevice mDevice;
-
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
-
+  private Boolean initSuccess = null;
+  private UiDevice mDevice;
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
       MainActivity.class) {
@@ -114,9 +108,8 @@ public class InteropTest {
     //Move to Survey
     onView(withId(R.id.menu_edit_row)).perform(click());
 
-    intended(ODKMatchers.hasTable(
-        "femaleClients", "femaleClients", "906c2b4f-b9d2-4aa1-bbb0-e754d66325ff"
-    ));
+    intended(ODKMatchers
+        .hasTable("femaleClients", "femaleClients", "906c2b4f-b9d2-4aa1-bbb0-e754d66325ff"));
 
     //Some background tasks are slow (for example ColorRule), force a wait
     Thread.sleep(WAIT);
@@ -130,7 +123,8 @@ public class InteropTest {
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
     try {
       Thread.sleep(TABLE_MGR_WAIT);
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
 
     //Open "Tea houses editable"
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
@@ -141,9 +135,8 @@ public class InteropTest {
     //Edit the row
     onView(withText(EspressoUtils.getString(mActivityRule, R.string.edit_row))).perform(click());
 
-    intended(ODKMatchers.hasTable(
-        T_HOUSE_E_TABLE_ID, T_HOUSE_E_TABLE_ID, "1ed5404f-c501-4308-ac0f-a080c13ae5c4"
-    ));
+    intended(ODKMatchers
+        .hasTable(T_HOUSE_E_TABLE_ID, T_HOUSE_E_TABLE_ID, "1ed5404f-c501-4308-ac0f-a080c13ae5c4"));
 
     Thread.sleep(WAIT);
   }
@@ -167,9 +160,7 @@ public class InteropTest {
 
       //change form id to something invalid
       onData(withKey(DEFAULT_FORM)).perform(click());
-      onView(withId(R.id.edit_form_id))
-          .perform(click())
-          .perform(clearText())
+      onView(withId(R.id.edit_form_id)).perform(click()).perform(clearText())
           .perform(typeText("invalid_form_id"));
       onView(withId(android.R.id.button1)).perform(click());
 
@@ -192,8 +183,8 @@ public class InteropTest {
     } finally {
       //restore original formId
       try {
-        FormType ft =
-            FormType.constructFormType(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
+        FormType ft = FormType
+            .constructFormType(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
         ft.setFormId(currFormId);
         ft.persist(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
       } catch (ServicesAvailabilityException e) {

@@ -210,6 +210,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
   public void showColumnPreferenceFragment(String elementKey) {
     showColumnPreferenceFragment(elementKey, true);
   }
+
   public void showColumnPreferenceFragment(String elementKey, boolean addToBackStack) {
     this.mElementKeyOfDisplayedColumn = elementKey;
     this.mCurrentFragmentType = FragmentType.COLUMN_PRFERENCE;
@@ -219,9 +220,10 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
       columnPreferenceFragment = new ColumnPreferenceFragment();
     }
     FragmentTransaction transaction = fragmentManager.beginTransaction();
-    transaction.replace(android.R.id.content, columnPreferenceFragment, Constants.FragmentTags
-        .COLUMN_PREFERENCE);
-    if (addToBackStack) transaction.addToBackStack(null);
+    transaction.replace(android.R.id.content, columnPreferenceFragment,
+        Constants.FragmentTags.COLUMN_PREFERENCE);
+    if (addToBackStack)
+      transaction.addToBackStack(null);
     transaction.commit();
 
   }

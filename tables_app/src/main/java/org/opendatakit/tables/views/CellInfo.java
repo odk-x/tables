@@ -22,20 +22,39 @@ public class CellInfo implements Parcelable {
   // elementKey may be null if we ever need a touch
   // listener on status column. For now, everything works.
 
-  public String elementKey;
+  public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
+    public CellInfo createFromParcel(Parcel in) {
+      return new CellInfo(in);
+    }
+
+    public CellInfo[] newArray(int size) {
+      return new CellInfo[size];
+    }
+  };
   public final int rowId;
   // this is ONLY relevant to this TabularView
   final int colPos;
+  public String elementKey;
 
   public CellInfo(String elementKey, int colPos, int rowId) {
     this.elementKey = elementKey;
     this.colPos = colPos;
     this.rowId = rowId;
   }
+
+  public CellInfo(Parcel in) {
+    if (in.readByte() == 1) {
+      elementKey = in.readString();
+    }
+    rowId = in.readInt();
+    colPos = in.readInt();
+  }
+
   @Override
   public int describeContents() {
     return 0;
   }
+
   @Override
   public void writeToParcel(Parcel dest, int flags) {
     if (elementKey == null) {
@@ -47,19 +66,4 @@ public class CellInfo implements Parcelable {
     dest.writeInt(rowId);
     dest.writeInt(colPos);
   }
-  public CellInfo(Parcel in) {
-    if (in.readByte() == 1) {
-      elementKey = in.readString();
-    }
-    rowId = in.readInt();
-    colPos = in.readInt();
-  }
-  public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
-    public CellInfo createFromParcel(Parcel in) {
-      return new CellInfo(in);
-    }
-    public CellInfo[] newArray(int size) {
-      return new CellInfo[size];
-    }
-  };
 }

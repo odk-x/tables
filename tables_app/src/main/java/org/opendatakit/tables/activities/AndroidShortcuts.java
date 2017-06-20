@@ -117,11 +117,12 @@ public class AndroidShortcuts extends BaseActivity {
             // Move to one before the first entry so that moveToNext will put us at the first entry
             c.moveToPosition(-1);
             while (c.moveToNext()) {
-              String tableId =  CursorUtils.getIndexAsString(c, c.getColumnIndex
-                  (TableDefinitionsColumns.TABLE_ID));
+              String tableId = CursorUtils
+                  .getIndexAsString(c, c.getColumnIndex(TableDefinitionsColumns.TABLE_ID));
               String tableName = app.getName() + " > " + tableId;
-              uri = Uri.withAppendedPath(Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
-                  tableId);
+              uri = Uri
+                  .withAppendedPath(Uri.withAppendedPath(TablesProviderAPI.CONTENT_URI, appName),
+                      tableId);
               choices.add(new Choice(R.drawable.tables_table, tableIcon, uri, tableName, appName));
             }
           }
@@ -132,8 +133,8 @@ public class AndroidShortcuts extends BaseActivity {
         }
       }
     } else {
-      Toast.makeText(getApplicationContext(), getString(R.string.file_not_under_app_dir,
-          "OpenDataKit"), Toast.LENGTH_LONG).show();
+      Toast.makeText(getApplicationContext(),
+          getString(R.string.file_not_under_app_dir, "OpenDataKit"), Toast.LENGTH_LONG).show();
     }
 
     builder.setAdapter(new ArrayAdapter<Choice>(this, R.layout.shortcut_item, choices) {

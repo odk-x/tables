@@ -39,13 +39,13 @@ public class OdkTablesIf {
   /**
    * Set list view portion of a DetailWithList view, restricted by given query.
    *
-   * @param tableId       the tableId of the table to open
-   * @param whereClause   If null will not restrict the results.
+   * @param tableId              the tableId of the table to open
+   * @param whereClause          If null will not restrict the results.
    * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
    *                             numeric, boolean and string types, one for each "?" in whereClause.
-   *                      If null will not restrict the results.
-   * @param relativePath  the name of the file specifying the list view, relative to the app
-   *                      folder.
+   *                             If null will not restrict the results.
+   * @param relativePath         the name of the file specifying the list view, relative to the app
+   *                             folder.
    * @return true if the open succeeded
    */
   @android.webkit.JavascriptInterface
@@ -54,7 +54,7 @@ public class OdkTablesIf {
     if (isInactive())
       return false;
     return weakControl.get()
-        .helperSetSubListView(tableId, relativePath, whereClause, sqlSelectionArgsJSON,
-            null, null, null, null);
+        .helperSetSubListView(tableId, relativePath, whereClause, sqlSelectionArgsJSON, null, null,
+            null, null);
   }
 }

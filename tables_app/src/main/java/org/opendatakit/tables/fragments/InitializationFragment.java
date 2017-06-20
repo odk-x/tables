@@ -70,8 +70,9 @@ public class InitializationFragment extends Fragment
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
-    WebLogger.getLogger(appName).d(TAG, "in public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle "
-        + "savedInstanceState) {");
+    WebLogger.getLogger(appName).d(TAG,
+        "in public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle "
+            + "savedInstanceState) {");
     appName = ((IAppAwareActivity) getActivity()).getAppName();
     View view = inflater.inflate(ID, container, false);
 
@@ -266,7 +267,8 @@ public class InitializationFragment extends Fragment
    * @param message the message to show in the progress dialog
    */
   private void updateProgressDialogMessage(String message) {
-    WebLogger.getLogger(appName).d(TAG, "in private void updateProgressDialogMessage(String message) {");
+    WebLogger.getLogger(appName)
+        .d(TAG, "in private void updateProgressDialogMessage(String message) {");
     if (mDialogState == DialogState.Progress) {
       mAlertTitle = getString(R.string.configuring_app,
           getString(Tables.getInstance().getApkDisplayNameResourceId()));
@@ -339,7 +341,8 @@ public class InitializationFragment extends Fragment
    * @param message the message for the dialog
    */
   private void createAlertDialog(String title, String message) {
-    WebLogger.getLogger(appName).d(TAG, "in private void createAlertDialog(String title, String message) {");
+    WebLogger.getLogger(appName)
+        .d(TAG, "in private void createAlertDialog(String title, String message) {");
     mAlertMsg = message;
     mAlertTitle = title;
     restoreAlertDialog();
@@ -352,7 +355,8 @@ public class InitializationFragment extends Fragment
    */
   @Override
   public void initializationProgressUpdate(String displayString) {
-    WebLogger.getLogger(appName).d(TAG, "in public void initializationProgressUpdate(String displayString) {");
+    WebLogger.getLogger(appName)
+        .d(TAG, "in public void initializationProgressUpdate(String displayString) {");
     updateProgressDialogMessage(displayString);
   }
 
@@ -397,6 +401,6 @@ public class InitializationFragment extends Fragment
 
   // The types of dialogs we handle
   private enum DialogState {
-    Init,Progress,Alert,None
+    Init, Progress, Alert, None
   }
 }

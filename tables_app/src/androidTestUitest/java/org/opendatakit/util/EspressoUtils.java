@@ -33,8 +33,8 @@ public class EspressoUtils {
   /**
    * Returns the String with Id id using an ActivityTestRule
    *
-   * @param rule     ActivityTestRule to get String from
-   * @param id Id of String to retrieve
+   * @param rule ActivityTestRule to get String from
+   * @param id   Id of String to retrieve
    * @return Returns the String
    */
   public static String getString(ActivityTestRule rule, int id, Object... formatArgs) {
@@ -73,7 +73,8 @@ public class EspressoUtils {
         try {
           //force a wait, sometimes JS is too slow
           Thread.sleep(2 * waitTime);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
 
         return wInteraction;
       }
@@ -167,8 +168,7 @@ public class EspressoUtils {
         .check(matches(isDisplayed()));
   }
 
-  public static void openTableManagerFromCustomHome()
-  {
+  public static void openTableManagerFromCustomHome() {
     if (!viewExists(withId(R.id.menu_web_view_activity_table_manager))) {
       throw new IllegalStateException("Not on custom home!");
     }

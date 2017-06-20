@@ -36,12 +36,12 @@ import org.sqlite.database.sqlite.SQLiteException;
  *         All of these functions return a stringifiedJSON object.
  *         <p>
  *         <pre>
- *                             {
- *                                 transId: "openTransactionIdString",
- *                                 errorMsg: "message if there was an error",
- *                                 data: complexJSONstructure
- *                             }
- *                         </pre>
+ *                                     {
+ *                                         transId: "openTransactionIdString",
+ *                                         errorMsg: "message if there was an error",
+ *                                         data: complexJSONstructure
+ *                                     }
+ *                                 </pre>
  *         <p>
  *         If the transaction was to be left open, the transId field will hold the transaction Id of the open transaction.
  *         <p>

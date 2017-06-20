@@ -55,8 +55,8 @@ public class SpreadsheetUserTable {
   //
   private final String[] spreadsheetIndexToElementKey;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
-  private UserTable userTable;
   public SpreadsheetProps props;
+  private UserTable userTable;
 
   public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws ServicesAvailabilityException {
     this.fragment = frag;
@@ -80,7 +80,7 @@ public class SpreadsheetUserTable {
         indexColumnElementKey = this.props.getFrozen();
       } else {
         //indexColumnElementKey = TableUtil.get().getIndexColumn(dbInterface, getAppName(), db,
-            //getTableId());
+        //getTableId());
         indexColumnElementKey = null;
       }
       colOrder = TableUtil.get()
@@ -211,8 +211,10 @@ public class SpreadsheetUserTable {
   String getHeader(int colNum) {
     return header[colNum];
   }
+
   String getHeaderKey(int colNum) {
-    if (colNum < 0 || colNum >= header_keys.length) return null;
+    if (colNum < 0 || colNum >= header_keys.length)
+      return null;
     return header_keys[colNum];
   }
 

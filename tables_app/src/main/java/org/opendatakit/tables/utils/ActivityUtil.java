@@ -109,8 +109,8 @@ public class ActivityUtil {
    *                           prepopulated.
    * @throws ServicesAvailabilityException if the database is down
    */
-  public static void addRow(AbsBaseActivity activity, String appName, String tableId, Map<String, Object> prepopulatedValues)
-      throws ServicesAvailabilityException {
+  public static void addRow(AbsBaseActivity activity, String appName, String tableId,
+      Map<String, Object> prepopulatedValues) throws ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit
@@ -181,8 +181,8 @@ public class ActivityUtil {
    * @param tableId    the id of the table to edit
    * @param elementKey put in the bundle
    */
-  public static void launchTablePreferenceActivityToEditColumn(Activity activity,
-      String appName, String tableId, String elementKey) {
+  public static void launchTablePreferenceActivityToEditColumn(Activity activity, String appName,
+      String tableId, String elementKey) {
     Intent intent = new Intent(activity, TableLevelPreferencesActivity.class);
     Bundle extras = new Bundle();
     IntentUtil.addTablePreferenceFragmentTypeToBundle(extras,
@@ -193,6 +193,7 @@ public class ActivityUtil {
     intent.putExtras(extras);
     activity.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_COLOR_RULE_LIST);
   }
+
   /**
    * This method is unused
    * Checks if the device is a tablet or a phone

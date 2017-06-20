@@ -25,15 +25,10 @@ import android.view.View;
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.Row;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.tables.application.Tables;
 
 import java.util.*;
 
@@ -628,8 +623,8 @@ class TabularView extends View {
     // This line is here because without it, the bottom border somehow never gets drawn, and an
     // extra scanline of blue/white gets drawn instead, which makes sorted or grouped by columns
     // look really awkward, and vertical borders extend down by one too few pixels
-    canvas.drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + BORDER_WIDTH,
-        borderPaint);
+    canvas
+        .drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + BORDER_WIDTH, borderPaint);
     // draw vertical borders
     int xCoord = leftmostBorder;
     for (int i = indexOfLeftmostColumn; i < indexOfRightmostColumn + 1; i++) {
@@ -708,8 +703,8 @@ class TabularView extends View {
             backgroundColor = rowGuide.getBackground();
           }
         }
-        if (type == TableLayoutType.MAIN_HEADER || type == TableLayoutType.INDEX_HEADER || type
-            == TableLayoutType.STATUS_HEADER) {
+        if (type == TableLayoutType.MAIN_HEADER || type == TableLayoutType.INDEX_HEADER
+            || type == TableLayoutType.STATUS_HEADER) {
           if (Arrays.asList(mTable.props.getGroupBy()).contains(columnKey)) {
             backgroundColor = GROUP_BY_COLOR;
           } else if (columnKey != null && columnKey.equals(mTable.props.getSort())) {
@@ -788,7 +783,7 @@ class TabularView extends View {
   private void highlightCell(Canvas canvas, int x, int y, int columnWidth) {
     canvas.drawLine(x, y, x + columnWidth, y, highlightPaint);
     canvas.drawLine(x, y, x, y + rowHeight, highlightPaint);
-    canvas .drawLine(x, y + rowHeight, x + columnWidth, y + rowHeight, highlightPaint);
+    canvas.drawLine(x, y + rowHeight, x + columnWidth, y + rowHeight, highlightPaint);
     canvas.drawLine(x + columnWidth - 1, y, x + columnWidth - 1, y + rowHeight, highlightPaint);
   }
 

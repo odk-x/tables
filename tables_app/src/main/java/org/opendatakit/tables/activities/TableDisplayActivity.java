@@ -23,9 +23,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.os.Parcelable;
-import android.provider.ContactsContract;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -54,7 +52,6 @@ import org.opendatakit.views.ViewDataQueryParams;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -90,6 +87,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   public static final String INTENT_KEY_QUERIES = "queries";
   // Used for logging
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
+  public SpreadsheetProps props;
   /**
    * Keep references to all queries used to populate all fragments. Use the array index as the
    * viewID.
@@ -114,6 +112,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * The {@link UserTable} that is being displayed in this activity.
    */
   private UserTable mUserTable = null;
+  /**
+   * If we're being created for the first time, pull the display type (list, spreadsheet, map,
+   * etc..) and the original filename from the intent. Otherwise pull it from the saved instance
+   * state
+   *
+   * @param savedInstanceState the state we saved in onSaveInstanceState
+   */
+  private boolean pullFromDatabase;
 
   /**
    * Casts an array of objects from Parcelable to a given class that extends Parcelable..
@@ -138,14 +144,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return array;
   }
 
-  /**
-   * If we're being created for the first time, pull the display type (list, spreadsheet, map,
-   * etc..) and the original filename from the intent. Otherwise pull it from the saved instance
-   * state
-   *
-   * @param savedInstanceState the state we saved in onSaveInstanceState
-   */
-  private boolean pullFromDatabase;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -165,7 +163,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       } else {
         pullFromDatabase = true;
       }
-  }
+    }
 
     /*
      * If we are restoring from a saved state, the fleshed-out original view type and filename
@@ -275,9 +273,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(in.getExtras());
 
     ViewDataQueryParams queryParams = new ViewDataQueryParams(tableId, rowId,
-        sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
-        sqlQueryStruct.groupBy, sqlQueryStruct.having, sqlQueryStruct.orderByElementKey,
-        sqlQueryStruct.orderByDirection);
+        sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs, sqlQueryStruct.groupBy,
+        sqlQueryStruct.having, sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
     mQueries[0] = queryParams;
   }
 
@@ -313,19 +310,22 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     outState.putParcelable("props", props);
   }
 
-  @Override public void databaseUnavailable() {}
+  @Override
+  public void databaseUnavailable() {
+  }
 
   /**
    * Display the current fragment (which should already be around) when we resume
    */
-  @Override public void databaseAvailable() {
+  @Override
+  public void databaseAvailable() {
     WebLogger.getLogger(getAppName()).i(TAG, "databaseAvailable called");
     if (pullFromDatabase) {
       try {
         UserDbInterface dbInt = Tables.getInstance().getDatabase();
         DbHandle db = dbInt.openDatabase(mAppName);
         props.setSortOrder(TableUtil.get().getSortOrder(dbInt, mAppName, db, getTableId()));
-        props.setSortOrder(TableUtil.get().getSortColumn(dbInt,mAppName, db, getTableId()));
+        props.setSortOrder(TableUtil.get().getSortColumn(dbInt, mAppName, db, getTableId()));
         List<String> temp = TableUtil.get().getGroupByColumns(dbInt, mAppName, db, getTableId());
         props.setGroupBy(temp.toArray(new String[temp.size()]));
         pullFromDatabase = false;
@@ -363,7 +363,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     }
   }
 
-  public SpreadsheetProps props;
   /**
    * Get the {@link UserTable} that is being held by this activity. AND CHANGES mUserTable! to
    * be that table
@@ -389,8 +388,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         String[] emptyArray = {};
         mUserTable = Tables.getInstance().getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
-                sqlQueryStruct.whereClause,
-                sqlQueryStruct.selectionArgs,
+                sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
                 (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
                 sqlQueryStruct.having, (sqlQueryStruct.orderByElementKey == null) ?
                     emptyArray :
@@ -629,8 +627,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     case R.id.top_level_table_menu_add:
       WebLogger.getLogger(getAppName()).d(TAG, "[onOptionsItemSelected] add selected");
       try {
-        ActivityUtil
-            .addRow(this, this.getAppName(), this.getTableId(), null);
+        ActivityUtil.addRow(this, this.getAppName(), this.getTableId(), null);
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
@@ -652,8 +649,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         return true;
       }
       try {
-        ActivityUtil
-            .editRow(this, this.getAppName(), this.getTableId(), rowId);
+        ActivityUtil.editRow(this, this.getAppName(), this.getTableId(), rowId);
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
