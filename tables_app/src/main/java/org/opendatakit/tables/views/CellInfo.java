@@ -15,11 +15,14 @@
  */
 package org.opendatakit.tables.views;
 
-public class CellInfo {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class CellInfo implements Parcelable {
   // elementKey may be null if we ever need a touch
   // listener on status column. For now, everything works.
 
-  public final String elementKey;
+  public String elementKey;
   public final int rowId;
   // this is ONLY relevant to this TabularView
   final int colPos;
@@ -29,4 +32,34 @@ public class CellInfo {
     this.colPos = colPos;
     this.rowId = rowId;
   }
+  @Override
+  public int describeContents() {
+    return 0;
+  }
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    if (elementKey == null) {
+      dest.writeByte((byte) 0);
+    } else {
+      dest.writeByte((byte) 1);
+      dest.writeString(elementKey);
+    }
+    dest.writeInt(rowId);
+    dest.writeInt(colPos);
+  }
+  public CellInfo(Parcel in) {
+    if (in.readByte() == 1) {
+      elementKey = in.readString();
+    }
+    rowId = in.readInt();
+    colPos = in.readInt();
+  }
+  public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
+    public CellInfo createFromParcel(Parcel in) {
+      return new CellInfo(in);
+    }
+    public CellInfo[] newArray(int size) {
+      return new CellInfo[size];
+    }
+  };
 }

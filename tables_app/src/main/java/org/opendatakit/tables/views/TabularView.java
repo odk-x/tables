@@ -42,7 +42,7 @@ import java.util.*;
  */
 class TabularView extends View {
 
-  public static final String TAG = "TabularView";
+  public static final String TAG = TabularView.class.getSimpleName();
   public static final int DEFAULT_STATUS_COLUMN_WIDTH = 10;
   /**
    * The value that appears in the spreadsheet of the status column.
