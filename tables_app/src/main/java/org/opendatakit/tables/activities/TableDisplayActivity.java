@@ -350,7 +350,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
         String sort = TableUtil.get().getSortColumn(Tables.getInstance()
             .getDatabase(), getAppName(), db, getTableId());
-        if (sort != null || sort.length() != 0 || !getIntentExtras().containsKey
+        if (sort == null || sort.length() == 0 || !getIntentExtras().containsKey
             ("intentOverridesDatabase")) {
           sqlQueryStruct.orderByElementKey = sort;
         }
