@@ -344,15 +344,20 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         ArrayList<String> dbGroupBy = TableUtil.get().getGroupByColumns(Tables.getInstance()
             .getDatabase(), getAppName(), db, getTableId());
         String[] groupBy = dbGroupBy.toArray(new String[dbGroupBy.size()]);
-        if (groupBy.length != 0 && !getIntentExtras().containsKey("intentOverridesDatabase")) {
+        if (groupBy.length != 0 && !getIntentExtras().containsKey("inCollection")) {
           sqlQueryStruct.groupBy = groupBy;
         }
 
         String sort = TableUtil.get().getSortColumn(Tables.getInstance()
             .getDatabase(), getAppName(), db, getTableId());
-        if (sort != null || sort.length() != 0 || !getIntentExtras().containsKey
-            ("intentOverridesDatabase")) {
+        if (!(sort == null || sort.length() == 0)) {
           sqlQueryStruct.orderByElementKey = sort;
+        }
+
+        String order = TableUtil.get().getSortOrder(Tables.getInstance().getDatabase(),
+            getAppName(), db, getTableId());
+        if (!(order == null || order.length() == 0)) {
+          sqlQueryStruct.orderByDirection = order;
         }
 
         String[] emptyArray = {};

@@ -26,7 +26,6 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.JoinColumn;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
@@ -44,18 +43,15 @@ import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.views.CellInfo;
 import org.opendatakit.tables.views.SpreadsheetUserTable;
 import org.opendatakit.tables.views.SpreadsheetUserTable.SpreadsheetCell;
 import org.opendatakit.tables.views.SpreadsheetView;
-import org.opendatakit.views.ViewDataQueryParams;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Fragment responsible for displaying a spreadsheet view. This class is a hideous monstrosity
@@ -84,6 +80,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   // This should allow for the opening of a joined table.
   private static final int MENU_ITEM_ID_OPEN_JOIN_TABLE = 10;
   private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES = 11;
+  private static final int MENU_ITEM_ID_SORT_ASC = 12;
+  private static final int MENU_ITEM_ID_SORT_DESC = 13;
 
   private SpreadsheetUserTable spreadsheetTable;
 
@@ -225,6 +223,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       Toast.makeText(getActivity(), getString(R.string.remove_group_by_fail), Toast.LENGTH_LONG)
           .show();
     }
+    if (getActivity().getIntent().getExtras().containsKey("inCollection")) {
+      getActivity().finish();
+    }
   }
 
   /**
@@ -242,6 +243,30 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       Toast.makeText(getActivity(), getString(R.string.set_sort_column_fail), Toast.LENGTH_LONG)
           .show();
     }
+  }
+
+  private void setSortOrder(String order) {
+    try {
+      TableUtil.get()
+          .setSortOrder(Tables.getInstance().getDatabase(), getAppName(), Tables.getInstance()
+              .getDatabase().openDatabase(mAppName), getTableId(), order);
+    } catch (ServicesAvailabilityException e) {
+      Toast.makeText(getActivity(), getString(R.string.set_sort_direction_fail), Toast.LENGTH_LONG)
+          .show();
+    }
+  }
+
+  private String getSortOrder() {
+    try {
+      String sort = TableUtil.get().getSortOrder(Tables.getInstance().getDatabase(), mAppName,
+          Tables.getInstance().getDatabase().openDatabase(mAppName), getTableId());
+      if (sort == null || sort.length() == 0) return "ASC";
+      return sort;
+    } catch (ServicesAvailabilityException e) {
+      Toast.makeText(getActivity(), getString(R.string.set_sort_direction_fail), Toast.LENGTH_LONG)
+          .show();
+    }
+    return "ASC";
   }
 
   /**
@@ -270,43 +295,38 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     Bundle intentExtras = this.getActivity().getIntent().getExtras();
 
     SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(intentExtras);
-    {
-      // see if we should update the group-by with the info from the database
-      UserDbInterface dbInterface = Tables.getInstance().getDatabase();
-      ArrayList<String> dbGroupBy = TableUtil.get()
-          .getGroupByColumns(dbInterface, getAppName(), dbInterface.openDatabase(mAppName),
-              getTableId());
-      String[] sqlGroupBy = dbGroupBy.toArray(new String[dbGroupBy.size()]);
-      if (sqlGroupBy.length != 0) {
-        sqlQueryStruct.groupBy = sqlGroupBy;
-      }
-    }
+    // see if we should update the group-by with the info from the database
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    ArrayList<String> dbGroupBy = TableUtil.get()
+        .getGroupByColumns(dbInterface, getAppName(), dbInterface.openDatabase(mAppName),
+            getTableId());
+    String[] sqlGroupBy = dbGroupBy.toArray(new String[dbGroupBy.size()]);
 
-    if (sqlQueryStruct.groupBy != null && sqlQueryStruct.groupBy.length != 0) {
-      StringBuilder s = new StringBuilder();
-      if (sqlQueryStruct.whereClause != null && sqlQueryStruct.whereClause.length() != 0) {
-        s.append("(").append(sqlQueryStruct.whereClause).append(") AND ");
-      }
-      ArrayList<Object> newSelectionArgs = new ArrayList<Object>();
-      newSelectionArgs.addAll(Arrays.asList(sqlQueryStruct.selectionArgs.bindArgs));
-      boolean first = true;
-      for (String groupByColumn : sqlQueryStruct.groupBy) {
-        if (!first) {
-          s.append(", ");
-        }
-        first = false;
-        String value = cell.row.getDataByKey(groupByColumn);
-        if (value == null) {
-          s.append(groupByColumn).append(" IS NULL");
-        } else {
-          s.append(groupByColumn).append("=?");
-          newSelectionArgs.add(value);
-        }
-      }
-      sqlQueryStruct.whereClause = s.toString();
-      sqlQueryStruct.selectionArgs =
-          new BindArgs(newSelectionArgs.toArray(new Object[newSelectionArgs.size()]));
+    sqlQueryStruct.groupBy = new String[0];
+
+    StringBuilder s = new StringBuilder();
+    if (sqlQueryStruct.whereClause != null && sqlQueryStruct.whereClause.length() != 0) {
+      s.append("(").append(sqlQueryStruct.whereClause).append(") AND ");
     }
+    ArrayList<Object> newSelectionArgs = new ArrayList<Object>();
+    newSelectionArgs.addAll(Arrays.asList(sqlQueryStruct.selectionArgs.bindArgs));
+    boolean first = true;
+    for (String groupByColumn : sqlGroupBy) {
+      if (!first) {
+        s.append(", ");
+      }
+      first = false;
+      String value = cell.row.getDataByKey(groupByColumn);
+      if (value == null) {
+        s.append(groupByColumn).append(" IS NULL");
+      } else {
+        s.append(groupByColumn).append("=?");
+        newSelectionArgs.add(value);
+      }
+    }
+    sqlQueryStruct.whereClause = s.toString();
+    sqlQueryStruct.selectionArgs =
+        new BindArgs(newSelectionArgs.toArray(new Object[newSelectionArgs.size()]));
 
     Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
     Bundle extras = new Bundle();
@@ -314,7 +334,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     IntentUtil.addTableIdToBundle(extras, this.getTableId());
     IntentUtil.addSQLQueryStructToBundle(extras, sqlQueryStruct);
     IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
-    extras.putString("intentOverridesDatabase", "");
     extras.putString("inCollection", "");
     intent.putExtras(extras);
     this.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
@@ -569,6 +588,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       ActivityUtil
           .launchTablePreferenceActivityToEditColumnColorRules(this.getActivity(), getAppName(),
               getTableId(), elementKey);
+    case MENU_ITEM_ID_SORT_ASC:
+      setSortOrder("ASC");
+      init();
+      return true;
+    case MENU_ITEM_ID_SORT_DESC:
+      setSortOrder("DESC");
+      init();
+      return true;
     default:
       WebLogger.getLogger(getAppName())
           .e(TAG, "unrecognized menu item selected: " + item.getItemId());
@@ -726,12 +753,19 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     boolean isSort = (sortColumn != null) && cellInfo.elementKey.equals(sortColumn);
     boolean isGroup = groupByColumns.contains(cd.getElementKey());
     boolean isCollection = getActivity().getIntent().getExtras().containsKey("inCollection");
-    if (isGroup && !isCollection) {
+    if (isGroup) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
           getString(R.string.unset_as_group_by));
     } else if (isSort) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_SORT, ContextMenu.NONE,
           getString(R.string.unset_as_sort));
+      if (getSortOrder().equals("ASC")) {
+        menu.add(ContextMenu.NONE, MENU_ITEM_ID_SORT_DESC, ContextMenu.NONE,
+            getString(R.string.sort_desc));
+      } else {
+        menu.add(ContextMenu.NONE, MENU_ITEM_ID_SORT_ASC, ContextMenu.NONE,
+            getString(R.string.sort_asc));
+      }
     } else {
       if (!isCollection) {
         menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
