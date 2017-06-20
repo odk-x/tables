@@ -25,10 +25,15 @@ import android.view.View;
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.provider.DataTableColumns;
+import org.opendatakit.tables.application.Tables;
 
 import java.util.*;
 
@@ -53,6 +58,8 @@ class TabularView extends View {
   private static final int DEFAULT_DATA_BACKGROUND_COLOR = Color.WHITE;
   private static final int DEFAULT_BORDER_COLOR = Color.GRAY;
   private static final int DEFAULT_HEADER_BACKGROUND_COLOR = Color.CYAN;
+  private static final int GROUP_BY_COLOR = Color.argb(0xff, 0xaa, 0xc3, 0x6c);
+  private static final int SORT_COLOR = Color.argb(0xff, 0xff, 0x80, 0x80);
   private static final int ROW_HEIGHT_PADDING = 14;
   private static final int HORIZONTAL_CELL_PADDING = 5;
   private static final int VERTICAL_CELL_PADDING = 9;
@@ -104,6 +111,30 @@ class TabularView extends View {
   // change based on the TableType. For instance, data objects will be all the
   // data rows of the table; the header has one row.
   private int mNumberOfRows;
+
+  private UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+  private ArrayList<String> groupByColumns = new ArrayList<>();
+  private String sort;
+
+  private void populateSortAndGroupBy() {
+    DbHandle db;
+    try {
+      db = dbInterface.openDatabase(mTable.getAppName());
+    } catch (ServicesAvailabilityException e) {
+      db = null;
+    }
+    if (db != null) {
+      try {
+        groupByColumns = TableUtil.get()
+            .getGroupByColumns(dbInterface, mTable.getAppName(), db, mTable.getTableId());
+        sort = TableUtil.get()
+            .getSortColumn(dbInterface, mTable.getAppName(), db, mTable.getTableId());
+      } catch (ServicesAvailabilityException e) {
+        WebLogger.getLogger(mTable.getAppName()).printStackTrace(e);
+      }
+    }
+
+  }
 
   /**
    * Construct a TabularView. Most uses will likely be able to use one of the
@@ -221,6 +252,7 @@ class TabularView extends View {
         total += BORDER_WIDTH + columnWidths[i];
       }
     }
+    populateSortAndGroupBy();
   }
 
   /**
@@ -647,12 +679,14 @@ class TabularView extends View {
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
 
         String datum = null;
+        String columnKey = null;
         if (this.type == TableLayoutType.STATUS_DATA
             || this.type == TableLayoutType.STATUS_HEADER) {
           datum = DEFAULT_STATUS_COLUMN_VALUE;
         } else if (this.type == TableLayoutType.INDEX_HEADER
             || this.type == TableLayoutType.MAIN_HEADER) {
           datum = this.mTable.getHeader(userDataIndex[j]);
+          columnKey = mTable.getHeaderKey(userDataIndex[j]);
         } else if (this.type == TableLayoutType.INDEX_DATA
             || this.type == TableLayoutType.MAIN_DATA) {
 
@@ -690,7 +724,19 @@ class TabularView extends View {
             backgroundColor = rowGuide.getBackground();
           }
         }
-        drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor, columnWidths[j]);
+        // if header_fix is set, draw one extra pixel further down than we should. This fixes a
+        // bug probably related to SpreadsheetView but it makes the headers look a lot prettier
+        boolean header_fix = false;
+        if (type == TableLayoutType.MAIN_HEADER) {
+          header_fix = true;
+          if (groupByColumns.contains(columnKey)) {
+            backgroundColor = GROUP_BY_COLOR;
+          } else if (columnKey.equals(sort)) {
+            backgroundColor = SORT_COLOR;
+          }
+        }
+        drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor, columnWidths[j],
+            header_fix);
       }
       y += rowHeight + BORDER_WIDTH;
       /** adding to try and fix draw **/
@@ -732,7 +778,7 @@ class TabularView extends View {
   }
 
   private void drawCell(Canvas canvas, int x, int y, String datum, int backgroundColor,
-      int foregroundColor, int columnWidth) {
+      int foregroundColor, int columnWidth, boolean header_fix) {
     // have to do this check to reset to the default, otherwise it uses the
     // old object which was previously saved and paints all the columns the
     // wrong color.
@@ -741,7 +787,10 @@ class TabularView extends View {
     } else {
       bgPaint.setColor(this.defaultBackgroundColor);
     }
-    canvas.drawRect(x, y, x + columnWidth, y + rowHeight, bgPaint);
+    int row_height_real = rowHeight;
+    if (header_fix)
+      row_height_real++;
+    canvas.drawRect(x, y, x + columnWidth, y + row_height_real, bgPaint);
     canvas.save(Canvas.ALL_SAVE_FLAG);
     canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y, x + columnWidth - (2 * HORIZONTAL_CELL_PADDING),
         y + rowHeight);

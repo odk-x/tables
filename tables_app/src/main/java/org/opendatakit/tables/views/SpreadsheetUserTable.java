@@ -48,6 +48,7 @@ public class SpreadsheetUserTable {
   private final String indexColumnElementKey;
   // The localized display names for the columns of the table
   private final String[] header;
+  private final String[] header_keys;
   //
   private final String[] spreadsheetIndexToElementKey;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
@@ -71,6 +72,7 @@ public class SpreadsheetUserTable {
               frag.getColumnDefinitions());
 
       header = new String[colOrder.size()];
+      header_keys = new String[colOrder.size()];
       spreadsheetIndexToElementKey = new String[colOrder.size()];
       elementKeyToSpreadsheetIndex = new HashMap<>();
 
@@ -82,6 +84,7 @@ public class SpreadsheetUserTable {
                 frag.getTableId(), elementKey);
 
         header[i] = localizedDisplayName;
+        header_keys[i] = elementKey;
         spreadsheetIndexToElementKey[i] = elementKey;
         elementKeyToSpreadsheetIndex.put(elementKey, i);
       }
@@ -191,6 +194,9 @@ public class SpreadsheetUserTable {
 
   String getHeader(int colNum) {
     return header[colNum];
+  }
+  String getHeaderKey(int colNum) {
+    return header_keys[colNum];
   }
 
   public static class SpreadsheetCell {
