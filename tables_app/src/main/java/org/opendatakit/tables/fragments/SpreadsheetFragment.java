@@ -311,9 +311,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     Bundle extras = new Bundle();
     IntentUtil.addAppNameToBundle(extras, this.getAppName());
     IntentUtil.addTableIdToBundle(extras, this.getTableId());
-    IntentUtil.addSQLKeysToBundle(extras, sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
-        sqlQueryStruct.groupBy, sqlQueryStruct.having,
-        sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
+    IntentUtil.addSQLQueryStructToBundle(extras, sqlQueryStruct);
     IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
     extras.putString("intentOverridesDatabase", "");
     intent.putExtras(extras);
