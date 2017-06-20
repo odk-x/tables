@@ -700,9 +700,6 @@ class TabularView extends View {
               .e(TAG, "unrecognized table type: " + this.type.name());
           datum = null;
         }
-        if (datum == null) {
-          datum = "";
-        }
         int foregroundColor = this.defaultForegroundColor;
         int backgroundColor = this.defaultBackgroundColor;
         if (type == TableLayoutType.INDEX_DATA || type == TableLayoutType.MAIN_DATA) {
@@ -733,6 +730,11 @@ class TabularView extends View {
           } else if (columnKey != null && columnKey.equals(sort)) {
             backgroundColor = SORT_COLOR;
           }
+        }
+        // Override any of that if the data is actually null
+        if (datum == null) {
+          foregroundColor = Color.rgb(127, 127, 127); // grey
+          datum = "(NULL)";
         }
         drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor, columnWidths[j]);
       }
