@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.views;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
@@ -93,6 +94,24 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
   private CellInfo lastHighlightedCellId;
   private CellInfo lastLastHighlightedCellId;
+
+
+  public void openDataMenu() {
+    if (table.isIndexed()) {
+      controller.openContextMenu(indexData);
+    } else {
+      controller.openContextMenu(mainData);
+    }
+  }
+
+  public void openHeaderMenu() {
+    if (table.isIndexed()) {
+      controller.openContextMenu(indexHeader);
+    } else {
+      controller.openContextMenu(mainHeader);
+    }
+  }
+
 
   /**
    * Initializes a new spreadsheet view to the specified table. It pulls the app name out of the
@@ -195,7 +214,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
        */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
-        controller.openDataContextMenu(mainData);
+        controller.openContextMenu(mainData);
       }
 
       /**
@@ -245,7 +264,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
        */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
-        controller.openHeaderContextMenu(mainHeader);
+        controller.openContextMenu(mainHeader);
       }
 
       /**
@@ -293,7 +312,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
        */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
-        controller.openDataContextMenu(indexData);
+        controller.openContextMenu(indexData);
       }
 
       /**
@@ -341,7 +360,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
        */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
-        controller.openHeaderContextMenu(indexHeader);
+        controller.openContextMenu(indexHeader);
       }
 
       /**
@@ -683,13 +702,11 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
-    void openHeaderContextMenu(View view);
-
     void dataCellClicked(CellInfo cellId);
 
     void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
-    void openDataContextMenu(View view);
+    void openContextMenu(View view);
   }
 
   /**

@@ -315,7 +315,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Display the current fragment (which should already be around) when we resume
+   * Handles pulling properties out of the database if they weren't in the saved instance state
+   * or the intent, recreates the current fragment.
    */
   @Override
   public void databaseAvailable() {
@@ -325,7 +326,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         UserDbInterface dbInt = Tables.getInstance().getDatabase();
         DbHandle db = dbInt.openDatabase(mAppName);
         props.setSortOrder(TableUtil.get().getSortOrder(dbInt, mAppName, db, getTableId()));
-        props.setSortOrder(TableUtil.get().getSortColumn(dbInt, mAppName, db, getTableId()));
+        props.setSort(TableUtil.get().getSortColumn(dbInt, mAppName, db, getTableId()));
         List<String> temp = TableUtil.get().getGroupByColumns(dbInt, mAppName, db, getTableId());
         props.setGroupBy(temp.toArray(new String[temp.size()]));
         pullFromDatabase = false;
@@ -708,6 +709,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         props = data.getExtras().getParcelable("props");
         props.setActivity(this);
       }
+      break;
     }
 
     super.onActivityResult(requestCode, resultCode, data);

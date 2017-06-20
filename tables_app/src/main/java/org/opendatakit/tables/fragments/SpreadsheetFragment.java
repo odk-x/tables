@@ -89,12 +89,17 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   private CellInfo mLastDataCellMenued;
   private CellInfo mLastHeaderCellMenued;
   private LinearLayout theView;
+  private boolean dataMenuOpen = false;
+  private boolean headerMenuOpen = false;
+  private View container;
 
   @Override
   public void onSaveInstanceState(Bundle out) {
     super.onSaveInstanceState(out);
     out.putParcelable("data", mLastDataCellMenued);
     out.putParcelable("header", mLastHeaderCellMenued);
+    out.putBoolean("dataMenuOpen", dataMenuOpen);
+    out.putBoolean("headerMenuOpen", headerMenuOpen);
   }
 
   @Override
@@ -107,7 +112,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       if (savedInstanceState.containsKey("header")) {
         mLastHeaderCellMenued = savedInstanceState.getParcelable("header");
       }
+      if (savedInstanceState.containsKey("dataMenuOpen")) {
+        dataMenuOpen = savedInstanceState.getBoolean("dataMenuOpen");
+      }
+      if (savedInstanceState.containsKey("headerMenuOpen")) {
+        headerMenuOpen = savedInstanceState.getBoolean("headerMenuOpen");
+      }
     }
+
   }
 
   /**
@@ -137,6 +149,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     TextView textView = new TextView(getActivity());
     textView.setText(getString(R.string.error_accessing_database));
     theView.addView(textView);
+    this.container = container;
     return theView;
   }
 
@@ -157,7 +170,17 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         theView.addView(textView);
       } else {
         theView.removeAllViews();
-        theView.addView(buildSpreadsheetView());
+        SpreadsheetView theSpreadsheetView = buildSpreadsheetView();
+        theView.addView(theSpreadsheetView);
+        if (headerMenuOpen) {
+          // TODO
+          //theSpreadsheetView.openHeaderMenu();
+        }
+        if (dataMenuOpen) {
+          // TODO
+          //theSpreadsheetView.openDataMenu();
+        }
+
       }
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
@@ -405,15 +428,17 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   @Override
   public boolean onContextItemSelected(MenuItem item) {
+    headerMenuOpen = false;
+    dataMenuOpen = false;
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
 
     // TEMP code to try and fix the crash on return-edit
     if (spreadsheetTable == null) {
       if (dbInterface == null)
         return false;
-      databaseAvailable();
-      if (spreadsheetTable == null)
-        return false;
+      //databaseAvailable();
+      //if (spreadsheetTable == null)
+      //return false;
     }
     // end temp
     SpreadsheetCell cell;
@@ -661,12 +686,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   @Override
   public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo)
       throws ServicesAvailabilityException {
+    if (!dataMenuOpen) {
+      mLastDataCellMenued = cellInfo;
+      dataMenuOpen = true;
+    } else {
+      cellInfo = mLastDataCellMenued;
+    }
 
-    this.mLastDataCellMenued = cellInfo;
-    WebLogger.getLogger(mAppName).i(TAG,
-        "setting lastDataCellMenu'd to " + (mLastDataCellMenued == null ?
-            "null" :
-            mLastDataCellMenued.toString()));
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
@@ -729,19 +755,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    * @param view A view to put the context menu in
    */
   @Override
-  public void openHeaderContextMenu(View view) {
-    this.getActivity().openContextMenu(view);
-  }
-
-  /**
-   * Opens the row actions context menu. Called when the user double clicks or long clicks on a
-   * cell in SpreadsheetView
-   *
-   * @param view A view to put the context menu in
-   */
-  @Override
-  public void openDataContextMenu(View view) {
-    this.getActivity().openContextMenu(view);
+  public void openContextMenu(View view) {
+    getActivity().openContextMenu(view);
   }
 
   /**
@@ -755,7 +770,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   @Override
   public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo)
       throws ServicesAvailabilityException {
-    this.mLastHeaderCellMenued = cellInfo;
+    if (!headerMenuOpen) {
+      mLastHeaderCellMenued = cellInfo;
+      headerMenuOpen = true;
+    } else {
+      cellInfo = mLastHeaderCellMenued;
+    }
 
     menu.setHeaderTitle(getString(R.string.column_actions));
 
