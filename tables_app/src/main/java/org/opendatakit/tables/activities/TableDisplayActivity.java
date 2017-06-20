@@ -23,6 +23,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.view.Menu;
@@ -34,6 +35,7 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
@@ -46,12 +48,14 @@ import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
+import org.opendatakit.tables.views.SpreadsheetProps;
 import org.opendatakit.views.ODKWebView;
 import org.opendatakit.views.ViewDataQueryParams;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Displays information about a table. List, Map, and Detail views are all
@@ -141,9 +145,27 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    *
    * @param savedInstanceState the state we saved in onSaveInstanceState
    */
+  private boolean pullFromDatabase;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    props = new SpreadsheetProps();
+    props.setActivity(this);
+    pullFromDatabase = false;
+    if (savedInstanceState != null) {
+      if (savedInstanceState.containsKey("props")) {
+        props = savedInstanceState.getParcelable("props");
+        props.setActivity(this);
+      }
+    } else {
+      Bundle extras = getIntentExtras();
+      if (extras.containsKey(Constants.IntentKeys.SQL_OVERRIDES_DATABASE)) {
+        props = extras.getParcelable("props");
+        props.setActivity(this);
+      } else {
+        pullFromDatabase = true;
+      }
+  }
 
     /*
      * If we are restoring from a saved state, the fleshed-out original view type and filename
@@ -288,6 +310,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     if (mQueries != null) {
       outState.putParcelableArray(INTENT_KEY_QUERIES, mQueries);
     }
+    outState.putParcelable("props", props);
   }
 
   @Override public void databaseUnavailable() {}
@@ -296,8 +319,21 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * Display the current fragment (which should already be around) when we resume
    */
   @Override public void databaseAvailable() {
-    showCurrentDisplayFragment(true);
     WebLogger.getLogger(getAppName()).i(TAG, "databaseAvailable called");
+    if (pullFromDatabase) {
+      try {
+        UserDbInterface dbInt = Tables.getInstance().getDatabase();
+        DbHandle db = dbInt.openDatabase(mAppName);
+        props.setSortOrder(TableUtil.get().getSortOrder(dbInt, mAppName, db, getTableId()));
+        props.setSortOrder(TableUtil.get().getSortColumn(dbInt,mAppName, db, getTableId()));
+        List<String> temp = TableUtil.get().getGroupByColumns(dbInt, mAppName, db, getTableId());
+        props.setGroupBy(temp.toArray(new String[temp.size()]));
+        pullFromDatabase = false;
+      } catch (ServicesAvailabilityException e) {
+        // TODO
+      }
+    }
+    showCurrentDisplayFragment(true);
   }
 
   /**
@@ -327,6 +363,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     }
   }
 
+  public SpreadsheetProps props;
   /**
    * Get the {@link UserTable} that is being held by this activity. AND CHANGES mUserTable! to
    * be that table
@@ -341,24 +378,13 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         SQLQueryStruct sqlQueryStruct = IntentUtil
             .getSQLQueryStructFromBundle(this.getIntent().getExtras());
 
-        ArrayList<String> dbGroupBy = TableUtil.get().getGroupByColumns(Tables.getInstance()
-            .getDatabase(), getAppName(), db, getTableId());
-        String[] groupBy = dbGroupBy.toArray(new String[dbGroupBy.size()]);
-        if (groupBy.length != 0 && !getIntentExtras().containsKey("inCollection")) {
-          sqlQueryStruct.groupBy = groupBy;
+        if (getIntentExtras().containsKey("inCollection")) {
+          sqlQueryStruct.groupBy = null;
+        } else {
+          sqlQueryStruct.groupBy = props.getGroupBy();
         }
-
-        String sort = TableUtil.get().getSortColumn(Tables.getInstance()
-            .getDatabase(), getAppName(), db, getTableId());
-        if (!(sort == null || sort.length() == 0)) {
-          sqlQueryStruct.orderByElementKey = sort;
-        }
-
-        String order = TableUtil.get().getSortOrder(Tables.getInstance().getDatabase(),
-            getAppName(), db, getTableId());
-        if (!(order == null || order.length() == 0)) {
-          sqlQueryStruct.orderByDirection = order;
-        }
+        sqlQueryStruct.orderByElementKey = props.getSort();
+        sqlQueryStruct.orderByDirection = props.getSortOrder();
 
         String[] emptyArray = {};
         mUserTable = Tables.getInstance().getDatabase()
@@ -681,6 +707,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
             .d(TAG, "[onActivityResult] result canceled, refreshing backing table");
       }
       break;
+    case Constants.RequestCodes.LAUNCH_VIEW:
+      if (data.getExtras().containsKey("props")) {
+        props = data.getExtras().getParcelable("props");
+        props.setActivity(this);
+      }
     }
 
     super.onActivityResult(requestCode, resultCode, data);

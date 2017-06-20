@@ -60,6 +60,7 @@ class TabularView extends View {
   private static final int DEFAULT_HEADER_BACKGROUND_COLOR = Color.CYAN;
   private static final int GROUP_BY_COLOR = Color.rgb(0xaa, 0xc3, 0x6c);
   private static final int SORT_COLOR = Color.rgb(0xff, 0x80, 0x80);
+  private static final int FROZEN_COLOR = Color.rgb(0xcc, 0xcc, 0xcc);
   private static final int NULL_COLOR = Color.rgb(127, 127, 127);
   private static final int ROW_HEIGHT_PADDING = 14;
   private static final int HORIZONTAL_CELL_PADDING = 5;
@@ -114,29 +115,7 @@ class TabularView extends View {
   // data rows of the table; the header has one row.
   private int mNumberOfRows;
 
-  private UserDbInterface dbInterface = Tables.getInstance().getDatabase();
-  private ArrayList<String> groupByColumns = new ArrayList<>();
-  private String sort;
-
-  private void populateSortAndGroupBy() {
-    DbHandle db;
-    try {
-      db = dbInterface.openDatabase(mTable.getAppName());
-    } catch (ServicesAvailabilityException e) {
-      db = null;
-    }
-    if (db != null) {
-      try {
-        groupByColumns = TableUtil.get()
-            .getGroupByColumns(dbInterface, mTable.getAppName(), db, mTable.getTableId());
-        sort = TableUtil.get()
-            .getSortColumn(dbInterface, mTable.getAppName(), db, mTable.getTableId());
-      } catch (ServicesAvailabilityException e) {
-        WebLogger.getLogger(mTable.getAppName()).printStackTrace(e);
-      }
-    }
-
-  }
+  private SpreadsheetProps props;
 
   /**
    * Construct a TabularView. Most uses will likely be able to use one of the
@@ -254,7 +233,6 @@ class TabularView extends View {
         total += BORDER_WIDTH + columnWidths[i];
       }
     }
-    populateSortAndGroupBy();
   }
 
   /**
@@ -732,10 +710,13 @@ class TabularView extends View {
         }
         if (type == TableLayoutType.MAIN_HEADER || type == TableLayoutType.INDEX_HEADER || type
             == TableLayoutType.STATUS_HEADER) {
-          if (groupByColumns.contains(columnKey)) {
+          if (Arrays.asList(mTable.props.getGroupBy()).contains(columnKey)) {
             backgroundColor = GROUP_BY_COLOR;
-          } else if (columnKey != null && columnKey.equals(sort)) {
+          } else if (columnKey != null && columnKey.equals(mTable.props.getSort())) {
             backgroundColor = SORT_COLOR;
+          }
+          if (columnKey != null && columnKey.equals(mTable.props.getFrozen())) {
+            backgroundColor = FROZEN_COLOR;
           }
         }
         // Override any of that if the data is actually null
