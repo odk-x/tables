@@ -644,6 +644,8 @@ class TabularView extends View {
           borderPaint);
       yCoord += rowHeight + BORDER_WIDTH;
     }
+    canvas.drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + BORDER_WIDTH,
+        borderPaint);
     int xCoord = leftmostBorder;
     for (int i = indexOfLeftmostColumn; i < indexOfRightmostColumn + 1; i++) {
       canvas.drawRect(xCoord, topmostBorder, xCoord + BORDER_WIDTH, bottomBottommost, borderPaint);
@@ -724,19 +726,14 @@ class TabularView extends View {
             backgroundColor = rowGuide.getBackground();
           }
         }
-        // if header_fix is set, draw one extra pixel further down than we should. This fixes a
-        // bug probably related to SpreadsheetView but it makes the headers look a lot prettier
-        boolean header_fix = false;
         if (type == TableLayoutType.MAIN_HEADER) {
-          header_fix = true;
           if (groupByColumns.contains(columnKey)) {
             backgroundColor = GROUP_BY_COLOR;
           } else if (columnKey.equals(sort)) {
             backgroundColor = SORT_COLOR;
           }
         }
-        drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor, columnWidths[j],
-            header_fix);
+        drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor, columnWidths[j]);
       }
       y += rowHeight + BORDER_WIDTH;
       /** adding to try and fix draw **/
@@ -778,7 +775,7 @@ class TabularView extends View {
   }
 
   private void drawCell(Canvas canvas, int x, int y, String datum, int backgroundColor,
-      int foregroundColor, int columnWidth, boolean header_fix) {
+      int foregroundColor, int columnWidth) {
     // have to do this check to reset to the default, otherwise it uses the
     // old object which was previously saved and paints all the columns the
     // wrong color.
@@ -788,8 +785,6 @@ class TabularView extends View {
       bgPaint.setColor(this.defaultBackgroundColor);
     }
     int row_height_real = rowHeight;
-    if (header_fix)
-      row_height_real++;
     canvas.drawRect(x, y, x + columnWidth, y + row_height_real, bgPaint);
     canvas.save(Canvas.ALL_SAVE_FLAG);
     canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y, x + columnWidth - (2 * HORIZONTAL_CELL_PADDING),
@@ -801,12 +796,10 @@ class TabularView extends View {
   }
 
   private void highlightCell(Canvas canvas, int x, int y, int columnWidth) {
-    canvas.drawLine(x + 1, y + 1, x + columnWidth - 1, y - 1, highlightPaint);
-    canvas.drawLine(x + 1, y + 1, x + 1, y + rowHeight - 1, highlightPaint);
-    canvas.drawLine(x + columnWidth - 1, y + 1, x + columnWidth - 1, y + rowHeight - 1,
-        highlightPaint);
-    canvas
-        .drawLine(x + 1, y + rowHeight - 1, x + columnWidth - 1, y + rowHeight - 1, highlightPaint);
+    canvas.drawLine(x, y, x + columnWidth, y, highlightPaint);
+    canvas.drawLine(x, y, x, y + rowHeight, highlightPaint);
+    canvas .drawLine(x, y + rowHeight, x + columnWidth, y + rowHeight, highlightPaint);
+    canvas.drawLine(x + columnWidth - 1, y, x + columnWidth - 1, y + rowHeight, highlightPaint);
   }
 
   @Override
