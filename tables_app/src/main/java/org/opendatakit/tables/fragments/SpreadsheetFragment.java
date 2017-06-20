@@ -235,6 +235,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       TableUtil.get()
           .atomicSetSortColumn(Tables.getInstance().getDatabase(), getAppName(), getTableId(),
               (cd == null) ? null : cd.getElementKey());
+      //getUserTable().setSort(cd.getElementKey());
     } catch (ServicesAvailabilityException e) {
       Toast.makeText(getActivity(), getString(R.string.set_sort_column_fail), Toast.LENGTH_LONG)
           .show();
@@ -329,7 +330,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
     IntentUtil.addAppNameToBundle(extras, this.getAppName());
     IntentUtil.addTableIdToBundle(extras, getTableId());
-    extras.putString("intentOverridesDatabase", "");
+    extras.putString("inCollection", "");
     intent.putExtras(extras);
     this.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
   }
@@ -626,7 +627,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
     MenuItem mi;
     // If we have group buys, give the user the "View collection" option
-    if (this.hasGroupBys()) {
+    if (this.hasGroupBys() && !getActivity().getIntent().getExtras().containsKey("inCollection")) {
       mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN, ContextMenu.NONE,
           R.string.view_collection);
       mi.setIcon(R.drawable.ic_view_headline_black_24dp);
@@ -736,15 +737,21 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       //WebLogger.getLogger(mAppName).i(TAG, x);
     //}
 
-    if (groupByColumns.contains(cd.getElementKey())) {
+    // Do not let the user change group by settings if we're viewing a collection, it breaks things
+    boolean isSort = (sortColumn != null) && cellInfo.elementKey.equals(sortColumn);
+    boolean isGroup = groupByColumns.contains(cd.getElementKey());
+    boolean isCollection = getActivity().getIntent().getExtras().containsKey("inCollection");
+    if (isGroup && !isCollection) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
           getString(R.string.unset_as_group_by));
-    } else if ((sortColumn != null) && cellInfo.elementKey.equals(sortColumn)) {
+    } else if (isSort) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_SORT, ContextMenu.NONE,
           getString(R.string.unset_as_sort));
     } else {
-      menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
-          getString(R.string.set_as_group_by));
+      if (!isCollection) {
+        menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
+            getString(R.string.set_as_group_by));
+      }
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_COLUMN_AS_SORT, ContextMenu.NONE,
           getString(R.string.set_as_sort));
     }
