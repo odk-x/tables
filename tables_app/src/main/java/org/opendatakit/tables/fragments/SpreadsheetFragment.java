@@ -225,6 +225,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       Toast.makeText(getActivity(), getString(R.string.remove_group_by_fail), Toast.LENGTH_LONG)
           .show();
     }
+    if (getActivity().getIntent().getExtras().containsKey("inCollection")) {
+      getActivity().finish();
+    }
   }
 
   /**
@@ -270,49 +273,43 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     Bundle intentExtras = this.getActivity().getIntent().getExtras();
 
     SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(intentExtras);
-    {
-      // see if we should update the group-by with the info from the database
-      UserDbInterface dbInterface = Tables.getInstance().getDatabase();
-      ArrayList<String> dbGroupBy = TableUtil.get()
-          .getGroupByColumns(dbInterface, getAppName(), dbInterface.openDatabase(mAppName),
-              getTableId());
-      String[] sqlGroupBy = dbGroupBy.toArray(new String[dbGroupBy.size()]);
-      if (sqlGroupBy.length != 0) {
-        sqlQueryStruct.groupBy = sqlGroupBy;
-      }
-    }
+    // see if we should update the group-by with the info from the database
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    ArrayList<String> dbGroupBy = TableUtil.get()
+        .getGroupByColumns(dbInterface, getAppName(), dbInterface.openDatabase(mAppName),
+            getTableId());
+    String[] sqlGroupBy = dbGroupBy.toArray(new String[dbGroupBy.size()]);
 
-    if (sqlQueryStruct.groupBy != null && sqlQueryStruct.groupBy.length != 0) {
-      StringBuilder s = new StringBuilder();
-      if (sqlQueryStruct.whereClause != null && sqlQueryStruct.whereClause.length() != 0) {
-        s.append("(").append(sqlQueryStruct.whereClause).append(") AND ");
-      }
-      ArrayList<Object> newSelectionArgs = new ArrayList<Object>();
-      newSelectionArgs.addAll(Arrays.asList(sqlQueryStruct.selectionArgs.bindArgs));
-      boolean first = true;
-      for (String groupByColumn : sqlQueryStruct.groupBy) {
-        if (!first) {
-          s.append(", ");
-        }
-        first = false;
-        String value = cell.row.getDataByKey(groupByColumn);
-        if (value == null) {
-          s.append(groupByColumn).append(" IS NULL");
-        } else {
-          s.append(groupByColumn).append("=?");
-          newSelectionArgs.add(value);
-        }
-      }
-      sqlQueryStruct.whereClause = s.toString();
-      sqlQueryStruct.selectionArgs =
-          new BindArgs(newSelectionArgs.toArray(new Object[newSelectionArgs.size()]));
+    sqlQueryStruct.groupBy = new String[0];
+
+    StringBuilder s = new StringBuilder();
+    if (sqlQueryStruct.whereClause != null && sqlQueryStruct.whereClause.length() != 0) {
+      s.append("(").append(sqlQueryStruct.whereClause).append(") AND ");
     }
+    ArrayList<Object> newSelectionArgs = new ArrayList<Object>();
+    newSelectionArgs.addAll(Arrays.asList(sqlQueryStruct.selectionArgs.bindArgs));
+    boolean first = true;
+    for (String groupByColumn : sqlGroupBy) {
+      if (!first) {
+        s.append(", ");
+      }
+      first = false;
+      String value = cell.row.getDataByKey(groupByColumn);
+      if (value == null) {
+        s.append(groupByColumn).append(" IS NULL");
+      } else {
+        s.append(groupByColumn).append("=?");
+        newSelectionArgs.add(value);
+      }
+    }
+    sqlQueryStruct.whereClause = s.toString();
+    sqlQueryStruct.selectionArgs =
+        new BindArgs(newSelectionArgs.toArray(new Object[newSelectionArgs.size()]));
 
     Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
     Bundle extras = new Bundle();
     IntentUtil.addAppNameToBundle(extras, this.getAppName());
     IntentUtil.addTableIdToBundle(extras, this.getTableId());
-    sqlQueryStruct.groupBy = new String[0];
     IntentUtil.addSQLQueryStructToBundle(extras, sqlQueryStruct);
     IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
     extras.putString("inCollection", "");
@@ -726,7 +723,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     boolean isSort = (sortColumn != null) && cellInfo.elementKey.equals(sortColumn);
     boolean isGroup = groupByColumns.contains(cd.getElementKey());
     boolean isCollection = getActivity().getIntent().getExtras().containsKey("inCollection");
-    if (isGroup && !isCollection) {
+    if (isGroup) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
           getString(R.string.unset_as_group_by));
     } else if (isSort) {
