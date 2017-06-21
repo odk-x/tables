@@ -70,7 +70,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   private static final String TAG = SpreadsheetFragment.class.getSimpleName();
 
   // used in onContextItemSelected
-  private static final int MENU_ITEM_ID_HISTORY_IN = 0;
+  private static final int MENU_ITEM_ID_OPEN_COLLECTION = 0;
   //  private static final int MENU_ITEM_ID_EDIT_CELL = 1;
   private static final int MENU_ITEM_ID_DELETE_ROW = 2;
   private static final int MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY = 3;
@@ -354,7 +354,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // When the user long taps or double taps on a cell, and they have edit permission, and the
     // table has group buys, then this option is displayed in the drop down menu. It opens a
     // collection
-    case MENU_ITEM_ID_HISTORY_IN:
+    case MENU_ITEM_ID_OPEN_COLLECTION:
       cell = spreadsheetTable.getSpreadsheetCell(getProps().lastDataCellMenued);
       try {
         openCollectionView(cell);
@@ -613,7 +613,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     MenuItem mi;
     // If we have group buys, give the user the "View collection" option
     if (this.hasGroupBys() && !getActivity().getIntent().getExtras().containsKey("inCollection")) {
-      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN, ContextMenu.NONE,
+      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_COLLECTION, ContextMenu.NONE,
           R.string.view_collection);
       mi.setIcon(R.drawable.ic_view_headline_black_24dp);
     }
