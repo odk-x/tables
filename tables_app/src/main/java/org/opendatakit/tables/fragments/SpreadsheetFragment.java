@@ -38,6 +38,8 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.provider.DataTableColumns;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.ISpreadsheetFragmentContainer;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.application.Tables;
@@ -46,6 +48,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.views.CellInfo;
+import org.opendatakit.tables.views.SpreadsheetProps;
 import org.opendatakit.tables.views.SpreadsheetUserTable;
 import org.opendatakit.tables.views.SpreadsheetUserTable.SpreadsheetCell;
 import org.opendatakit.tables.views.SpreadsheetView;
@@ -86,41 +89,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
   private SpreadsheetUserTable spreadsheetTable;
 
-  private CellInfo mLastDataCellMenued;
-  private CellInfo mLastHeaderCellMenued;
   private LinearLayout theView;
-  private boolean dataMenuOpen = false;
-  private boolean headerMenuOpen = false;
   private View container;
-
-  @Override
-  public void onSaveInstanceState(Bundle out) {
-    super.onSaveInstanceState(out);
-    out.putParcelable("data", mLastDataCellMenued);
-    out.putParcelable("header", mLastHeaderCellMenued);
-    out.putBoolean("dataMenuOpen", dataMenuOpen);
-    out.putBoolean("headerMenuOpen", headerMenuOpen);
-  }
-
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    if (savedInstanceState != null) {
-      if (savedInstanceState.containsKey("data")) {
-        mLastDataCellMenued = savedInstanceState.getParcelable("data");
-      }
-      if (savedInstanceState.containsKey("header")) {
-        mLastHeaderCellMenued = savedInstanceState.getParcelable("header");
-      }
-      if (savedInstanceState.containsKey("dataMenuOpen")) {
-        dataMenuOpen = savedInstanceState.getBoolean("dataMenuOpen");
-      }
-      if (savedInstanceState.containsKey("headerMenuOpen")) {
-        headerMenuOpen = savedInstanceState.getBoolean("headerMenuOpen");
-      }
-    }
-
-  }
 
   /**
    * returns spreadsheet
@@ -170,17 +140,25 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         theView.addView(textView);
       } else {
         theView.removeAllViews();
-        SpreadsheetView theSpreadsheetView = buildSpreadsheetView();
+        final SpreadsheetView theSpreadsheetView = buildSpreadsheetView();
         theView.addView(theSpreadsheetView);
-        if (headerMenuOpen) {
-          // TODO
-          //theSpreadsheetView.openHeaderMenu();
-        }
-        if (dataMenuOpen) {
-          // TODO
-          //theSpreadsheetView.openDataMenu();
-        }
-
+        final SpreadsheetProps props = getProps();
+        container.post(new Runnable() {
+          @Override
+          public void run() {
+            if (getActivity() == null) {
+              WebLogger.getLogger(mAppName).i(TAG, "activity was null in post, this fragment "
+                  + "was probably destroyed and recreated via showCurrentDisplayFragment before "
+                  + "the rotation completed.");
+            } else {
+              if (props.headerMenuOpen) {
+                theSpreadsheetView.openHeaderMenu();
+              } else if (props.dataMenuOpen) {
+                theSpreadsheetView.openDataMenu();
+              }
+            }
+          }
+        });
       }
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
@@ -223,11 +201,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    * @param cd which column to group by
    */
   void addGroupByColumn(ColumnDefinition cd) {
-    String[] groupBy = getGroupBy();
+    String[] groupBy = getProps().getGroupBy();
     String[] newArr = new String[groupBy.length + 1];
     System.arraycopy(groupBy, 0, newArr, 0, groupBy.length);
     newArr[groupBy.length] = cd.getElementKey();
-    setGroupBy(newArr);
+    getProps().setGroupBy(newArr);
     // Can't be done in a collection view so we don't need to update the parent
   }
 
@@ -239,102 +217,22 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   void removeGroupByColumn(ColumnDefinition cd) {
     // Need to wrap because Arrays.asList returns an immutable List object and asList.remove will
     // throw an UnsupportedOperationException
-    ArrayList<String> asList = new ArrayList<>(Arrays.asList(getGroupBy()));
+    ArrayList<String> asList = new ArrayList<>(Arrays.asList(getProps().getGroupBy()));
     if (asList.contains(cd.getElementKey())) {
       asList.remove(cd.getElementKey());
     }
-    setGroupBy(asList.toArray(new String[asList.size()]));
+    getProps().setGroupBy(asList.toArray(new String[asList.size()]));
     if (getActivity().getIntent().getExtras().containsKey("inCollection")) {
-      // TODO!! Needs to update parent activity!
       getActivity().finish();
     }
   }
 
   private String getSortOrder() {
-    Activity act = getActivity();
-    String sortOrder = null;
-    if (act instanceof TableDisplayActivity) {
-      sortOrder = ((TableDisplayActivity) act).props.getSortOrder();
-    }
+    String sortOrder = getProps().getSortOrder();
     if (sortOrder == null || sortOrder.length() == 0) {
       return "ASC";
     }
     return sortOrder;
-  }
-
-  private void setSortOrder(String order) {
-    Activity act = getActivity();
-    if (act instanceof TableDisplayActivity) {
-      ((TableDisplayActivity) act).props.setSortOrder(order);
-    }
-  }
-
-  private String getSort() {
-    Activity act = getActivity();
-    String sort = null;
-    if (act instanceof TableDisplayActivity) {
-      sort = ((TableDisplayActivity) act).props.getSort();
-    }
-    return sort;
-  }
-
-  /**
-   * Sorts the table by a column
-   *
-   * @param cd the column to sort by
-   */
-  void setSort(String cd) {
-    Activity act = getActivity();
-    if (act instanceof TableDisplayActivity) {
-      if (cd == null) {
-        ((TableDisplayActivity) act).props.setSort(null);
-      } else {
-        ((TableDisplayActivity) act).props.setSort(cd);
-      }
-    }
-  }
-
-  private String getFrozen() {
-    Activity act = getActivity();
-    String frozen = null;
-    if (act instanceof TableDisplayActivity) {
-      frozen = ((TableDisplayActivity) act).props.getFrozen();
-    }
-    return frozen;
-  }
-
-  /**
-   * Indexes the table by the given column
-   *
-   * @param cd the column to index by
-   */
-  void setFrozen(ColumnDefinition cd) {
-    Activity act = getActivity();
-    if (act instanceof TableDisplayActivity) {
-      if (cd == null) {
-        ((TableDisplayActivity) act).props.setFrozen(null);
-      } else {
-        ((TableDisplayActivity) act).props.setFrozen(cd.getElementKey());
-      }
-    }
-  }
-
-  String[] getGroupBy() {
-    Activity act = getActivity();
-    String[] groupBy = null;
-    if (act instanceof TableDisplayActivity) {
-      groupBy = ((TableDisplayActivity) act).props.getGroupBy();
-    }
-    if (groupBy == null)
-      return new String[0];
-    return groupBy;
-  }
-
-  void setGroupBy(String[] groupBy) {
-    Activity act = getActivity();
-    if (act instanceof TableDisplayActivity) {
-      ((TableDisplayActivity) act).props.setGroupBy(groupBy);
-    }
   }
 
   /**
@@ -348,7 +246,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
     SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(intentExtras);
     // see if we should update the group-by with the info from the database
-    String[] sqlGroupBy = getGroupBy();
+    String[] sqlGroupBy = getProps().getGroupBy();
     // We don't need to set sqlQueryStruct.groupBy to an empty array because
     // TableDisplayActivity::getUserTable does that on the other end
     StringBuilder s = new StringBuilder();
@@ -383,7 +281,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
     Activity act = getActivity();
     if (act instanceof TableDisplayActivity) {
-      extras.putParcelable("props", ((TableDisplayActivity) act).props);
+      extras.putParcelable("props", getProps());
     }
     extras.putString("inCollection", "");
     extras.putString(Constants.IntentKeys.SQL_OVERRIDES_DATABASE, "");
@@ -420,6 +318,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
   }
 
+  private SpreadsheetProps getProps() {
+    Activity act = getActivity();
+    if (act instanceof ISpreadsheetFragmentContainer) {
+      return ((ISpreadsheetFragmentContainer) act).getProps();
+    }
+    throw new IllegalStateException("Must be inside something with props");
+  }
+
   /**
    * When the user clicks an item, handle that action based on what they clicked
    *
@@ -428,8 +334,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   @Override
   public boolean onContextItemSelected(MenuItem item) {
-    headerMenuOpen = false;
-    dataMenuOpen = false;
+    getProps().headerMenuOpen = false;
+    getProps().dataMenuOpen = false;
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
 
     // TEMP code to try and fix the crash on return-edit
@@ -449,7 +355,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // table has group buys, then this option is displayed in the drop down menu. It opens a
     // collection
     case MENU_ITEM_ID_HISTORY_IN:
-      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(getProps().lastDataCellMenued);
       try {
         openCollectionView(cell);
       } catch (ServicesAvailabilityException e) {
@@ -459,7 +365,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // This is in the Row Actions menu that pops up when you double click or long tap on a cell
     // if you have the permissions to open the menu
     case MENU_ITEM_ID_DELETE_ROW:
-      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(getProps().lastDataCellMenued);
       AlertDialog confirmDeleteAlert;
       // Prompt an alert box
       final String rowId = cell.row.getDataByKey(DataTableColumns.ID);
@@ -469,7 +375,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       // OK Action => delete the row
       alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
-          TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+          AbsBaseActivity activity = (AbsBaseActivity) getActivity();
           try {
             deleteRow(rowId);
             init();
@@ -499,10 +405,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // This is in the same Row Actions menu as delete row
     case MENU_ITEM_ID_EDIT_ROW:
-      WebLogger.getLogger(mAppName).i(TAG,
-          "spreadsheetTable is " + (spreadsheetTable == null ? "null" : "not null") + " "
-              + "and lastDataCellMenu'd is " + (mLastDataCellMenued == null ? "null" : "not null"));
-      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(getProps().lastDataCellMenued);
       // It is possible that a custom form has been defined for this table.
       // We will get the strings we need, and then set the parameter object.
       try {
@@ -517,7 +420,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // Also in the row actions menu, but only if applicable
     case MENU_ITEM_ID_OPEN_JOIN_TABLE:
-      cell = spreadsheetTable.getSpreadsheetCell(this.mLastDataCellMenued);
+      cell = spreadsheetTable.getSpreadsheetCell(getProps().lastDataCellMenued);
       ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cell.elementKey);
       // Get the JoinColumn.
       ArrayList<JoinColumn> joinColumns;
@@ -599,8 +502,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
           Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
           Bundle extras = new Bundle();
           IntentUtil.addAppNameToBundle(extras, getAppName());
-          // TODO: pass the correct view type.
           IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
+          // TODO: Pass a query!
+          IntentUtil.addTableIdToBundle(extras, getTableId());
+          extras.putParcelable("props", getProps());
+          // Do not pass inCollection because that will set groupBy to null in TableDispAct
+          extras.putString(Constants.IntentKeys.SQL_OVERRIDES_DATABASE, "");
           intent.putExtras(extras);
           getActivity().startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
         }
@@ -610,54 +517,57 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // shows up as "Unset as Group By". It's in the red cross issue tracker
     case MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY:
       addGroupByColumn(
-          spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
+          spreadsheetTable.getColumnByElementKey(getProps().lastHeaderCellMenued.elementKey));
       init();
       return true;
     // In the same context menu you get from double tapping on a column heading
     case MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY:
       removeGroupByColumn(
-          spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
+          spreadsheetTable.getColumnByElementKey(getProps().lastHeaderCellMenued.elementKey));
       init();
       return true;
     // In the same context menu you get from double tapping on a column heading
     case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-      setSort(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey)
-          .getElementKey());
+      getProps().setSort(
+          spreadsheetTable.getColumnByElementKey(getProps().lastHeaderCellMenued.elementKey)
+              .getElementKey());
       init();
       return true;
     // In the same context menu
     case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
-      setSort(null);
+      getProps().setSort(null);
       init();
       return true;
     case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-      setFrozen(spreadsheetTable.getColumnByElementKey(this.mLastHeaderCellMenued.elementKey));
+      getProps().setFrozen(
+          spreadsheetTable.getColumnByElementKey(getProps().lastHeaderCellMenued.elementKey)
+              .getElementKey());
       init();
       return true;
     case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
-      setFrozen(null);
+      getProps().setFrozen(null);
       init();
       return true;
     // In the same context menu you get from double tapping on a column heading
     case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
-      String elementKey = this.mLastHeaderCellMenued.elementKey;
+      String elementKey = getProps().lastHeaderCellMenued.elementKey;
       ActivityUtil
           .launchTablePreferenceActivityToEditColumnColorRules(this.getActivity(), getAppName(),
               getTableId(), elementKey);
       init();
       return true;
     case MENU_ITEM_ID_SORT_ASC:
-      setSortOrder("ASC");
+      getProps().setSortOrder("ASC");
       init();
       return true;
     case MENU_ITEM_ID_SORT_DESC:
-      setSortOrder("DESC");
+      getProps().setSortOrder("DESC");
       init();
       return true;
     case MENU_ITEM_ID_PREFS:
       ActivityUtil
           .launchTablePreferenceActivityToEditColumn(this.getActivity(), getAppName(), getTableId(),
-              mLastHeaderCellMenued.elementKey);
+              getProps().lastHeaderCellMenued.elementKey);
       init();
       return true;
     default:
@@ -673,7 +583,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    * @return Whether group bys are displayed
    */
   private boolean hasGroupBys() throws ServicesAvailabilityException {
-    return getGroupBy() != null && getGroupBy().length != 0;
+    return getProps().getGroupBy() != null && getProps().getGroupBy().length != 0;
   }
 
   /**
@@ -686,11 +596,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   @Override
   public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo)
       throws ServicesAvailabilityException {
-    if (!dataMenuOpen) {
-      mLastDataCellMenued = cellInfo;
-      dataMenuOpen = true;
+    getProps().dataMenuOpen = true;
+    if (cellInfo == null) {
+      // the screen was rotated after the user opened the menu
+      cellInfo = getProps().lastDataCellMenued;
     } else {
-      cellInfo = mLastDataCellMenued;
+      getProps().lastDataCellMenued = cellInfo;
     }
 
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
@@ -770,11 +681,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   @Override
   public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo)
       throws ServicesAvailabilityException {
-    if (!headerMenuOpen) {
-      mLastHeaderCellMenued = cellInfo;
-      headerMenuOpen = true;
+    getProps().headerMenuOpen = true;
+    if (cellInfo == null) {
+      // the screen was rotated after the user opened the menu
+      cellInfo = getProps().lastHeaderCellMenued;
     } else {
-      cellInfo = mLastHeaderCellMenued;
+      getProps().lastHeaderCellMenued = cellInfo;
     }
 
     menu.setHeaderTitle(getString(R.string.column_actions));
@@ -782,10 +694,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
 
     // Do not let the user change group by settings if we're viewing a collection, it breaks things
-    boolean isSort = (getSort() != null) && cellInfo.elementKey.equals(getSort());
-    boolean isGroup = Arrays.asList(getGroupBy()).contains(cd.getElementKey());
+    boolean isSort =
+        (getProps().getSort() != null) && cellInfo.elementKey.equals(getProps().getSort());
+    boolean isGroup = Arrays.asList(getProps().getGroupBy()).contains(cd.getElementKey());
     boolean isCollection = getActivity().getIntent().getExtras().containsKey("inCollection");
-    boolean isFrozen = (getFrozen() != null) && getFrozen().equals(cd.getElementKey());
+    boolean isFrozen =
+        (getProps().getFrozen() != null) && getProps().getFrozen().equals(cd.getElementKey());
     if (isGroup) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
           getString(R.string.unset_as_group_by));

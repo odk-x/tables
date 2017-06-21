@@ -78,7 +78,8 @@ import java.util.List;
  * @author sudar.sam@gmail.com
  */
 public class TableDisplayActivity extends AbsBaseWebActivity
-    implements TableMapInnerFragmentListener, IOdkTablesActivity, DatabaseConnectionListener {
+    implements TableMapInnerFragmentListener, IOdkTablesActivity, DatabaseConnectionListener,
+    ISpreadsheetFragmentContainer {
 
   // Some keys for things that get saved to the instance state
   public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
@@ -87,7 +88,10 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   public static final String INTENT_KEY_QUERIES = "queries";
   // Used for logging
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
-  public SpreadsheetProps props;
+  private SpreadsheetProps props;
+  public SpreadsheetProps getProps() {
+    return props;
+  }
   /**
    * Keep references to all queries used to populate all fragments. Use the array index as the
    * viewID.

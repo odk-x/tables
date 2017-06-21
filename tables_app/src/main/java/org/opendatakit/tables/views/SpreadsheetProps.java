@@ -26,6 +26,10 @@ public class SpreadsheetProps implements Parcelable {
   private String frozen;
   private String[] groupBy;
   private Activity act;
+  public boolean dataMenuOpen = false;
+  public boolean headerMenuOpen = false;
+  public CellInfo lastDataCellMenued;
+  public CellInfo lastHeaderCellMenued;
 
   public SpreadsheetProps() {
 
@@ -40,6 +44,18 @@ public class SpreadsheetProps implements Parcelable {
       groupBy = new String[length];
       in.readStringArray(groupBy);
     }
+    boolean[] bools = new boolean[2];
+    in.readBooleanArray(bools);
+    dataMenuOpen = bools[0];
+    headerMenuOpen = bools[1];
+    lastDataCellMenued = readCellInfo(in);
+    lastHeaderCellMenued = readCellInfo(in);
+  }
+  private CellInfo readCellInfo(Parcel in) {
+    if (in.readByte() == 0) {
+      return null;
+    }
+    return in.readParcelable(CellInfo.class.getClassLoader());
   }
 
   public String getSort() {
@@ -82,9 +98,7 @@ public class SpreadsheetProps implements Parcelable {
     if (act == null)
       return;
     Intent i = new Intent();
-    Bundle extras = new Bundle();
-    extras.putParcelable("props", this);
-    i.putExtras(extras);
+    i.putExtra("props", this);
     act.setResult(Activity.RESULT_OK, i);
   }
 
@@ -120,6 +134,17 @@ public class SpreadsheetProps implements Parcelable {
       dest.writeByte((byte) 1);
       dest.writeInt(groupBy.length);
       dest.writeStringArray(groupBy);
+    }
+    dest.writeBooleanArray(new boolean[] {dataMenuOpen, headerMenuOpen});
+    writeCellInfo(dest, lastDataCellMenued);
+    writeCellInfo(dest, lastHeaderCellMenued);
+  }
+  private void writeCellInfo(Parcel dest, CellInfo cell) {
+    if (cell == null) {
+      dest.writeByte((byte) 0);
+    } else {
+      dest.writeByte((byte) 1);
+      dest.writeParcelable(cell, 0);
     }
   }
 

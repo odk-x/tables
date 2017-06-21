@@ -28,6 +28,7 @@ import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.tables.activities.ISpreadsheetFragmentContainer;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
@@ -63,8 +64,8 @@ public class SpreadsheetUserTable {
     props = null;
     if (frag instanceof SpreadsheetFragment) {
       Activity act = frag.getActivity();
-      if (act instanceof TableDisplayActivity) {
-        props = ((TableDisplayActivity) act).props;
+      if (act instanceof ISpreadsheetFragmentContainer) {
+        props = ((ISpreadsheetFragmentContainer) act).getProps();
       }
     }
     PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
