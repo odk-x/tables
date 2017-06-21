@@ -593,16 +593,15 @@ class TabularView extends View {
     rightRightmostBorder = leftRightmost + columnWidths[indexOfRightmostColumn] + BORDER_WIDTH;
     // draw horizontal borders
     int yCoord = topmostBorder;
-    for (int i = topmost; i < bottommost + 1; i++) {
+    // This reason we add two here is because without it, the bottom border somehow never gets
+    // drawn, and an extra scanline of blue/white gets drawn instead, which makes sorted or
+    // grouped by columns look really awkward, and vertical borders extend down by one too few
+    // pixels
+    for (int i = topmost; i < bottommost + 2; i++) {
       canvas.drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + BORDER_WIDTH,
           borderPaint);
       yCoord += rowHeight + BORDER_WIDTH;
     }
-    // This line is here because without it, the bottom border somehow never gets drawn, and an
-    // extra scanline of blue/white gets drawn instead, which makes sorted or grouped by columns
-    // look really awkward, and vertical borders extend down by one too few pixels
-    canvas
-        .drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + BORDER_WIDTH, borderPaint);
     // draw vertical borders
     int xCoord = leftmostBorder;
     for (int i = indexOfLeftmostColumn; i < indexOfRightmostColumn + 1; i++) {
