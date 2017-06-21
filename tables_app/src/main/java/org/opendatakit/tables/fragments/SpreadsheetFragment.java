@@ -155,6 +155,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
                 theSpreadsheetView.openHeaderMenu();
               } else if (props.dataMenuOpen) {
                 theSpreadsheetView.openDataMenu();
+              } else if (props.deleteDialogOpen) {
+                openDeleteDialog();
               }
             }
           }
@@ -365,43 +367,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // This is in the Row Actions menu that pops up when you double click or long tap on a cell
     // if you have the permissions to open the menu
     case MENU_ITEM_ID_DELETE_ROW:
-      cell = spreadsheetTable.getSpreadsheetCell(getProps().lastDataCellMenued);
-      AlertDialog confirmDeleteAlert;
-      // Prompt an alert box
-      final String rowId = cell.row.getDataByKey(DataTableColumns.ID);
-      AlertDialog.Builder alert = new AlertDialog.Builder(activity);
-      alert.setTitle(getString(R.string.confirm_delete_row))
-          .setMessage(getString(R.string.are_you_sure_delete_row, rowId));
-      // OK Action => delete the row
-      alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int whichButton) {
-          AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-          try {
-            deleteRow(rowId);
-            init();
-          } catch (ActionNotAuthorizedException e) {
-            WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-            WebLogger.getLogger(activity.getAppName())
-                .e(TAG, "Not authorized for action while " + "accessing database");
-            Toast.makeText(activity, "Not authorized for action while accessing database",
-                Toast.LENGTH_LONG).show();
-          } catch (ServicesAvailabilityException e) {
-            WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-            WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-            Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-          }
-        }
-      });
-
-      // Cancel Action
-      alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int whichButton) {
-          // Canceled.
-        }
-      });
-      // show the dialog
-      confirmDeleteAlert = alert.create();
-      confirmDeleteAlert.show();
+      openDeleteDialog();
       return true;
     // This is in the same Row Actions menu as delete row
     case MENU_ITEM_ID_EDIT_ROW:
@@ -617,10 +583,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
           R.string.view_collection);
       mi.setIcon(R.drawable.ic_view_headline_black_24dp);
     }
-    // Dead code, we removed the ability to edit a cell directly in tables
-    //    mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_CELL, ContextMenu.NONE,
-    //        getString(R.string.edit_cell, viewString));
-    //    mi.setIcon(R.drawable.ic_action_edit);
 
     String access = spreadsheetTable.getRowAtIndex(cellInfo.rowId)
         .getDataByKey(DataTableColumns.EFFECTIVE_ACCESS);
@@ -753,6 +715,59 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   @Override
   public void headerCellClicked(CellInfo cellInfo) {
+  }
+
+  private void openDeleteDialog() {
+    getProps().deleteDialogOpen = true;
+    SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(getProps().lastDataCellMenued);
+    AlertDialog confirmDeleteAlert;
+    // Prompt an alert box
+    final String rowId = cell.row.getDataByKey(DataTableColumns.ID);
+    AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+    alert.setTitle(getString(R.string.confirm_delete_row))
+        .setMessage(getString(R.string.are_you_sure_delete_row, rowId));
+    // OK Action => delete the row
+    alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int whichButton) {
+        AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+        try {
+          deleteRow(rowId);
+          init();
+        } catch (ActionNotAuthorizedException e) {
+          WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+          WebLogger.getLogger(activity.getAppName())
+              .e(TAG, "Not authorized for action while " + "accessing database");
+          Toast.makeText(activity, "Not authorized for action while accessing database",
+              Toast.LENGTH_LONG).show();
+        } catch (ServicesAvailabilityException e) {
+          WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+          WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+          Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+        }
+      }
+    });
+
+    // Cancel Action
+    alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int whichButton) {
+        // Canceled.
+      }
+    });
+    if (android.os.Build.VERSION.SDK_INT >= 17) {
+      alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
+        @Override
+        public void onDismiss(DialogInterface dialog) {
+          getProps().deleteDialogOpen = false;
+        }
+      });
+    } else {
+      alert.setCancelable(false);
+      // they can still cancel it with the back button, in which case we're screwed
+    }
+    // show the dialog
+    confirmDeleteAlert = alert.create();
+    confirmDeleteAlert.show();
+
   }
 
 }

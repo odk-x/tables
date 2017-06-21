@@ -30,6 +30,7 @@ public class SpreadsheetProps implements Parcelable {
   public boolean headerMenuOpen = false;
   public CellInfo lastDataCellMenued;
   public CellInfo lastHeaderCellMenued;
+  public boolean deleteDialogOpen = false;
 
   public SpreadsheetProps() {
 
@@ -44,10 +45,11 @@ public class SpreadsheetProps implements Parcelable {
       groupBy = new String[length];
       in.readStringArray(groupBy);
     }
-    boolean[] bools = new boolean[2];
+    boolean[] bools = new boolean[3];
     in.readBooleanArray(bools);
     dataMenuOpen = bools[0];
     headerMenuOpen = bools[1];
+    deleteDialogOpen = bools[2];
     lastDataCellMenued = readCellInfo(in);
     lastHeaderCellMenued = readCellInfo(in);
   }
@@ -135,7 +137,7 @@ public class SpreadsheetProps implements Parcelable {
       dest.writeInt(groupBy.length);
       dest.writeStringArray(groupBy);
     }
-    dest.writeBooleanArray(new boolean[] {dataMenuOpen, headerMenuOpen});
+    dest.writeBooleanArray(new boolean[] {dataMenuOpen, headerMenuOpen, deleteDialogOpen});
     writeCellInfo(dest, lastDataCellMenued);
     writeCellInfo(dest, lastHeaderCellMenued);
   }
