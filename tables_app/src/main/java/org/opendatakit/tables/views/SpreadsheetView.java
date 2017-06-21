@@ -76,7 +76,6 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   // Keeping this for now in case someone else needs to work with the code
   // and relied on this variable.
   private LockableScrollView dataStatusScroll;
-  private View wrapper;
   private HorizontalScrollView wrapScroll;
 
   private LockableScrollView indexScroll;
@@ -394,7 +393,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    */
   private void buildNonIndexedTable() {
     // the false is to indicate that we're building a non-indexed table
-    wrapper = buildTable(null, false);
+    View wrapper = buildTable(null, false);
     wrapScroll = new HorizontalScrollView(context);
     wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
         LinearLayout.LayoutParams.MATCH_PARENT);

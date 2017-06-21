@@ -20,6 +20,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -614,12 +615,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // Set the title to rowActions
     menu.setHeaderTitle(getString(R.string.row_actions));
 
-    MenuItem mi;
     // If we have group buys, give the user the "View collection" option
     if (this.hasGroupBys() && !getActivity().getIntent().getExtras().containsKey("inCollection")) {
-      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_COLLECTION, ContextMenu.NONE,
+      menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_COLLECTION, ContextMenu.NONE,
           R.string.view_collection);
-      mi.setIcon(R.drawable.ic_view_headline_black_24dp);
     }
 
     String access = spreadsheetTable.getRowAtIndex(cellInfo.rowId)
@@ -628,14 +627,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       access = "";
 
     if (access.contains("d")) {
-      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE,
+      menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE,
           getString(R.string.delete_row));
-      mi.setIcon(R.drawable.ic_action_content_discard);
     }
     if (access.contains("w")) {
-      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE,
+      menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE,
           getString(R.string.edit_row));
-      mi.setIcon(R.drawable.ic_mode_edit_black_24dp);
     }
 
     // check a join association with this column; add a join... option if
@@ -654,9 +651,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
 
     if (joinColumns != null && joinColumns.size() != 0) {
-      mi = menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_JOIN_TABLE, ContextMenu.NONE,
+      menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_JOIN_TABLE, ContextMenu.NONE,
           getString(R.string.open_join_table));
-      mi.setIcon(R.drawable.ic_search_black_24dp);
     }
   }
 
