@@ -112,8 +112,6 @@ class TabularView extends View {
   // data rows of the table; the header has one row.
   private int mNumberOfRows;
 
-  private SpreadsheetProps props;
-
   /**
    * Construct a TabularView. Most uses will likely be able to use one of the
    * static factory methods.

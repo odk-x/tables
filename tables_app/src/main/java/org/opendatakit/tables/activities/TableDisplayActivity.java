@@ -729,8 +729,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       }
       break;
     case Constants.RequestCodes.LAUNCH_VIEW:
-      if (data.getExtras().containsKey("props")) {
-        props = data.getExtras().getParcelable("props");
+      // if data is null then they never changed anything in the subactivity anyways
+      if (data != null && data.hasExtra("props")) {
+        props = data.getParcelableExtra("props");
         props.setActivity(this);
       }
       break;
