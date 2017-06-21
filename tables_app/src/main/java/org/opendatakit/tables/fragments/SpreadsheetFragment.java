@@ -429,6 +429,73 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         db = dbInterface.openDatabase(getAppName());
         joinColumns = ColumnUtil.get()
             .getJoins(dbInterface, getAppName(), db, getTableId(), cd.getElementKey());
+
+        AlertDialog.Builder badJoinDialog;
+        // TODO should check for valid table properties and column properties here. or rather valid
+        // ids and keys.
+        if (joinColumns == null || joinColumns.size() == 0) {
+          badJoinDialog = new AlertDialog.Builder(this.getActivity());
+          badJoinDialog.setTitle("Bad Join");
+          badJoinDialog.setMessage("A join column has not been set in Column Properties.");
+          badJoinDialog.create().show();
+          WebLogger.getLogger(getAppName()).e(TAG,
+              "cp.getJoins was null but open join table was " + "requested for cp: " + cd
+                  .getElementKey());
+        } else if (joinColumns.size() != 1) {
+          badJoinDialog = new AlertDialog.Builder(this.getActivity());
+          badJoinDialog.setTitle("Bad Join");
+          badJoinDialog
+              .setMessage("Multiple join associations have been set in Column Properties.");
+          badJoinDialog.create().show();
+          WebLogger.getLogger(getAppName()).e(TAG,
+              "cp.getJoins has multiple joins (missing code is needed to handle this) for cp: " + cd
+                  .getElementKey());
+        } else {
+          JoinColumn joinColumn = joinColumns.get(0);
+          if (joinColumn.getTableId().equals(JoinColumn.DEFAULT_NOT_SET_VALUE) || joinColumn
+              .getElementKey().equals(JoinColumn.DEFAULT_NOT_SET_VALUE)) {
+            badJoinDialog = new AlertDialog.Builder(this.getActivity());
+            badJoinDialog.setTitle("Bad Join");
+            badJoinDialog.setMessage("Both a table and column must be set.");
+            badJoinDialog.create().show();
+            WebLogger.getLogger(getAppName()).e(TAG,
+                "Bad elementKey or tableId in open join table. tableId: " + joinColumn.getTableId()
+                    + " elementKey: " + joinColumn.getElementKey());
+          } else {
+            db = null;
+            try {
+              db = dbInterface.openDatabase(getAppName());
+            } catch (ServicesAvailabilityException e) {
+              WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+              WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
+              Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
+            } finally {
+              if (db != null) {
+                try {
+                  dbInterface.closeDatabase(getAppName(), db);
+                } catch (ServicesAvailabilityException e) {
+                  WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+                  WebLogger.getLogger(activity.getAppName()).e(TAG, "Error closing database");
+                  Toast.makeText(activity, "Error closing database", Toast.LENGTH_LONG).show();
+                }
+              }
+            }
+
+            // I would prefer this kind of query to be set in another
+            // object, but alas, it looks like atm it is hardcoded.
+            Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
+            Bundle extras = new Bundle();
+            IntentUtil.addAppNameToBundle(extras, getAppName());
+            IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
+            // TODO: Pass a query!
+            IntentUtil.addTableIdToBundle(extras, getTableId());
+            extras.putParcelable("props", getProps());
+            // Do not pass inCollection because that will set groupBy to null in TableDispAct
+            extras.putString(Constants.IntentKeys.SQL_OVERRIDES_DATABASE, "");
+            intent.putExtras(extras);
+            getActivity().startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
+          }
+        }
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
         WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
@@ -445,76 +512,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
           }
         }
       }
-
-      AlertDialog.Builder badJoinDialog;
-      // TODO should check for valid table properties and column properties here. or rather valid
-      // ids and keys.
-      if (joinColumns == null || joinColumns.size() == 0) {
-        badJoinDialog = new AlertDialog.Builder(this.getActivity());
-        badJoinDialog.setTitle("Bad Join");
-        badJoinDialog.setMessage("A join column has not been " + "set in Column Properties.");
-        badJoinDialog.create().show();
-        WebLogger.getLogger(getAppName()).e(TAG,
-            "cp.getJoins was null but open join table " + "was requested for cp: " + cd
-                .getElementKey());
-      } else if (joinColumns.size() != 1) {
-        badJoinDialog = new AlertDialog.Builder(this.getActivity());
-        badJoinDialog.setTitle("Bad Join");
-        badJoinDialog
-            .setMessage("Multiple join associations have been " + "set in Column Properties.");
-        badJoinDialog.create().show();
-        WebLogger.getLogger(getAppName()).e(TAG,
-            "cp.getJoins has multiple joins " + "(missing code is needed to handle this) for cp: "
-                + cd.getElementKey());
-      } else {
-        JoinColumn joinColumn = joinColumns.get(0);
-        if (joinColumn.getTableId().equals(JoinColumn.DEFAULT_NOT_SET_VALUE) || joinColumn
-            .getElementKey().equals(JoinColumn.DEFAULT_NOT_SET_VALUE)) {
-          badJoinDialog = new AlertDialog.Builder(this.getActivity());
-          badJoinDialog.setTitle("Bad Join");
-          badJoinDialog.setMessage("Both a table and column " + "must be set.");
-          badJoinDialog.create().show();
-          WebLogger.getLogger(getAppName()).e(TAG,
-              "Bad elementKey or tableId in open join " + "table. tableId: " + joinColumn
-                  .getTableId() + " elementKey: " + joinColumn.getElementKey());
-        } else {
-          db = null;
-          try {
-            db = dbInterface.openDatabase(getAppName());
-          } catch (ServicesAvailabilityException e) {
-            WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-            WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
-            Toast.makeText(activity, "Error while accessing database", Toast.LENGTH_LONG).show();
-          } finally {
-            if (db != null) {
-              try {
-                dbInterface.closeDatabase(getAppName(), db);
-              } catch (ServicesAvailabilityException e) {
-                WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
-                WebLogger.getLogger(activity.getAppName()).e(TAG, "Error closing database");
-                Toast.makeText(activity, "Error closing database", Toast.LENGTH_LONG).show();
-              }
-            }
-          }
-
-          // I would prefer this kind of query to be set in another
-          // object, but alas, it looks like atm it is hardcoded.
-          Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
-          Bundle extras = new Bundle();
-          IntentUtil.addAppNameToBundle(extras, getAppName());
-          IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
-          // TODO: Pass a query!
-          IntentUtil.addTableIdToBundle(extras, getTableId());
-          extras.putParcelable("props", getProps());
-          // Do not pass inCollection because that will set groupBy to null in TableDispAct
-          extras.putString(Constants.IntentKeys.SQL_OVERRIDES_DATABASE, "");
-          intent.putExtras(extras);
-          getActivity().startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
-        }
-      }
       return true;
-    // In the context menu when you double click on a column heading. Currently bugged, only ever
-    // shows up as "Unset as Group By". It's in the red cross issue tracker
+    // In the context menu when you double click on a column heading.
     case MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY:
       addGroupByColumn(
           spreadsheetTable.getColumnByElementKey(getProps().lastHeaderCellMenued.elementKey));
@@ -575,6 +574,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
           .e(TAG, "unrecognized menu item selected: " + item.getItemId());
       return super.onContextItemSelected(item);
     }
+
   }
 
   /**
