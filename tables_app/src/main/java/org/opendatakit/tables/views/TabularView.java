@@ -19,6 +19,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.util.DisplayMetrics;
 import android.view.ContextMenu;
 import android.view.View;
@@ -53,15 +54,16 @@ class TabularView extends View {
   private static final int DEFAULT_DATA_BACKGROUND_COLOR = Color.WHITE;
   private static final int DEFAULT_BORDER_COLOR = Color.GRAY;
   private static final int DEFAULT_HEADER_BACKGROUND_COLOR = Color.CYAN;
-  private static final int GROUP_BY_COLOR = Color.rgb(0xaa, 0xc3, 0x6c);
-  private static final int SORT_COLOR = Color.rgb(0xff, 0x80, 0x80);
-  private static final int FROZEN_COLOR = Color.rgb(0xcc, 0xcc, 0xcc);
-  private static final int NULL_COLOR = Color.rgb(127, 127, 127);
+  private static final int GROUP_BY_COLOR = Color.rgb(0xaa, 0xc3, 0x6c); // light green
+  private static final int SORT_COLOR = Color.rgb(0xff, 0x80, 0x80); // pink-ish
+  private static final int FROZEN_COLOR = Color.rgb(0xcc, 0xcc, 0xcc); // a lighter grey
+  private static final int NULL_COLOR = Color.rgb(127, 127, 127); // grey
   private static final int ROW_HEIGHT_PADDING = 14;
   private static final int HORIZONTAL_CELL_PADDING = 5;
   private static final int VERTICAL_CELL_PADDING = 9;
   private static final int BORDER_WIDTH = 1;
-  private static final String NULL_DATA_TEXT = "(NULL)";
+  //private static final String NULL_DATA_TEXT = "(NULL)";
+  private static final String NULL_DATA_TEXT = "null";
   private final Controller controller;
   private final int defaultBackgroundColor;
   private final int defaultForegroundColor;
@@ -124,25 +126,21 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
-   * @param table                        the {@link SpreadsheetUserTable} into which this TabularView is
-   *                                     providing a view.
-   * @param elementKeys                  the list of element keys which this tabular view is responsible
-   *                                     for displaying. E.g. if it is a data column without any frozen
-   *                                     columns, it would be the entire column order. If it was a single
-   *                                     frozen column, it would be just that element key. Must be nonzero
-   *                                     length.
+   * @param table                      the {@link SpreadsheetUserTable} into which this TabularView is
+   *                                   providing a view.
+   * @param elementKeys                the list of element keys which this tabular view is responsible
+   *                                   for displaying. E.g. if it is a data column without any frozen
+   *                                   columns, it would be the entire column order. If it was a single
+   *                                   frozen column, it would be just that element key. Must be nonzero
+   *                                   length.
    * @param defaultForegroundColor
    * @param defaultBackgroundColor
    * @param borderColor
    * @param columnWidths
    * @param type
    * @param fontSize
-   * @param elementKeyToColumnProperties mapping of element key to the corresponding
-   *                                     {@link ColumnDefinition} object. Must be all the columns, NOT just
-   *                                     those displayed in thie TabularView.
-   * @param elementKeyToColorRuleGroup   mapping of element key to their corresponding
-   *                                     {@link ColorRuleGroup} objects.
+   * @param elementKeyToColorRuleGroup mapping of element key to their corresponding
+   *                                   {@link ColorRuleGroup} objects.
    */
   private TabularView(Context context, Controller controller, SpreadsheetUserTable table,
       List<String> elementKeys, int defaultForegroundColor, int defaultBackgroundColor,
@@ -201,8 +199,8 @@ class TabularView extends View {
     highlightPaint.setStrokeWidth(3);
     totalHeight = (rowHeight + BORDER_WIDTH) * this.mNumberOfRows + BORDER_WIDTH;
     totalWidth = BORDER_WIDTH;
-    for (int i = 0; i < columnWidths.length; i++) {
-      totalWidth += columnWidths[i] + BORDER_WIDTH;
+    for (int cw : columnWidths) {
+      totalWidth += cw + BORDER_WIDTH;
     }
     setVerticalScrollBarEnabled(true);
     setVerticalFadingEdgeEnabled(true);
@@ -236,16 +234,13 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param elementKeysToDisplay
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getMainDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
@@ -262,16 +257,13 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param elementKeysToDisplay
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getMainHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
@@ -289,16 +281,13 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param elementKeysToDisplay
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getIndexDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
@@ -315,16 +304,13 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param elementKeysToDisplay
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getIndexHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
@@ -342,15 +328,12 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getStatusDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, int[] columnWidths, int fontSize,
@@ -370,15 +353,12 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getStatusHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, int[] columnWidths, int fontSize,
@@ -643,9 +623,8 @@ class TabularView extends View {
 
     // drawing the cells
     int y = topTopmost;
-    for (int i = topmost; i < bottommost + 1; i++) {
+    for (int theRowIndex = topmost; theRowIndex < bottommost + 1; theRowIndex++) {
       Row theRow = null;
-      int theRowIndex = i;
 
       // we only need to fetch this once for a given row...
       ColorGuide rowGuide = null;
@@ -775,6 +754,11 @@ class TabularView extends View {
     canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y, x + columnWidth - (2 * HORIZONTAL_CELL_PADDING),
         y + rowHeight);
     textPaint.setColor(foregroundColor);
+    if (datum.equals(NULL_DATA_TEXT)) {
+      textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.ITALIC));
+    } else {
+      textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+    }
     canvas.drawText(datum, x + HORIZONTAL_CELL_PADDING, (y + rowHeight - VERTICAL_CELL_PADDING),
         textPaint);
     canvas.restore();
@@ -791,10 +775,8 @@ class TabularView extends View {
   public void onCreateContextMenu(ContextMenu menu) {
     switch (type) {
     case MAIN_DATA:
-      controller.onCreateMainDataContextMenu(menu);
-      return;
     case INDEX_DATA:
-      controller.onCreateIndexDataContextMenu(menu);
+      controller.onCreateDataContextMenu(menu);
       return;
     case MAIN_HEADER:
     case INDEX_HEADER:
@@ -821,9 +803,7 @@ class TabularView extends View {
   }
 
   interface Controller {
-    void onCreateMainDataContextMenu(ContextMenu menu);
-
-    void onCreateIndexDataContextMenu(ContextMenu menu);
+    void onCreateDataContextMenu(ContextMenu menu);
 
     void onCreateHeaderContextMenu(ContextMenu menu);
 

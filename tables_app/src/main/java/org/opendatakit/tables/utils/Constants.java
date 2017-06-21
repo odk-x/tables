@@ -91,7 +91,7 @@ public class Constants {
     // TODO document
     public static final String SQL_FROZEN = "sqlFrozenCol";
     // TODO document
-    public static final String SQL_OVERRIDES_DATABASE = "sqlOverridesDatabase";
+    public static final String CONTAINS_PROPS = "sqlOverridesDatabase";
 
     /**
      * A JSON serialization of an array of bind parameters.

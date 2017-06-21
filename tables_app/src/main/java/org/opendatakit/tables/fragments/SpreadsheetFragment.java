@@ -87,9 +87,19 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   private static final int MENU_ITEM_ID_SORT_DESC = 13;
   private static final int MENU_ITEM_ID_PREFS = 14;
 
+  /**
+   * The object that contains the actual rows of the table and their data
+   */
   private SpreadsheetUserTable spreadsheetTable;
 
+  /**
+   * theView is used to store the SpreadsheetView once we have one, but before we can create one
+   * (before databaseAvailable) is called, it holds a text view with a database error message.
+   */
   private LinearLayout theView;
+  /**
+   * used to post actions until all the lifecycle events have happened on them.
+   */
   private View container;
 
   /**
@@ -124,8 +134,23 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   }
 
   /**
-   * When the database becomes available, replace the existing view with a new
+   * When the database becomes available, replace the view in theView with a new
    * SpreadsheetUserTable, or an error message if we can't
+   *
+   * It is a bit of a strange interaction, when the screen is rotated, first TableDisplayActivity
+   * gets restored, then this gets restored, then databaseAvailable is called on
+   * TableDisplayActivity which promptly detaches and destroys this fragment, then databaseAvailable
+   * gets called on the destroyed fragment and then again on the new fragment. So this method
+   * will be called twice, once on a recently-destroyed fragment and again on a good and attached
+   * fragment. getActivity() will return null on the detached fragment, so we have to check that
+   * or we'll get a null pointer exception and crash tables
+   *
+   * Also note that the database is always up on first creation, because first creation of this
+   * fragment only happens in two cases, creation on the first creation of TableDisplayActivity
+   * which needs to get the default view type (spreadsheet vs list vs map) from the database, and
+   * again when this fragment is destroyed and a new one created in TDA's databaseAvailable.
+   *
+   * However in all cases, this method is called
    */
   @Override
   public void databaseAvailable() {
@@ -171,9 +196,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       theView.removeAllViews();
       theView.addView(textView);
     }
-
   }
 
+  /**
+   * Logs a message on resume
+   */
   @Override
   public void onResume() {
     super.onResume();
@@ -181,7 +208,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   }
 
   /**
-   * Does nothing when the database goes away, rather than calling super.databaseUnavailable
+   * Does nothing when the database goes away
    */
   @Override
   public void databaseUnavailable() {
@@ -200,28 +227,27 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   /**
    * Adds a column to group the rows in the table by
    *
-   * @param cd which column to group by
+   * @param column which column to group by
    */
-  void addGroupByColumn(ColumnDefinition cd) {
+  void addGroupByColumn(String column) {
     String[] groupBy = getProps().getGroupBy();
     String[] newArr = new String[groupBy.length + 1];
     System.arraycopy(groupBy, 0, newArr, 0, groupBy.length);
-    newArr[groupBy.length] = cd.getElementKey();
+    newArr[groupBy.length] = column;
     getProps().setGroupBy(newArr);
-    // Can't be done in a collection view so we don't need to update the parent
   }
 
   /**
    * Removes a column from the list of columns to group by
    *
-   * @param cd the column to remove
+   * @param column the column to remove
    */
-  void removeGroupByColumn(ColumnDefinition cd) {
+  void removeGroupByColumn(String column) {
     // Need to wrap because Arrays.asList returns an immutable List object and asList.remove will
     // throw an UnsupportedOperationException
     ArrayList<String> asList = new ArrayList<>(Arrays.asList(getProps().getGroupBy()));
-    if (asList.contains(cd.getElementKey())) {
-      asList.remove(cd.getElementKey());
+    if (asList.contains(column)) {
+      asList.remove(column);
     }
     getProps().setGroupBy(asList.toArray(new String[asList.size()]));
     if (getActivity().getIntent().getExtras().containsKey("inCollection")) {
@@ -229,6 +255,10 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
   }
 
+  /**
+   * Returns the current order in which we are sorting, either ASC or DESC
+   * @return what direction the table is sorted
+   */
   private String getSortOrder() {
     String sortOrder = getProps().getSortOrder();
     if (sortOrder == null || sortOrder.length() == 0) {
@@ -246,16 +276,17 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   private void openCollectionView(SpreadsheetCell cell) throws ServicesAvailabilityException {
     Bundle intentExtras = this.getActivity().getIntent().getExtras();
 
+    // Start with the query from the intent.
     SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(intentExtras);
-    // see if we should update the group-by with the info from the database
     String[] sqlGroupBy = getProps().getGroupBy();
+    // Construct a new where clause
     // We don't need to set sqlQueryStruct.groupBy to an empty array because
-    // TableDisplayActivity::getUserTable does that on the other end
+    // TableDisplayActivity::getUserTable does that on the other end.
     StringBuilder s = new StringBuilder();
     if (sqlQueryStruct.whereClause != null && sqlQueryStruct.whereClause.length() != 0) {
       s.append("(").append(sqlQueryStruct.whereClause).append(") AND ");
     }
-    ArrayList<Object> newSelectionArgs = new ArrayList<Object>();
+    ArrayList<Object> newSelectionArgs = new ArrayList<>();
     newSelectionArgs.addAll(Arrays.asList(sqlQueryStruct.selectionArgs.bindArgs));
     boolean first = true;
     for (String groupByColumn : sqlGroupBy) {
@@ -275,18 +306,22 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     sqlQueryStruct.selectionArgs = new BindArgs(
         newSelectionArgs.toArray(new Object[newSelectionArgs.size()]));
 
-    Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
+    Activity act = getActivity();
+    if (!(act instanceof ISpreadsheetFragmentContainer)) {
+      throw new IllegalStateException("Cannot view a collection in a spreadsheet using something "
+          + "that can't view spreadsheets");
+    }
+    Intent intent = new Intent(this.getActivity(), act.getClass());
     Bundle extras = new Bundle();
     IntentUtil.addAppNameToBundle(extras, this.getAppName());
     IntentUtil.addTableIdToBundle(extras, this.getTableId());
     IntentUtil.addSQLQueryStructToBundle(extras, sqlQueryStruct);
     IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
-    Activity act = getActivity();
-    if (act instanceof TableDisplayActivity) {
       extras.putParcelable("props", getProps());
-    }
+    // This tells it to ignore any groupBy and just use an empty array
     extras.putString("inCollection", "");
-    extras.putString(Constants.IntentKeys.SQL_OVERRIDES_DATABASE, "");
+    // This tells it to get props from the intent
+    extras.putString(Constants.IntentKeys.CONTAINS_PROPS, "");
     intent.putExtras(extras);
     getActivity().startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
   }
@@ -294,9 +329,11 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   /**
    * Initializes and refreshes the activity
    */
-  private void init() {
-    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-    activity.refreshDataAndDisplayFragment();
+  private void destroyAndRecreateFragment() {
+    Activity act = getActivity();
+    if (act instanceof TableDisplayActivity) {
+      ((TableDisplayActivity) act).refreshDataAndDisplayFragment();
+    }
   }
 
   /**
@@ -320,6 +357,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
   }
 
+  /**
+   * Gets the spreadsheet properties from the activity.
+   *
+   * @return the properties object that's saved across the fragment being destroyed and a new one
+   * being created
+   */
   private SpreadsheetProps getProps() {
     Activity act = getActivity();
     if (act instanceof ISpreadsheetFragmentContainer) {
@@ -457,7 +500,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
             IntentUtil.addTableIdToBundle(extras, getTableId());
             extras.putParcelable("props", getProps());
             // Do not pass inCollection because that will set groupBy to null in TableDispAct
-            extras.putString(Constants.IntentKeys.SQL_OVERRIDES_DATABASE, "");
+            extras.putString(Constants.IntentKeys.CONTAINS_PROPS, "");
             intent.putExtras(extras);
             getActivity().startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
           }
@@ -481,37 +524,31 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return true;
     // In the context menu when you double click on a column heading.
     case MENU_ITEM_ID_SET_COLUMN_AS_GROUP_BY:
-      addGroupByColumn(
-          spreadsheetTable.getColumnByElementKey(getProps().lastHeaderCellMenued.elementKey));
-      init();
+      addGroupByColumn(getProps().lastHeaderCellMenued.elementKey);
+      destroyAndRecreateFragment();
       return true;
     // In the same context menu you get from double tapping on a column heading
     case MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY:
-      removeGroupByColumn(
-          spreadsheetTable.getColumnByElementKey(getProps().lastHeaderCellMenued.elementKey));
-      init();
+      removeGroupByColumn(getProps().lastHeaderCellMenued.elementKey);
+      destroyAndRecreateFragment();
       return true;
     // In the same context menu you get from double tapping on a column heading
     case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-      getProps().setSort(
-          spreadsheetTable.getColumnByElementKey(getProps().lastHeaderCellMenued.elementKey)
-              .getElementKey());
-      init();
+      getProps().setSort(getProps().lastHeaderCellMenued.elementKey);
+      destroyAndRecreateFragment();
       return true;
     // In the same context menu
     case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
       getProps().setSort(null);
-      init();
+      destroyAndRecreateFragment();
       return true;
     case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-      getProps().setFrozen(
-          spreadsheetTable.getColumnByElementKey(getProps().lastHeaderCellMenued.elementKey)
-              .getElementKey());
-      init();
+      getProps().setFrozen(getProps().lastHeaderCellMenued.elementKey);
+      destroyAndRecreateFragment();
       return true;
     case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
       getProps().setFrozen(null);
-      init();
+      destroyAndRecreateFragment();
       return true;
     // In the same context menu you get from double tapping on a column heading
     case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
@@ -519,21 +556,21 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       ActivityUtil
           .launchTablePreferenceActivityToEditColumnColorRules(this.getActivity(), getAppName(),
               getTableId(), elementKey);
-      init();
+      destroyAndRecreateFragment();
       return true;
     case MENU_ITEM_ID_SORT_ASC:
       getProps().setSortOrder("ASC");
-      init();
+      destroyAndRecreateFragment();
       return true;
     case MENU_ITEM_ID_SORT_DESC:
       getProps().setSortOrder("DESC");
-      init();
+      destroyAndRecreateFragment();
       return true;
     case MENU_ITEM_ID_PREFS:
       ActivityUtil
           .launchTablePreferenceActivityToEditColumn(this.getActivity(), getAppName(), getTableId(),
               getProps().lastHeaderCellMenued.elementKey);
-      init();
+      destroyAndRecreateFragment();
       return true;
     default:
       WebLogger.getLogger(getAppName())
@@ -553,15 +590,19 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   }
 
   /**
-   * Called when someone with edit permission on the database double taps or long clicks on a cell
+   * Called when someone double taps or long clicks on a data cell. Adds view collection option
+   * to the menu if we have group bys, adds edit or delete row options to the menu if the user
+   * has permission to do that, and adds a join option if applicable
    *
-   * @param menu     A context menu that will be displayed, with Edit Row and Delete Row options
+   * @param menu     A context menu that will be displayed, to be populated with options.
    * @param cellInfo Info about the cell that was clicked on
    * @throws ServicesAvailabilityException if the database is down
    */
   @Override
   public void prepDataCellOccm(ContextMenu menu, CellInfo cellInfo)
       throws ServicesAvailabilityException {
+    // Mark the fact that we have a data menu open so if the user rotates the screen, we can open
+    // it again.
     getProps().dataMenuOpen = true;
     if (cellInfo == null) {
       // the screen was rotated after the user opened the menu
@@ -570,10 +611,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       getProps().lastDataCellMenued = cellInfo;
     }
 
-    ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
-
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
-
+    // Set the title to rowActions
     menu.setHeaderTitle(getString(R.string.row_actions));
 
     MenuItem mi;
@@ -603,11 +641,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // check a join association with this column; add a join... option if
     // it is applicable.
     ArrayList<JoinColumn> joinColumns;
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());
       joinColumns = ColumnUtil.get()
-          .getJoins(dbInterface, getAppName(), db, getTableId(), cd.getElementKey());
+          .getJoins(dbInterface, getAppName(), db, getTableId(), cellInfo.elementKey);
     } finally {
       if (db != null) {
         dbInterface.closeDatabase(getAppName(), db);
@@ -634,15 +673,18 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
   /**
    * Called when the user double clicks or long clicks on a blue header cell in a spreadsheet
-   * It includes the group by/ungroup by, freeze/unfreeze column and edit column color rules options
+   * It includes the group by/ungroup by, freeze/unfreeze column, edit column color rules, edit
+   * column preferences and change sort direction options
    *
-   * @param menu     A context menu that will get opened
+   * @param menu     A context menu to populate with items
    * @param cellInfo Some info about the cell they clicked
    * @throws ServicesAvailabilityException if the database is down
    */
   @Override
   public void prepHeaderCellOccm(ContextMenu menu, CellInfo cellInfo)
       throws ServicesAvailabilityException {
+    // Mark the menu as being open so when the user rotates the screen or changes something and
+    // this fragment gets destroyed, we can re-open the menu
     getProps().headerMenuOpen = true;
     if (cellInfo == null) {
       // the screen was rotated after the user opened the menu
@@ -651,17 +693,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       getProps().lastHeaderCellMenued = cellInfo;
     }
 
+    // set the title
     menu.setHeaderTitle(getString(R.string.column_actions));
 
-    ColumnDefinition cd = spreadsheetTable.getColumnByElementKey(cellInfo.elementKey);
-
     // Do not let the user change group by settings if we're viewing a collection, it breaks things
-    boolean isSort =
-        (getProps().getSort() != null) && cellInfo.elementKey.equals(getProps().getSort());
-    boolean isGroup = Arrays.asList(getProps().getGroupBy()).contains(cd.getElementKey());
+    boolean isSort = cellInfo.elementKey.equals(getProps().getSort());
+    boolean isGroup = Arrays.asList(getProps().getGroupBy()).contains(cellInfo.elementKey);
     boolean isCollection = getActivity().getIntent().getExtras().containsKey("inCollection");
-    boolean isFrozen =
-        (getProps().getFrozen() != null) && getProps().getFrozen().equals(cd.getElementKey());
+    boolean isFrozen = cellInfo.elementKey.equals(getProps().getFrozen());
     if (isGroup) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_GROUP_BY, ContextMenu.NONE,
           getString(R.string.unset_as_group_by));
@@ -717,7 +756,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   public void headerCellClicked(CellInfo cellInfo) {
   }
 
+  /**
+   * Called when the user clicks the delete option, or the fragment is created with
+   * deleteDialogOpen already set to true (they clicked delete then rotated the screen)
+   */
   private void openDeleteDialog() {
+    // Make sure it will re-open if we rotate the screen
     getProps().deleteDialogOpen = true;
     SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(getProps().lastDataCellMenued);
     AlertDialog confirmDeleteAlert;
@@ -732,13 +776,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         AbsBaseActivity activity = (AbsBaseActivity) getActivity();
         try {
           deleteRow(rowId);
-          init();
+          destroyAndRecreateFragment();
         } catch (ActionNotAuthorizedException e) {
           WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
           WebLogger.getLogger(activity.getAppName())
-              .e(TAG, "Not authorized for action while " + "accessing database");
-          Toast.makeText(activity, "Not authorized for action while accessing database",
-              Toast.LENGTH_LONG).show();
+              .e(TAG, "Not authorized for action while accessing database");
+          Toast.makeText(activity, getString(R.string.no_permissions), Toast.LENGTH_LONG).show();
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
           WebLogger.getLogger(activity.getAppName()).e(TAG, "Error while accessing database");
@@ -750,9 +793,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // Cancel Action
     alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int whichButton) {
-        // Canceled.
+        getProps().deleteDialogOpen = false;
       }
     });
+    // Set deleteDialogOpen to false when the user dismisses the dialog by tapping outside of it
+    // or pressing a button, so that we won't re-create it if they then rotate the screen.
+    // Unfortunately our minimum target is sdk 16, so if their OS version doesn't support onDismiss
+    // listeners, try not to let them dismiss it and instead make them click the cancel button to
+    // dismiss it
     if (android.os.Build.VERSION.SDK_INT >= 17) {
       alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
         @Override
@@ -767,7 +815,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // show the dialog
     confirmDeleteAlert = alert.create();
     confirmDeleteAlert.show();
-
   }
 
 }

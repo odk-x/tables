@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.views;
 
-import android.app.Activity;
 import android.content.Context;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
@@ -93,25 +92,10 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   private View.OnTouchListener indexHeaderCellClickListener;
 
   private CellInfo lastHighlightedCellId;
+  /**
+   * used for making sure the user double tapped the same cell twice instead of differenct cells
+   */
   private CellInfo lastLastHighlightedCellId;
-
-
-  public void openDataMenu() {
-    if (table.isIndexed()) {
-      controller.openContextMenu(indexData);
-    } else {
-      controller.openContextMenu(mainData);
-    }
-  }
-
-  public void openHeaderMenu() {
-    if (table.isIndexed()) {
-      controller.openContextMenu(indexHeader);
-    } else {
-      controller.openContextMenu(mainHeader);
-    }
-  }
-
 
   /**
    * Initializes a new spreadsheet view to the specified table. It pulls the app name out of the
@@ -173,6 +157,30 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     }
     mainData.setOnTouchListener(mainDataCellClickListener);
     mainHeader.setOnTouchListener(mainHeaderCellClickListener);
+  }
+
+  /**
+   * Called when the user double taps or long taps a data cell, picks the view to open a context
+   * menu on and passes that through to the controller
+   */
+  public void openDataMenu() {
+    if (table.isIndexed()) {
+      controller.openContextMenu(indexData);
+    } else {
+      controller.openContextMenu(mainData);
+    }
+  }
+
+  /**
+   * Called when the user double taps or long taps a header cell, picks the view to open a context
+   * menu on and passes that through to the controller
+   */
+  public void openHeaderMenu() {
+    if (table.isIndexed()) {
+      controller.openContextMenu(indexHeader);
+    } else {
+      controller.openContextMenu(mainHeader);
+    }
   }
 
   /**
@@ -616,7 +624,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * @param menu the menu to be populated with items then displayed
    */
   @Override
-  public void onCreateMainDataContextMenu(ContextMenu menu) {
+  public void onCreateDataContextMenu(ContextMenu menu) {
     try {
       controller.prepDataCellOccm(menu, lastHighlightedCellId);
     } catch (ServicesAvailabilityException e) {
@@ -626,25 +634,6 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
     }
   }
-
-  /**
-   * Called when someone with permission to edit the table double clicks or long clicks on an
-   * indexed cell. Forwards the request to the controller, which is in fragments.SpreadsheetFragment
-   *
-   * @param menu the menu to be populated with items then displayed
-   */
-  @Override
-  public void onCreateIndexDataContextMenu(ContextMenu menu) {
-    try {
-      controller.prepDataCellOccm(menu, lastHighlightedCellId);
-    } catch (ServicesAvailabilityException e) {
-      String appName = SpreadsheetView.this.table.getAppName();
-      WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
-      Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
-    }
-  }
-
   /**
    * Called when someone with permission to edit the table double clicks or long clicks on a
    * header cell. Forwards the request to the controller, which is in fragments.SpreadsheetFragment
@@ -710,11 +699,11 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   }
 
   /**
-   * An abstract helper class that gets anonymously extended about three or four times in
-   * initListeners. It extends an OnTouchListener and receives events when the user taps down and
-   * releases a tap from a cell, then it determines if they've clicked, double clicked, long
-   * clicked or done nothing (doing nothing is unsupported right now because MIN_CLICK_DURATION
-   * is zero), then forwards that on to one of its methods that should be overridden
+   * An abstract helper class that gets anonymously extended four times in initListeners. It
+   * extends an OnTouchListener and receives events when the user taps down and releases a tap
+   * from a cell, then it determines if they've clicked, double clicked, long clicked or done
+   * nothing (doing nothing is unsupported right now because MIN_CLICK_DURATION is zero), then
+   * forwards that on to one of its methods that should be overridden
    */
   private abstract class CellTouchListener implements View.OnTouchListener {
 

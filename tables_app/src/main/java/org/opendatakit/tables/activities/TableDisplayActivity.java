@@ -88,7 +88,17 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   public static final String INTENT_KEY_QUERIES = "queries";
   // Used for logging
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
+  /**
+   * The activity destroys and creates a new SpreadsheetFragment every time it gets created, an
+   * activity returns or the database becomes available, so we can't store props in the
+   * fragment's savedInstanceState, so we store it in the activity
+   */
   private SpreadsheetProps props;
+
+  /**
+   * Getter for the props, specified in ISpreadsheetFragmentContainer
+   * @return a mutable properties object
+   */
   public SpreadsheetProps getProps() {
     return props;
   }
@@ -116,13 +126,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * The {@link UserTable} that is being displayed in this activity.
    */
   private UserTable mUserTable = null;
-  /**
-   * If we're being created for the first time, pull the display type (list, spreadsheet, map,
-   * etc..) and the original filename from the intent. Otherwise pull it from the saved instance
-   * state
-   *
-   * @param savedInstanceState the state we saved in onSaveInstanceState
-   */
   private boolean pullFromDatabase;
 
   /**
@@ -148,6 +151,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return array;
   }
 
+  /**
+   * If we're being created for the first time, pull the display type (list, spreadsheet, map,
+   * etc..), the original filename, and the properties (group by, sort order, sort direction,
+   * etc) from the intent. Otherwise pull it from the saved instance state. If neither the intent
+   * nor the saved instance state had props, pull the defaults from the database
+   *
+   * @param savedInstanceState the state we saved in onSaveInstanceState
+   */
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -161,7 +172,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       }
     } else {
       Bundle extras = getIntentExtras();
-      if (extras.containsKey(Constants.IntentKeys.SQL_OVERRIDES_DATABASE)) {
+      if (extras.containsKey(Constants.IntentKeys.CONTAINS_PROPS)) {
         props = extras.getParcelable("props");
         props.setActivity(this);
       } else {
@@ -264,7 +275,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Pulls all of the query parameters from the intent and puts them in mQueries[0
+   * Pulls all of the query parameters from the intent and puts them in mQueries[0]
    *
    * @param in the intent that was used to launch this TableDisplayActivity
    */
@@ -283,8 +294,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Saves the queries, open fragment type, file and sub-file name and original filenames and
-   * fragment types to the state bundle so they can be restored later
+   * Saves the queries, open fragment type, file and sub-file name, original filenames, fragment
+   * types and properties to the state bundle so they can be restored later
    *
    * @param outState the state to be saved
    */
@@ -314,6 +325,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     outState.putParcelable("props", props);
   }
 
+  /**
+   * Do nothing if the database goes away
+   */
   @Override
   public void databaseUnavailable() {
   }
@@ -371,6 +385,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   /**
    * Get the {@link UserTable} that is being held by this activity. AND CHANGES mUserTable! to
    * be that table
+   * If we're in a collection, put an empty group by in the query so we don't only get one result.
+   * Getting only the rows in this collection is handled by the where clause passed in to the
+   * intent by SpreadsheetFragment's openCollectionView
    *
    * @return the UserTable pulled from tables
    */
@@ -467,7 +484,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   public String getInstanceId() {
     if (mCurrentFragmentType == ViewFragmentType.DETAIL
         || mCurrentFragmentType == ViewFragmentType.DETAIL_WITH_LIST) {
-      return IntentUtil.retrieveRowIdFromBundle(this.getIntent().getExtras());
+      return IntentUtil.retrieveRowIdFromBundle(getIntentExtras());
     }
     // map views are not considered to have a specific instanceId.
     // While one of the items happens to be distinguished, the view
@@ -687,11 +704,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Called when an activity returns to this activity. Handles add and edit row actions
+   * Called when an activity returns to this activity.
+   * If it was an add row or edit row action, just log a message
+   * If it was from launching a collection view or a join table view, update properties as they
+   * may have been changed in the subactivity.
    *
    * @param requestCode Which activity is being returned from
    * @param resultCode  whether the activity was successful or not
-   * @param data        The intent we used to open it
+   * @param data        The intent set in setResult() before calling finish()
    */
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -728,7 +748,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Refreshes the data in the fragment
+   * Destroys the data in the current table, destroys the current fragment and recreates it
    */
   public void refreshDataAndDisplayFragment() {
     WebLogger.getLogger(getAppName()).d(TAG, "refreshDataAndDisplayFragment called");
