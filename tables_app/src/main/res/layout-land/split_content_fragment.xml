@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:gravity="right"
-    android:orientation="horizontal"
-    android:baselineAligned="false" >
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:gravity="right"
+              android:orientation="horizontal"
+              android:baselineAligned="false">
 
     <LinearLayout
-        android:id="@+id/top_pane"
-        android:layout_width="0dp"
-        android:layout_height="fill_parent"
-        android:layout_weight="1"
-        android:orientation="vertical" />
+            android:id="@+id/top_pane"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"/>
 
     <View
-        android:layout_height="match_parent"
-        android:layout_width="1dp"
-        android:background="@android:color/darker_gray"/>
+            android:layout_height="match_parent"
+            android:layout_width="1dp"
+            android:background="@android:color/darker_gray"/>
 
     <LinearLayout
-        android:id="@+id/bottom_pane"
-        android:layout_width="0dp"
-        android:layout_height="fill_parent"
-        android:layout_weight="1"
-        android:orientation="vertical" />
+            android:id="@+id/bottom_pane"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"/>
 
 </LinearLayout>

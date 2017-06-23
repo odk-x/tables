@@ -88,6 +88,11 @@ public class Constants {
      */
     public static final String SQL_WHERE = "sqlWhereClause";
 
+    // TODO document
+    public static final String SQL_FROZEN = "sqlFrozenCol";
+    // TODO document
+    public static final String CONTAINS_PROPS = "sqlOverridesDatabase";
+
     /**
      * A JSON serialization of an array of bind parameters.
      * This allows for integer, numeric, boolean and string values to be
@@ -215,6 +220,7 @@ public class Constants {
     public static final int LAUNCH_CONFLICT_RESOLVER = 20;
     public static final int LAUNCH_EXPORT = 21;
     public static final int LAUNCH_DOACTION = 22;
+    public static final int LAUNCH_COLUMN_PREFS = 23;
   }
 
   /**

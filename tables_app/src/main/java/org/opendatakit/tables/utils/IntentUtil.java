@@ -65,7 +65,8 @@ public class IntentUtil {
    */
   public static SQLQueryStruct getSQLQueryStructFromBundle(Bundle bundle) {
     String sqlWhereClause = bundle.containsKey(IntentKeys.SQL_WHERE) ?
-              bundle.getString(IntentKeys.SQL_WHERE) : null;
+        bundle.getString(IntentKeys.SQL_WHERE) :
+        null;
 
     BindArgs sqlBindArgs;
     {
@@ -79,24 +80,28 @@ public class IntentUtil {
     }
 
     String[] sqlGroupBy = bundle.containsKey(IntentKeys.SQL_GROUP_BY_ARGS) ?
-        bundle.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS) : null;
+        bundle.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS) :
+        null;
     String sqlHaving = null;
     if (sqlGroupBy != null && sqlGroupBy.length != 0) {
       sqlHaving = bundle.containsKey(IntentKeys.SQL_HAVING) ?
-          bundle.getString(IntentKeys.SQL_HAVING) : null;
+          bundle.getString(IntentKeys.SQL_HAVING) :
+          null;
     }
     String sqlOrderByElementKey = bundle.containsKey(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) ?
-        bundle.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) : null;
+        bundle.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) :
+        null;
     String sqlOrderByDirection = null;
     if (sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0) {
       sqlOrderByDirection = bundle.containsKey(IntentKeys.SQL_ORDER_BY_DIRECTION) ?
-          bundle.getString(IntentKeys.SQL_ORDER_BY_DIRECTION) : null;
+          bundle.getString(IntentKeys.SQL_ORDER_BY_DIRECTION) :
+          null;
       if (sqlOrderByDirection == null || sqlOrderByDirection.length() == 0) {
         sqlOrderByDirection = "ASC";
       }
     }
-    SQLQueryStruct result = new SQLQueryStruct(sqlWhereClause, sqlBindArgs, sqlGroupBy,
-        sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+    SQLQueryStruct result = new SQLQueryStruct(sqlWhereClause, sqlBindArgs, sqlGroupBy, sqlHaving,
+        sqlOrderByElementKey, sqlOrderByDirection);
     return result;
   }
 

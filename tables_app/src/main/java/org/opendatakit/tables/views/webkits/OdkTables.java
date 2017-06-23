@@ -57,17 +57,18 @@ public class OdkTables {
    * Set the list view contents for a detail with list view
    *
    * @param tableId
-   * @param relativePath     the path relative to the app folder
+   * @param relativePath         the path relative to the app folder
    * @param sqlWhereClause
    * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
    *                             numeric, boolean and string types.
    * @return
    */
   public boolean helperSetSubListView(String tableId, String relativePath, String sqlWhereClause,
-      String sqlSelectionArgsJSON, String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey,
-      String sqlOrderByDirection) {
-    return this.helperUpdateView(tableId, sqlWhereClause, sqlSelectionArgsJSON, sqlGroupBy, sqlHaving,
-        sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.SUB_LIST, relativePath);
+      String sqlSelectionArgsJSON, String[] sqlGroupBy, String sqlHaving,
+      String sqlOrderByElementKey, String sqlOrderByDirection) {
+    return this
+        .helperUpdateView(tableId, sqlWhereClause, sqlSelectionArgsJSON, sqlGroupBy, sqlHaving,
+            sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.SUB_LIST, relativePath);
   }
 
   /**

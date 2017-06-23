@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.views;
 
+import android.app.Activity;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
@@ -27,8 +28,10 @@ import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.tables.activities.ISpreadsheetFragmentContainer;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
+import org.opendatakit.tables.fragments.SpreadsheetFragment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,10 +55,18 @@ public class SpreadsheetUserTable {
   //
   private final String[] spreadsheetIndexToElementKey;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
+  public SpreadsheetProps props;
   private UserTable userTable;
 
   public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws ServicesAvailabilityException {
     this.fragment = frag;
+    props = null;
+    if (frag instanceof SpreadsheetFragment) {
+      Activity act = frag.getActivity();
+      if (act instanceof ISpreadsheetFragmentContainer) {
+        props = ((ISpreadsheetFragmentContainer) act).getProps();
+      }
+    }
     PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
@@ -65,8 +76,13 @@ public class SpreadsheetUserTable {
     try {
       db = dbInterface.openDatabase(frag.getAppName());
       userTable = getUserTable();
-      indexColumnElementKey = TableUtil.get()
-          .getIndexColumn(dbInterface, getAppName(), db, getTableId());
+      if (this.props != null) {
+        indexColumnElementKey = this.props.getFrozen();
+      } else {
+        //indexColumnElementKey = TableUtil.get().getIndexColumn(dbInterface, getAppName(), db,
+        //getTableId());
+        indexColumnElementKey = null;
+      }
       colOrder = TableUtil.get()
           .getColumnOrder(dbInterface, frag.getAppName(), db, frag.getTableId(),
               frag.getColumnDefinitions());
@@ -195,7 +211,10 @@ public class SpreadsheetUserTable {
   String getHeader(int colNum) {
     return header[colNum];
   }
+
   String getHeaderKey(int colNum) {
+    if (colNum < 0 || colNum >= header_keys.length)
+      return null;
     return header_keys[colNum];
   }
 

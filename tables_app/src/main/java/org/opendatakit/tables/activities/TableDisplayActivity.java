@@ -24,7 +24,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.provider.ContactsContract;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -34,6 +33,7 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.UserTable;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
@@ -46,12 +46,13 @@ import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
+import org.opendatakit.tables.views.SpreadsheetProps;
 import org.opendatakit.views.ODKWebView;
 import org.opendatakit.views.ViewDataQueryParams;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Displays information about a table. List, Map, and Detail views are all
@@ -77,7 +78,8 @@ import java.util.ArrayList;
  * @author sudar.sam@gmail.com
  */
 public class TableDisplayActivity extends AbsBaseWebActivity
-    implements TableMapInnerFragmentListener, IOdkTablesActivity, DatabaseConnectionListener {
+    implements TableMapInnerFragmentListener, IOdkTablesActivity, DatabaseConnectionListener,
+    ISpreadsheetFragmentContainer {
 
   // Some keys for things that get saved to the instance state
   public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
@@ -86,6 +88,20 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   public static final String INTENT_KEY_QUERIES = "queries";
   // Used for logging
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
+  /**
+   * The activity destroys and creates a new SpreadsheetFragment every time it gets created, an
+   * activity returns or the database becomes available, so we can't store props in the
+   * fragment's savedInstanceState, so we store it in the activity
+   */
+  private SpreadsheetProps props;
+
+  /**
+   * Getter for the props, specified in ISpreadsheetFragmentContainer
+   * @return a mutable properties object
+   */
+  public SpreadsheetProps getProps() {
+    return props;
+  }
   /**
    * Keep references to all queries used to populate all fragments. Use the array index as the
    * viewID.
@@ -110,6 +126,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * The {@link UserTable} that is being displayed in this activity.
    */
   private UserTable mUserTable = null;
+  private boolean pullFromDatabase;
 
   /**
    * Casts an array of objects from Parcelable to a given class that extends Parcelable..
@@ -136,14 +153,32 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
   /**
    * If we're being created for the first time, pull the display type (list, spreadsheet, map,
-   * etc..) and the original filename from the intent. Otherwise pull it from the saved instance
-   * state
+   * etc..), the original filename, and the properties (group by, sort order, sort direction,
+   * etc) from the intent. Otherwise pull it from the saved instance state. If neither the intent
+   * nor the saved instance state had props, pull the defaults from the database
    *
    * @param savedInstanceState the state we saved in onSaveInstanceState
    */
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    props = new SpreadsheetProps();
+    props.setActivity(this);
+    pullFromDatabase = false;
+    if (savedInstanceState != null) {
+      if (savedInstanceState.containsKey("props")) {
+        props = savedInstanceState.getParcelable("props");
+        props.setActivity(this);
+      }
+    } else {
+      Bundle extras = getIntentExtras();
+      if (extras.containsKey(Constants.IntentKeys.CONTAINS_PROPS)) {
+        props = extras.getParcelable("props");
+        props.setActivity(this);
+      } else {
+        pullFromDatabase = true;
+      }
+    }
 
     /*
      * If we are restoring from a saved state, the fleshed-out original view type and filename
@@ -240,7 +275,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Pulls all of the query parameters from the intent and puts them in mQueries[0
+   * Pulls all of the query parameters from the intent and puts them in mQueries[0]
    *
    * @param in the intent that was used to launch this TableDisplayActivity
    */
@@ -253,15 +288,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(in.getExtras());
 
     ViewDataQueryParams queryParams = new ViewDataQueryParams(tableId, rowId,
-        sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
-        sqlQueryStruct.groupBy, sqlQueryStruct.having, sqlQueryStruct.orderByElementKey,
-        sqlQueryStruct.orderByDirection);
+        sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs, sqlQueryStruct.groupBy,
+        sqlQueryStruct.having, sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
     mQueries[0] = queryParams;
   }
 
   /**
-   * Saves the queries, open fragment type, file and sub-file name and original filenames and
-   * fragment types to the state bundle so they can be restored later
+   * Saves the queries, open fragment type, file and sub-file name, original filenames, fragment
+   * types and properties to the state bundle so they can be restored later
    *
    * @param outState the state to be saved
    */
@@ -288,16 +322,37 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     if (mQueries != null) {
       outState.putParcelableArray(INTENT_KEY_QUERIES, mQueries);
     }
+    outState.putParcelable("props", props);
   }
 
-  @Override public void databaseUnavailable() {}
+  /**
+   * Do nothing if the database goes away
+   */
+  @Override
+  public void databaseUnavailable() {
+  }
 
   /**
-   * Display the current fragment (which should already be around) when we resume
+   * Handles pulling properties out of the database if they weren't in the saved instance state
+   * or the intent, recreates the current fragment.
    */
-  @Override public void databaseAvailable() {
-    showCurrentDisplayFragment(true);
+  @Override
+  public void databaseAvailable() {
     WebLogger.getLogger(getAppName()).i(TAG, "databaseAvailable called");
+    if (pullFromDatabase) {
+      try {
+        UserDbInterface dbInt = Tables.getInstance().getDatabase();
+        DbHandle db = dbInt.openDatabase(mAppName);
+        props.setSortOrder(TableUtil.get().getSortOrder(dbInt, mAppName, db, getTableId()));
+        props.setSort(TableUtil.get().getSortColumn(dbInt, mAppName, db, getTableId()));
+        List<String> temp = TableUtil.get().getGroupByColumns(dbInt, mAppName, db, getTableId());
+        props.setGroupBy(temp.toArray(new String[temp.size()]));
+        pullFromDatabase = false;
+      } catch (ServicesAvailabilityException e) {
+        // TODO
+      }
+    }
+    showCurrentDisplayFragment(true);
   }
 
   /**
@@ -330,6 +385,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   /**
    * Get the {@link UserTable} that is being held by this activity. AND CHANGES mUserTable! to
    * be that table
+   * If we're in a collection, put an empty group by in the query so we don't only get one result.
+   * Getting only the rows in this collection is handled by the where clause passed in to the
+   * intent by SpreadsheetFragment's openCollectionView
    *
    * @return the UserTable pulled from tables
    */
@@ -341,30 +399,18 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         SQLQueryStruct sqlQueryStruct = IntentUtil
             .getSQLQueryStructFromBundle(this.getIntent().getExtras());
 
-        ArrayList<String> dbGroupBy = TableUtil.get().getGroupByColumns(Tables.getInstance()
-            .getDatabase(), getAppName(), db, getTableId());
-        String[] groupBy = dbGroupBy.toArray(new String[dbGroupBy.size()]);
-        if (groupBy.length != 0 && !getIntentExtras().containsKey("inCollection")) {
-          sqlQueryStruct.groupBy = groupBy;
+        if (getIntentExtras().containsKey("inCollection")) {
+          sqlQueryStruct.groupBy = null;
+        } else {
+          sqlQueryStruct.groupBy = props.getGroupBy();
         }
-
-        String sort = TableUtil.get().getSortColumn(Tables.getInstance()
-            .getDatabase(), getAppName(), db, getTableId());
-        if (!(sort == null || sort.length() == 0)) {
-          sqlQueryStruct.orderByElementKey = sort;
-        }
-
-        String order = TableUtil.get().getSortOrder(Tables.getInstance().getDatabase(),
-            getAppName(), db, getTableId());
-        if (!(order == null || order.length() == 0)) {
-          sqlQueryStruct.orderByDirection = order;
-        }
+        sqlQueryStruct.orderByElementKey = props.getSort();
+        sqlQueryStruct.orderByDirection = props.getSortOrder();
 
         String[] emptyArray = {};
         mUserTable = Tables.getInstance().getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
-                sqlQueryStruct.whereClause,
-                sqlQueryStruct.selectionArgs,
+                sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
                 (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
                 sqlQueryStruct.having, (sqlQueryStruct.orderByElementKey == null) ?
                     emptyArray :
@@ -438,7 +484,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   public String getInstanceId() {
     if (mCurrentFragmentType == ViewFragmentType.DETAIL
         || mCurrentFragmentType == ViewFragmentType.DETAIL_WITH_LIST) {
-      return IntentUtil.retrieveRowIdFromBundle(this.getIntent().getExtras());
+      return IntentUtil.retrieveRowIdFromBundle(getIntentExtras());
     }
     // map views are not considered to have a specific instanceId.
     // While one of the items happens to be distinguished, the view
@@ -603,8 +649,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     case R.id.top_level_table_menu_add:
       WebLogger.getLogger(getAppName()).d(TAG, "[onOptionsItemSelected] add selected");
       try {
-        ActivityUtil
-            .addRow(this, this.getAppName(), this.getTableId(), null);
+        ActivityUtil.addRow(this, this.getAppName(), this.getTableId(), null);
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
@@ -626,8 +671,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         return true;
       }
       try {
-        ActivityUtil
-            .editRow(this, this.getAppName(), this.getTableId(), rowId);
+        ActivityUtil.editRow(this, this.getAppName(), this.getTableId(), rowId);
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
@@ -660,11 +704,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Called when an activity returns to this activity. Handles add and edit row actions
+   * Called when an activity returns to this activity.
+   * If it was an add row or edit row action, just log a message
+   * If it was from launching a collection view or a join table view, update properties as they
+   * may have been changed in the subactivity.
    *
    * @param requestCode Which activity is being returned from
    * @param resultCode  whether the activity was successful or not
-   * @param data        The intent we used to open it
+   * @param data        The intent set in setResult() before calling finish()
    */
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -681,6 +728,13 @@ public class TableDisplayActivity extends AbsBaseWebActivity
             .d(TAG, "[onActivityResult] result canceled, refreshing backing table");
       }
       break;
+    case Constants.RequestCodes.LAUNCH_VIEW:
+      // if data is null then they never changed anything in the subactivity anyways
+      if (data != null && data.hasExtra("props")) {
+        props = data.getParcelableExtra("props");
+        props.setActivity(this);
+      }
+      break;
     }
 
     super.onActivityResult(requestCode, resultCode, data);
@@ -695,7 +749,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Refreshes the data in the fragment
+   * Destroys the data in the current table, destroys the current fragment and recreates it
    */
   public void refreshDataAndDisplayFragment() {
     WebLogger.getLogger(getAppName()).d(TAG, "refreshDataAndDisplayFragment called");

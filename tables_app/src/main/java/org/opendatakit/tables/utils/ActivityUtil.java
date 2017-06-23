@@ -109,8 +109,8 @@ public class ActivityUtil {
    *                           prepopulated.
    * @throws ServicesAvailabilityException if the database is down
    */
-  public static void addRow(AbsBaseActivity activity, String appName, String tableId, Map<String, Object> prepopulatedValues)
-      throws ServicesAvailabilityException {
+  public static void addRow(AbsBaseActivity activity, String appName, String tableId,
+      Map<String, Object> prepopulatedValues) throws ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit
@@ -168,6 +168,28 @@ public class ActivityUtil {
     IntentUtil.addTableIdToBundle(extras, tableId);
     IntentUtil.addElementKeyToBundle(extras, elementKey);
     IntentUtil.addColorRuleGroupTypeToBundle(extras, ColorRuleGroup.Type.COLUMN);
+    intent.putExtras(extras);
+    activity.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_COLOR_RULE_LIST);
+  }
+
+  /**
+   * Launch {@link TableLevelPreferencesActivity} to edit a column's preferences. Launches with
+   * request code {@link Constants.RequestCodes#LAUNCH_COLUMN_PREFS}.
+   *
+   * @param activity   the activity to launch
+   * @param appName    the app name
+   * @param tableId    the id of the table to edit
+   * @param elementKey put in the bundle
+   */
+  public static void launchTablePreferenceActivityToEditColumn(Activity activity, String appName,
+      String tableId, String elementKey) {
+    Intent intent = new Intent(activity, TableLevelPreferencesActivity.class);
+    Bundle extras = new Bundle();
+    IntentUtil.addTablePreferenceFragmentTypeToBundle(extras,
+        TableLevelPreferencesActivity.FragmentType.COLUMN_PRFERENCE);
+    IntentUtil.addAppNameToBundle(extras, appName);
+    IntentUtil.addTableIdToBundle(extras, tableId);
+    IntentUtil.addElementKeyToBundle(extras, elementKey);
     intent.putExtras(extras);
     activity.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_COLOR_RULE_LIST);
   }

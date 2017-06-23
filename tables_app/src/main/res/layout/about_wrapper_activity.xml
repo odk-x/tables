@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/about_wrapper_activity_layout"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent" >
-    
+             android:id="@+id/about_wrapper_activity_layout"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+
     <fragment
-        android:tag="foreground"
-        android:name="org.opendatakit.fragment.AboutMenuFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="visible" />
-    
+            android:tag="foreground"
+            android:name="org.opendatakit.fragment.AboutMenuFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible"/>
+
 </FrameLayout>

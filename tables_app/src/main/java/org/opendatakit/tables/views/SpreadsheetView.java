@@ -76,7 +76,6 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   // Keeping this for now in case someone else needs to work with the code
   // and relied on this variable.
   private LockableScrollView dataStatusScroll;
-  private View wrapper;
   private HorizontalScrollView wrapScroll;
 
   private LockableScrollView indexScroll;
@@ -92,6 +91,9 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   private View.OnTouchListener indexHeaderCellClickListener;
 
   private CellInfo lastHighlightedCellId;
+  /**
+   * used for making sure the user double tapped the same cell twice instead of differenct cells
+   */
   private CellInfo lastLastHighlightedCellId;
 
   /**
@@ -157,6 +159,30 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   }
 
   /**
+   * Called when the user double taps or long taps a data cell, picks the view to open a context
+   * menu on and passes that through to the controller
+   */
+  public void openDataMenu() {
+    if (table.isIndexed()) {
+      controller.openContextMenu(indexData);
+    } else {
+      controller.openContextMenu(mainData);
+    }
+  }
+
+  /**
+   * Called when the user double taps or long taps a header cell, picks the view to open a context
+   * menu on and passes that through to the controller
+   */
+  public void openHeaderMenu() {
+    if (table.isIndexed()) {
+      controller.openContextMenu(indexHeader);
+    } else {
+      controller.openContextMenu(mainHeader);
+    }
+  }
+
+  /**
    * Initializes the click listeners. There are four right now
    */
   private void initListeners() {
@@ -195,7 +221,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
        */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
-        controller.openDataContextMenu(mainData);
+        controller.openContextMenu(mainData);
       }
 
       /**
@@ -245,7 +271,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
        */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
-        controller.openHeaderContextMenu(mainHeader);
+        controller.openContextMenu(mainHeader);
       }
 
       /**
@@ -293,7 +319,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
        */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
-        controller.openDataContextMenu(indexData);
+        controller.openContextMenu(indexData);
       }
 
       /**
@@ -341,7 +367,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
        */
       @Override
       protected void takeLongClickAction(int rawX, int rawY) {
-        controller.openHeaderContextMenu(indexHeader);
+        controller.openContextMenu(indexHeader);
       }
 
       /**
@@ -367,7 +393,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    */
   private void buildNonIndexedTable() {
     // the false is to indicate that we're building a non-indexed table
-    wrapper = buildTable(null, false);
+    View wrapper = buildTable(null, false);
     wrapScroll = new HorizontalScrollView(context);
     wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
         LinearLayout.LayoutParams.MATCH_PARENT);
@@ -597,7 +623,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * @param menu the menu to be populated with items then displayed
    */
   @Override
-  public void onCreateMainDataContextMenu(ContextMenu menu) {
+  public void onCreateDataContextMenu(ContextMenu menu) {
     try {
       controller.prepDataCellOccm(menu, lastHighlightedCellId);
     } catch (ServicesAvailabilityException e) {
@@ -607,25 +633,6 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
     }
   }
-
-  /**
-   * Called when someone with permission to edit the table double clicks or long clicks on an
-   * indexed cell. Forwards the request to the controller, which is in fragments.SpreadsheetFragment
-   *
-   * @param menu the menu to be populated with items then displayed
-   */
-  @Override
-  public void onCreateIndexDataContextMenu(ContextMenu menu) {
-    try {
-      controller.prepDataCellOccm(menu, lastHighlightedCellId);
-    } catch (ServicesAvailabilityException e) {
-      String appName = SpreadsheetView.this.table.getAppName();
-      WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
-      Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
-    }
-  }
-
   /**
    * Called when someone with permission to edit the table double clicks or long clicks on a
    * header cell. Forwards the request to the controller, which is in fragments.SpreadsheetFragment
@@ -683,21 +690,19 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
-    void openHeaderContextMenu(View view);
-
     void dataCellClicked(CellInfo cellId);
 
     void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
-    void openDataContextMenu(View view);
+    void openContextMenu(View view);
   }
 
   /**
-   * An abstract helper class that gets anonymously extended about three or four times in
-   * initListeners. It extends an OnTouchListener and receives events when the user taps down and
-   * releases a tap from a cell, then it determines if they've clicked, double clicked, long
-   * clicked or done nothing (doing nothing is unsupported right now because MIN_CLICK_DURATION
-   * is zero), then forwards that on to one of its methods that should be overridden
+   * An abstract helper class that gets anonymously extended four times in initListeners. It
+   * extends an OnTouchListener and receives events when the user taps down and releases a tap
+   * from a cell, then it determines if they've clicked, double clicked, long clicked or done
+   * nothing (doing nothing is unsupported right now because MIN_CLICK_DURATION is zero), then
+   * forwards that on to one of its methods that should be overridden
    */
   private abstract class CellTouchListener implements View.OnTouchListener {
 

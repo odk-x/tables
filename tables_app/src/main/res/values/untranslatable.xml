@@ -6,15 +6,15 @@
 	under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 	OR CONDITIONS OF ANY KIND, either express or implied. See the License for
 	the specific language governing permissions and limitations under the License. -->
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <!-- strings that should not be translated -->
-	<string translatable="false" name="table_view_types_values_spreadsheet">SPREADSHEET</string>
-	<string translatable="false" name="table_view_types_values_list">LIST</string>
-	<string translatable="false" name="table_view_types_values_graph">GRAPH</string>
-	<string translatable="false" name="table_view_types_values_map">MAP</string>
+    <string translatable="false" name="table_view_types_values_spreadsheet">SPREADSHEET</string>
+    <string translatable="false" name="table_view_types_values_list">LIST</string>
+    <string translatable="false" name="table_view_types_values_graph">GRAPH</string>
+    <string translatable="false" name="table_view_types_values_map">MAP</string>
 
-	<string translatable="false" name="color_rule_type_values_none">none</string>
-	<string translatable="false" name="color_rule_type_values_table">table</string>
-	<string translatable="false" name="color_rule_type_values_status">status</string>
+    <string translatable="false" name="color_rule_type_values_none">none</string>
+    <string translatable="false" name="color_rule_type_values_table">table</string>
+    <string translatable="false" name="color_rule_type_values_status">status</string>
 
 </resources>

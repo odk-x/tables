@@ -19,21 +19,17 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.util.DisplayMetrics;
 import android.view.ContextMenu;
 import android.view.View;
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.Row;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.provider.DataTableColumns;
-import org.opendatakit.tables.application.Tables;
 
 import java.util.*;
 
@@ -58,12 +54,16 @@ class TabularView extends View {
   private static final int DEFAULT_DATA_BACKGROUND_COLOR = Color.WHITE;
   private static final int DEFAULT_BORDER_COLOR = Color.GRAY;
   private static final int DEFAULT_HEADER_BACKGROUND_COLOR = Color.CYAN;
-  private static final int GROUP_BY_COLOR = Color.argb(0xff, 0xaa, 0xc3, 0x6c);
-  private static final int SORT_COLOR = Color.argb(0xff, 0xff, 0x80, 0x80);
+  private static final int GROUP_BY_COLOR = Color.rgb(0xaa, 0xc3, 0x6c); // light green
+  private static final int SORT_COLOR = Color.rgb(0xff, 0x80, 0x80); // pink-ish
+  private static final int FROZEN_COLOR = Color.rgb(0xcc, 0xcc, 0xcc); // a lighter grey
+  private static final int NULL_COLOR = Color.rgb(127, 127, 127); // grey
   private static final int ROW_HEIGHT_PADDING = 14;
   private static final int HORIZONTAL_CELL_PADDING = 5;
   private static final int VERTICAL_CELL_PADDING = 9;
   private static final int BORDER_WIDTH = 1;
+  //private static final String NULL_DATA_TEXT = "(NULL)";
+  private static final String NULL_DATA_TEXT = "null";
   private final Controller controller;
   private final int defaultBackgroundColor;
   private final int defaultForegroundColor;
@@ -112,30 +112,6 @@ class TabularView extends View {
   // data rows of the table; the header has one row.
   private int mNumberOfRows;
 
-  private UserDbInterface dbInterface = Tables.getInstance().getDatabase();
-  private ArrayList<String> groupByColumns = new ArrayList<>();
-  private String sort;
-
-  private void populateSortAndGroupBy() {
-    DbHandle db;
-    try {
-      db = dbInterface.openDatabase(mTable.getAppName());
-    } catch (ServicesAvailabilityException e) {
-      db = null;
-    }
-    if (db != null) {
-      try {
-        groupByColumns = TableUtil.get()
-            .getGroupByColumns(dbInterface, mTable.getAppName(), db, mTable.getTableId());
-        sort = TableUtil.get()
-            .getSortColumn(dbInterface, mTable.getAppName(), db, mTable.getTableId());
-      } catch (ServicesAvailabilityException e) {
-        WebLogger.getLogger(mTable.getAppName()).printStackTrace(e);
-      }
-    }
-
-  }
-
   /**
    * Construct a TabularView. Most uses will likely be able to use one of the
    * static factory methods.
@@ -148,25 +124,21 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
-   * @param table                        the {@link SpreadsheetUserTable} into which this TabularView is
-   *                                     providing a view.
-   * @param elementKeys                  the list of element keys which this tabular view is responsible
-   *                                     for displaying. E.g. if it is a data column without any frozen
-   *                                     columns, it would be the entire column order. If it was a single
-   *                                     frozen column, it would be just that element key. Must be nonzero
-   *                                     length.
+   * @param table                      the {@link SpreadsheetUserTable} into which this TabularView is
+   *                                   providing a view.
+   * @param elementKeys                the list of element keys which this tabular view is responsible
+   *                                   for displaying. E.g. if it is a data column without any frozen
+   *                                   columns, it would be the entire column order. If it was a single
+   *                                   frozen column, it would be just that element key. Must be nonzero
+   *                                   length.
    * @param defaultForegroundColor
    * @param defaultBackgroundColor
    * @param borderColor
    * @param columnWidths
    * @param type
    * @param fontSize
-   * @param elementKeyToColumnProperties mapping of element key to the corresponding
-   *                                     {@link ColumnDefinition} object. Must be all the columns, NOT just
-   *                                     those displayed in thie TabularView.
-   * @param elementKeyToColorRuleGroup   mapping of element key to their corresponding
-   *                                     {@link ColorRuleGroup} objects.
+   * @param elementKeyToColorRuleGroup mapping of element key to their corresponding
+   *                                   {@link ColorRuleGroup} objects.
    */
   private TabularView(Context context, Controller controller, SpreadsheetUserTable table,
       List<String> elementKeys, int defaultForegroundColor, int defaultBackgroundColor,
@@ -225,8 +197,8 @@ class TabularView extends View {
     highlightPaint.setStrokeWidth(3);
     totalHeight = (rowHeight + BORDER_WIDTH) * this.mNumberOfRows + BORDER_WIDTH;
     totalWidth = BORDER_WIDTH;
-    for (int i = 0; i < columnWidths.length; i++) {
-      totalWidth += columnWidths[i] + BORDER_WIDTH;
+    for (int cw : columnWidths) {
+      totalWidth += cw + BORDER_WIDTH;
     }
     setVerticalScrollBarEnabled(true);
     setVerticalFadingEdgeEnabled(true);
@@ -252,7 +224,6 @@ class TabularView extends View {
         total += BORDER_WIDTH + columnWidths[i];
       }
     }
-    populateSortAndGroupBy();
   }
 
   /**
@@ -261,16 +232,13 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param elementKeysToDisplay
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getMainDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
@@ -287,16 +255,13 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param elementKeysToDisplay
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getMainHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
@@ -314,16 +279,13 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param elementKeysToDisplay
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getIndexDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
@@ -340,16 +302,13 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param elementKeysToDisplay
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getIndexHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, List<String> elementKeysToDisplay, int[] columnWidths,
@@ -367,15 +326,12 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getStatusDataTable(Context context, Controller controller,
       SpreadsheetUserTable table, int[] columnWidths, int fontSize,
@@ -395,15 +351,12 @@ class TabularView extends View {
    *
    * @param context
    * @param controller
-   * @param tp
    * @param table
    * @param columnWidths
    * @param fontSize
-   * @param elementKeyToColumnProperties
    * @param elementKeyToColorRuleGroup
    * @param rowColorRuleGroup
    * @return
-   * @see TabularView#TabularView(Context, TabularView.Controller, SpreadsheetUserTable, * List, int, int, int, int[], TabularView.TableLayoutType, int, Map, Map)
    */
   public static TabularView getStatusHeaderTable(Context context, Controller controller,
       SpreadsheetUserTable table, int[] columnWidths, int fontSize,
@@ -638,14 +591,18 @@ class TabularView extends View {
     leftRightmost = xs[indexOfRightmostColumn];
     // i believe at the end, then, this should be total width, once it is all on the column?
     rightRightmostBorder = leftRightmost + columnWidths[indexOfRightmostColumn] + BORDER_WIDTH;
+    // draw horizontal borders
     int yCoord = topmostBorder;
-    for (int i = topmost; i < bottommost + 1; i++) {
+    // This reason we add two here is because without it, the bottom border somehow never gets
+    // drawn, and an extra scanline of blue/white gets drawn instead, which makes sorted or
+    // grouped by columns look really awkward, and vertical borders extend down by one too few
+    // pixels
+    for (int i = topmost; i < bottommost + 2; i++) {
       canvas.drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + BORDER_WIDTH,
           borderPaint);
       yCoord += rowHeight + BORDER_WIDTH;
     }
-    canvas.drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + BORDER_WIDTH,
-        borderPaint);
+    // draw vertical borders
     int xCoord = leftmostBorder;
     for (int i = indexOfLeftmostColumn; i < indexOfRightmostColumn + 1; i++) {
       canvas.drawRect(xCoord, topmostBorder, xCoord + BORDER_WIDTH, bottomBottommost, borderPaint);
@@ -663,9 +620,8 @@ class TabularView extends View {
 
     // drawing the cells
     int y = topTopmost;
-    for (int i = topmost; i < bottommost + 1; i++) {
+    for (int theRowIndex = topmost; theRowIndex < bottommost + 1; theRowIndex++) {
       Row theRow = null;
-      int theRowIndex = i;
 
       // we only need to fetch this once for a given row...
       ColorGuide rowGuide = null;
@@ -700,9 +656,6 @@ class TabularView extends View {
               .e(TAG, "unrecognized table type: " + this.type.name());
           datum = null;
         }
-        if (datum == null) {
-          datum = "";
-        }
         int foregroundColor = this.defaultForegroundColor;
         int backgroundColor = this.defaultBackgroundColor;
         if (type == TableLayoutType.INDEX_DATA || type == TableLayoutType.MAIN_DATA) {
@@ -726,17 +679,26 @@ class TabularView extends View {
             backgroundColor = rowGuide.getBackground();
           }
         }
-        if (type == TableLayoutType.MAIN_HEADER) {
-          if (groupByColumns.contains(columnKey)) {
+        if (type == TableLayoutType.MAIN_HEADER || type == TableLayoutType.INDEX_HEADER
+            || type == TableLayoutType.STATUS_HEADER) {
+          if (Arrays.asList(mTable.props.getGroupBy()).contains(columnKey)) {
             backgroundColor = GROUP_BY_COLOR;
-          } else if (columnKey.equals(sort)) {
+          } else if (columnKey != null && columnKey.equals(mTable.props.getSort())) {
             backgroundColor = SORT_COLOR;
           }
+          if (columnKey != null && columnKey.equals(mTable.props.getFrozen())) {
+            backgroundColor = FROZEN_COLOR;
+          }
+        }
+        // Override any of that if the data is actually null
+        if (datum == null) {
+          datum = NULL_DATA_TEXT;
+          foregroundColor = NULL_COLOR;
         }
         drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor, columnWidths[j]);
       }
       y += rowHeight + BORDER_WIDTH;
-      /** adding to try and fix draw **/
+      // adding to try and fix draw
     }
     // highlighting cell (if necessary)
     if (highlightedCellInfo != null) {
@@ -789,6 +751,11 @@ class TabularView extends View {
     canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y, x + columnWidth - (2 * HORIZONTAL_CELL_PADDING),
         y + rowHeight);
     textPaint.setColor(foregroundColor);
+    if (datum.equals(NULL_DATA_TEXT)) {
+      textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.ITALIC));
+    } else {
+      textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+    }
     canvas.drawText(datum, x + HORIZONTAL_CELL_PADDING, (y + rowHeight - VERTICAL_CELL_PADDING),
         textPaint);
     canvas.restore();
@@ -797,7 +764,7 @@ class TabularView extends View {
   private void highlightCell(Canvas canvas, int x, int y, int columnWidth) {
     canvas.drawLine(x, y, x + columnWidth, y, highlightPaint);
     canvas.drawLine(x, y, x, y + rowHeight, highlightPaint);
-    canvas .drawLine(x, y + rowHeight, x + columnWidth, y + rowHeight, highlightPaint);
+    canvas.drawLine(x, y + rowHeight, x + columnWidth, y + rowHeight, highlightPaint);
     canvas.drawLine(x + columnWidth - 1, y, x + columnWidth - 1, y + rowHeight, highlightPaint);
   }
 
@@ -805,10 +772,8 @@ class TabularView extends View {
   public void onCreateContextMenu(ContextMenu menu) {
     switch (type) {
     case MAIN_DATA:
-      controller.onCreateMainDataContextMenu(menu);
-      return;
     case INDEX_DATA:
-      controller.onCreateIndexDataContextMenu(menu);
+      controller.onCreateDataContextMenu(menu);
       return;
     case MAIN_HEADER:
     case INDEX_HEADER:
@@ -835,9 +800,7 @@ class TabularView extends View {
   }
 
   interface Controller {
-    void onCreateMainDataContextMenu(ContextMenu menu);
-
-    void onCreateIndexDataContextMenu(ContextMenu menu);
+    void onCreateDataContextMenu(ContextMenu menu);
 
     void onCreateHeaderContextMenu(ContextMenu menu);
 

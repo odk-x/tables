@@ -11,9 +11,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.tables.utils.TableNameStruct;
 
-import static android.support.test.espresso.intent.matcher.IntentMatchers.hasAction;
-import static android.support.test.espresso.intent.matcher.IntentMatchers.hasData;
-import static android.support.test.espresso.intent.matcher.IntentMatchers.toPackage;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
 import static android.support.test.espresso.intent.matcher.UriMatchers.hasHost;
 import static android.support.test.espresso.intent.matcher.UriMatchers.hasPath;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -93,10 +91,8 @@ public class ODKMatchers {
     String host = "org.opendatakit.provider.forms";
     String path = "/" + APP_NAME + "/" + tableId + "/" + formId + "/";
 
-    Matcher<Intent> partial = allOf(
-        hasAction("android.intent.action.EDIT"),
-        toPackage(SURVEY_PKG_NAME)
-    );
+    Matcher<Intent> partial = allOf(hasAction("android.intent.action.EDIT"),
+        toPackage(SURVEY_PKG_NAME));
 
     if (instanceId == null) {
       return allOf(partial, hasData(allOf(hasHost(host), hasPath(path))));

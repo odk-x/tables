@@ -54,7 +54,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
       this.showColumnListFragment();
       break;
     case COLUMN_PRFERENCE:
-      this.showColumnPreferenceFragment(elementKey);
+      this.showColumnPreferenceFragment(elementKey, false);
       break;
     case COLOR_RULE_LIST:
       ColorRuleGroup.Type colorRuleGroupType = IntentUtil
@@ -208,6 +208,10 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
   }
 
   public void showColumnPreferenceFragment(String elementKey) {
+    showColumnPreferenceFragment(elementKey, true);
+  }
+
+  public void showColumnPreferenceFragment(String elementKey, boolean addToBackStack) {
     this.mElementKeyOfDisplayedColumn = elementKey;
     this.mCurrentFragmentType = FragmentType.COLUMN_PRFERENCE;
     FragmentManager fragmentManager = this.getFragmentManager();
@@ -215,8 +219,12 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     if (columnPreferenceFragment == null) {
       columnPreferenceFragment = new ColumnPreferenceFragment();
     }
-    fragmentManager.beginTransaction().replace(android.R.id.content, columnPreferenceFragment,
-        Constants.FragmentTags.COLUMN_PREFERENCE).addToBackStack(null).commit();
+    FragmentTransaction transaction = fragmentManager.beginTransaction();
+    transaction.replace(android.R.id.content, columnPreferenceFragment,
+        Constants.FragmentTags.COLUMN_PREFERENCE);
+    if (addToBackStack)
+      transaction.addToBackStack(null);
+    transaction.commit();
 
   }
 
