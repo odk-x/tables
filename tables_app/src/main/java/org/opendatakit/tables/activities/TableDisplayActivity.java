@@ -162,23 +162,25 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    props = new SpreadsheetProps();
-    props.setActivity(this);
+    props = null;
     pullFromDatabase = false;
     if (savedInstanceState != null) {
       if (savedInstanceState.containsKey("props")) {
         props = savedInstanceState.getParcelable("props");
-        props.setActivity(this);
       }
     } else {
       Bundle extras = getIntentExtras();
       if (extras.containsKey(Constants.IntentKeys.CONTAINS_PROPS)) {
         props = extras.getParcelable("props");
-        props.setActivity(this);
       } else {
         pullFromDatabase = true;
       }
     }
+    if (props == null) {
+      props = new SpreadsheetProps();
+    }
+    props.setActivity(this);
+
 
     /*
      * If we are restoring from a saved state, the fleshed-out original view type and filename

@@ -20,7 +20,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -288,7 +287,9 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       s.append("(").append(sqlQueryStruct.whereClause).append(") AND ");
     }
     ArrayList<Object> newSelectionArgs = new ArrayList<>();
-    newSelectionArgs.addAll(Arrays.asList(sqlQueryStruct.selectionArgs.bindArgs));
+    if (sqlQueryStruct.selectionArgs.bindArgs != null) {
+      newSelectionArgs.addAll(Arrays.asList(sqlQueryStruct.selectionArgs.bindArgs));
+    }
     boolean first = true;
     for (String groupByColumn : sqlGroupBy) {
       if (!first) {
@@ -369,6 +370,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     if (act instanceof ISpreadsheetFragmentContainer) {
       return ((ISpreadsheetFragmentContainer) act).getProps();
     }
+    Thread.dumpStack();
     throw new IllegalStateException("Must be inside something with props");
   }
 
@@ -771,6 +773,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       public void onClick(DialogInterface dialog, int whichButton) {
         AbsBaseActivity activity = (AbsBaseActivity) getActivity();
         try {
+          getProps().deleteDialogOpen = false;
           deleteRow(rowId);
           destroyAndRecreateFragment();
         } catch (ActionNotAuthorizedException e) {
@@ -801,7 +804,15 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
         @Override
         public void onDismiss(DialogInterface dialog) {
-          getProps().deleteDialogOpen = false;
+          try {
+            // If they already clicked ok, this fragment will have been detached and getActivity
+            // will return null. That's why we set deleteDialogOpen to false in the positive
+            // onClick listener as well
+            if (getActivity() != null) {
+              getProps().deleteDialogOpen = false;
+            }
+          } catch (IllegalArgumentException ignored) {
+          }
         }
       });
     } else {
