@@ -163,9 +163,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   @Override
   public String getProperty(String propertyId) {
     final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(), getTableId(),
-        getInstanceId(), getActiveUser(), mProps.getUserSelectedDefaultLocale(),
-        mProps.getProperty(CommonToolProperties.KEY_USERNAME),
-        mProps.getProperty(CommonToolProperties.KEY_ACCOUNT));
+        getInstanceId(), getActiveUser(), mProps.getUserSelectedDefaultLocale());
 
     String value = mPropertyManager.getSingularProperty(propertyId, cb);
     return value;
