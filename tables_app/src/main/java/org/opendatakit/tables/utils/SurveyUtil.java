@@ -368,7 +368,7 @@ public class SurveyUtil {
         if (kvsList.size() != 1) {
           formId = null;
         } else {
-          formId = KeyValueStoreUtils.getString(appName, kvsList.get(0));
+          formId = KeyValueStoreUtils.getString(kvsList.get(0));
         }
       } finally {
         if (db != null) {

@@ -91,16 +91,6 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
   }
 
   /**
-   * Called when the export is done
-   *
-   * @param outcome whether the export was successful or not
-   */
-  @Override
-  public void exportComplete(boolean outcome) {
-    keyValueStoreSuccessful = outcome;
-  }
-
-  /**
    * does nothing
    *
    * @param progress unknown
