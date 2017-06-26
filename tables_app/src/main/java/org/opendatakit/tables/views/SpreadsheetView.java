@@ -414,6 +414,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     completeWrapper.setVerticalFadingEdgeEnabled(true);
 
     addView(completeWrapper, wrapLp);
+    // TODO it appears mainScroll might be used before initialized
     mainScroll.setOnTouchListener(new View.OnTouchListener() {
       @Override
       public boolean onTouch(View view, MotionEvent event) {
@@ -630,7 +631,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
+      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e);
       Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
     }
   }
@@ -647,7 +648,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     } catch (ServicesAvailabilityException e) {
       String appName = SpreadsheetView.this.table.getAppName();
       WebLogger.getLogger(appName).printStackTrace(e);
-      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e.toString());
+      WebLogger.getLogger(appName).e(TAG, "Error accessing database: " + e);
       Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
     }
   }
@@ -659,6 +660,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    * NB: If getting this from outside of spreadsheet view, you should really
    * consider if you need to be accessing column widths.
    *
+   * @param db The database to use
    * @return an array of the widths for each column, taken from the database
    * @throws ServicesAvailabilityException if the database is down
    */
@@ -687,14 +689,40 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
    */
   public interface Controller {
 
+    /**
+     * Called when the user clicks a header cell
+     * @param cellId The ID of the cell that the user clicked
+     */
     void headerCellClicked(CellInfo cellId);
 
+    /**
+     * Called when the user activates a menu on a header cell, populates the list of options in the
+     * menu.
+     * @param menu the ContextMenu about to be created
+     * @param cellId the cell id that was double clicked or long clicked to trigger the menu
+     * @throws ServicesAvailabilityException if the database is down
+     */
     void prepHeaderCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
+    /**
+     * Called when the user clicks a data cell
+     * @param cellId The ID of the cell that the user clicked
+     */
     void dataCellClicked(CellInfo cellId);
 
+    /**
+     * Called when the user activates a menu on a data cell, populates the list of options in the
+     * menu.
+     * @param menu the ContextMenu about to be created
+     * @param cellId the cell id that was double clicked or long clicked to trigger the menu
+     * @throws ServicesAvailabilityException if the database is down
+     */
     void prepDataCellOccm(ContextMenu menu, CellInfo cellId) throws ServicesAvailabilityException;
 
+    /**
+     * Opens a menu on the last clicked cell, as appropriate
+     * @param view the view to open the menu on
+     */
     void openContextMenu(View view);
   }
 
@@ -711,12 +739,6 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     private long lastDownTime = -1;
 
     /**
-     * Constructor called by initListeners
-     */
-    private CellTouchListener() {
-    }
-
-    /**
      * Called when the user performs a tap action on a cell, including a "up" (user let go) event
      *
      * @param view  the view that the user clicked on, expected to be a TabularView
@@ -726,8 +748,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     @Override
     public boolean onTouch(View view, MotionEvent event) {
       // Get where the user tapped out of the event
-      int x = (Float.valueOf(event.getX())).intValue();
-      int y = (Float.valueOf(event.getY())).intValue();
+      int x = Float.valueOf(event.getX()).intValue();
+      int y = Float.valueOf(event.getY()).intValue();
       // Figure out which cell it was that they tapped on, and put it in a CellInfo object
       CellInfo cellId = null;
       if (view instanceof TabularView) {
@@ -742,15 +764,15 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       long duration = event.getEventTime() - event.getDownTime();
       if (event.getAction() == MotionEvent.ACTION_UP && duration >= MIN_CLICK_DURATION) {
         if (event.getEventTime() - lastDownTime < MAX_DOUBLE_CLICK_TIME) {
-          takeDoubleClickAction((Float.valueOf(event.getRawX())).intValue(),
-              (Float.valueOf(event.getRawY())).intValue());
+          takeDoubleClickAction(Float.valueOf(event.getRawX()).intValue(),
+              Float.valueOf(event.getRawY()).intValue());
         } else if (duration < MIN_LONG_CLICK_DURATION) {
           takeClickAction();
         } else {
           // rawX and rawY are taken from the ending of the long click, not the beginning
           // but rawX and rawY are unused anyways
-          int rawX = (Float.valueOf(event.getRawX())).intValue();
-          int rawY = (Float.valueOf(event.getRawY())).intValue();
+          int rawX = Float.valueOf(event.getRawX()).intValue();
+          int rawY = Float.valueOf(event.getRawY()).intValue();
           takeLongClickAction(rawX, rawY);
         }
         lastDownTime = event.getDownTime();

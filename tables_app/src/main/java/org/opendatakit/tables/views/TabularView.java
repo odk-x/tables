@@ -694,12 +694,12 @@ final class TabularView extends View {
         }
         if (type == TableLayoutType.MAIN_HEADER || type == TableLayoutType.INDEX_HEADER
             || type == TableLayoutType.STATUS_HEADER) {
-          if (Arrays.asList(mTable.props.getGroupBy()).contains(columnKey)) {
+          if (Arrays.asList(mTable.getProps().getGroupBy()).contains(columnKey)) {
             backgroundColor = GROUP_BY_COLOR;
-          } else if (columnKey != null && columnKey.equals(mTable.props.getSort())) {
+          } else if (columnKey != null && columnKey.equals(mTable.getProps().getSort())) {
             backgroundColor = SORT_COLOR;
           }
-          if (columnKey != null && columnKey.equals(mTable.props.getFrozen())) {
+          if (columnKey != null && columnKey.equals(mTable.getProps().getFrozen())) {
             backgroundColor = FROZEN_COLOR;
           }
         }

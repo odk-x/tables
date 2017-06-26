@@ -31,7 +31,6 @@ import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.activities.ISpreadsheetFragmentContainer;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
-import org.opendatakit.tables.fragments.SpreadsheetFragment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +42,7 @@ import java.util.Map;
  *
  * @author Administrator
  */
-public class SpreadsheetUserTable {
+public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
   // A fragment that has the ability to display a table
   private final AbsTableDisplayFragment fragment;
 
@@ -55,17 +54,23 @@ public class SpreadsheetUserTable {
   //
   private final String[] spreadsheetIndexToElementKey;
   private final Map<String, Integer> elementKeyToSpreadsheetIndex;
-  public SpreadsheetProps props;
+  private SpreadsheetProps props;
   private UserTable userTable;
 
+  /**
+   * Constructs a SpreadsheetUserTable
+   * @param frag the fragment we're embedded in
+   * @throws ServicesAvailabilityException if the database is down
+   */
   public SpreadsheetUserTable(AbsTableDisplayFragment frag) throws ServicesAvailabilityException {
     this.fragment = frag;
     props = null;
-    if (frag instanceof SpreadsheetFragment) {
-      Activity act = frag.getActivity();
-      if (act instanceof ISpreadsheetFragmentContainer) {
-        props = ((ISpreadsheetFragmentContainer) act).getProps();
-      }
+    if (frag == null) {
+      throw new IllegalStateException("Must have a fragment to get appname to open database");
+    }
+    Activity act = frag.getActivity();
+    if (act instanceof ISpreadsheetFragmentContainer) {
+      props = ((ISpreadsheetFragmentContainer) act).getProps();
     }
     PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
@@ -79,9 +84,9 @@ public class SpreadsheetUserTable {
       if (this.props != null) {
         indexColumnElementKey = this.props.getFrozen();
       } else {
-        //indexColumnElementKey = TableUtil.get().getIndexColumn(dbInterface, getAppName(), db,
-        //getTableId());
-        indexColumnElementKey = null;
+        indexColumnElementKey = TableUtil.get()
+            .getIndexColumn(dbInterface, getAppName(), db, getTableId());
+        //indexColumnElementKey = null;
       }
       colOrder = TableUtil.get()
           .getColumnOrder(dbInterface, frag.getAppName(), db, frag.getTableId(),
@@ -111,6 +116,10 @@ public class SpreadsheetUserTable {
     }
   }
 
+  public SpreadsheetProps getProps() {
+    return props;
+  }
+
   public String getTableId() {
     return fragment.getTableId();
   }
@@ -138,6 +147,11 @@ public class SpreadsheetUserTable {
     return table.getNumberOfRows();
   }
 
+  /**
+   * Gets the row at the requested index from the table, or null if the index is out of bounds
+   * @param index the index of the row
+   * @return the requested row or null
+   */
   public Row getRowAtIndex(int index) {
     UserTable table = fragment.getUserTable();
     if (table == null) {
@@ -162,16 +176,25 @@ public class SpreadsheetUserTable {
 
   boolean isIndexed() {
     String elementKey = getIndexedColumnElementKey();
-    return elementKey != null && elementKey.length() != 0;
+    return elementKey != null && !elementKey.isEmpty();
   }
 
   // These need to be re-worked...
 
+  /**
+   * Tries to determine if the table has any data in it or not
+   * @return whether there is data in the user table
+   */
   public boolean hasData() {
     UserTable table = fragment.getUserTable();
-    return !(table == null || (header.length == 0));
+    return !(table == null || header.length == 0);
   }
 
+  /**
+   * Gets a cell from the given CellInfo object. Used in SpreadsheetFragment
+   * @param cellInfo an object that has a row id and column (elementKey) in it
+   * @return a SpreadsheetCell object from the CellInfo object
+   */
   public SpreadsheetCell getSpreadsheetCell(CellInfo cellInfo) {
     SpreadsheetCell cell = new SpreadsheetCell();
     userTable = getUserTable();
@@ -191,9 +214,13 @@ public class SpreadsheetUserTable {
     return getColumnByElementKey(spreadsheetIndexToElementKey[headerCellNum]);
   }
 
+  /**
+   * Finds a column definition given a column key
+   * @param elementKey the id of the requested column
+   * @return a column definition object for the column with that id
+   */
   public ColumnDefinition getColumnByElementKey(String elementKey) {
-    OrderedColumns orderedDefns = getColumnDefinitions();
-    return orderedDefns.find(elementKey);
+    return getColumnDefinitions().find(elementKey);
   }
 
   public int getWidth() {
@@ -218,9 +245,21 @@ public class SpreadsheetUserTable {
     return header_keys[colNum];
   }
 
+  /**
+   * A class that holds a row, column id, value, row number and some display text
+   */
   public static class SpreadsheetCell {
+    /**
+     * The row of the cell
+     */
     public Row row; // the row
+    /**
+     * The column of the cell
+     */
     public String elementKey; // of the column
+    /**
+     * The actual data in the cell
+     */
     public String value;
     int rowNum; // of the row
     String displayText;

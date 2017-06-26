@@ -13,7 +13,8 @@ public class SpreadsheetProps implements Parcelable {
   /**
    * parcelable cruft
    */
-  public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
+  public static final Parcelable.Creator<SpreadsheetProps> CREATOR = new Parcelable
+      .Creator<SpreadsheetProps>() {
     public SpreadsheetProps createFromParcel(Parcel in) {
       return new SpreadsheetProps(in);
     }
@@ -23,17 +24,26 @@ public class SpreadsheetProps implements Parcelable {
     }
   };
   /**
-   * Booleans to hold whether the various menus and dialogs are open, so they can be re-opened
-   * after rotate
+   * Boolean to hold whether a data menu is open, so it can be re-opened after rotate
    */
   public boolean dataMenuOpen = false;
+  /**
+   * Boolean to hold whether a header menu is open, so it can be re-opened after rotate
+   */
   public boolean headerMenuOpen = false;
+  /**
+   * Boolean to hold whether a delete row dialog is open, so it can be re-opened after rotate
+   */
   public boolean deleteDialogOpen = false;
   /**
-   * cellInfo stored for the same reason, so that the dialogs and menus know which cell was double
+   * cellInfo stored so that the delete dialog and row actions menu know which cell was double
    * tapped or long tapped in order to open them.
    */
   public CellInfo lastDataCellMenued;
+  /**
+   * cellInfo stored so that the column actions menu know which cell was double tapped or long
+   * tapped in order to open them.
+   */
   public CellInfo lastHeaderCellMenued;
   /**
    * The properties of the sql query that the user can manipulate
@@ -171,7 +181,7 @@ public class SpreadsheetProps implements Parcelable {
    * @param in the parcel to read from
    * @return the string that was originally put in the parcelable
    */
-  private String readString(Parcel in) {
+  private static String readString(Parcel in) {
     if (in.readByte() == 1) {
       return in.readString();
     }
@@ -184,7 +194,7 @@ public class SpreadsheetProps implements Parcelable {
    * @param in the parcel to read from
    * @return the cell info object we read
    */
-  private CellInfo readCellInfo(Parcel in) {
+  private static CellInfo readCellInfo(Parcel in) {
     if (in.readByte() == 0) {
       return null;
     }
@@ -197,7 +207,7 @@ public class SpreadsheetProps implements Parcelable {
    * @param out the parcel to write to
    * @param str the string to write
    */
-  private void writeString(Parcel out, String str) {
+  private static void writeString(Parcel out, String str) {
     if (str == null) {
       out.writeByte((byte) 0);
     } else {
@@ -212,7 +222,7 @@ public class SpreadsheetProps implements Parcelable {
    * @param dest the parcel to write to
    * @param cell the cell to write to the parcel
    */
-  private void writeCellInfo(Parcel dest, CellInfo cell) {
+  private static void writeCellInfo(Parcel dest, CellInfo cell) {
     if (cell == null) {
       dest.writeByte((byte) 0);
     } else {

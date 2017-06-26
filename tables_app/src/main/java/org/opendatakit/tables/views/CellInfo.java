@@ -18,11 +18,17 @@ package org.opendatakit.tables.views;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+/**
+ * Stores information about a cell, particularly the column, column position and row id
+ */
 public class CellInfo implements Parcelable {
   // elementKey may be null if we ever need a touch
   // listener on status column. For now, everything works.
 
-  public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
+  /**
+   * Parcelable cruft
+   */
+  public static final Parcelable.Creator<CellInfo> CREATOR = new Parcelable.Creator<CellInfo>() {
     public CellInfo createFromParcel(Parcel in) {
       return new CellInfo(in);
     }
@@ -31,18 +37,24 @@ public class CellInfo implements Parcelable {
       return new CellInfo[size];
     }
   };
+  /**
+   * The ID of the row
+   */
   public final int rowId;
   // this is ONLY relevant to this TabularView
   final int colPos;
+  /**
+   * The column of the cell
+   */
   public String elementKey;
 
-  public CellInfo(String elementKey, int colPos, int rowId) {
+  CellInfo(String elementKey, int colPos, int rowId) {
     this.elementKey = elementKey;
     this.colPos = colPos;
     this.rowId = rowId;
   }
 
-  public CellInfo(Parcel in) {
+  private CellInfo(Parcel in) {
     if (in.readByte() == 1) {
       elementKey = in.readString();
     }

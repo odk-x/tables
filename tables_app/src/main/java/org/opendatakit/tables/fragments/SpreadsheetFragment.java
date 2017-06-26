@@ -104,15 +104,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   private View container;
 
   /**
-   * returns spreadsheet
-   *
-   * @return the type of this fragment (spreadsheet view fragment)
-   */
-  public ViewFragmentType getFragmentType() {
-    return ViewFragmentType.SPREADSHEET;
-  }
-
-  /**
    * Called when the view needs to be displayed to the user. Since it might called before the
    * database is up, it just displays an error message that will be replaced when
    * databaseAvailable is called.

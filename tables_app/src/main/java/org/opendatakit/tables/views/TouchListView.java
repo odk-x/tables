@@ -30,7 +30,19 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import org.opendatakit.tables.R;
 
+/**
+ * A thin wrapper for ListView
+ */
 public class TouchListView extends ListView {
+  public TouchListView(Context context, AttributeSet attrs) {
+    this(context, attrs, 0);
+  }
+
+  public TouchListView(Context context, AttributeSet attrs, int defStyle) {
+    super(context, attrs, defStyle);
+  }
+
+  /*
   public static final int FLING = 0;
   public static final int SLIDE_RIGHT = 1;
   public static final int SLIDE_LEFT = 2;
@@ -154,7 +166,7 @@ public class TouchListView extends ListView {
   /*
    * pointToPosition() doesn't consider invisible views, but we need to, so
    * implement a slightly different version.
-   */
+   * / // EDITED COMMENT END
   private int myPointToPosition(int x, int y) {
     Rect frame = mTempRect;
     final int count = getChildCount();
@@ -192,7 +204,7 @@ public class TouchListView extends ListView {
 
   /*
    * Restore size and visibility for all listitems
-   */
+   * / // EDITED COMMENT END
   private void unExpandViews(boolean deletion) {
     for (int i = 0; ; i++) {
       View v = getChildAt(i);
@@ -226,7 +238,7 @@ public class TouchListView extends ListView {
    * dragged listitem is still on screen, make it as small as possible and
    * expand the item below the insert point. If the dragged item is not on
    * screen, only expand the item below the current insertpoint.
-   */
+   * / // EDITED COMMENT END
   private void doExpansion() {
     int childnum = mDragPos - getFirstVisiblePosition();
     if (mDragPos > mFirstDragPos) {
@@ -422,4 +434,5 @@ public class TouchListView extends ListView {
   public interface RemoveListener {
     void remove(int which);
   }
+  */
 }
