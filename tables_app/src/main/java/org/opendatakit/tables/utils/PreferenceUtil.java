@@ -29,15 +29,16 @@ import org.opendatakit.tables.application.Tables;
  */
 public class PreferenceUtil {
 
+  @SuppressWarnings("unused")
   private static final String TAG = PreferenceUtil.class.getSimpleName();
 
   /**
-   * Save viewType to be the default view type for the tableId
+   * Save viewType (i.e. spreadsheet, detail, map...) to be the default view type for the tableId
    *
-   * @param context
-   * @param appName
-   * @param tableId
-   * @param viewType
+   * @param context a context used for displaying an error
+   * @param appName the app name
+   * @param tableId the id of the table to set the view type on
+   * @param viewType the view type to save
    */
   public static void setDefaultViewType(Context context, String appName, String tableId,
       TableViewType viewType) {
@@ -51,18 +52,17 @@ public class PreferenceUtil {
   }
 
   /**
-   * Get the width thast has been set for the column. If none has been set,
+   * Get the width that has been set for the column. If none has been set,
    * returns {@see DEFAULT_COL_WIDTH}.
    *
-   * @param context
-   * @param appName
-   * @param tableId
-   * @param elementKey
-   * @return
-   * @throws ServicesAvailabilityException
+   * @param appName the app name
+   * @param tableId the table id that the column is in
+   * @param elementKey the column id of the column to get the width for
+   * @return a width in pixels for the column
+   * @throws ServicesAvailabilityException if the database is down
    */
-  public static int getColumnWidth(Context context, String appName, String tableId,
-      String elementKey) throws ServicesAvailabilityException {
+  public static int getColumnWidth(String appName, String tableId, String elementKey)
+      throws ServicesAvailabilityException {
     Integer result = null;
     DbHandle db = null;
     try {

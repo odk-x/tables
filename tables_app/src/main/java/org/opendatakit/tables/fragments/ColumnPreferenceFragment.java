@@ -215,7 +215,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     final String appName = activity.getAppName();
     final EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.WIDTH);
-    int columnWidth = PreferenceUtil.getColumnWidth(getActivity(), getAppName(), getTableId(),
+    int columnWidth = PreferenceUtil.getColumnWidth(getAppName(), getTableId(),
         retrieveColumnDefinition().getElementKey());
     pref.setSummary(Integer.toString(columnWidth));
 

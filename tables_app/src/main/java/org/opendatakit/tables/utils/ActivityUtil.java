@@ -64,7 +64,7 @@ public class ActivityUtil {
 
     SurveyFormParameters params = formType.getSurveyFormParameters();
 
-    Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, appName, tableId, params,
+    Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(tableId, params,
         row.getDataByKey(DataTableColumns.ID));
     if (intent != null) {
       SurveyUtil
@@ -85,7 +85,7 @@ public class ActivityUtil {
       throws ServicesAvailabilityException {
     WebLogger.getLogger(appName).d(TAG, "[editRow] using survey form");
     SurveyFormParameters surveyFormParameters = SurveyFormParameters
-        .constructSurveyFormParameters(activity, appName, tableId);
+        .constructSurveyFormParameters(appName, tableId);
 
     // If no formId has been specified, show toast and exit
     if (surveyFormParameters.getFormId() == null) {

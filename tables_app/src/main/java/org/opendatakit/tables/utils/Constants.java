@@ -28,6 +28,9 @@ public class Constants {
   public static final int DEFAULT_TEXT_COLOR = Color.BLACK;
   public static final int DEFAULT_BACKGROUND_COLOR = Color.WHITE;
 
+  /**
+   * Unused
+   */
   public static class HTML {
     /**
      * The default HTML to be displayed if no file name has been set.
@@ -36,10 +39,16 @@ public class Constants {
         "<html><body>" + "<p>No filename has been specified.</p>" + "</body></html>";
   }
 
+  /**
+   * Unused
+   */
   public static class MimeTypes {
     public static final String TEXT_HTML = "text/html";
   }
 
+  /**
+   * Unused
+   */
   public static class ExternalIntentStrings {
     /**
      * Survey's package name as declared in the manifest.
@@ -88,10 +97,12 @@ public class Constants {
      */
     public static final String SQL_WHERE = "sqlWhereClause";
 
-    // TODO document
-    public static final String SQL_FROZEN = "sqlFrozenCol";
-    // TODO document
-    public static final String CONTAINS_PROPS = "sqlOverridesDatabase";
+    /**
+     * Used when launching a TableDisplayActivity to a SpreadsheetView when you want to pass
+     * non-default properties (sort column, sort direction, group by column or frozen column)
+     * via the intent or activity result.
+     */
+    public static final String CONTAINS_PROPS = "containsProps";
 
     /**
      * A JSON serialization of an array of bind parameters.
@@ -118,14 +129,13 @@ public class Constants {
     public static final String SQL_ORDER_BY_DIRECTION = "sqlOrderByDirection";
   }
 
+  /**
+   * For most fragments, this is either the name() of {@link ScreenType} or
+   * {@ViewFragmentType}.
+   * <p>
+   * Others are listed here.
+   */
   public static class FragmentTags {
-    /**
-     * For most fragments, this is either the name() of {@link ScreenType} or
-     * {@ViewFragmentType}.
-     *
-     * Others are listed here.
-     */
-
     /**
      * ViewFragmentType.MAP has two inner fragments and a separate mapping
      * layout that is made visible. The inner fragments are controlled with
@@ -163,6 +173,9 @@ public class Constants {
       public static final String DISPLAY_NAME = "table_pref_display_name";
       public static final String TABLE_ID = "table_pref_table_id";
       public static final String DEFAULT_VIEW_TYPE = "table_pref_default_view_type";
+      /**
+       * unused
+       */
       public static final String DEFAULT_FORM = "table_pref_default_form";
       public static final String TABLE_COLOR_RULES = "table_pref_table_color_rules";
       public static final String STATUS_COLOR_RULES = "table_pref_status_column_color_rules";
@@ -204,9 +217,8 @@ public class Constants {
     public static final int LAUNCH_DISPLAY_PREFS = 6;
     public static final int LAUNCH_IMPORT = 7;
     public static final int LAUNCH_SYNC = 8;
-    public static final int LAUNCH_TABLE_MANAGER = 9;
     /**
-     * For launching an HTML file not associated with a table.
+     * For launching an HTML file not associated with a table. Unused
      */
     public static final int LAUNCH_WEB_VIEW = 10;
     /**

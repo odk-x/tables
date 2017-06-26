@@ -19,6 +19,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.widget.Toast;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.consts.IntentConsts;
@@ -45,6 +46,10 @@ import java.util.UUID;
  */
 public class SurveyUtil {
 
+  /**
+   * Used for logging
+   */
+  @SuppressWarnings("unused")
   private static final String TAG = SurveyUtil.class.getSimpleName();
 
   /**
@@ -79,7 +84,6 @@ public class SurveyUtil {
    * should eventually be able to prepopulate the row with the values in
    * elementKeyToValue. However! Much of this is still unimplemented.
    *
-   * @param context              unused
    * @param appName              the app name
    * @param tableId              the id of the table we want to add a row to
    * @param surveyFormParameters an object that contains a form id, whether the form was
@@ -88,7 +92,7 @@ public class SurveyUtil {
    *                             that you wish to prepopulate in the add row.
    * @return an intent to open Survey to a particular form
    */
-  public static Intent getIntentForOdkSurveyAddRow(Context context, String appName, String tableId,
+  public static Intent getIntentForOdkSurveyAddRow(String appName, String tableId,
       SurveyFormParameters surveyFormParameters, Map<String, Object> elementKeyToValue) {
 
     // To launch to a specific form we need to construct an Intent meant for
@@ -114,7 +118,6 @@ public class SurveyUtil {
    * Does the row perhaps presuppose some structure on the form? Should clarify
    * this.
    *
-   * @param context              unused
    * @param appName              the app name
    * @param tableId              the table id
    * @param surveyFormParameters an object that contains a form id, whether the form was
@@ -122,7 +125,7 @@ public class SurveyUtil {
    * @param instanceId           which row to edit
    * @return an intent that can be started to switch to survey
    */
-  public static Intent getIntentForOdkSurveyEditRow(Context context, String appName, String tableId,
+  public static Intent getIntentForOdkSurveyEditRow(String appName, String tableId,
       SurveyFormParameters surveyFormParameters, String instanceId) {
     // To launch a specific form for a particular row we need to construct up
     // an Intent for Survey's MainMenuActivity. This Intent takes a Uri via its
@@ -147,15 +150,14 @@ public class SurveyUtil {
    * @param surveyFormParameters an object that contains a form id, whether the form was
    *                             automatically generated, and the screen path to the form
    * @param elementKeyToValue    a map of prepopulated values to add to the form.
-   * @return
+   * @return a URI that can be used to add a row using survey
    */
   private static Uri getUriForSurveyAddRow(String appName, String tableId,
       SurveyFormParameters surveyFormParameters, Map<String, Object> elementKeyToValue) {
     // We'll create a UUID, as that will tell survey we want a new one.
     String newUuid = INSTANCE_UUID_PREFIX + UUID.randomUUID().toString();
-    Uri helpedUri = getUriForSurveyHelper(appName, tableId, surveyFormParameters, newUuid,
+    return getUriForSurveyHelper(appName, tableId, surveyFormParameters, newUuid,
         elementKeyToValue);
-    return helpedUri;
   }
 
   /**
@@ -192,7 +194,7 @@ public class SurveyUtil {
    *                             newly-generated id will result in an add row--an existent ID will
    *                             result in an edit row for the specified id.
    * @param elementKeyToValue    optional map of key/value pairs that will be added after the #
-   * @return
+   * @return a URI that can be used for adding or editing a row with survey
    */
   public static Uri getUriForSurveyHelper(String appName, String tableId,
       SurveyFormParameters surveyFormParameters, String instanceId,
@@ -247,8 +249,7 @@ public class SurveyUtil {
   public static void addRowWithSurvey(AbsBaseActivity activity, String appName, String tableId,
       SurveyFormParameters surveyFormParameters, Map<String, Object> prepopulatedValues) {
     Intent addRowIntent = SurveyUtil
-        .getIntentForOdkSurveyAddRow(activity, appName, tableId, surveyFormParameters,
-            prepopulatedValues);
+        .getIntentForOdkSurveyAddRow(appName, tableId, surveyFormParameters, prepopulatedValues);
     SurveyUtil.launchSurveyToAddRow(activity, tableId, addRowIntent);
   }
 
@@ -266,7 +267,7 @@ public class SurveyUtil {
   public static void editRowWithSurvey(AbsBaseActivity activity, String appName, String tableId,
       String instanceId, SurveyFormParameters surveyFormParameters) {
     Intent editRowIntent = SurveyUtil
-        .getIntentForOdkSurveyEditRow(activity, appName, tableId, surveyFormParameters, instanceId);
+        .getIntentForOdkSurveyEditRow(appName, tableId, surveyFormParameters, instanceId);
     SurveyUtil.launchSurveyToEditRow(activity, tableId, editRowIntent, instanceId);
   }
 
@@ -278,10 +279,14 @@ public class SurveyUtil {
    *                              the row
    * @param tableId               the id of the table to add the row to
    * @param surveyEditIntent      an intent object used by startActivityForResult
-   * @param rowId                 unused
+   * @param rowId                 added to the intent's extras
    */
   public static void launchSurveyToEditRow(AbsBaseActivity activityToAwaitReturn, String tableId,
       Intent surveyEditIntent, String rowId) {
+    // Should already be in there but just in case
+    Bundle extras = surveyEditIntent.getExtras();
+    IntentUtil.addRowIdToBundle(extras, rowId);
+    surveyEditIntent.putExtras(extras);
     Context ctxt = activityToAwaitReturn.getApplicationContext();
     if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)) {
       activityToAwaitReturn.setActionTableId(tableId);
@@ -347,15 +352,14 @@ public class SurveyUtil {
      * <p>
      * The display name of the row will be the display name of the table.
      *
-     * @param context unused
      * @param appName the app name
      * @param tableId the id of the table to add/edit a row in
      * @return a SurveyFormParameters object that contains information about what form survey
      * should open
      * @throws ServicesAvailabilityException if the database is down
      */
-    public static SurveyFormParameters constructSurveyFormParameters(Context context,
-        String appName, String tableId) throws ServicesAvailabilityException {
+    public static SurveyFormParameters constructSurveyFormParameters(String appName, String tableId)
+        throws ServicesAvailabilityException {
       String formId;
       DbHandle db = null;
       try {
@@ -411,7 +415,7 @@ public class SurveyUtil {
     }
 
     /**
-     * sets the screen path and also sets user defined to true
+     * Sets the screen path and also sets user defined to true. Unused
      *
      * @param screenPath
      */
@@ -430,7 +434,7 @@ public class SurveyUtil {
     }
 
     /**
-     * standard setter for whether the form is user defined or not
+     * standard setter for whether the form is user defined or not. Unused
      *
      * @param isUserDefined whether the form is user defined or not
      */

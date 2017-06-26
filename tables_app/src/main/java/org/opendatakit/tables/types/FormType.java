@@ -45,7 +45,7 @@ public class FormType {
   public static FormType constructFormType(Context context, String appName, String tableId)
       throws ServicesAvailabilityException {
     return new FormType(context, appName, tableId,
-        SurveyFormParameters.constructSurveyFormParameters(context, appName, tableId));
+        SurveyFormParameters.constructSurveyFormParameters(appName, tableId));
   }
 
   public void persist(Context context, String appName, String tableId)

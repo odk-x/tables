@@ -29,7 +29,7 @@ public class TableFileUtils {
 
   private static final String TAG = TableFileUtils.class.getSimpleName();
 
-  public static final String getDefaultAppName() {
+  public static String getDefaultAppName() {
     Log.i(TAG, "appName is null on intent");
     Thread.dumpStack();
     return ODKFileUtils.getOdkDefaultAppName();
