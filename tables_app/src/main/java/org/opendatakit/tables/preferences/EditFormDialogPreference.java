@@ -41,9 +41,9 @@ public class EditFormDialogPreference extends DialogPreference {
   // The context and activity we're running in
   private Context mContext;
   private AbsTableActivity mActivity;
-  private FormType mFormType;
+  private FormType mFormType = null;
   // The EditText that the user actually types in
-  private EditText mFormId;
+  private EditText mFormId = null;
 
   /**
    * Sets up the activity and makes sure that we're executing in a TableActivity
@@ -111,7 +111,7 @@ public class EditFormDialogPreference extends DialogPreference {
     super.onDialogClosed(positiveResult);
     if (positiveResult) {
       String formId = this.mFormId.getText().toString();
-      if (formId.length() == 0) {
+      if (formId.isEmpty()) {
         alertInvalidForm();
         return;
       }

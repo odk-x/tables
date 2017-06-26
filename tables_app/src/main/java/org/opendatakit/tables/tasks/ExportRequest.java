@@ -63,7 +63,7 @@ public class ExportRequest {
    *
    * @return the prefix for the csv filenames
    */
-  public String getFileQualifier() {
+  String getFileQualifier() {
     return fileQualifier;
   }
 }

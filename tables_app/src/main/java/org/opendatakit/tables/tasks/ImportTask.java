@@ -38,9 +38,7 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
 
   // the app name
   private final String appName;
-  // booleans used to keep track of whether there was an error
-  public boolean caughtDuplicateTableException = false;
-  public boolean problemImportingKVSEntries = false;
+  private boolean problemImportingKVSEntries = false;
   // a task that needs to be passed to progressDialogFragment so it can update the progress
   // dialog's message
   private AbsBaseActivity context;
@@ -123,10 +121,7 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
       ImportExportDialogFragment
           .newInstance(ImportExportDialogFragment.CSVIMPORT_SUCCESS_DIALOG, context);
     } else {
-      if (caughtDuplicateTableException) {
-        ImportExportDialogFragment
-            .newInstance(ImportExportDialogFragment.CSVIMPORT_FAIL_DUPLICATE_TABLE, context);
-      } else if (problemImportingKVSEntries) {
+      if (problemImportingKVSEntries) {
         ImportExportDialogFragment.newInstance(
             ImportExportDialogFragment.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG,
             context);

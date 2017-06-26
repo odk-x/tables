@@ -33,28 +33,13 @@ public class EditNameDialogPreference extends DialogPreference {
 
   // This is the Activity that calls this object.
   private EditSavedViewEntryHandler callingActivity;
-  private EditText mEditText;
-  private String mText;
-
-  public EditNameDialogPreference(Context context, AttributeSet attrs) {
-    super(context, attrs);
-  }
+  private EditText mEditText = null;
+  private String mText = null;
 
   public EditNameDialogPreference(Context context, AttributeSet attrs,
       EditSavedViewEntryHandler callingActivity) {
     super(context, attrs);
-  }
-
-  /**
-   * Set the calling activity as well as the listview name for this dialog.
-   *
-   * @param callingActivity
-   */
-  public void setCallingActivity(EditSavedViewEntryHandler callingActivity) {
     this.callingActivity = callingActivity;
-    mText = callingActivity.getCurrentViewName();
-    // Display the name to the user.
-    this.setSummary(mText);
   }
 
   /**
@@ -83,7 +68,7 @@ public class EditNameDialogPreference extends DialogPreference {
    * Return the String that is currently in the dialog. NOT necessarily
    * what is in the EditText.
    *
-   * @return
+   * @return the text in the dialog
    */
   public String getText() {
     return mText;
@@ -95,15 +80,6 @@ public class EditNameDialogPreference extends DialogPreference {
       String value = mEditText.getText().toString();
       callingActivity.tryToSaveNewName(value);
     }
-  }
-
-  /**
-   * Get the EditText in the dialog.
-   *
-   * @return
-   */
-  public EditText getEditText() {
-    return mEditText;
   }
 
 }

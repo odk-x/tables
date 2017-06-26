@@ -44,7 +44,7 @@ public class ImportRequest {
    * @param tableId       the id of the table
    * @param fileQualifier the prefix for the csv file to import
    */
-  public ImportRequest(boolean createTable, String tableId, String fileQualifier) {
+  private ImportRequest(boolean createTable, String tableId, String fileQualifier) {
     this.createTable = createTable;
     this.tableId = tableId;
     this.fileQualifier = fileQualifier;
@@ -55,7 +55,7 @@ public class ImportRequest {
    *
    * @return whether we should create the table if it doesn't already exist
    */
-  public boolean getCreateTable() {
+  boolean getCreateTable() {
     return createTable;
   }
 
@@ -73,7 +73,7 @@ public class ImportRequest {
    *
    * @return the prefix for the filename
    */
-  public String getFileQualifier() {
+  String getFileQualifier() {
     return fileQualifier;
   }
 }

@@ -41,8 +41,6 @@ public class ImportExportDialogFragment extends DialogFragment {
   // This is intended to say that "your csv exported successfully, but there
   // was a problem with the key value store setting mapping.
   public static final int CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 7;
-  public static final int CSVIMPORT_FAIL_DUPLICATE_TABLE = 8;
-  protected static final int CSVIMPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 9;
   // private IDs that are put in the bundle of arguments to determine which type of dialog to create
   // can't use an enum because you can't (safely) put an enum in a bundle
   private static final int ALERT_DIALOG = 0;
@@ -98,12 +96,6 @@ public class ImportExportDialogFragment extends DialogFragment {
       break;
     case CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG:
       message = act.getString(R.string.export_partial_success);
-      break;
-    case CSVIMPORT_FAIL_DUPLICATE_TABLE:
-      message = act.getString(R.string.import_failure_existing_table);
-      break;
-    case CSVIMPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG:
-      message = act.getString(R.string.import_partial_success);
       break;
     default:
       throw new IllegalArgumentException();

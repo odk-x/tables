@@ -64,8 +64,7 @@ public class ActivityUtil {
 
     SurveyFormParameters params = formType.getSurveyFormParameters();
 
-    Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(tableId, params,
-        row.getDataByKey(DataTableColumns.ID));
+    Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(appName, tableId, params, row.getDataByKey(DataTableColumns.ID));
     if (intent != null) {
       SurveyUtil
           .launchSurveyToEditRow(activity, tableId, intent, row.getDataByKey(DataTableColumns.ID));

@@ -38,8 +38,6 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
   private final String appName;
   // The context the progress dialog needs
   private AbsBaseActivity context;
-  // This says whether or not the secondary entries in the key value store were written successfully
-  private boolean keyValueStoreSuccessful = true;
 
   /**
    * Constructor that stores off its arguments
@@ -48,6 +46,7 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
    * @param context the activity that the progress dialog is running in
    */
   public ExportTask(String appName, AbsBaseActivity context) {
+    super();
     this.appName = appName;
     this.context = context;
   }
@@ -76,7 +75,6 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG, "Unable to access database");
-      e.printStackTrace();
       return false;
     } finally {
       if (db != null) {
@@ -103,19 +101,13 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
    * Called when the export is done. Dismisses the "Import in progress..." dialog, and displays
    * a success alert dialog or one of the failure alert dialogs, which will be dismissed by the user
    *
-   * @param result
+   * @param result Whether the import was successful
    */
   protected void onPostExecute(Boolean result) {
     ImportExportDialogFragment.activeDialogFragment.dismiss();
     if (result) {
-      if (keyValueStoreSuccessful) {
-        ImportExportDialogFragment
-            .newInstance(ImportExportDialogFragment.CSVEXPORT_SUCCESS_DIALOG, context);
-      } else {
-        ImportExportDialogFragment.newInstance(
-            ImportExportDialogFragment.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG,
-            context);
-      }
+      ImportExportDialogFragment
+          .newInstance(ImportExportDialogFragment.CSVEXPORT_SUCCESS_DIALOG, context);
     } else {
       ImportExportDialogFragment
           .newInstance(ImportExportDialogFragment.CSVEXPORT_FAIL_DIALOG, context);

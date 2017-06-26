@@ -41,9 +41,8 @@ public class DefaultViewTypePreference extends ListPreference {
    * The view types allowed for the table this preference will display.
    */
   //private TableProperties mTableProperties;
-  private PossibleTableViewTypes mPossibleViewTypes;
+  private PossibleTableViewTypes mPossibleViewTypes = null;
   private Context mContext;
-  private CharSequence[] mEntryValues;
 
   public DefaultViewTypePreference(Context context, AttributeSet attrs) {
     super(context, attrs);
@@ -56,7 +55,8 @@ public class DefaultViewTypePreference extends ListPreference {
       throws ServicesAvailabilityException {
 
     TableViewType defaultViewType = null;
-    this.mEntryValues = this.mContext.getResources().getTextArray(R.array.table_view_types_values);
+    CharSequence[] mEntryValues = mContext.getResources()
+        .getTextArray(R.array.table_view_types_values);
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
@@ -74,10 +74,9 @@ public class DefaultViewTypePreference extends ListPreference {
     if (defaultViewType == null || !mPossibleViewTypes.getAllPossibleViewTypes()
         .contains(defaultViewType)) {
       // default to spreadsheet.
-      defaultViewType = TableViewType.SPREADSHEET;
       this.setValueIndex(0);
     } else {
-      int index = Arrays.asList(this.mEntryValues).indexOf(defaultViewType.name());
+      int index = Arrays.asList(mEntryValues).indexOf(defaultViewType.name());
       if (index < 0) {
         index = 0;
       }

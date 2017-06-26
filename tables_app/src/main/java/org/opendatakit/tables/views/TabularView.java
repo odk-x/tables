@@ -41,7 +41,7 @@ import java.util.*;
  *
  * @author sudar.sam@gmail.com
  */
-class TabularView extends View {
+final class TabularView extends View {
 
   public static final String TAG = TabularView.class.getSimpleName();
   public static final int DEFAULT_STATUS_COLUMN_WIDTH = 10;
@@ -89,18 +89,8 @@ class TabularView extends View {
   private int totalHeight;
   private int totalWidth;
   private CellInfo highlightedCellInfo;
-  /**
-   * The map of element key to {@link ColorRuleGroup} objects for the columns of
-   * the table. This will be responsible for coloring the cells of a column.
-   */
-  private Map<String, ColorRuleGroup> mColumnColorRules;
-  private Map<String, ColorGuideGroup> mColumnColorGuideGroup;
-  /**
-   * The {@link ColorRuleGroup} object for the table. This will be responsible
-   * for things like determining row color.
-   */
-  private ColorRuleGroup mRowColorRuleGroup;
-  private ColorGuideGroup mRowColorGuideGroup;
+  private Map<String, ColorGuideGroup> mColumnColorGuideGroup = null;
+  private ColorGuideGroup mRowColorGuideGroup = null;
   // this should hold the x location of the column. so xs[12] should hold the
   // x displacement of the left side of that column.
   private int[] xs;
@@ -163,22 +153,29 @@ class TabularView extends View {
           .e(TAG, "Unrecognized TableType in constructor: " + this.type.name());
       this.mNumberOfRows = this.mTable.getNumberOfRows();
     }
-    this.mColumnColorRules = elementKeyToColorRuleGroup;
+    /*
+    The map of element key to {@link ColorRuleGroup} objects for the columns of
+    the table. This will be responsible for coloring the cells of a column.
+   */
 
-    this.mRowColorRuleGroup = rowColorRuleGroup;
+    /*
+    The {@link ColorRuleGroup} object for the table. This will be responsible
+    for things like determining row color.
+   */
 
     // Initialized the ColorGuideGroups
     if (mTable != null) {
-      this.mRowColorGuideGroup = new ColorGuideGroup(mRowColorRuleGroup, mTable.getUserTable());
+      this.mRowColorGuideGroup = new ColorGuideGroup(rowColorRuleGroup, mTable.getUserTable());
 
-      Set<String> keys = elementKeyToColorRuleGroup.keySet();
-      for (String key : keys) {
-        ColorRuleGroup crg = elementKeyToColorRuleGroup.get(key);
+      for (Map.Entry<String, ColorRuleGroup> stringColorRuleGroupEntry : elementKeyToColorRuleGroup
+          .entrySet()) {
+        ColorRuleGroup crg = stringColorRuleGroupEntry.getValue();
         if (crg != null) {
           if (this.mColumnColorGuideGroup == null) {
-            this.mColumnColorGuideGroup = new TreeMap<String, ColorGuideGroup>();
+            this.mColumnColorGuideGroup = new TreeMap<>();
           }
-          this.mColumnColorGuideGroup.put(key, new ColorGuideGroup(crg, mTable.getUserTable()));
+          this.mColumnColorGuideGroup.put(
+              stringColorRuleGroupEntry.getKey(), new ColorGuideGroup(crg, mTable.getUserTable()));
         }
       }
     }
@@ -209,6 +206,11 @@ class TabularView extends View {
     this.metrics = getResources().getDisplayMetrics();
     if (this.mNumberOfRows > 0) {
       this.xs = new int[this.mElementKeys.size()];
+      if (xs.length == 0) {
+        // There are no columns. This happens in a table with only one column and the user
+        // freezes it, then we get an out of bounds exception setting xs[0] and tables crashes
+        return;
+      }
       xs[0] = BORDER_WIDTH;
       for (int i = 0; i < this.mElementKeys.size() - 1; i++) {
         xs[i + 1] = xs[i] + columnWidths[i] + BORDER_WIDTH;
@@ -412,7 +414,7 @@ class TabularView extends View {
   public void onDraw(Canvas canvas) {
     // We don't want to do anything if we're not responsible for drawing any
     // of the rows or columns.
-    if (this.mNumberOfRows == 0 || this.mElementKeys.size() == 0) {
+    if (mNumberOfRows == 0 || mElementKeys.isEmpty()) {
       return;
     }
 
@@ -606,7 +608,7 @@ class TabularView extends View {
     int xCoord = leftmostBorder;
     for (int i = indexOfLeftmostColumn; i < indexOfRightmostColumn + 1; i++) {
       canvas.drawRect(xCoord, topmostBorder, xCoord + BORDER_WIDTH, bottomBottommost, borderPaint);
-      xCoord += (i == this.mElementKeys.size()) ? 0 : columnWidths[i] + BORDER_WIDTH;
+      xCoord += i == this.mElementKeys.size() ? 0 : columnWidths[i] + BORDER_WIDTH;
     }
 
     // precompute the correspondence between the displayed elementKeys and the
@@ -615,7 +617,7 @@ class TabularView extends View {
     for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; ++j) {
       String elementKey = this.mElementKeys.get(j);
       Integer idx = this.mTable.getColumnIndexOfElementKey(elementKey);
-      userDataIndex[j] = (idx == null) ? -1 : idx;
+      userDataIndex[j] = idx == null ? -1 : idx;
     }
 
     // drawing the cells
@@ -636,7 +638,7 @@ class TabularView extends View {
 
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
 
-        String datum = null;
+        String datum;
         String columnKey = null;
         if (this.type == TableLayoutType.STATUS_DATA
             || this.type == TableLayoutType.STATUS_HEADER) {
@@ -704,7 +706,7 @@ class TabularView extends View {
     if (highlightedCellInfo != null) {
       int rowNum = highlightedCellInfo.rowId;
       int colPos = highlightedCellInfo.colPos;
-      highlightCell(canvas, xs[colPos], ((rowNum + 1) * BORDER_WIDTH) + (rowNum * rowHeight),
+      highlightCell(canvas, xs[colPos], (rowNum + 1) * BORDER_WIDTH + rowNum * rowHeight,
           columnWidths[colPos]);
     }
   }
@@ -748,7 +750,7 @@ class TabularView extends View {
     }
     canvas.drawRect(x, y, x + columnWidth, y + rowHeight, bgPaint);
     canvas.save(Canvas.ALL_SAVE_FLAG);
-    canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y, x + columnWidth - (2 * HORIZONTAL_CELL_PADDING),
+    canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y, x + columnWidth - 2 * HORIZONTAL_CELL_PADDING,
         y + rowHeight);
     textPaint.setColor(foregroundColor);
     if (datum.equals(NULL_DATA_TEXT)) {
@@ -756,7 +758,7 @@ class TabularView extends View {
     } else {
       textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
     }
-    canvas.drawText(datum, x + HORIZONTAL_CELL_PADDING, (y + rowHeight - VERTICAL_CELL_PADDING),
+    canvas.drawText(datum, x + HORIZONTAL_CELL_PADDING, y + rowHeight - VERTICAL_CELL_PADDING,
         textPaint);
     canvas.restore();
   }
@@ -785,18 +787,13 @@ class TabularView extends View {
     }
   }
 
-  enum TableLayoutType {
+  private enum TableLayoutType {
     // NB: After the change to use SpreadsheetUserTable more heavily, there is
     // essentially no difference between the MAIN and INDEX table types. They
     // remain for now just for ease of debugging if for some reason it matters
     // in a way I don't yet see. They will probably be safe to consolidate in the
     // future.
     MAIN_DATA, MAIN_HEADER, INDEX_DATA, INDEX_HEADER, STATUS_DATA, STATUS_HEADER
-  }
-
-  interface ColorDecider {
-    ColorGuide getColor(int index, String[] rowData, Map<String, Integer> columnMapping,
-        Map<String, ColumnDefinition> definitionMapping);
   }
 
   interface Controller {
