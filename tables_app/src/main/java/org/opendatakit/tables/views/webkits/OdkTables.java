@@ -16,9 +16,9 @@
 
 package org.opendatakit.tables.views.webkits;
 
+import android.content.Context;
 import android.os.Bundle;
 import org.opendatakit.database.queries.BindArgs;
-import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
@@ -28,66 +28,73 @@ import org.opendatakit.views.ODKWebView;
 import java.lang.ref.WeakReference;
 
 /**
- * Created by jbeorse on 5/9/17.
+ * TODO what does this class do?
  */
+class OdkTables {
 
-public class OdkTables {
-
+  /**
+   * Used for logging
+   */
+  @SuppressWarnings("unused")
   private static final String TAG = OdkTables.class.getSimpleName();
-  protected AbsBaseActivity mActivity;
+  private Context mActivity;
   private WeakReference<ODKWebView> mWebView;
 
   /**
-   * @param activity the activity that will be holding the view
+   * Constructs
+   *
+   * @param context the activity that will be holding the view
+   * @param webView the webview to hold
    */
-  public OdkTables(AbsBaseActivity activity, ODKWebView webView) {
-    this.mActivity = activity;
-    this.mWebView = new WeakReference<ODKWebView>(webView);
+  OdkTables(Context context, ODKWebView webView) {
+    this.mActivity = context;
+    this.mWebView = new WeakReference<>(webView);
   }
 
-  public boolean isInactive() {
-    return (mWebView.get() == null) || mWebView.get().isInactive();
+  boolean isInactive() {
+    return mWebView.get() == null || mWebView.get().isInactive();
   }
 
-  public OdkTablesIf getJavascriptInterfaceWithWeakReference() {
+  OdkTablesIf getJavascriptInterfaceWithWeakReference() {
     return new OdkTablesIf(this);
   }
 
   /**
    * Set the list view contents for a detail with list view
    *
-   * @param tableId
+   * @param tableId              the table id
    * @param relativePath         the path relative to the app folder
-   * @param sqlWhereClause
+   * @param sqlWhereClause       an sql selection parameter to limit what rows get shown
    * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
    *                             numeric, boolean and string types.
-   * @return
+   * @param sqlGroupBy           an array of column IDs (element keys) to group by
+   * @param sqlHaving            a sql having argument
+   * @param sqlOrderByElementKey the id of the column the result set will be sorted by
+   * @param sqlOrderByDirection  ASC for ascending DESC for descending
    */
-  public boolean helperSetSubListView(String tableId, String relativePath, String sqlWhereClause,
+  void helperSetSubListView(String tableId, String relativePath, String sqlWhereClause,
       String sqlSelectionArgsJSON, String[] sqlGroupBy, String sqlHaving,
       String sqlOrderByElementKey, String sqlOrderByDirection) {
-    return this
-        .helperUpdateView(tableId, sqlWhereClause, sqlSelectionArgsJSON, sqlGroupBy, sqlHaving,
-            sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.SUB_LIST, relativePath);
+    helperUpdateView(tableId, sqlWhereClause, sqlSelectionArgsJSON, sqlGroupBy, sqlHaving,
+        sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.SUB_LIST, relativePath);
   }
 
   /**
    * Send a bundle to update a view without opening a new activity.
    *
-   * @param tableId
-   * @param sqlWhereClause
+   * @param tableId              the table id
+   * @param sqlWhereClause       an sql selection parameter to limit what rows get shown
    * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
    *                             numeric, boolean and string types.
-   * @param sqlGroupBy
-   * @param sqlHaving
-   * @param sqlOrderByElementKey
-   * @param sqlOrderByDirection
-   * @param viewType
-   * @param relativePath
-   * @return
+   * @param sqlGroupBy           an array of column IDs (element keys) to group by
+   * @param sqlHaving            a sql having argument
+   * @param sqlOrderByElementKey the id of the column the result set will be sorted by
+   * @param sqlOrderByDirection  ASC for ascending DESC for descending
+   * @param viewType             Must be ViewFragmentType.SUB_LIST right now
+   * @param relativePath         the path relative to the app folder
    * @throws IllegalArgumentException if viewType is not a sub view
    */
-  boolean helperUpdateView(String tableId, String sqlWhereClause, String sqlSelectionArgsJSON,
+  private void helperUpdateView(String tableId, String sqlWhereClause, String sqlSelectionArgsJSON,
       String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey,
       String sqlOrderByDirection, ViewFragmentType viewType, String relativePath) {
     if (viewType != ViewFragmentType.SUB_LIST) {
@@ -102,8 +109,7 @@ public class OdkTables {
     IntentUtil.addFragmentViewTypeToBundle(bundle, viewType);
     IntentUtil.addFileNameToBundle(bundle, relativePath);
 
-    switch (viewType) {
-    case SUB_LIST:
+    if (mActivity instanceof TableDisplayActivity) {
       final TableDisplayActivity activity = (TableDisplayActivity) mActivity;
       // Run on ui thread to try and prevent a race condition with the two webkits
       activity.runOnUiThread(new Runnable() {
@@ -112,11 +118,10 @@ public class OdkTables {
           activity.updateFragment(Constants.FragmentTags.DETAIL_WITH_LIST_LIST, bundle);
         }
       });
-      break;
-    default: // This is unreachable
-      break;
+    } else {
+      throw new IllegalArgumentException(
+          "Cannot update an activity without an updateFragment " + "method");
     }
-    return true;
   }
 
 }

@@ -256,6 +256,7 @@ public class ColorRuleTest {
     //obtain bounds of color picker
     Rect bounds = mDevice.findObject(By.clazz(ScrollView.class)).getVisibleBounds();
     //center coordinate of "OK" button is hard coded in ColorRulesDialog.java
+    // TODO update this? ColorRulesDialog.java is dead
     mDevice.click(74 + bounds.left, 336 + bounds.top);
 
     return color;

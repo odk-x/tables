@@ -19,21 +19,24 @@ package org.opendatakit.tables.views.webkits;
 import java.lang.ref.WeakReference;
 
 /**
- * Created by jbeorse on 5/9/17.
+ * TODO what does this class do?
  */
 
-public class OdkTablesIf {
+class OdkTablesIf {
 
-  public static final String TAG = "OdkTablesIf";
+  /**
+   * Used for logging
+   */
+  public static final String TAG = OdkTablesIf.class.getSimpleName();
 
   private WeakReference<OdkTables> weakControl;
 
   OdkTablesIf(OdkTables odkTables) {
-    weakControl = new WeakReference<OdkTables>(odkTables);
+    weakControl = new WeakReference<>(odkTables);
   }
 
-  public boolean isInactive() {
-    return (weakControl.get() == null) || weakControl.get().isInactive();
+  private boolean isInactive() {
+    return weakControl.get() == null || weakControl.get().isInactive();
   }
 
   /**
@@ -53,8 +56,9 @@ public class OdkTablesIf {
       String relativePath) {
     if (isInactive())
       return false;
-    return weakControl.get()
+    weakControl.get()
         .helperSetSubListView(tableId, relativePath, whereClause, sqlSelectionArgsJSON, null, null,
             null, null);
+    return true;
   }
 }

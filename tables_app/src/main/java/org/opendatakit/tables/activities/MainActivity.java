@@ -96,7 +96,7 @@ public class MainActivity extends AbsBaseWebActivity
    * and its query.
    *
    * @param ifChanged  unused
-   * @param fragmentID unused
+   * @param fragmentID unused - there is only one webview
    * @return A URI that represents the current location of the web view, with query strings if
    * needed
    */
