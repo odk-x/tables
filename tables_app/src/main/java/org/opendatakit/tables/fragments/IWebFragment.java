@@ -28,7 +28,7 @@ public interface IWebFragment {
   /**
    * Get the webkit in this fragment
    *
-   * @return
+   * @return the webkit in the fragment
    */
   OdkTablesWebView getWebKit();
 

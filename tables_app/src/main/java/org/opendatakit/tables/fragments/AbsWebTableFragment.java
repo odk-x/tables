@@ -42,9 +42,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implem
       Bundle savedInstanceState) {
     WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView]");
 
-    ViewGroup v = (ViewGroup) inflater.inflate(R.layout.web_view_container, container, false);
-
-    return v;
+    return inflater.inflate(R.layout.web_view_container, container, false);
   }
 
   @Override

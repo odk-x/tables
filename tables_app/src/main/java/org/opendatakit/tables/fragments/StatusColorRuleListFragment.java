@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
+import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Context;
 import android.os.Bundle;
@@ -22,6 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
@@ -48,15 +50,15 @@ public class StatusColorRuleListFragment extends ListFragment {
   /**
    * The group of color rules being displayed by this list.
    */
-  ColorRuleGroup mColorRuleGroup;
-  ColorRuleAdapter mColorRuleAdapter;
+  ColorRuleGroup mColorRuleGroup = null;
+  ColorRuleAdapter mColorRuleAdapter = null;
 
   /**
-   * Retrieve a new instance of {@list StatusColorRuleListFragment} with the
+   * Retrieve a new instance of {@link StatusColorRuleListFragment} with the
    * appropriate values set in its arguments.
    *
-   * @param colorRuleType
-   * @return
+   * @param colorRuleType the color group type to use
+   * @return a new StatusColorRuleListFragment, configured with the requested color rule group type
    */
   public static StatusColorRuleListFragment newInstance(ColorRuleGroup.Type colorRuleType) {
     StatusColorRuleListFragment result = new StatusColorRuleListFragment();
@@ -119,47 +121,46 @@ public class StatusColorRuleListFragment extends ListFragment {
   ColorRuleAdapter createColorRuleAdapter(String[] adminColumns,
       Map<String, String> colDisplayNames) {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
-    ColorRuleAdapter result = new ColorRuleAdapter((TableLevelPreferencesActivity) getActivity(),
+    return new ColorRuleAdapter((TableLevelPreferencesActivity) getActivity(),
         getAppName(), getTableId(), R.layout.row_for_view_entry, adminColumns, colDisplayNames,
         this.mColorRuleGroup.getColorRules(), type);
-    return result;
   }
 
   /**
    * Retrieve the {@link ColorRuleGroup.Type} from the arguments passed to this
    * fragment.
    *
-   * @return
+   * @return the color rule type we were created with
    */
   ColorRuleGroup.Type retrieveColorRuleType() {
-    ColorRuleGroup.Type result = IntentUtil.retrieveColorRuleTypeFromBundle(this.getArguments());
-    return result;
+    return IntentUtil.retrieveColorRuleTypeFromBundle(this.getArguments());
   }
 
   /**
    * Retrieve the {@link TableLevelPreferencesActivity} hosting this fragment.
    *
-   * @return
+   * @return getActivity casted to a TableLevelPreferencesActivity
    */
   TableLevelPreferencesActivity retrieveTableLevelPreferencesActivity() {
-    TableLevelPreferencesActivity result = (TableLevelPreferencesActivity) this.getActivity();
-    return result;
+    Activity act = getActivity();
+    if (act instanceof TableLevelPreferencesActivity) {
+      return (TableLevelPreferencesActivity) act;
+    }
+    throw new IllegalStateException("Must be inside something with a table ID");
   }
 
   String getAppName() {
-    TableLevelPreferencesActivity result = retrieveTableLevelPreferencesActivity();
-    return result.getAppName();
+    return ((IAppAwareActivity) getActivity()).getAppName();
   }
 
   String getTableId() {
-    TableLevelPreferencesActivity result = retrieveTableLevelPreferencesActivity();
-    return result.getTableId();
+    return retrieveTableLevelPreferencesActivity().getTableId();
   }
 
   ColorRuleGroup retrieveColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
       String[] adminColumns) throws ServicesAvailabilityException {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
-    ColorRuleGroup result = null;
+    ColorRuleGroup result;
     switch (type) {
     case STATUS_COLUMN:
       result = ColorRuleGroup

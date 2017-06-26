@@ -62,11 +62,11 @@ public class ColorRuleListFragment extends ListFragment {
   ColorRuleAdapter mColorRuleAdapter;
 
   /**
-   * Retrieve a new instance of {@list ColorRuleListFragment} with the
+   * Retrieve a new instance of {@link ColorRuleListFragment} with the
    * appropriate values set in its arguments.
    *
-   * @param colorRuleType
-   * @return
+   * @param colorRuleType the color rule group type to put in the arguments of the new fragment
+   * @return a color rule list fragment with the correct color rule group type
    */
   public static ColorRuleListFragment newInstance(ColorRuleGroup.Type colorRuleType) {
     ColorRuleListFragment result = new ColorRuleListFragment();
@@ -138,21 +138,19 @@ public class ColorRuleListFragment extends ListFragment {
   ColorRuleAdapter createColorRuleAdapter(String[] adminColumns,
       Map<String, String> colDisplayNames) {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
-    ColorRuleAdapter result = new ColorRuleAdapter((TableLevelPreferencesActivity) getActivity(),
+    return new ColorRuleAdapter((TableLevelPreferencesActivity) getActivity(),
         getAppName(), getTableId(), R.layout.row_for_edit_view_entry, adminColumns, colDisplayNames,
         this.mColorRuleGroup.getColorRules(), type);
-    return result;
   }
 
   /**
    * Retrieve the {@link ColorRuleGroup.Type} from the arguments passed to this
    * fragment.
    *
-   * @return
+   * @return the color rule type this fragment was created with
    */
   ColorRuleGroup.Type retrieveColorRuleType() {
-    ColorRuleGroup.Type result = IntentUtil.retrieveColorRuleTypeFromBundle(this.getArguments());
-    return result;
+    return IntentUtil.retrieveColorRuleTypeFromBundle(getArguments());
   }
 
   @Override
@@ -267,17 +265,15 @@ public class ColorRuleListFragment extends ListFragment {
   /**
    * Wipe the current rules and revert to the defaults for the given type.
    *
-   * @throws ServicesAvailabilityException
+   * @throws ServicesAvailabilityException if the database is down
    */
   private void revertToDefaults() throws ServicesAvailabilityException {
     TableLevelPreferencesActivity activity = this.retrieveTableLevelPreferencesActivity();
-    final String appName = activity.getAppName();
     ColorRuleGroup.Type colorRuleGroupType = this.retrieveColorRuleType();
     switch (colorRuleGroupType) {
     case STATUS_COLUMN:
       // replace the rules.
-      List<ColorRule> newList = new ArrayList<ColorRule>();
-      newList.addAll(ColorRuleUtil.getDefaultSyncStateColorRules());
+      List<ColorRule> newList = new ArrayList<>(ColorRuleUtil.getDefaultSyncStateColorRules());
       this.mColorRuleGroup.replaceColorRuleList(newList);
       this.mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
       this.mColorRuleAdapter.notifyDataSetChanged();
@@ -285,44 +281,38 @@ public class ColorRuleListFragment extends ListFragment {
     case COLUMN:
     case TABLE:
       // We want to just wipe all the columns for both of these types.
-      List<ColorRule> emptyList = new ArrayList<ColorRule>();
+      List<ColorRule> emptyList = new ArrayList<>();
       this.mColorRuleGroup.replaceColorRuleList(emptyList);
       this.mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
-    default:
-      WebLogger.getLogger(appName)
-          .e(TAG, "unrecognized type of column rule in revert to default: " + colorRuleGroupType);
     }
   }
 
   /**
    * Retrieve the {@link TableLevelPreferencesActivity} hosting this fragment.
    *
-   * @return
+   * @return the activity casted to something with a getTableId and getElementKey method
    */
   TableLevelPreferencesActivity retrieveTableLevelPreferencesActivity() {
-    TableLevelPreferencesActivity result = (TableLevelPreferencesActivity) this.getActivity();
-    return result;
+    return (TableLevelPreferencesActivity) this.getActivity();
   }
 
   String getAppName() {
-    TableLevelPreferencesActivity result = retrieveTableLevelPreferencesActivity();
-    return result.getAppName();
+    return retrieveTableLevelPreferencesActivity().getAppName();
   }
 
   String getTableId() {
-    TableLevelPreferencesActivity result = retrieveTableLevelPreferencesActivity();
-    return result.getTableId();
+    return retrieveTableLevelPreferencesActivity().getTableId();
   }
 
   ColorRuleGroup retrieveColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
       String[] adminColumns) throws ServicesAvailabilityException {
-    ColorRuleGroup.Type type = this.retrieveColorRuleType();
-    ColorRuleGroup result = null;
+    ColorRuleGroup.Type type = retrieveColorRuleType();
+    ColorRuleGroup result;
     switch (type) {
     case COLUMN:
-      String elementKey = this.retrieveTableLevelPreferencesActivity().getElementKey();
+      String elementKey = retrieveTableLevelPreferencesActivity().getElementKey();
       result = ColorRuleGroup
           .getColumnColorRuleGroup(dbInterface, getAppName(), db, getTableId(), elementKey,
               adminColumns);
@@ -336,7 +326,7 @@ public class ColorRuleListFragment extends ListFragment {
           .getTableColorRuleGroup(dbInterface, getAppName(), db, getTableId(), adminColumns);
       break;
     default:
-      throw new IllegalArgumentException("unrecognized color rule group type: " + type);
+      throw new IllegalArgumentException("Color rule group type was not present in the intent");
     }
     return result;
   }

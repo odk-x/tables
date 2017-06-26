@@ -78,18 +78,12 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
 
     WebLogger.getLogger(getAppName()).d(TAG, "[resetView]");
 
-    OdkTablesWebView currentView = (OdkTablesWebView) this.getView().findViewById(R.id.webkit);
+    if (getView() == null)
+      return; // Can't do anything
 
+    OdkTablesWebView currentView = (OdkTablesWebView) getView().findViewById(R.id.webkit);
     // reload the page.
     currentView.reloadPage();
-  }
-
-  /**
-   * @return true if the user has selected a row that should be displayed as
-   * selected
-   */
-  protected boolean itemIsSelected() {
-    return this.mSelectedItemIndex != INVALID_INDEX;
   }
 
   @Override

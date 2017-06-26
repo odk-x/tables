@@ -33,6 +33,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.fragments.IWebFragment;
 import org.opendatakit.tables.fragments.InitializationFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.fragments.WebFragment;
@@ -84,7 +85,7 @@ public class MainActivity extends AbsBaseWebActivity
       FragmentManager mgr = this.getFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
       if (newFragment != null) {
-        return ((WebFragment) newFragment).getWebKit();
+        return ((IWebFragment) newFragment).getWebKit();
       }
     }
     return null;
@@ -108,7 +109,7 @@ public class MainActivity extends AbsBaseWebActivity
       if (newFragment != null && webFileToDisplay != null) {
         // Split off query parameter if it exists
         String[] webFileStrs = checkForQueryParameter(webFileToDisplay);
-        String filename = null;
+        String filename;
         if (webFileStrs.length > 1) {
           File webFile = new File(webFileStrs[0]);
           filename = ODKFileUtils.asRelativePath(mAppName, webFile);
@@ -116,13 +117,11 @@ public class MainActivity extends AbsBaseWebActivity
           filename = ODKFileUtils.asRelativePath(mAppName, webFileToDisplay);
         }
 
-        if (filename != null) {
-          if (webFileStrs.length > 1) {
-            return UrlUtils.getAsWebViewUri(this, getAppName(),
-                filename.concat(QUERY_START_PARAM).concat(webFileStrs[1]));
-          } else {
-            return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
-          }
+        if (webFileStrs.length > 1) {
+          return UrlUtils.getAsWebViewUri(this, getAppName(),
+              filename.concat(QUERY_START_PARAM).concat(webFileStrs[1]));
+        } else {
+          return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
         }
       }
     }
@@ -204,7 +203,7 @@ public class MainActivity extends AbsBaseWebActivity
    * if we are configured to show it. If we are configured
    * to show it and it is not present, clear that flag.
    *
-   * @return
+   * @return the file used to display the home screen
    */
   protected File getHomeScreen(Bundle savedInstanceState) {
     Boolean setting = mProps.getBooleanProperty(CommonToolProperties.KEY_USE_HOME_SCREEN);
@@ -212,7 +211,7 @@ public class MainActivity extends AbsBaseWebActivity
         .retrieveFileNameFromSavedStateOrArguments(savedInstanceState,
             this.getIntent().getExtras());
 
-    File userHomeScreen = null;
+    File userHomeScreen;
     if (relativeFileName != null) {
       userHomeScreen = ODKFileUtils.asAppFile(mAppName, relativeFileName);
     } else {
@@ -226,11 +225,11 @@ public class MainActivity extends AbsBaseWebActivity
       userHomeScreenFile = new File(userHomeScreenUrlParts[0]);
     }
 
-    if ((relativeFileName != null) || (setting == null ? false : setting) || (
-        userHomeScreenFile.exists() && userHomeScreenFile.isFile())) {
+    if (relativeFileName != null || (setting == null ? false : setting)
+        || userHomeScreenFile.exists() && userHomeScreenFile.isFile()) {
       return userHomeScreen;
     } else {
-      if ((setting == null || setting == Boolean.TRUE) && relativeFileName == null) {
+      if (setting == null || setting) {
         // the home screen doesn't exist but we are requesting to show it -- clear the setting
         mProps.setProperties(Collections
             .singletonMap(CommonToolProperties.KEY_USE_HOME_SCREEN, Boolean.toString(false)));
@@ -239,10 +238,10 @@ public class MainActivity extends AbsBaseWebActivity
     }
   }
 
-  private String[] checkForQueryParameter(File webFile) {
+  private static String[] checkForQueryParameter(File webFile) {
     String webFileToDisplayPath = webFile.getPath();
-    String[] webFileStrs = webFileToDisplayPath.split("[" + QUERY_START_PARAM + "]", 2);
-    return webFileStrs;
+    //noinspection DynamicRegexReplaceableByCompiledPattern
+    return webFileToDisplayPath.split("[" + QUERY_START_PARAM + "]", 2);
   }
 
   private void popBackStack() {
@@ -268,10 +267,6 @@ public class MainActivity extends AbsBaseWebActivity
     popBackStack();
   }
 
-  public ScreenType getCurrentScreenType() {
-    return activeScreenType;
-  }
-
   /**
    * Transitions the active screen to the passed argument. If the fragment manager already has a
    * fragment of the requested type, we reuse that. If there is a matching fragment in the
@@ -283,12 +278,12 @@ public class MainActivity extends AbsBaseWebActivity
    */
   public void swapScreens(ScreenType newScreenType) {
     WebLogger.getLogger(getAppName()).i(TAG,
-        "swapScreens: Transitioning from " + ((activeScreenType == null) ?
+        "swapScreens: Transitioning from " + (activeScreenType == null ?
             "-none-" :
             activeScreenType.name()) + " to " + newScreenType.name());
     FragmentManager mgr = this.getFragmentManager();
     FragmentTransaction trans = null;
-    Fragment newFragment = null;
+    Fragment newFragment;
     switch (newScreenType) {
     case TABLE_MANAGER_SCREEN:
       newFragment = mgr.findFragmentByTag(newScreenType.name());
@@ -328,25 +323,19 @@ public class MainActivity extends AbsBaseWebActivity
     }
 
     if (matchingBackStackEntry) {
-      if (trans != null) {
-        WebLogger.getLogger(mAppName).e(TAG, "Unexpected active transaction when popping state!");
-        trans = null;
-      }
       // flush backward, to the screen we want to go back to
       activeScreenType = newScreenType;
       mgr.popBackStackImmediate(activeScreenType.name(), 0);
     } else {
       // add transaction to show the screen we want
-      if (trans == null) {
-        trans = mgr.beginTransaction();
-      }
+      trans = mgr.beginTransaction();
       activeScreenType = newScreenType;
       trans.replace(R.id.activity_main_activity, newFragment, activeScreenType.name());
       trans.addToBackStack(activeScreenType.name());
     }
 
     // and see if we should re-initialize...
-    if ((activeScreenType != ScreenType.INITIALIZATION_SCREEN) && Tables.getInstance()
+    if (activeScreenType != ScreenType.INITIALIZATION_SCREEN && Tables.getInstance()
         .shouldRunInitializationTask(getAppName())) {
       WebLogger.getLogger(getAppName())
           .i(TAG, "swapToFragmentView -- calling clearRunInitializationTask");
@@ -381,7 +370,9 @@ public class MainActivity extends AbsBaseWebActivity
     lastMenuType = activeScreenType;
 
     ActionBar actionBar = getActionBar();
-    actionBar.show();
+    if (actionBar != null) { // always true
+      actionBar.show();
+    }
   }
 
   @Override
@@ -404,7 +395,7 @@ public class MainActivity extends AbsBaseWebActivity
    * those three options,
    *
    * @param item The id of the item that the user clicked on
-   * @return
+   * @return whether it was handled or not
    */
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
@@ -479,6 +470,8 @@ public class MainActivity extends AbsBaseWebActivity
               .d(TAG, "[onActivityResult] result canceled, refreshing backing table");
         }
         break;
+      default:
+        break;
       }
     }
     super.onActivityResult(requestCode, resultCode, data);
@@ -498,14 +491,12 @@ public class MainActivity extends AbsBaseWebActivity
 
     SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(bundle);
 
-    ViewDataQueryParams params = new ViewDataQueryParams(tableId, rowId, sqlQueryStruct.whereClause,
+    return new ViewDataQueryParams(tableId, rowId, sqlQueryStruct.whereClause,
         sqlQueryStruct.selectionArgs, sqlQueryStruct.groupBy, sqlQueryStruct.having,
         sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
-
-    return params;
   }
 
-  public enum ScreenType {
+  private enum ScreenType {
     INITIALIZATION_SCREEN, TABLE_MANAGER_SCREEN, ABOUT_SCREEN, WEBVIEW_SCREEN
   }
 

@@ -23,11 +23,11 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 import org.opendatakit.views.ODKWebView;
 
 /**
  * Created by jbeorse on 5/1/17.
+ * The fragment with two webviews on one screen, each a list
  */
 public class DetailWithListListViewFragment extends AbsWebTableFragment {
 
@@ -38,7 +38,11 @@ public class DetailWithListListViewFragment extends AbsWebTableFragment {
       Bundle savedInstanceState) {
     View newView = super.onCreateView(inflater, container, savedInstanceState);
 
-    ODKWebView webView = (OdkTablesWebView) newView.findViewById(R.id.webkit);
+    if (newView == null) {
+      WebLogger.getLogger(getAppName()).e(TAG, "[onCreateView] parent view was null");
+      return null;
+    }
+    ODKWebView webView = (ODKWebView) newView.findViewById(R.id.webkit);
     if (webView == null) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreateView] web view was null");
       return newView;
@@ -47,7 +51,6 @@ public class DetailWithListListViewFragment extends AbsWebTableFragment {
     return newView;
   }
 
-  @Override
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.SUB_LIST;
   }

@@ -14,6 +14,7 @@
 
 package org.opendatakit.tables.fragments;
 
+import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
@@ -51,7 +52,7 @@ public class InitializationFragment extends Fragment
   private static final String DIALOG_TITLE = "dialogTitle";
   private static final String DIALOG_MSG = "dialogMsg";
   private static final String DIALOG_STATE = "dialogState";
-  private static String appName;
+  private static String appName = null;
   // data to save across orientation changes
   private String mAlertTitle;
   private String mAlertMsg;
@@ -204,6 +205,7 @@ public class InitializationFragment extends Fragment
     } catch (IllegalArgumentException e) {
       WebLogger.getLogger(appName)
           .i(TAG, "Attempting to close a dialog that was not previously opened");
+      WebLogger.getLogger(appName).printStackTrace(e);
     }
 
     Tables.getInstance().clearInitializationTask();
@@ -212,7 +214,7 @@ public class InitializationFragment extends Fragment
       // do not require an OK if everything went well
       Fragment progress = getFragmentManager().findFragmentByTag("progressDialog");
       if (progress != null) {
-        ((ProgressDialogFragment) progress).dismiss();
+        ((DialogFragment) progress).dismiss();
         mDialogState = DialogState.None;
       }
 
@@ -239,14 +241,14 @@ public class InitializationFragment extends Fragment
     WebLogger.getLogger(appName).d(TAG, "in private void restoreProgressDialog() {");
     Fragment alert = getFragmentManager().findFragmentByTag("alertDialog");
     if (alert != null) {
-      ((AlertDialogFragment) alert).dismiss();
+      ((DialogFragment) alert).dismiss();
     }
 
     Fragment dialog = getFragmentManager().findFragmentByTag("progressDialog");
 
-    if (dialog != null && ((ProgressDialogFragment) dialog).getDialog() != null) {
+    if (dialog != null && ((DialogFragment) dialog).getDialog() != null) {
       mDialogState = DialogState.Progress;
-      ((ProgressDialogFragment) dialog).getDialog().setTitle(mAlertTitle);
+      ((DialogFragment) dialog).getDialog().setTitle(mAlertTitle);
       ((ProgressDialogFragment) dialog).setMessage(mAlertMsg);
 
     } else {
@@ -288,7 +290,7 @@ public class InitializationFragment extends Fragment
     }
     Fragment dialog = getFragmentManager().findFragmentByTag("progressDialog");
     if (dialog != null) {
-      ((ProgressDialogFragment) dialog).dismiss();
+      ((DialogFragment) dialog).dismiss();
       mPendingDialogState = DialogState.None;
     }
   }
@@ -301,14 +303,14 @@ public class InitializationFragment extends Fragment
     WebLogger.getLogger(appName).d(TAG, "in private void restoreAlertDialog() {");
     Fragment progress = getFragmentManager().findFragmentByTag("progressDialog");
     if (progress != null) {
-      ((ProgressDialogFragment) progress).dismiss();
+      ((DialogFragment) progress).dismiss();
     }
 
     Fragment dialog = getFragmentManager().findFragmentByTag("alertDialog");
 
-    if (dialog != null && ((AlertDialogFragment) dialog).getDialog() != null) {
+    if (dialog != null && ((DialogFragment) dialog).getDialog() != null) {
       mDialogState = DialogState.Alert;
-      ((AlertDialogFragment) dialog).getDialog().setTitle(mAlertTitle);
+      ((DialogFragment) dialog).getDialog().setTitle(mAlertTitle);
       ((AlertDialogFragment) dialog).setMessage(mAlertMsg);
 
     } else {

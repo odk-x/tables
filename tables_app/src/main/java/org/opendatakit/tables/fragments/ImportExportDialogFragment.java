@@ -138,7 +138,7 @@ public class ImportExportDialogFragment extends DialogFragment {
         }
         if (getArguments().getInt("type") == PROGRESS_DIALOG) {
           String message = getString(id, status);
-          ((ProgressDialog) d).setMessage(message);
+          ((AlertDialog) d).setMessage(message);
           getArguments().putString("message", message); // in case the screen is rotated and the
           // dialog gets recreated, don't reset to the default message
         }

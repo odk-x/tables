@@ -28,6 +28,7 @@ import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.*;
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
@@ -48,9 +49,7 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The InnerMapFragment has the capability of showing a map. It displays markers
@@ -97,44 +96,36 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
   /**
    * The object that is listening in on events.
    */
-  public TableMapInnerFragmentListener listener;
-  private GoogleMap map;
+  public TableMapInnerFragmentListener listener = null;
+  private GoogleMap map = null;
   private double savedLatitude = initCameraValue;
   private double savedLongitude = initCameraValue;
   private float savedZoom = initCameraValue;
   /**
    * A mapping of all markers to index to determine which marker is selected.
    */
-  private Map<Marker, Integer> mMarkerIds;
-  /**
-   * A set of all the visible markers.
-   */
-  private Set<Marker> mVisibleMarkers;
+  private Map<Marker, Integer> mMarkerIds = null;
   /**
    * The currently selected marker.
    */
-  private Marker mCurrentMarker;
-  /**
-   * Used for coloring markers.
-   */
-  private ColorRuleGroup mColorGroup;
-  private ColorGuideGroup mColorGuideGroup;
+  private Marker mCurrentMarker = null;
+  private ColorGuideGroup mColorGuideGroup = null;
   /**
    * the latitide elementKey to use for plotting
    */
-  private String mLatitudeElementKey;
+  private String mLatitudeElementKey = null;
   /**
    * the longitude elementKey to use for plotting
    */
-  private String mLongitudeElementKey;
+  private String mLongitudeElementKey = null;
   /**
    * This value is only set after the activity was saved and then reinstated. It
    * is used to figure out which marker was selected before the activity was
    * previously destroyed. It will be set to -1 if no index was selected.
    */
-  private int mCurrentIndex;
+  private int mCurrentIndex = 0;
 
-  int retrieveSavedIndexFromBundle(Bundle bundle) {
+  static int retrieveSavedIndexFromBundle(Bundle bundle) {
     if (bundle != null && bundle.containsKey(SAVE_KEY_INDEX)) {
       return bundle.getInt(SAVE_KEY_INDEX);
     } else {
@@ -146,7 +137,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     // AppName may not yet be available...
-    this.mCurrentIndex = this.retrieveSavedIndexFromBundle(savedInstanceState);
+    this.mCurrentIndex = TableMapInnerFragment.retrieveSavedIndexFromBundle(savedInstanceState);
   }
 
   @Override
@@ -192,11 +183,11 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       this.map = map;
 
       clearAndInitializeMap();
-      if (this.savedLatitude != this.initCameraValue && this.savedLongitude != this.initCameraValue
-          && this.savedZoom != this.initCameraValue) {
-        this.map.moveCamera(CameraUpdateFactory
-            .newLatLngZoom(new LatLng(savedLatitude, savedLongitude), savedZoom));
-      }
+      //if (savedLatitude != initCameraValue && savedLongitude != initCameraValue
+      //&& savedZoom != initCameraValue) {
+      this.map.moveCamera(
+          CameraUpdateFactory.newLatLngZoom(new LatLng(savedLatitude, savedLongitude), savedZoom));
+      //}
 
       this.map.setMyLocationEnabled(true);
       this.map.setOnMapLongClickListener(getOnMapLongClickListener());
@@ -231,7 +222,6 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     // references to the markers, otherwise leaks will happen.
     if (map != null) {
       mMarkerIds.clear();
-      mVisibleMarkers.clear();
       mCurrentMarker = null;
       map = null;
     }
@@ -240,7 +230,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
   /**
    * Sets up the color properties used for color rules.
    *
-   * @throws ServicesAvailabilityException
+   * @throws ServicesAvailabilityException if the database is down
    */
   public void resetColorProperties() throws ServicesAvailabilityException {
     findColorGroupAndDbConfiguration();
@@ -249,7 +239,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
   /**
    * Finds the color group that will be needed when making color rules.
    *
-   * @throws ServicesAvailabilityException
+   * @throws ServicesAvailabilityException if the database is down
    */
   private void findColorGroupAndDbConfiguration() throws ServicesAvailabilityException {
     // Grab the color group
@@ -271,7 +261,10 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
               activity.getTableId());
 
       // Create a guide depending on what type of color rule is selected.
-      mColorGroup = null;
+      /*
+    Used for coloring markers.
+   */
+      ColorRuleGroup mColorGroup = null;
       if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
         mColorGroup = ColorRuleGroup
             .getTableColorRuleGroup(dbInterface, activity.getAppName(), db, activity.getTableId(),
@@ -304,12 +297,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     if (mMarkerIds != null) {
       mMarkerIds.clear();
     }
-    if (mVisibleMarkers != null) {
-      mVisibleMarkers.clear();
-    }
 
-    mMarkerIds = new HashMap<Marker, Integer>();
-    mVisibleMarkers = new HashSet<Marker>();
+    mMarkerIds = new HashMap<>();
 
     if (mLatitudeElementKey == null || mLongitudeElementKey == null) {
       Toast.makeText(getActivity(), getActivity().getString(R.string.lat_long_not_set),
@@ -334,14 +323,13 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
         Row row = table.getRowAtIndex(i);
         String latitudeString = row.getDataByKey(latitudeColumn.getElementKey());
         String longitudeString = row.getDataByKey(longitudeColumn.getElementKey());
-        if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
-            || longitudeString.length() == 0) {
+        if (latitudeString == null || longitudeString == null || latitudeString.isEmpty()
+            || longitudeString.isEmpty()) {
           continue;
         }
 
         // Create a LatLng from the latitude and longitude strings.
-        LatLng location = parseLocationFromString(latitudeColumn, latitudeString, longitudeColumn,
-            longitudeString);
+        LatLng location = parseLocationFromString(latitudeString, longitudeString);
         if (location == null) {
           continue;
         }
@@ -362,6 +350,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       }
 
       if (firstLocation != null && map != null) {
+        // TODO why 12f exactly?
+        //noinspection MagicNumber
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
         map.setOnMarkerClickListener(getOnMarkerClickListener());
       }
@@ -398,19 +388,16 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    String latitudeElementKey = TableUtil.get()
+    return TableUtil.get()
         .getMapListViewLatitudeElementKey(Tables.getInstance().getDatabase(), activity.getAppName(),
             dbHandle, activity.getTableId(), orderedDefns);
-    return latitudeElementKey;
   }
 
   private String getLongitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    String longitudeElementKey = TableUtil.get()
-        .getMapListViewLongitudeElementKey(Tables.getInstance().getDatabase(),
-            activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
-    return longitudeElementKey;
+    return TableUtil.get().getMapListViewLongitudeElementKey(Tables.getInstance().getDatabase(),
+        activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
   }
 
   /**
@@ -423,9 +410,10 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     try {
       return new LatLng(Double.parseDouble(split[0]), Double.parseDouble(split[1]));
     } catch (Exception e) {
-      AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-      WebLogger.getLogger(activity.getAppName())
+      String appName = ((IAppAwareActivity) getActivity()).getAppName();
+      WebLogger.getLogger(appName)
           .e(TAG, "The following location is not in the proper lat,lng form: " + location);
+      WebLogger.getLogger(appName).printStackTrace(e);
     }
     return null;
   }
@@ -433,14 +421,14 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
   /**
    * Parses the latitude and longitude strings and creates a LatLng.
    */
-  private LatLng parseLocationFromString(ColumnDefinition latitudeColumn, String latitude,
-      ColumnDefinition longitudeColumn, String longitude) {
+  private LatLng parseLocationFromString(String latitude, String longitude) {
     try {
       return new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
     } catch (Exception e) {
-      AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-      WebLogger.getLogger(activity.getAppName())
+      String appName = ((IAppAwareActivity) getActivity()).getAppName();
+      WebLogger.getLogger(appName)
           .e(TAG, "The following location did not parse correctly: " + latitude + "," + longitude);
+      WebLogger.getLogger(appName).printStackTrace(e);
     }
     return null;
   }
@@ -469,13 +457,13 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
         // Create a mapping from the lat and long columns to the
         // values in the location.
-        Map<String, Object> elementKeyToValue = new HashMap<String, Object>();
+        Map<String, Object> elementKeyToValue = new HashMap<>();
 
         elementKeyToValue.put(mLatitudeElementKey, location.latitude);
         elementKeyToValue.put(mLongitudeElementKey, location.longitude);
 
         // To store the mapping in a bundle, JSON stringify it.
-        String jsonStringifyElementKeyToValueMap = null;
+        String jsonStringifyElementKeyToValueMap;
         try {
           jsonStringifyElementKeyToValueMap = ODKFileUtils.mapper
               .writeValueAsString(elementKeyToValue);
@@ -502,16 +490,16 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
   private OnMarkerClickListener getOnMarkerClickListener() {
     return new OnMarkerClickListener() {
       @Override
-      public boolean onMarkerClick(Marker arg0) {
-        int index = (mCurrentMarker != null) ? mMarkerIds.get(mCurrentMarker) : INVALID_INDEX;
+      public boolean onMarkerClick(Marker clickedMarker) {
+        int index = mCurrentMarker == null ? INVALID_INDEX : mMarkerIds.get(mCurrentMarker);
         // Make the marker visible if it is either invisible or a
         // new marker.
         // Make the marker invisible if clicking on the already
         // selected marker.
-        if (index != mMarkerIds.get(arg0)) {
+        if (index != mMarkerIds.get(clickedMarker)) {
           deselectCurrentMarker();
-          int newIndex = mMarkerIds.get(arg0);
-          selectMarker(arg0);
+          int newIndex = mMarkerIds.get(clickedMarker);
+          selectMarker(clickedMarker);
           listener.onSetSelectedItemIndex(newIndex);
         } else {
           deselectCurrentMarker();
@@ -528,7 +516,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
    * @param marker The marker to be selected.
    */
   private void selectMarker(Marker marker) {
-    if (mCurrentMarker == marker)
+    if (mCurrentMarker.equals(marker))
       return;
     marker.setIcon(BitmapDescriptorFactory.defaultMarker(DEFAULT_SELECTED_MARKER_HUE));
     mCurrentMarker = marker;

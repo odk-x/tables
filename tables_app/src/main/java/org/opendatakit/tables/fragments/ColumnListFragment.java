@@ -77,7 +77,7 @@ public class ColumnListFragment extends ListFragment {
       WebLogger.getLogger(tableLevelPreferenceActivity.getAppName()).printStackTrace(e);
       return;
     }
-    ArrayAdapter<String> adapter = new ArrayAdapter<String>(this.getActivity(),
+    ArrayAdapter<String> adapter = new ArrayAdapter<>(this.getActivity(),
         android.R.layout.simple_list_item_1, this.mDisplayNames);
     this.setListAdapter(adapter);
   }
@@ -90,10 +90,9 @@ public class ColumnListFragment extends ListFragment {
   }
 
   /**
-   * Retrieve all the element keys for the columns in the table.
+   * Sets all the element keys for the columns in the table.
    *
-   * @return
-   * @throws ServicesAvailabilityException
+   * @throws ServicesAvailabilityException if the database is down
    */
   private void setElementKeysAndDisplayNames() throws ServicesAvailabilityException {
 
@@ -103,7 +102,7 @@ public class ColumnListFragment extends ListFragment {
     PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
-    TableUtil.TableColumns tc = null;
+    TableUtil.TableColumns tc;
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(appName);
@@ -114,7 +113,7 @@ public class ColumnListFragment extends ListFragment {
       colOrder = TableUtil.get()
           .getColumnOrder(dbInterface, appName, db, activity.getTableId(), orderedDefns);
       this.mElementKeys = colOrder;
-      List<String> displayNames = new ArrayList<String>();
+      List<String> displayNames = new ArrayList<>();
       for (String elementKey : mElementKeys) {
         String localizedDisplayName = tc.localizedDisplayNames.get(elementKey);
         displayNames.add(localizedDisplayName);
@@ -130,11 +129,10 @@ public class ColumnListFragment extends ListFragment {
   /**
    * Retrieve the {@link AbsTableActivity} hosting this fragment.
    *
-   * @return
+   * @return the parent activity casted to an AbsTableActivity
    */
   AbsTableActivity retrieveTableActivity() {
-    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
-    return activity;
+    return (AbsTableActivity) getActivity();
   }
 
 }

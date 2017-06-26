@@ -19,6 +19,7 @@ import android.app.Fragment;
 import android.content.Context;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.UserTable;
+import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 
 /**
@@ -40,37 +41,28 @@ public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
   /**
    * Get the tableId of the active table.
    *
-   * @return
+   * @return the table id
    */
   public String getTableId() {
-    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-    return activity.getTableId();
+    return ((AbsTableActivity) getActivity()).getTableId();
   }
 
   /**
    * Get the description of the table.
    *
-   * @return
+   * @return the columns of the active table
    */
   public OrderedColumns getColumnDefinitions() {
-    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-    return activity.getColumnDefinitions();
+    return ((AbsTableActivity) getActivity()).getColumnDefinitions();
   }
 
   /**
    * Get the {@link UserTable} being held by the {@link TableDisplayActivity}.
    *
-   * @return
+   * @return the user table (data in the table) from the enclosing activity
    */
   public UserTable getUserTable() {
-    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-    UserTable result = activity.getUserTable();
-    return result;
+    return ((TableDisplayActivity) getActivity()).getUserTable();
   }
-
-  /**
-   * Return the type of this fragment.
-   */
-  public abstract TableDisplayActivity.ViewFragmentType getFragmentType();
 
 }

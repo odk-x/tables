@@ -25,6 +25,7 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.view.ContextMenu;
 import android.widget.Toast;
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.TableViewType;
 import org.opendatakit.data.utilities.TableUtil;
@@ -123,7 +124,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
           // sleep 100ms then hope the database is up and recurse. if it isn't, we'll sleep again
           try {
             Thread.sleep(100);
-          } catch (InterruptedException e) {
+          } catch (InterruptedException ignored) {
           }
           getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -209,7 +210,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    * @param intent the intent to pull the path out of
    * @return the path
    */
-  private String getFullPathFromIntent(Intent intent) {
+  private static String getFullPathFromIntent(Intent intent) {
     Uri uri = intent.getData();
     return uri.getPath();
   }
@@ -224,7 +225,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
       TableUtil.get()
           .atomicSetListViewFilename(Tables.getInstance().getDatabase(), getAppName(), getTableId(),
               relativePath);
-    } catch (ServicesAvailabilityException e) {
+    } catch (ServicesAvailabilityException ignored) {
       Toast.makeText(getActivity(), "Unable to save List View filename", Toast.LENGTH_LONG).show();
     }
   }
@@ -238,7 +239,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     try {
       TableUtil.get().atomicSetDetailViewFilename(Tables.getInstance().getDatabase(), getAppName(),
           getTableId(), relativePath);
-    } catch (ServicesAvailabilityException e) {
+    } catch (ServicesAvailabilityException ignored) {
       Toast.makeText(getActivity(), "Unable to set Detail View filename", Toast.LENGTH_LONG).show();
     }
   }
@@ -252,7 +253,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     try {
       TableUtil.get().atomicSetMapListViewFilename(Tables.getInstance().getDatabase(), getAppName(),
           getTableId(), relativePath);
-    } catch (ServicesAvailabilityException e) {
+    } catch (ServicesAvailabilityException ignored) {
       Toast.makeText(getActivity(), "Unable to set Map List View Filename", Toast.LENGTH_LONG)
           .show();
     }
@@ -411,7 +412,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     FileSelectorPreference listPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.LIST_FILE);
     listPref.setFields(this, Constants.RequestCodes.CHOOSE_LIST_FILE,
-        ((AbsBaseActivity) getActivity()).getAppName());
+        ((IAppAwareActivity) getActivity()).getAppName());
     listPref.setSummary(TableUtil.get()
         .getListViewFilename(Tables.getInstance().getDatabase(), getAppName(), db, getTableId()));
   }
@@ -426,7 +427,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     FileSelectorPreference mapListPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.MAP_LIST_FILE);
     mapListPref.setFields(this, Constants.RequestCodes.CHOOSE_MAP_FILE,
-        ((AbsBaseActivity) getActivity()).getAppName());
+        ((IAppAwareActivity) getActivity()).getAppName());
     String mapListViewFileName = TableUtil.get()
         .getMapListViewFilename(Tables.getInstance().getDatabase(), getAppName(), db, getTableId());
     WebLogger.getLogger(getAppName())
@@ -444,7 +445,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     FileSelectorPreference detailPref = (FileSelectorPreference) this
         .findPreference(Constants.PreferenceKeys.Table.DETAIL_FILE);
     detailPref.setFields(this, Constants.RequestCodes.CHOOSE_DETAIL_FILE,
-        ((AbsBaseActivity) getActivity()).getAppName());
+        ((IAppAwareActivity) getActivity()).getAppName());
     detailPref.setSummary(TableUtil.get()
         .getDetailViewFilename(Tables.getInstance().getDatabase(), getAppName(), db, getTableId()));
   }
@@ -537,7 +538,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
         } catch (ServicesAvailabilityException re) {
           WebLogger.getLogger(getAppName())
               .e(TAG, "[onPreferenceChange] for map color rule preference. RemoteException : ");
-          re.printStackTrace();
+          WebLogger.getLogger(getAppName()).printStackTrace(re);
           return false;
         } finally {
           if (db != null) {
@@ -547,7 +548,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
               WebLogger.getLogger(getAppName()).e(TAG,
                   "[onPreferenceChange] for map color rule preference. "
                       + "RemoteException while closing db: ");
-              re.printStackTrace();
+              WebLogger.getLogger(getAppName()).printStackTrace(re);
             }
           }
         }
@@ -580,7 +581,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    */
   private String getRelativePathOfFile(String fullPath) {
     return ODKFileUtils
-        .asRelativePath(((AbsBaseActivity) getActivity()).getAppName(), new File(fullPath));
+        .asRelativePath(((IAppAwareActivity) getActivity()).getAppName(), new File(fullPath));
   }
 
   //private boolean dbUp;

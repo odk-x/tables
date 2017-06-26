@@ -26,6 +26,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
@@ -54,7 +55,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
 
   private static final int ID = R.layout.fragment_table_list;
 
-  private TableNameStructAdapter mTpAdapter;
+  private TableNameStructAdapter mTpAdapter = null;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -64,9 +65,8 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
-    WebLogger.getLogger(((AbsBaseActivity) getActivity()).getAppName()).d(TAG, "[onCreateView]");
-    View view = inflater.inflate(ID, container, false);
-    return view;
+    WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName()).d(TAG, "[onCreateView]");
+    return inflater.inflate(ID, container, false);
   }
 
   @Override
@@ -99,7 +99,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
 
-    List<TableNameStruct> tableNameStructs = new ArrayList<TableNameStruct>();
+    List<TableNameStruct> tableNameStructs = new ArrayList<>();
 
     if (Tables.getInstance().getDatabase() != null) {
 
@@ -120,15 +120,15 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
         WebLogger.getLogger(baseActivity.getAppName())
             .e(TAG, "got tableId list of size: " + tableNameStructs.size());
       } catch (ServicesAvailabilityException e) {
-        WebLogger.getLogger(baseActivity.getAppName())
-            .e(TAG, "error while fetching tableId list: " + e.toString());
+        WebLogger.getLogger(baseActivity.getAppName()).e(TAG, "error while fetching tableId list");
+        WebLogger.getLogger(baseActivity.getAppName()).printStackTrace(e);
       } finally {
         if (db != null) {
           try {
             dbInterface.closeDatabase(appName, db);
           } catch (ServicesAvailabilityException e) {
-            WebLogger.getLogger(baseActivity.getAppName())
-                .e(TAG, "error while closing database: " + e.toString());
+            WebLogger.getLogger(baseActivity.getAppName()).e(TAG, "error while closing database");
+            WebLogger.getLogger(baseActivity.getAppName()).printStackTrace(e);
           }
         }
       }
@@ -184,6 +184,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
   public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
     MenuInflater menuInflater = this.getActivity().getMenuInflater();
     menuInflater.inflate(R.menu.table_manager_context, menu);
+    menu.setHeaderTitle(R.string.table_actions);
   }
 
   @Override
@@ -191,6 +192,9 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo) item
         .getMenuInfo();
     TableNameStruct selectedStruct = this.mTpAdapter.getItem(menuInfo.position);
+    if (selectedStruct == null) {
+      return super.onContextItemSelected(item);
+    }
     final String tableIdOfSelectedItem = selectedStruct.getTableId();
     final AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
     final String appName = baseActivity.getAppName();
@@ -222,7 +226,8 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
             // Now update the list.
             updateTableIdList();
           } catch (ServicesAvailabilityException e) {
-            WebLogger.getLogger(((AbsBaseActivity) getActivity()).getAppName()).printStackTrace(e);
+            WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName())
+                .printStackTrace(e);
             Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
           }
         }
@@ -242,8 +247,10 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       ActivityUtil.launchTableLevelPreferencesActivity(baseActivity, baseActivity.getAppName(),
           tableIdOfSelectedItem, TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
       return true;
+    default:
+      break;
     }
-    return false;
+    return super.onContextItemSelected(item);
   }
 
   @Override

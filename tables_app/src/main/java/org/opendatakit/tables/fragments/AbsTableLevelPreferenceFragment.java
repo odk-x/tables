@@ -19,6 +19,7 @@ import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.PreferenceFragment;
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.tables.activities.AbsTableActivity;
 
@@ -46,18 +47,15 @@ public abstract class AbsTableLevelPreferenceFragment extends PreferenceFragment
   }
 
   String getAppName() {
-    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
-    return activity.getAppName();
+    return ((IAppAwareActivity) getActivity()).getAppName();
   }
 
   String getTableId() {
-    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
-    return activity.getTableId();
+    return ((AbsTableActivity) getActivity()).getTableId();
   }
 
   OrderedColumns getColumnDefinitions() {
-    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
-    return activity.getColumnDefinitions();
+    return ((AbsTableActivity) getActivity()).getColumnDefinitions();
   }
 
   /**
@@ -66,12 +64,11 @@ public abstract class AbsTableLevelPreferenceFragment extends PreferenceFragment
    * calling {@link PreferenceFragment#findPreference(CharSequence)} and
    * casting it to {@link EditTextPreference}.
    *
-   * @param key
-   * @return
+   * @param key the key to search the fragment for
+   * @return the edit text preference with that key or null if it wasn't found
    */
   EditTextPreference findEditTextPreference(String key) {
-    EditTextPreference preference = (EditTextPreference) this.findPreference(key);
-    return preference;
+    return (EditTextPreference) this.findPreference(key);
   }
 
   /**
@@ -79,12 +76,11 @@ public abstract class AbsTableLevelPreferenceFragment extends PreferenceFragment
    * calling {@link PreferenceFragment#findPreference(CharSequence)} and
    * casting it to {@link ListPreference}.
    *
-   * @param key
-   * @return
+   * @param key the key to search the fragment for
+   * @return the list preference with that key or null if it wasn't found
    */
   ListPreference findListPreference(String key) {
-    ListPreference preference = (ListPreference) findPreference(key);
-    return preference;
+    return (ListPreference) findPreference(key);
   }
 
 }

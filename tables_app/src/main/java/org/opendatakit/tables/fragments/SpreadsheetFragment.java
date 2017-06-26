@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.MenuItem;
@@ -107,7 +108,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    *
    * @return the type of this fragment (spreadsheet view fragment)
    */
-  @Override
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.SPREADSHEET;
   }
@@ -190,7 +190,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       WebLogger.getLogger(getAppName())
-          .e(TAG, "Error while constructing spreadsheet view: " + e.toString());
+          .e(TAG, "Error while constructing spreadsheet view: " + e);
       TextView textView = new TextView(getActivity());
       textView.setText(getString(R.string.error_accessing_database));
       theView.removeAllViews();
@@ -261,7 +261,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    */
   private String getSortOrder() {
     String sortOrder = getProps().getSortOrder();
-    if (sortOrder == null || sortOrder.length() == 0) {
+    if (sortOrder == null || sortOrder.isEmpty()) {
       return "ASC";
     }
     return sortOrder;
@@ -273,7 +273,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    * @param cell the cell that the user had to double tap on to get the menu open to call this
    *             method
    */
-  private void openCollectionView(SpreadsheetCell cell) throws ServicesAvailabilityException {
+  private void openCollectionView(SpreadsheetCell cell) {
     Bundle intentExtras = this.getActivity().getIntent().getExtras();
 
     // Start with the query from the intent.
@@ -283,7 +283,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // We don't need to set sqlQueryStruct.groupBy to an empty array because
     // TableDisplayActivity::getUserTable does that on the other end.
     StringBuilder s = new StringBuilder();
-    if (sqlQueryStruct.whereClause != null && sqlQueryStruct.whereClause.length() != 0) {
+    if (sqlQueryStruct.whereClause != null && !sqlQueryStruct.whereClause.isEmpty()) {
       s.append("(").append(sqlQueryStruct.whereClause).append(") AND ");
     }
     ArrayList<Object> newSelectionArgs = new ArrayList<>();
@@ -370,7 +370,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     if (act instanceof ISpreadsheetFragmentContainer) {
       return ((ISpreadsheetFragmentContainer) act).getProps();
     }
-    Thread.dumpStack();
     throw new IllegalStateException("Must be inside something with props");
   }
 
@@ -404,11 +403,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // collection
     case MENU_ITEM_ID_OPEN_COLLECTION:
       cell = spreadsheetTable.getSpreadsheetCell(getProps().lastDataCellMenued);
-      try {
-        openCollectionView(cell);
-      } catch (ServicesAvailabilityException e) {
-        WebLogger.getLogger(mAppName).printStackTrace(e);
-      }
+      openCollectionView(cell);
       return true;
     // This is in the Row Actions menu that pops up when you double click or long tap on a cell
     // if you have the permissions to open the menu
@@ -445,7 +440,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         AlertDialog.Builder badJoinDialog;
         // TODO should check for valid table properties and column properties here. or rather valid
         // ids and keys.
-        if (joinColumns == null || joinColumns.size() == 0) {
+        if (joinColumns == null || joinColumns.isEmpty()) {
           badJoinDialog = new AlertDialog.Builder(this.getActivity());
           badJoinDialog.setTitle("Bad Join");
           badJoinDialog.setMessage("A join column has not been set in Column Properties.");
@@ -588,7 +583,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    *
    * @return Whether group bys are displayed
    */
-  private boolean hasGroupBys() throws ServicesAvailabilityException {
+  private boolean hasGroupBys() {
     return getProps().getGroupBy() != null && getProps().getGroupBy().length != 0;
   }
 
@@ -652,7 +647,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       }
     }
 
-    if (joinColumns != null && joinColumns.size() != 0) {
+    if (joinColumns != null && !joinColumns.isEmpty()) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_JOIN_TABLE, ContextMenu.NONE,
           getString(R.string.open_join_table));
     }
@@ -705,7 +700,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     } else if (isSort) {
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_SORT, ContextMenu.NONE,
           getString(R.string.unset_as_sort));
-      if (getSortOrder().equals("ASC")) {
+      if ("ASC".equals(getSortOrder())) {
         menu.add(ContextMenu.NONE, MENU_ITEM_ID_SORT_DESC, ContextMenu.NONE,
             getString(R.string.sort_desc));
       } else {
@@ -800,7 +795,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // Unfortunately our minimum target is sdk 16, so if their OS version doesn't support onDismiss
     // listeners, try not to let them dismiss it and instead make them click the cancel button to
     // dismiss it
-    if (android.os.Build.VERSION.SDK_INT >= 17) {
+    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
       alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
         @Override
         public void onDismiss(DialogInterface dialog) {

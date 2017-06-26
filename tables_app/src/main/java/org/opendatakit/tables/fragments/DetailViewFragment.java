@@ -25,9 +25,12 @@ import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
  */
 public class DetailViewFragment extends AbsWebTableFragment {
 
+  /**
+   * Used for logging
+   */
+  @SuppressWarnings("unused")
   private static final String TAG = DetailViewFragment.class.getSimpleName();
 
-  @Override
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.DETAIL;
   }

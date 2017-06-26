@@ -95,6 +95,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     } catch (IllegalArgumentException e) {
       WebLogger.getLogger(activity.getAppName())
           .e(TAG, "[retrieveColumnDefinition] did not find column for element key: " + elementKey);
+      WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
       return null;
     }
   }
@@ -229,6 +230,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
           newWidth = Integer.parseInt(newValueStr);
         } catch (NumberFormatException e) {
           WebLogger.getLogger(appName).e(TAG, "column width not an integer, doing nothing");
+          WebLogger.getLogger(appName).printStackTrace(e);
           Toast.makeText(activity.getApplicationContext(), getString(R.string.invalid_integer),
               Toast.LENGTH_LONG).show();
           return false;

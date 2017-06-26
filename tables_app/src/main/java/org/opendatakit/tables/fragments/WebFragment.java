@@ -38,20 +38,19 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
 
   private static final String TAG = WebFragment.class.getSimpleName();
 
-  private static final int ID = R.layout.web_view_container;
-
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
-    WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView] activity is: " + this.getActivity());
+    WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView] activity is: " + getActivity()
+        .getClass().getSimpleName());
 
-    View v = inflater.inflate(R.layout.web_view_container, container, false);
-
-    return v;
+    return inflater.inflate(R.layout.web_view_container, container, false);
   }
 
   @Override
   public OdkTablesWebView getWebKit() {
+    if (getView() == null)
+      return null;
     return (OdkTablesWebView) getView().findViewById(R.id.webkit);
   }
 

@@ -50,9 +50,6 @@ public class LocationDialogFragment extends DialogFragment {
    */
   public static final String ELEMENT_KEY_TO_VALUE_MAP_KEY = "elementKeyToValueMapKey";
 
-  private String _location;
-  private String _jsonStringifyElementKeyToValue;
-
   @Override
   public Dialog onCreateDialog(Bundle savedInstanceState) {
     Bundle bundle = getArguments();
@@ -84,27 +81,19 @@ public class LocationDialogFragment extends DialogFragment {
     return null;
   }
 
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-
-    outState.putString(LOCATION_KEY, _location);
-    outState.putString(ELEMENT_KEY_TO_VALUE_MAP_KEY, _jsonStringifyElementKeyToValue);
-  }
-
   /**
    * There is no way to store a map in a bundle, so I had to store it as a list,
    * alternating the key and the value. This recreates the map from the bundle.
    */
-  private Map<String, Object> getElementKeyToValueMap(String jsonStringifyElementKeyToValue) {
-    HashMap<String, Object> elementKeyToValue = new HashMap<String, Object>();
+  private static Map<String, Object> getElementKeyToValueMap(String jsonStringifyElementKeyToValue) {
+    HashMap<String, Object> elementKeyToValue = new HashMap<>();
     if (jsonStringifyElementKeyToValue != null) {
       TypeReference<HashMap<String, Object>> ref = new TypeReference<HashMap<String, Object>>() {
       };
       try {
         elementKeyToValue = ODKFileUtils.mapper.readValue(jsonStringifyElementKeyToValue, ref);
       } catch (IOException e) {
-        e.printStackTrace();
+        WebLogger.getLogger(null).printStackTrace(e);
       }
     }
     return elementKeyToValue;

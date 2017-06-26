@@ -18,12 +18,12 @@ package org.opendatakit.tables.fragments;
 /**
  * @author sudar.sam@gmail.com
  */
-public interface IMapListViewCallbacks {
+interface IMapListViewCallbacks {
 
   /**
    * Sets the index of the row that is selected.
    *
-   * @param index
+   * @param index the index of the selected item
    */
   void setIndexOfSelectedItem(int index);
 
