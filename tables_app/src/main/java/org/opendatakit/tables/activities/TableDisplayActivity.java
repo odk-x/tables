@@ -175,6 +175,10 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    // If we don't remove all fragments, we get the bug where if you go to a list view, then
+    // switch to a spreadsheet view, then rotate the screen and switch back to list, the list
+    // view never loads
+    removeAllFragments();
     props = null;
     pullFromDatabase = false;
     if (savedInstanceState != null) {
@@ -368,7 +372,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         WebLogger.getLogger(getAppName()).printStackTrace(e);
       }
     }
-    destroyAndRecreateCurrentFragment();
+    showCurrentDisplayFragment(true);
   }
 
   /**
@@ -766,7 +770,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     mUserTable = null;
     // drop default filenames...
     mPossibleTableViewTypes = null;
-    destroyAndRecreateCurrentFragment();
+    showCurrentDisplayFragment(true);
   }
 
   /**
@@ -786,11 +790,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     mCurrentFragmentType = requestedType;
     mCurrentFileName = fileName;
     mCurrentSubFileName = subFileName;
-    destroyAndRecreateCurrentFragment();
+    showCurrentDisplayFragment(false);
   }
 
   /**
-   * Used in destroyAndRecreateCurrentFragment, tries to pull the possible table view types from the
+   * Used in showCurrentDisplayFragment, tries to pull the possible table view types from the
    * database and set up the default filename and sub-filename if possible
    */
   private void possiblySupplyDefaults() {
@@ -858,7 +862,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * {@link #retrieveTableIdFromIntent()}. Initializes Spreadsheet if none is
    * present in Intent.
    */
-  private void destroyAndRecreateCurrentFragment() {
+  private void showCurrentDisplayFragment(boolean createNew) {
     possiblySupplyDefaults();
     updateChildViewVisibility(mCurrentFragmentType);
     FragmentManager fragmentManager = this.getFragmentManager();
@@ -909,81 +913,110 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     // and enable, or delete and re-create, the fragment that we want to display
     switch (mCurrentFragmentType) {
     case SPREADSHEET:
-      if (spreadsheetFragment != null) {
-        WebLogger.getLogger(getAppName())
-            .d(TAG, "[showSpreadsheetFragment] removing existing fragment");
-        // Get rid of the existing fragment
-        fragmentTransaction.remove(spreadsheetFragment);
+      if (spreadsheetFragment == null || createNew) {
+        if (spreadsheetFragment != null) {
+          WebLogger.getLogger(getAppName())
+              .d(TAG, "[showSpreadsheetFragment] removing existing fragment");
+          // Get rid of the existing fragment
+          fragmentTransaction.remove(spreadsheetFragment);
+        }
+        spreadsheetFragment = new SpreadsheetFragment();
+        fragmentTransaction
+            .add(R.id.activity_table_display_activity_one_pane_content, spreadsheetFragment,
+                mCurrentFragmentType.name());
+      } else {
+        fragmentTransaction.show(spreadsheetFragment);
       }
-      spreadsheetFragment = new SpreadsheetFragment();
-      fragmentTransaction
-          .add(R.id.activity_table_display_activity_one_pane_content, spreadsheetFragment,
-              mCurrentFragmentType.name());
       break;
     case DETAIL:
-      if (detailViewFragment != null) {
-        WebLogger.getLogger(getAppName())
-            .d(TAG, "[showDetailViewFragment] removing existing fragment");
-        // Get rid of the existing fragment
-        fragmentTransaction.remove(detailViewFragment);
+      if (detailViewFragment == null || createNew) {
+        if (detailViewFragment != null) {
+          WebLogger.getLogger(getAppName())
+              .d(TAG, "[showDetailViewFragment] removing existing fragment");
+          // Get rid of the existing fragment
+          fragmentTransaction.remove(detailViewFragment);
+        }
+        detailViewFragment = new DetailViewFragment();
+        fragmentTransaction
+            .add(R.id.activity_table_display_activity_one_pane_content, detailViewFragment,
+                mCurrentFragmentType.name());
+      } else {
+        fragmentTransaction.show(detailViewFragment);
       }
-      detailViewFragment = new DetailViewFragment();
-      fragmentTransaction
-          .add(R.id.activity_table_display_activity_one_pane_content, detailViewFragment,
-              mCurrentFragmentType.name());
       break;
     case SUB_LIST:
     case DETAIL_WITH_LIST:
-      if (detailWithListViewDetailFragment != null) {
-        // remove the old fragment
-        WebLogger.getLogger(getAppName())
-            .d(TAG, "[showDetailWithListFragment] removing old detail fragment");
-        fragmentTransaction.remove(detailWithListViewDetailFragment);
+      if (detailWithListViewDetailFragment == null || createNew) {
+        if (detailWithListViewDetailFragment != null) {
+          // remove the old fragment
+          WebLogger.getLogger(getAppName())
+              .d(TAG, "[showDetailWithListFragment] removing old detail fragment");
+          fragmentTransaction.remove(detailWithListViewDetailFragment);
+        }
+        detailWithListViewDetailFragment = new DetailWithListDetailViewFragment();
+        fragmentTransaction.add(R.id.top_pane, detailWithListViewDetailFragment,
+            Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL);
+      } else {
+        fragmentTransaction.show(detailWithListViewDetailFragment);
       }
-      detailWithListViewDetailFragment = new DetailWithListDetailViewFragment();
-      fragmentTransaction.add(R.id.top_pane, detailWithListViewDetailFragment,
-          Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL);
-      if (detailWithListViewListFragment != null) {
-        // remove the old fragment
-        WebLogger.getLogger(getAppName())
-            .d(TAG, "[showDetailWithListFragment] removing old list fragment");
-        fragmentTransaction.remove(detailWithListViewListFragment);
+      if (detailWithListViewListFragment == null || createNew) {
+        if (detailWithListViewListFragment != null) {
+          // remove the old fragment
+          WebLogger.getLogger(getAppName())
+              .d(TAG, "[showDetailWithListFragment] removing old list fragment");
+          fragmentTransaction.remove(detailWithListViewListFragment);
+        }
+        detailWithListViewListFragment = new DetailWithListListViewFragment();
+        fragmentTransaction.add(R.id.bottom_pane, detailWithListViewListFragment,
+            Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
+      } else {
+        fragmentTransaction.show(detailWithListViewListFragment);
       }
-      detailWithListViewListFragment = new DetailWithListListViewFragment();
-      fragmentTransaction.add(R.id.bottom_pane, detailWithListViewListFragment,
-          Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
       break;
     case LIST:
-      if (listViewFragment != null) {
-        // remove the old fragment
-        WebLogger.getLogger(getAppName()).d(TAG, "[showListFragment] removing old list fragment");
-        fragmentTransaction.remove(listViewFragment);
+      if (listViewFragment == null || createNew) {
+        if (listViewFragment != null) {
+          // remove the old fragment
+          WebLogger.getLogger(getAppName()).d(TAG, "[showListFragment] removing old list fragment");
+          fragmentTransaction.remove(listViewFragment);
+        }
+        listViewFragment = new ListViewFragment();
+        fragmentTransaction
+            .add(R.id.activity_table_display_activity_one_pane_content, listViewFragment,
+                mCurrentFragmentType.name());
+      } else {
+        fragmentTransaction.show(listViewFragment);
       }
-      listViewFragment = new ListViewFragment();
-      fragmentTransaction
-          .add(R.id.activity_table_display_activity_one_pane_content, listViewFragment,
-              mCurrentFragmentType.name());
       break;
     case MAP:
-      if (mapListViewFragment != null) {
-        // remove the old fragment
-        WebLogger.getLogger(getAppName())
-            .d(TAG, "[showMapFragment] removing old map list fragment");
-        fragmentTransaction.remove(mapListViewFragment);
+      if (mapListViewFragment == null || createNew) {
+        if (mapListViewFragment != null) {
+          // remove the old fragment
+          WebLogger.getLogger(getAppName())
+              .d(TAG, "[showMapFragment] removing old map list fragment");
+          fragmentTransaction.remove(mapListViewFragment);
+        }
+        mapListViewFragment = new MapListViewFragment();
+        fragmentTransaction
+            .add(R.id.map_view_list, mapListViewFragment, Constants.FragmentTags.MAP_LIST);
+      } else {
+        fragmentTransaction.show(mapListViewFragment);
       }
-      mapListViewFragment = new MapListViewFragment();
-      fragmentTransaction
-          .add(R.id.map_view_list, mapListViewFragment, Constants.FragmentTags.MAP_LIST);
-      if (innerMapFragment != null) {
-        // remove the old fragment
-        WebLogger.getLogger(getAppName())
-            .d(TAG, "[showMapFragment] removing old inner map fragment");
-        fragmentTransaction.remove(innerMapFragment);
+      if (innerMapFragment == null || createNew) {
+        if (innerMapFragment != null) {
+          // remove the old fragment
+          WebLogger.getLogger(getAppName())
+              .d(TAG, "[showMapFragment] removing old inner map fragment");
+          fragmentTransaction.remove(innerMapFragment);
+        }
+        innerMapFragment = new TableMapInnerFragment();
+        fragmentTransaction
+            .add(R.id.map_view_inner_map, innerMapFragment, Constants.FragmentTags.MAP_INNER_MAP);
+        ((TableMapInnerFragment) innerMapFragment).listener = this;
+      } else {
+        ((TableMapInnerFragment) innerMapFragment).listener = this;
+        fragmentTransaction.show(innerMapFragment);
       }
-      innerMapFragment = new TableMapInnerFragment();
-      fragmentTransaction
-          .add(R.id.map_view_inner_map, innerMapFragment, Constants.FragmentTags.MAP_INNER_MAP);
-      ((TableMapInnerFragment) innerMapFragment).listener = this;
       break;
     }
     fragmentTransaction.commit();
@@ -1143,6 +1176,40 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   @SuppressWarnings("JavaDoc")
   public enum ViewFragmentType {
     SPREADSHEET, LIST, MAP, DETAIL, DETAIL_WITH_LIST, SUB_LIST
+  }
+
+  private void removeAllFragments() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentTransaction fragmentTransaction = null;
+    // First acquire all the possible fragments.
+    AbsBaseFragment spreadsheetFragment = (AbsBaseFragment) fragmentManager
+        .findFragmentByTag(ViewFragmentType.SPREADSHEET.name());
+    AbsBaseFragment listViewFragment = (AbsBaseFragment) fragmentManager
+        .findFragmentByTag(ViewFragmentType.LIST.name());
+    AbsBaseFragment mapListViewFragment = (AbsBaseFragment) fragmentManager
+        .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+    Fragment innerMapFragment = fragmentManager
+        .findFragmentByTag(Constants.FragmentTags.MAP_INNER_MAP);
+    AbsBaseFragment detailViewFragment = (AbsBaseFragment) fragmentManager
+        .findFragmentByTag(ViewFragmentType.DETAIL.name());
+    AbsWebTableFragment detailWithListViewDetailFragment = (AbsWebTableFragment) fragmentManager
+        .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL);
+    AbsWebTableFragment detailWithListViewListFragment = (AbsWebTableFragment) fragmentManager
+        .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
+
+    for (Fragment f : new Fragment[] {spreadsheetFragment, listViewFragment, mapListViewFragment,
+        innerMapFragment, detailViewFragment, detailWithListViewDetailFragment,
+        detailWithListViewListFragment}) {
+      if (f != null) {
+        if (fragmentTransaction == null) {
+          fragmentTransaction = fragmentManager.beginTransaction();
+        }
+        fragmentTransaction.remove(f);
+      }
+    }
+    if (fragmentTransaction != null) {
+      fragmentTransaction.commit();
+    }
   }
 
 }
