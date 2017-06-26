@@ -23,10 +23,13 @@ import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
  * @author sudar.sam@gmail.com
  * @author unknown
  */
-public class Constants {
+public final class Constants {
 
   public static final int DEFAULT_TEXT_COLOR = Color.BLACK;
   public static final int DEFAULT_BACKGROUND_COLOR = Color.WHITE;
+
+  private Constants() {
+  }
 
   /**
    * Unused

@@ -23,6 +23,7 @@ import android.graphics.Typeface;
 import android.util.DisplayMetrics;
 import android.view.ContextMenu;
 import android.view.View;
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
@@ -630,7 +631,17 @@ final class TabularView extends View {
       if (this.type == TableLayoutType.STATUS_DATA || this.type == TableLayoutType.INDEX_DATA
           || this.type == TableLayoutType.MAIN_DATA) {
         // these are the only cases (below) where this value is used...
-        theRow = this.mTable.getRowAtIndex(theRowIndex);
+        theRow = mTable.getRowAtIndex(theRowIndex);
+        if (theRow == null) {
+          // TODO don't know what else to do here, this happens with the really odd
+          // IndexOutOfBoundsException
+          String appName = null;
+          if (controller.getContext() instanceof IAppAwareActivity) {
+            appName = ((IAppAwareActivity) controller.getContext()).getAppName();
+          }
+          WebLogger.getLogger(appName).e(TAG, "Out of bounds exception bug AGAIN");
+          return;
+        }
         //rowGuide = mRowColorRuleGroup.getColorGuide(this.mTable.getColumnDefinitions(), theRow);
         rowGuide = mRowColorGuideGroup
             .getColorGuideForRowId(theRow.getDataByKey(DataTableColumns.ID));
@@ -817,5 +828,7 @@ final class TabularView extends View {
      * @return
      */
     int getMainScrollY();
+
+    Context getContext();
   }
 }

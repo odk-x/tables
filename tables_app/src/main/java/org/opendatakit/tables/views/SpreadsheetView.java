@@ -154,6 +154,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       indexData.setOnTouchListener(indexDataCellClickListener);
       indexHeader.setOnTouchListener(indexHeaderCellClickListener);
     }
+    // TODO looks like these are called before mainData and mainHeader are set?
     mainData.setOnTouchListener(mainDataCellClickListener);
     mainHeader.setOnTouchListener(mainHeaderCellClickListener);
   }
@@ -506,7 +507,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
           .getIndexHeaderTable(context, this, table, elementKeysToDisplay, colWidths, fontSize,
               this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
     } else {
-      int width = (indexElementKey == null || indexElementKey.length() == 0) ?
+      int width = indexElementKey == null || indexElementKey.isEmpty() ?
           table.getWidth() :
           table.getWidth() - 1;
       colWidths = new int[width];
