@@ -28,12 +28,11 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.widget.Toast;
 import org.opendatakit.activities.BasePreferenceActivity;
 import org.opendatakit.activities.IAppAwareActivity;
+import org.opendatakit.application.CommonApplication;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.TableViewType;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -60,7 +59,8 @@ import java.util.List;
 public class TablePropertiesManager extends BasePreferenceActivity
     implements DatabaseConnectionListener, IAppAwareActivity {
 
-  private static final String TAG = "TablePropertiesManager";
+  @SuppressWarnings("unused")
+  private static final String TAG = TablePropertiesManager.class.getSimpleName();
 
   // these ints are used when selecting/changing the view files
   private static final int RC_DETAIL_VIEW_FILE = 0;
@@ -69,7 +69,6 @@ public class TablePropertiesManager extends BasePreferenceActivity
 
   private String appName;
   private String tableId;
-  private OrderedColumns orderedDefns;
 
   // private TableProperties tp;
 
@@ -82,20 +81,20 @@ public class TablePropertiesManager extends BasePreferenceActivity
     }
     tableId = getIntent().getStringExtra(IntentConsts.INTENT_KEY_TABLE_ID);
     if (tableId == null) {
-      throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
+      throw new RuntimeException("Null tableId");
     }
   }
 
   @Override
   protected void onResume() {
     super.onResume();
-    ((Tables) getApplication()).establishDoNotFireDatabaseConnectionListener(this);
+    ((CommonApplication) getApplication()).establishDoNotFireDatabaseConnectionListener(this);
   }
 
   @Override
   protected void onPostResume() {
     super.onPostResume();
-    ((Tables) getApplication()).fireDatabaseConnectionListener();
+    ((CommonApplication) getApplication()).fireDatabaseConnectionListener();
   }
 
   @Override
@@ -117,6 +116,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+      // TODO this is deprecated
       PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
       setPreferenceScreen(root);
       return;
@@ -155,6 +155,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).printStackTrace(e);
       Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+      // TODO this is deprecated
       setPreferenceScreen(root);
       return;
     } finally {
@@ -192,8 +193,9 @@ public class TablePropertiesManager extends BasePreferenceActivity
     PreferenceCategory displayMapViewCat = new PreferenceCategory(this);
     root.addPreference(displayMapViewCat);
     displayMapViewCat.setTitle(getString(R.string.display_map_view_settings));
-    addMapViewPreferences(displayMapViewCat);
+    //addMapViewPreferences();
 
+    // TODO this is deprecated
     setPreferenceScreen(root);
   }
 
@@ -295,7 +297,6 @@ public class TablePropertiesManager extends BasePreferenceActivity
       TableUtil.MapViewColorRuleInfo info = TableUtil.get()
           .getMapListViewColorRuleInfo(dbInterface, getAppName(), db, tableId);
 
-      ColumnDefinition colorColumn = null;
       // If the color rule type is columns, find the column that it identifies.
       // If that column cannot be found, then reset to color type none.
       //      if (info.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_COLUMN)) {
@@ -411,9 +412,6 @@ public class TablePropertiesManager extends BasePreferenceActivity
 
   }
 
-  private void addMapViewPreferences(PreferenceCategory prefCat) {
-  }
-
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     if (resultCode == RESULT_CANCELED) {
@@ -432,6 +430,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
       try {
         TableUtil.get().atomicSetDetailViewFilename(dbInterface, appName, tableId, relativePath);
       } catch (ServicesAvailabilityException e) {
+        WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(getParent(), "Unable to set Detail View Filename", Toast.LENGTH_LONG).show();
       }
       init();
@@ -444,6 +443,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
       try {
         TableUtil.get().atomicSetListViewFilename(dbInterface, appName, tableId, relativePath);
       } catch (ServicesAvailabilityException e) {
+        WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(getParent(), "Unable to set List View Filename", Toast.LENGTH_LONG).show();
       }
       init();
@@ -456,6 +456,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
       try {
         TableUtil.get().atomicSetMapListViewFilename(dbInterface, appName, tableId, relativePath);
       } catch (ServicesAvailabilityException e) {
+        WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(getParent(), "Unable to set Map List View Filename", Toast.LENGTH_LONG)
             .show();
       }
@@ -469,12 +470,11 @@ public class TablePropertiesManager extends BasePreferenceActivity
    * Get the relative filepath under the app directory for the full path as
    * returned from OI file picker.
    *
-   * @param fullPath
-   * @return
+   * @param fullPath the full path to the file
+   * @return the relative path from the odk app directory
    */
   private String getRelativePathOfFile(String fullPath) {
-    String relativePath = ODKFileUtils.asRelativePath(appName, new File(fullPath));
-    return relativePath;
+    return ODKFileUtils.asRelativePath(appName, new File(fullPath));
   }
 
   @Override
@@ -572,6 +572,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
                     .atomicSetRawDisplayName(Tables.getInstance().getDatabase(), appName, tableId,
                         (String) newValue));
       } catch (ServicesAvailabilityException e) {
+        WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
         init();
         return false;
@@ -590,6 +591,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
             .atomicSetDefaultViewType(Tables.getInstance().getDatabase(), appName, tableId,
                 TableViewType.valueOf((String) newValue));
       } catch (ServicesAvailabilityException e) {
+        WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(getParent(), "Unable to change default view type", Toast.LENGTH_LONG).show();
       }
       init();
@@ -610,7 +612,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
      */
     private int mRequestCode;
 
-    public FileSelectorPreference(Context context, int requestCode) {
+    FileSelectorPreference(Context context, int requestCode) {
       super(context);
       mRequestCode = requestCode;
     }
@@ -653,7 +655,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
       Intent intent = new Intent("org.openintents.action.PICK_FILE");
       List<ResolveInfo> list = packageManager
           .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-      return (list.size() > 0);
+      return !list.isEmpty();
     }
   }
 

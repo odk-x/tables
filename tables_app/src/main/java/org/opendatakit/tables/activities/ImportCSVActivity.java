@@ -47,8 +47,6 @@ public class ImportCSVActivity extends AbsBaseActivity {
   private String appName;
   // the text field for getting the filename
   private EditText filenameValField;
-  // the button for selecting a file
-  private Button pickFileButton;
   // The button to import a table.
   private Button mImportButton;
 
@@ -95,7 +93,8 @@ public class ImportCSVActivity extends AbsBaseActivity {
     filenameValField.setId(R.id.FILENAMEVAL_ID);
     fn.addView(filenameValField);
     v.addView(fn);
-    pickFileButton = new Button(this);
+    // The button for selecting a file
+    Button pickFileButton = new Button(this);
     pickFileButton.setText(getString(R.string.import_choose_csv_file));
     pickFileButton.setOnClickListener(
         new PickFileButtonListener(this.appName, getString(R.string.import_choose_csv_file)));
@@ -139,23 +138,18 @@ public class ImportCSVActivity extends AbsBaseActivity {
     if (filenamePath.startsWith(assetsCsvRelativePath)) {
       String remainingPath = filenamePath.substring(assetsCsvRelativePath.length() + 1);
       String[] terms = remainingPath.split("\\.");
-      if (terms.length == 2 && terms[1].equals("csv")) {
-        String tableId = terms[0];
-        String fileQualifier = null;
-        request = new ImportRequest(tableId, fileQualifier);
-      } else if (terms.length == 3 && (terms[1].equals("properties") || terms[1]
-          .equals("definition")) && terms[2].equals("csv")) {
-        String tableId = terms[0];
-        String fileQualifier = null;
-        request = new ImportRequest(tableId, fileQualifier);
-      } else if (terms.length == 3 && terms[2].equals("csv")) {
-        String tableId = terms[0];
-        String fileQualifier = terms[1];
-        request = new ImportRequest(tableId, fileQualifier);
-      } else if (terms.length == 4 && (terms[2].equals("properties") || terms[2]
-          .equals("definition")) && terms[3].equals("csv")) {
-        String tableId = terms[0];
-        String fileQualifier = terms[1];
+      String tableId = null;
+      String fileQualifier = null;
+      if (terms.length == 2 && "csv".equals(terms[1]) || terms.length == 3 && (
+          "properties".equals(terms[1]) || "definition".equals(terms[1])) && "csv".equals(terms[2])) {
+        tableId = terms[0];
+        fileQualifier = null;
+      } else if (terms.length == 3 && "csv".equals(terms[2]) || terms.length == 4 && (
+          "properties".equals(terms[2]) || "definition".equals(terms[2])) && "csv".equals(terms[3])) {
+        tableId = terms[0];
+        fileQualifier = terms[1];
+      }
+      if (tableId != null && fileQualifier != null) {
         request = new ImportRequest(tableId, fileQualifier);
       }
     }
@@ -192,7 +186,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
     File csvFile = new File(filepath);
     // We have to first hand this off to account for the difference in
     // external storage directories on different versions of android.
-    String relativePath = null;
+    String relativePath;
     try {
       relativePath = ODKFileUtils.asRelativePath(appName, csvFile);
     } catch (IllegalArgumentException iae) {
@@ -215,12 +209,11 @@ public class ImportCSVActivity extends AbsBaseActivity {
             Toast.LENGTH_LONG).show();
         return;
       } else {
-        if (!terms[terms.length - 1].equals("csv")) {
+        if (!"csv".equals(terms[terms.length - 1])) {
           Toast.makeText(this, "Import filename must end in .csv", Toast.LENGTH_LONG).show();
           return;
         }
-        if (terms.length == 4 && !(terms[2].equals("properties") || terms[2]
-            .equals("definition"))) {
+        if (terms.length == 4 && !("properties".equals(terms[2]) || "definition".equals(terms[2]))) {
           Toast.makeText(this,
               "Import filename must be of the form tableId.qualifier.properties.csv or tableId.qualifier.definition.csv",
               Toast.LENGTH_LONG).show();
@@ -259,7 +252,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
     private String appName;
     private String title;
 
-    public PickFileButtonListener(String appName, String title) {
+    PickFileButtonListener(String appName, String title) {
       this.appName = appName;
       this.title = title;
     }

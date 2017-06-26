@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.activities;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -81,32 +80,37 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     implements TableMapInnerFragmentListener, IOdkTablesActivity, DatabaseConnectionListener,
     ISpreadsheetFragmentContainer {
 
-  // Some keys for things that get saved to the instance state
+  /**
+   * Key for saving current view type to the saved instance state
+   */
   public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
+  /**
+   * Key for saving current filename to the saved instance state
+   */
   public static final String INTENT_KEY_CURRENT_FILE_NAME = "currentFileName";
+  /**
+   * Key for saving current subfile name to the saved instance state
+   */
   public static final String INTENT_KEY_CURRENT_SUB_FILE_NAME = "currentSubFileName";
+  /**
+   * Key for saving the sql query to the saved instance state
+   */
   public static final String INTENT_KEY_QUERIES = "queries";
-  // Used for logging
+  /**
+   * Used for logging
+   */
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
+  /**
+   * Keep references to all queries used to populate all fragments. Use the array index as the
+   * viewID.
+   */
+  ViewDataQueryParams[] mQueries;
   /**
    * The activity destroys and creates a new SpreadsheetFragment every time it gets created, an
    * activity returns or the database becomes available, so we can't store props in the
    * fragment's savedInstanceState, so we store it in the activity
    */
   private SpreadsheetProps props;
-
-  /**
-   * Getter for the props, specified in ISpreadsheetFragmentContainer
-   * @return a mutable properties object
-   */
-  public SpreadsheetProps getProps() {
-    return props;
-  }
-  /**
-   * Keep references to all queries used to populate all fragments. Use the array index as the
-   * viewID.
-   */
-  ViewDataQueryParams[] mQueries;
   /**
    * The type of fragment that is currently being displayed.
    */
@@ -149,6 +153,15 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       array[i] = (T) parcelableArray[i];
     }
     return array;
+  }
+
+  /**
+   * Getter for the props, specified in ISpreadsheetFragmentContainer
+   *
+   * @return a mutable properties object
+   */
+  public SpreadsheetProps getProps() {
+    return props;
   }
 
   /**
@@ -351,7 +364,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         props.setGroupBy(temp.toArray(new String[temp.size()]));
         pullFromDatabase = false;
       } catch (ServicesAvailabilityException e) {
-        // TODO
+        Toast.makeText(this, R.string.database_unavailable, Toast.LENGTH_LONG).show();
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
       }
     }
     showCurrentDisplayFragment(true);
@@ -368,20 +382,18 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       return null;
     }
     switch (fragmentType) {
-    case SPREADSHEET:
-      return null;
     case LIST:
       return mPossibleTableViewTypes.getDefaultListViewFileName();
     case MAP:
       return mPossibleTableViewTypes.getDefaultMapListViewFileName();
     case DETAIL:
       return mPossibleTableViewTypes.getDefaultDetailFileName();
+    case SPREADSHEET:
     case DETAIL_WITH_LIST:
     case SUB_LIST:
       return null; // TODO: For now there is no default detail with list. Do we need one?
-    default:
-      return null;
     }
+    return null;
   }
 
   /**
@@ -413,11 +425,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         mUserTable = Tables.getInstance().getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
                 sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
-                (sqlQueryStruct.groupBy == null) ? emptyArray : sqlQueryStruct.groupBy,
-                sqlQueryStruct.having, (sqlQueryStruct.orderByElementKey == null) ?
+                sqlQueryStruct.groupBy == null ? emptyArray : sqlQueryStruct.groupBy,
+                sqlQueryStruct.having, sqlQueryStruct.orderByElementKey == null ?
                     emptyArray :
                     new String[] { sqlQueryStruct.orderByElementKey },
-                (sqlQueryStruct.orderByDirection == null) ?
+                sqlQueryStruct.orderByDirection == null ?
                     emptyArray :
                     new String[] { sqlQueryStruct.orderByDirection }, null, null);
       } catch (ServicesAvailabilityException e) {
@@ -427,7 +439,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           try {
             Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
           } catch (ServicesAvailabilityException e) {
-            // ignore
+            Toast.makeText(this, R.string.database_unavailable, Toast.LENGTH_LONG).show();
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
           }
         }
       }
@@ -448,7 +461,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     // TODO: do we need to track the ifChanged status?
 
     String filename;
-    if (fragmentID != null && fragmentID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
+    if (Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
       filename = mCurrentSubFileName;
     } else {
       filename = mCurrentFileName;
@@ -590,9 +603,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       MenuItem mapItem = menu.findItem(R.id.top_level_table_menu_view_map_view);
       spreadsheetItem.setEnabled(true); // always possible
       listItem.setEnabled(
-          (mPossibleTableViewTypes != null) && mPossibleTableViewTypes.listViewIsPossible());
+          mPossibleTableViewTypes != null && mPossibleTableViewTypes.listViewIsPossible());
       mapItem.setEnabled(
-          (mPossibleTableViewTypes != null) && mPossibleTableViewTypes.mapViewIsPossible());
+          mPossibleTableViewTypes != null && mPossibleTableViewTypes.mapViewIsPossible());
       // Set the checkbox highlight to the view type being displayed.
       switch (mCurrentFragmentType) {
       case SPREADSHEET:
@@ -603,6 +616,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         break;
       case MAP:
         mapItem.setChecked(true);
+        break;
+      default:
         break;
       }
       break;
@@ -631,7 +646,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         filename = mOriginalFileName;
       }
       if (filename == null) {
-        filename = (mPossibleTableViewTypes != null) ?
+        filename = mPossibleTableViewTypes != null ?
             mPossibleTableViewTypes.getDefaultListViewFileName() :
             null;
       }
@@ -642,7 +657,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         filename = mOriginalFileName;
       }
       if (filename == null) {
-        filename = (mPossibleTableViewTypes != null) ?
+        filename = mPossibleTableViewTypes != null ?
             mPossibleTableViewTypes.getDefaultMapListViewFileName() :
             null;
       }
@@ -720,33 +735,25 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     // for most returns, we just refresh the data set and redraw the page
     // for others, we need to take more intensive action
     switch (requestCode) {
-    case Constants.RequestCodes.ADD_ROW_SURVEY:
-    case Constants.RequestCodes.EDIT_ROW_SURVEY:
-      if (resultCode == Activity.RESULT_OK) {
-        WebLogger.getLogger(getAppName())
-            .d(TAG, "[onActivityResult] result ok, refreshing backing table");
-      } else {
-        WebLogger.getLogger(getAppName())
-            .d(TAG, "[onActivityResult] result canceled, refreshing backing table");
-      }
-      break;
     case Constants.RequestCodes.LAUNCH_VIEW:
       // if data is null then they never changed anything in the subactivity anyways
       if (data != null && data.hasExtra("props")) {
         props = data.getParcelableExtra("props");
         props.setActivity(this);
       }
+      // This fallthrough is on purpose, we need to refresh because props (may have) changed
+    case Constants.RequestCodes.ADD_ROW_SURVEY:
+    case Constants.RequestCodes.EDIT_ROW_SURVEY:
+      try {
+        // verify that the data table doesn't contain checkpoints...
+        // always refresh, as table properties may have done something
+        refreshDataAndDisplayFragment();
+      } catch (IllegalStateException e) {
+        WebLogger.getLogger(getAppName()).printStackTrace(e);
+      }
       break;
-    }
-
-    super.onActivityResult(requestCode, resultCode, data);
-
-    try {
-      // verify that the data table doesn't contain checkpoints...
-      // always refresh, as table properties may have done something
-      refreshDataAndDisplayFragment();
-    } catch (IllegalStateException e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
+    default:
+      super.onActivityResult(requestCode, resultCode, data);
     }
   }
 
@@ -1007,10 +1014,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         fragmentTransaction.show(innerMapFragment);
       }
       break;
-    default:
-      WebLogger.getLogger(getAppName())
-          .e(TAG, "ViewFragmentType not recognized: " + this.mCurrentFragmentType);
-      break;
     }
     fragmentTransaction.commit();
 
@@ -1077,7 +1080,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
     int queryIndex = 0;
 
-    if (fragmentID != null && fragmentID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
+    if (Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
       queryIndex = 1;
     }
 
@@ -1099,31 +1102,25 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     // The map fragments occupy a different view than the single pane
     // content. This is because the map is two views--the list and the map
     // itself. So, we need to hide and show the others as appropriate.
-    View onePaneContent = this.findViewById(R.id.activity_table_display_activity_one_pane_content);
-    View splitContent = this.findViewById(R.id.activity_table_display_activity_split_content);
-    View mapContent = this.findViewById(R.id.activity_table_display_activity_map_content);
+    View onePaneContent = findViewById(R.id.activity_table_display_activity_one_pane_content);
+    View splitContent = findViewById(R.id.activity_table_display_activity_split_content);
+    View mapContent = findViewById(R.id.activity_table_display_activity_map_content);
+    for (View v : new View[] {onePaneContent, splitContent, mapContent}) {
+      v.setVisibility(View.GONE);
+    }
     switch (viewFragmentType) {
     case DETAIL:
     case LIST:
     case SPREADSHEET:
       onePaneContent.setVisibility(View.VISIBLE);
-      splitContent.setVisibility(View.GONE);
-      mapContent.setVisibility(View.GONE);
-      return;
+      break;
     case DETAIL_WITH_LIST:
     case SUB_LIST:
-      onePaneContent.setVisibility(View.GONE);
       splitContent.setVisibility(View.VISIBLE);
-      mapContent.setVisibility(View.GONE);
-      return;
+      break;
     case MAP:
-      onePaneContent.setVisibility(View.GONE);
-      splitContent.setVisibility(View.GONE);
       mapContent.setVisibility(View.VISIBLE);
-      return;
-    default:
-      WebLogger.getLogger(getAppName())
-          .e(TAG, "[updateChildViewVisibility] unrecognized type: " + viewFragmentType);
+      break;
     }
   }
 
@@ -1172,6 +1169,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    *
    * @author sudar.sam@gmail.com
    */
+  @SuppressWarnings("JavaDoc")
   public enum ViewFragmentType {
     SPREADSHEET, LIST, MAP, DETAIL, DETAIL_WITH_LIST, SUB_LIST
   }

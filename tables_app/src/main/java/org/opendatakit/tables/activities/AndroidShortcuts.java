@@ -14,6 +14,7 @@
 
 package org.opendatakit.tables.activities;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -25,6 +26,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -138,8 +140,10 @@ public class AndroidShortcuts extends BaseActivity {
     }
 
     builder.setAdapter(new ArrayAdapter<Choice>(this, R.layout.shortcut_item, choices) {
+      @SuppressLint("InflateParams")
+      @NonNull
       @Override
-      public View getView(int position, View convertView, ViewGroup parent) {
+      public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         View row;
 
         if (convertView == null) {
@@ -149,12 +153,19 @@ public class AndroidShortcuts extends BaseActivity {
           row = convertView;
         }
         TextView vw = (TextView) row.findViewById(R.id.shortcut_title);
+        Choice item = getItem(position);
+        if (item == null) {
+          TextView res = new TextView(AndroidShortcuts.this);
+          res.setText(R.string.error);
+          return res;
+        }
         // Future: vw.setTextSize(Tables.getQuestionFontsize(getItem(position).appName));
+        //noinspection MagicNumber
         vw.setTextSize(18);
-        vw.setText(getItem(position).name);
+        vw.setText(item.name);
 
         ImageView iv = (ImageView) row.findViewById(R.id.shortcut_icon);
-        iv.setImageBitmap(getItem(position).icon);
+        iv.setImageBitmap(item.icon);
 
         return row;
       }
@@ -211,12 +222,8 @@ public class AndroidShortcuts extends BaseActivity {
     DialogInterface.OnClickListener errorListener = new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int i) {
-        switch (i) {
-        case DialogInterface.BUTTON_POSITIVE:
-          if (shouldExit) {
-            finish();
-          }
-          break;
+        if (DialogInterface.BUTTON_POSITIVE == i && shouldExit) {
+          finish();
         }
       }
     };
@@ -249,14 +256,14 @@ public class AndroidShortcuts extends BaseActivity {
   public void databaseUnavailable() {
   }
 
-  private class Choice {
-    public final int iconResourceId;
+  private static class Choice {
+    final int iconResourceId;
+    final Uri command;
     public final Bitmap icon;
-    public final Uri command;
     public final String name;
     public final String appName;
 
-    public Choice(int iconResourceId, Bitmap icon, Uri command, String name, String appName) {
+    Choice(int iconResourceId, Bitmap icon, Uri command, String name, String appName) {
       this.iconResourceId = iconResourceId;
       this.icon = icon;
       this.command = command;

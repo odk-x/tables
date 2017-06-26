@@ -36,7 +36,6 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
@@ -71,7 +70,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
     if (savedInstanceState != null) {
       if (savedInstanceState.containsKey(Constants.IntentKeys.ACTION_TABLE_ID)) {
         mActionTableId = savedInstanceState.getString(Constants.IntentKeys.ACTION_TABLE_ID);
-        if (mActionTableId != null && mActionTableId.length() == 0) {
+        if (mActionTableId != null && mActionTableId.isEmpty()) {
           mActionTableId = null;
         }
       }
@@ -95,7 +94,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
 
-    if (mActionTableId != null && mActionTableId.length() != 0) {
+    if (mActionTableId != null && !mActionTableId.isEmpty()) {
       outState.putString(Constants.IntentKeys.ACTION_TABLE_ID, mActionTableId);
     }
     if (mCheckpointTables != null && !mCheckpointTables.isEmpty()) {
@@ -109,13 +108,13 @@ public abstract class AbsBaseActivity extends BaseActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    ((Tables) getApplication()).establishDoNotFireDatabaseConnectionListener(this);
+    ((CommonApplication) getApplication()).establishDoNotFireDatabaseConnectionListener(this);
   }
 
   @Override
   public void onPostResume() {
     super.onPostResume();
-    ((Tables) getApplication()).fireDatabaseConnectionListener();
+    ((CommonApplication) getApplication()).fireDatabaseConnectionListener();
   }
 
   public String getActionTableId() {
@@ -126,8 +125,12 @@ public abstract class AbsBaseActivity extends BaseActivity {
     mActionTableId = tableId;
   }
 
+  /**
+   * Checks all tables for checkpoints and conflicts, adding them to mConflictTables and
+   * mCheckpointTables
+   */
   public void scanAllTables() {
-    long now = System.currentTimeMillis();
+    long start = System.currentTimeMillis();
     WebLogger.getLogger(getAppName())
         .i(TAG, "scanAllTables -- searching for conflicts and checkpoints ");
 
@@ -162,19 +165,18 @@ public abstract class AbsBaseActivity extends BaseActivity {
       mCheckpointTables = checkpointTables;
       mConflictTables = conflictTables;
     } catch (ServicesAvailabilityException e) {
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
+      handleError(e);
     } finally {
       if (db != null) {
         try {
           app.getDatabase().closeDatabase(mAppName, db);
         } catch (ServicesAvailabilityException e) {
-          WebLogger.getLogger(getAppName()).printStackTrace(e);
-          WebLogger.getLogger(getAppName()).e(TAG, "Unable to close database");
+          handleError(e);
         }
       }
     }
 
-    long elapsed = System.currentTimeMillis() - now;
+    long elapsed = System.currentTimeMillis() - start;
     WebLogger.getLogger(getAppName())
         .i(TAG, "scanAllTables -- full table scan completed: " + Long.toString(elapsed) + " ms");
   }
@@ -189,7 +191,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
         || mConflictTables.isEmpty())) {
       scanAllTables();
     }
-    if ((mCheckpointTables != null) && !mCheckpointTables.isEmpty()) {
+    if (mCheckpointTables != null && !mCheckpointTables.isEmpty()) {
       Iterator<String> iterator = mCheckpointTables.keySet().iterator();
       String tableId = iterator.next();
       mCheckpointTables.remove(tableId);
@@ -204,22 +206,10 @@ public abstract class AbsBaseActivity extends BaseActivity {
       try {
         this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
       } catch (ActivityNotFoundException e) {
-        WebLogger.getLogger(mAppName).e(TAG, "onPostResume: Unable to access ODK Sync");
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-          public void run() {
-            AbsBaseActivity.this.runOnUiThread(new Runnable() {
-              @Override
-              public void run() {
-                Toast.makeText(AbsBaseActivity.this, getString(R.string.activity_not_found,
-                    IntentConsts.ResolveCheckpoint.ACTIVITY_NAME), Toast.LENGTH_LONG).show();
-              }
-            });
-          }
-        }, 100);
+        handleError(e);
       }
     }
-    if ((mConflictTables != null) && !mConflictTables.isEmpty()) {
+    if (mConflictTables != null && !mConflictTables.isEmpty()) {
       Iterator<String> iterator = mConflictTables.keySet().iterator();
       String tableId = iterator.next();
       mConflictTables.remove(tableId);
@@ -234,19 +224,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
       try {
         this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
       } catch (ActivityNotFoundException e) {
-        WebLogger.getLogger(mAppName).e(TAG, "onPostResume: Unable to access ODK Sync");
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-          public void run() {
-            AbsBaseActivity.this.runOnUiThread(new Runnable() {
-              @Override
-              public void run() {
-                Toast.makeText(AbsBaseActivity.this, getString(R.string.activity_not_found,
-                    IntentConsts.ResolveConflict.ACTIVITY_NAME), Toast.LENGTH_LONG).show();
-              }
-            });
-          }
-        }, 100);
+        handleError(e);
       }
     }
   }
@@ -321,6 +299,35 @@ public abstract class AbsBaseActivity extends BaseActivity {
         ((DatabaseConnectionListener) newFragment).databaseUnavailable();
       }
     }
+  }
+
+  /**
+   * Attempts to handle an error upon not being able to access services
+   * @param e an exception to log
+   */
+  private void handleError(Throwable e) {
+    String toast_text;
+    if (e instanceof ActivityNotFoundException) {
+      WebLogger.getLogger(mAppName).e(TAG, "Services not installed?");
+      toast_text = getString(R.string.services_missing);
+    } else {
+      WebLogger.getLogger(mAppName).e(TAG, "Could not connect to the database");
+      toast_text = getString(R.string.database_unavailable);
+    }
+    final String toast_text_copy = toast_text;
+    WebLogger.getLogger(mAppName).printStackTrace(e);
+    Handler handler = new Handler();
+    handler.postDelayed(new Runnable() {
+      public void run() {
+        AbsBaseActivity.this.runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            Toast.makeText(AbsBaseActivity.this, toast_text_copy, Toast.LENGTH_LONG).show();
+          }
+        });
+      }
+    }, 100);
+
   }
 
 }

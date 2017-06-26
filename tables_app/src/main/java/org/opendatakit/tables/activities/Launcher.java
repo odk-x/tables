@@ -35,7 +35,10 @@ import java.util.List;
  */
 public class Launcher extends BaseActivity {
 
-  // Used for logging
+  /**
+   * Used for logging
+   */
+  @SuppressWarnings("unused")
   private static final String TAG = Launcher.class.getName();
 
   // the app name

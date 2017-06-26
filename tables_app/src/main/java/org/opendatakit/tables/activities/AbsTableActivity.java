@@ -49,10 +49,10 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
   /**
    * Retrieve the table id from the intent. Returns null if not present.
    *
-   * @return
+   * @return the table id used to launch the activity
    */
   String retrieveTableIdFromIntent() {
-    return this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_TABLE_ID);
+    return getIntent().getStringExtra(IntentConsts.INTENT_KEY_TABLE_ID);
   }
 
   public String getTableId() {
@@ -72,7 +72,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to access database.");
           WebLogger.getLogger(getAppName()).printStackTrace(e);
-          throw new IllegalStateException("database went down -- handle this! " + e.toString());
+          throw new IllegalStateException("database went down -- handle this! " + e);
         } finally {
           if (db != null) {
             try {
@@ -80,7 +80,6 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
             } catch (ServicesAvailabilityException e) {
               WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to close database.");
               WebLogger.getLogger(getAppName()).printStackTrace(e);
-              throw new IllegalStateException("database went down -- handle this! " + e.toString());
             }
           }
         }

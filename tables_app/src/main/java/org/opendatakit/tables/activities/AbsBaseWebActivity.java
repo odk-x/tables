@@ -65,6 +65,12 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   public abstract String getInstanceId();
 
+  /**
+   * Gets the active webkit view
+   *
+   * @param viewID The id for the webkit in the view heirarchy, if there are multiple
+   * @return the webkit if it was found, or else null
+   */
   public abstract ODKWebView getWebKitView(String viewID);
 
   /**
@@ -128,13 +134,17 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
       if (savedInstanceState.containsKey(QUEUED_ACTIONS)) {
         String[] actionOutcomesArray = savedInstanceState.getStringArray(QUEUED_ACTIONS);
         queuedActions.clear();
-        queuedActions.addAll(Arrays.asList(actionOutcomesArray));
+        if (actionOutcomesArray != null) {
+          queuedActions.addAll(Arrays.asList(actionOutcomesArray));
+        }
       }
 
       if (savedInstanceState.containsKey(RESPONSE_JSON)) {
         String[] pendingResponseJSON = savedInstanceState.getStringArray(RESPONSE_JSON);
         queueResponseJSON.clear();
-        queueResponseJSON.addAll(Arrays.asList(pendingResponseJSON));
+        if (pendingResponseJSON != null) {
+          queueResponseJSON.addAll(Arrays.asList(pendingResponseJSON));
+        }
       }
     }
   }
@@ -165,8 +175,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(), getTableId(),
         getInstanceId(), getActiveUser(), mProps.getUserSelectedDefaultLocale());
 
-    String value = mPropertyManager.getSingularProperty(propertyId, cb);
-    return value;
+    return mPropertyManager.getSingularProperty(propertyId, cb);
   }
 
   /**
@@ -230,7 +239,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
       startActivityForResult(i, Constants.RequestCodes.LAUNCH_DOACTION);
       return "OK";
     } catch (ActivityNotFoundException ex) {
-      WebLogger.getLogger(getAppName()).e(TAG, "Unable to launch activity: " + ex.toString());
+      WebLogger.getLogger(getAppName()).e(TAG, "Unable to launch activity: " + ex);
       WebLogger.getLogger(getAppName()).printStackTrace(ex);
       return "Application not found";
     }
@@ -269,14 +278,13 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
       String jsonEncoded = ODKFileUtils.mapper.writeValueAsString(hash);
       queuedActions.addLast(jsonEncoded);
     } catch (Exception e) {
-      e.printStackTrace();
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
   }
 
   @Override
   public String viewFirstQueuedAction() {
-    String outcome = queuedActions.isEmpty() ? null : queuedActions.getFirst();
-    return outcome;
+    return queuedActions.isEmpty() ? null : queuedActions.getFirst();
   }
 
   @Override
@@ -313,8 +321,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     if (queueResponseJSON.isEmpty()) {
       return null;
     }
-    String responseJSON = queueResponseJSON.removeFirst();
-    return responseJSON;
+    return queueResponseJSON.removeFirst();
   }
 
   @Override
