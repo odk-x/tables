@@ -61,8 +61,6 @@ public class PossibleTableViewTypes {
       case LIST:
         mDefaultViewType = TableDisplayActivity.ViewFragmentType.LIST;
         break;
-      default:
-        mDefaultViewType = TableDisplayActivity.ViewFragmentType.SPREADSHEET;
       }
     } else {
       mDefaultViewType = TableDisplayActivity.ViewFragmentType.SPREADSHEET;
@@ -70,9 +68,9 @@ public class PossibleTableViewTypes {
 
     mSpreadsheetIsValid = true; // always
     mListFileName = TableUtil.get().getListViewFilename(dbInterface, appName, db, tableId);
-    mListIsValid = (null != mListFileName);
+    mListIsValid = null != mListFileName;
     mMapListFileName = TableUtil.get().getMapListViewFilename(dbInterface, appName, db, tableId);
-    mMapIsValid = (null != mMapListFileName) && orderedDefns.mapViewIsPossible();
+    mMapIsValid = null != mMapListFileName && orderedDefns.mapViewIsPossible();
 
     mDetailFileName = TableUtil.get().getDetailViewFilename(dbInterface, appName, db, tableId);
   }
@@ -85,7 +83,7 @@ public class PossibleTableViewTypes {
    * @return a {@link Set} of the possible view types.
    */
   public Set<TableViewType> getAllPossibleViewTypes() {
-    Set<TableViewType> result = new HashSet<TableViewType>();
+    Set<TableViewType> result = new HashSet<>();
     if (this.spreadsheetViewIsPossible()) {
       result.add(TableViewType.SPREADSHEET);
     }

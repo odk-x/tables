@@ -17,21 +17,24 @@ package org.opendatakit.tables.application;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.tables.R;
 
+import java.lang.ref.WeakReference;
+
 public class Tables extends CommonApplication {
 
   public static final String TAG = Tables.class.getSimpleName();
 
-  private static Tables singleton = null;
+  private static WeakReference<Tables> singleton = new WeakReference<>(null);
 
   public static Tables getInstance() {
-    return singleton;
+    return singleton.get();
   }
 
   @Override
   public void onCreate() {
-    singleton = this;
-
     super.onCreate();
+    if (singleton.get() == null) {
+      singleton = new WeakReference<>(this);
+    }
   }
 
   @Override
