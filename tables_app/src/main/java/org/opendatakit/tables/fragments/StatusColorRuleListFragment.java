@@ -113,7 +113,7 @@ public class StatusColorRuleListFragment extends ListFragment {
         }
       }
     }
-    this.mColorRuleAdapter = this.createColorRuleAdapter(tc.adminColumns, tc.localizedDisplayNames);
+    this.mColorRuleAdapter = createColorRuleAdapter(tc.adminColumns, tc.localizedDisplayNames);
     this.setListAdapter(this.mColorRuleAdapter);
     this.registerForContextMenu(this.getListView());
   }
@@ -121,9 +121,8 @@ public class StatusColorRuleListFragment extends ListFragment {
   ColorRuleAdapter createColorRuleAdapter(String[] adminColumns,
       Map<String, String> colDisplayNames) {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
-    return new ColorRuleAdapter((TableLevelPreferencesActivity) getActivity(),
-        getAppName(), getTableId(), R.layout.row_for_view_entry, adminColumns, colDisplayNames,
-        this.mColorRuleGroup.getColorRules(), type);
+    return new ColorRuleAdapter(getActivity(), getAppName(), R.layout.row_for_view_entry,
+        adminColumns, colDisplayNames, mColorRuleGroup.getColorRules(), type);
   }
 
   /**

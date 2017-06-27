@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Toast;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
@@ -33,8 +34,6 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
-import org.opendatakit.tables.views.components.LockableScrollView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,11 +74,11 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
   // Keeping this for now in case someone else needs to work with the code
   // and relied on this variable.
-  private LockableScrollView dataStatusScroll;
+  private ScrollView dataStatusScroll;
   private HorizontalScrollView wrapScroll;
 
-  private LockableScrollView indexScroll;
-  private LockableScrollView mainScroll;
+  private ScrollView indexScroll;
+  private ScrollView mainScroll;
   private TabularView indexData;
   private TabularView indexHeader;
   private TabularView mainData;
@@ -419,9 +418,11 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       @Override
       public boolean onTouch(View view, MotionEvent event) {
         dataStatusScroll.scrollTo(dataStatusScroll.getScrollX(), view.getScrollY());
+        /*
         if (event.getAction() == MotionEvent.ACTION_UP) {
           mainScroll.startScrollerTask();
         }
+        */
         return false;
       }
     });
@@ -439,7 +440,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     View mainWrapper = buildTable(indexElementKey, false);
     // Here the true indicates that we are building an indexed table
     View indexWrapper = buildTable(indexElementKey, true);
-    wrapScroll = new LockableHorizontalScrollView(context);
+    wrapScroll = new HorizontalScrollView(context);
     wrapScroll.addView(mainWrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
         LinearLayout.LayoutParams.MATCH_PARENT);
     wrapScroll.setHorizontalFadingEdgeEnabled(true);
@@ -459,10 +460,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       public boolean onTouch(View view, MotionEvent event) {
         mainScroll.scrollTo(mainScroll.getScrollX(), view.getScrollY());
         dataStatusScroll.scrollTo(mainScroll.getScrollX(), view.getScrollY());
+        /*
         if (event.getAction() == MotionEvent.ACTION_UP) {
           indexScroll.startScrollerTask();
           mainScroll.startScrollerTask();
         }
+        */
         return false;
       }
     });
@@ -471,10 +474,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       public boolean onTouch(View view, MotionEvent event) {
         indexScroll.scrollTo(indexScroll.getScrollX(), view.getScrollY());
         dataStatusScroll.scrollTo(indexScroll.getScrollX(), view.getScrollY());
+        /*
         if (event.getAction() == MotionEvent.ACTION_UP) {
           indexScroll.startScrollerTask();
           mainScroll.startScrollerTask();
         }
+        */
         return false;
       }
     });
@@ -530,8 +535,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
               this.mElementKeyToColorRuleGroup, mTableColorRuleGroup);
     }
 
-    LockableScrollView dataScroll;
-    dataScroll = new LockableScrollView(context);
+    ScrollView dataScroll = new ScrollView(context);
     dataScroll.addView(dataTable,
         new ViewGroup.LayoutParams(dataTable.getTableWidth(), dataTable.getTableHeight()));
     dataScroll.setVerticalFadingEdgeEnabled(true);
@@ -566,7 +570,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     colWidths = new int[1];
     colWidths[0] = TabularView.DEFAULT_STATUS_COLUMN_WIDTH;
 
-    dataStatusScroll = new LockableScrollView(context);
+    dataStatusScroll = new ScrollView(context);
     TabularView dataTable = TabularView
         .getStatusDataTable(context, this, table, colWidths, fontSize,
             this.mElementKeyToColorRuleGroup, mStatusColumnRuleGroup);
@@ -635,6 +639,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       Toast.makeText(getContext(), R.string.error_accessing_database, Toast.LENGTH_LONG).show();
     }
   }
+
   /**
    * Called when someone with permission to edit the table double clicks or long clicks on a
    * header cell. Forwards the request to the controller, which is in fragments.SpreadsheetFragment
@@ -691,6 +696,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     /**
      * Called when the user clicks a header cell
+     *
      * @param cellId The ID of the cell that the user clicked
      */
     void headerCellClicked(CellInfo cellId);
@@ -698,7 +704,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     /**
      * Called when the user activates a menu on a header cell, populates the list of options in the
      * menu.
-     * @param menu the ContextMenu about to be created
+     *
+     * @param menu   the ContextMenu about to be created
      * @param cellId the cell id that was double clicked or long clicked to trigger the menu
      * @throws ServicesAvailabilityException if the database is down
      */
@@ -706,6 +713,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     /**
      * Called when the user clicks a data cell
+     *
      * @param cellId The ID of the cell that the user clicked
      */
     void dataCellClicked(CellInfo cellId);
@@ -713,7 +721,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     /**
      * Called when the user activates a menu on a data cell, populates the list of options in the
      * menu.
-     * @param menu the ContextMenu about to be created
+     *
+     * @param menu   the ContextMenu about to be created
      * @param cellId the cell id that was double clicked or long clicked to trigger the menu
      * @throws ServicesAvailabilityException if the database is down
      */
@@ -721,6 +730,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
 
     /**
      * Opens a menu on the last clicked cell, as appropriate
+     *
      * @param view the view to open the menu on
      */
     void openContextMenu(View view);

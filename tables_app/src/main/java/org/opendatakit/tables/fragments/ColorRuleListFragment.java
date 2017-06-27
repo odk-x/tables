@@ -138,9 +138,8 @@ public class ColorRuleListFragment extends ListFragment {
   ColorRuleAdapter createColorRuleAdapter(String[] adminColumns,
       Map<String, String> colDisplayNames) {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
-    return new ColorRuleAdapter((TableLevelPreferencesActivity) getActivity(),
-        getAppName(), getTableId(), R.layout.row_for_edit_view_entry, adminColumns, colDisplayNames,
-        this.mColorRuleGroup.getColorRules(), type);
+    return new ColorRuleAdapter(getActivity(), getAppName(), R.layout.row_for_edit_view_entry,
+        adminColumns, colDisplayNames, mColorRuleGroup.getColorRules(), type);
   }
 
   /**
@@ -268,7 +267,6 @@ public class ColorRuleListFragment extends ListFragment {
    * @throws ServicesAvailabilityException if the database is down
    */
   private void revertToDefaults() throws ServicesAvailabilityException {
-    TableLevelPreferencesActivity activity = this.retrieveTableLevelPreferencesActivity();
     ColorRuleGroup.Type colorRuleGroupType = this.retrieveColorRuleType();
     switch (colorRuleGroupType) {
     case STATUS_COLUMN:

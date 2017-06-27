@@ -36,16 +36,34 @@ import android.widget.ScrollView;
  * LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
  */
 public class WScrollView extends HorizontalScrollView {
+  /**
+   * The internal scrollview, set by the client code
+   */
   public ScrollView sv;
 
+  /**
+   * Default one-argument constructor
+   * @param context unused
+   */
   public WScrollView(Context context) {
     super(context);
   }
 
+  /**
+   * Default two-argument constructor
+   * @param context unused
+   * @param attrs unused
+   */
   public WScrollView(Context context, AttributeSet attrs) {
     super(context, attrs);
   }
 
+  /**
+   * Default three-argument constructor
+   * @param context unused
+   * @param attrs unused
+   * @param defStyle unused
+   */
   public WScrollView(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
   }
@@ -54,10 +72,10 @@ public class WScrollView extends HorizontalScrollView {
   public boolean onTouchEvent(MotionEvent event) {
     try {
       boolean ret = super.onTouchEvent(event);
-      ret = ret | sv.onTouchEvent(event);
+      ret |= sv.onTouchEvent(event);
       return ret;
-    } catch (IllegalArgumentException iae) {
-      // Ignore iae and return false
+    } catch (IllegalArgumentException ignored) {
+      // just return false
     }
     return false;
   }
@@ -66,10 +84,10 @@ public class WScrollView extends HorizontalScrollView {
   public boolean onInterceptTouchEvent(MotionEvent event) {
     try {
       boolean ret = super.onInterceptTouchEvent(event);
-      ret = ret | sv.onInterceptTouchEvent(event);
+      ret |= sv.onInterceptTouchEvent(event);
       return ret;
-    } catch (IllegalArgumentException iae) {
-      // Ignore iae and return false
+    } catch (IllegalArgumentException ignored) {
+      // just return false
     }
     return false;
   }

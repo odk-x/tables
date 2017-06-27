@@ -38,7 +38,6 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.preferences.DefaultViewTypePreference;
@@ -60,6 +59,17 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
 
   // Used for logging
   private static final String TAG = TablePreferenceFragment.class.getSimpleName();
+
+  /**
+   * Return the full path of the file selected from the intent.
+   *
+   * @param intent the intent to pull the path out of
+   * @return the path
+   */
+  private static String getFullPathFromIntent(Intent intent) {
+    Uri uri = intent.getData();
+    return uri.getPath();
+  }
 
   /**
    * Called when the user opens the fragment or the fragment is resumed
@@ -202,17 +212,6 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
       Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
     }
 
-  }
-
-  /**
-   * Return the full path of the file selected from the intent.
-   *
-   * @param intent the intent to pull the path out of
-   * @return the path
-   */
-  private static String getFullPathFromIntent(Intent intent) {
-    Uri uri = intent.getData();
-    return uri.getPath();
   }
 
   /**
