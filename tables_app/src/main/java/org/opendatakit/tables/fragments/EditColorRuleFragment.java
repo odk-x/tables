@@ -31,7 +31,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.preferences.EditColorPreference;
 import org.opendatakit.tables.utils.Constants;
@@ -47,8 +47,13 @@ import java.util.Arrays;
 public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     implements OnColorChangedListener {
 
-  // The keys for communicating with EditColorPreference.
+  /**
+   * Key for communicating text color with EditColorPreference.
+   */
   public static final String COLOR_PREF_KEY_TEXT = "textKey";
+  /**
+   * Key for communicating background color with EditColorPreference.
+   */
   public static final String COLOR_PREF_KEY_BACKGROUND = "backgroundKey";
   /**
    * A value signifying the fragment is being used to add a new rule.
@@ -199,8 +204,11 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
       this.mElementKey = startingRule.getColumnElementKey();
     }
     // 3) then fill in the static things backing the dialogs.
-    this.mOperatorHumanFriendlyValues = ColorRule.RuleType.getValues();
-    this.mOperatorEntryValues = ColorRule.RuleType.getValues();
+    // mElementKey
+    String type = ((AbsTableActivity) getActivity()).getColumnDefinitions().find(mElementKey)
+        .getType().getElementType();
+    this.mOperatorHumanFriendlyValues = ColorRule.RuleType.getValues(type);
+    this.mOperatorEntryValues = ColorRule.RuleType.getValues(type);
 
     ArrayList<String> colorColElementKeys = new ArrayList<>(
         tc.orderedDefns.getRetentionColumnNames());
