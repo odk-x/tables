@@ -862,6 +862,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * {@link #retrieveTableIdFromIntent()}. Initializes Spreadsheet if none is
    * present in Intent.
    */
+  @SuppressWarnings("ConstantConditions") // too complex to analyze
   private void showCurrentDisplayFragment(boolean createNew) {
     possiblySupplyDefaults();
     updateChildViewVisibility(mCurrentFragmentType);

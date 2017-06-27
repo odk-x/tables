@@ -29,6 +29,11 @@ import org.opendatakit.tables.utils.IntentUtil;
  */
 public class TableLevelPreferencesActivity extends AbsTableActivity {
 
+  /**
+   * The fragment type currently being used, typically a {@link TablePreferenceFragment},
+   * {@link ColumnListFragment}, {@link ColumnPreferenceFragment},
+   * {@link ColorRuleListFragment}, or {@link StatusColorRuleListFragment}
+   */
   FragmentType mCurrentFragmentType;
   /**
    * The element key of the column we're displaying, if this activity is
@@ -212,20 +217,38 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     fragmentTransaction.commit();
   }
 
+  /**
+   * Static factory for a TablePreferenceFragment
+   * @return a new TablePreferenceFragment
+   */
   static TablePreferenceFragment createTablePreferenceFragment() {
     return new TablePreferenceFragment();
   }
 
+  /**
+   * Static factory for a StatusColorRuleListFragment with a particular list of color rules
+   * @param colorRuleGroupType the list of color rules for the status column
+   * @return a new StatusColorRuleListFragment with the correct color rules
+   */
   static StatusColorRuleListFragment createStatusColorRuleListFragment(
       ColorRuleGroup.Type colorRuleGroupType) {
     return StatusColorRuleListFragment
         .newInstance(colorRuleGroupType);
   }
 
+  /**
+   * Static factory for a ColorRuleListFragment with a particular list of color rules
+   * @param colorRuleGroupType the list of color rules for the column
+   * @return a new ColorRuleListFragment with the correct color rules
+   */
   static ColorRuleListFragment createColorRuleListFragment(ColorRuleGroup.Type colorRuleGroupType) {
     return ColorRuleListFragment.newInstance(colorRuleGroupType);
   }
 
+  /**
+   * Static factory for a ColumnPreferenceFragment
+   * @return a new ColumnPreferenceFragment
+   */
   static ColumnListFragment createColumnListFragment() {
     return new ColumnListFragment();
   }

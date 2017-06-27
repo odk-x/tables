@@ -204,7 +204,6 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
       this.mElementKey = startingRule.getColumnElementKey();
     }
     // 3) then fill in the static things backing the dialogs.
-    // mElementKey
     String type = ((AbsTableActivity) getActivity()).getColumnDefinitions().find(mElementKey)
         .getType().getElementType();
     this.mOperatorHumanFriendlyValues = ColorRule.RuleType.getValues(type);
@@ -348,6 +347,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         String newValueStr = (String) newValue;
         pref.setSummary(newValueStr);
+        pref.setText(newValueStr);
         mRuleValue = newValueStr;
         updateStateOfSaveButton();
         return false;
@@ -433,10 +433,12 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     }
   }
 
+  /**
+   * Sets the save button to be enabled or disabled based on whether it should be enabled or not
+   */
   void updateStateOfSaveButton() {
-    Preference savePref = this.findPreference(Constants.PreferenceKeys.ColorRule.SAVE);
-    boolean enableButton = this.saveButtonShouldBeEnabled();
-    savePref.setEnabled(enableButton);
+    Preference savePref = findPreference(Constants.PreferenceKeys.ColorRule.SAVE);
+    savePref.setEnabled(saveButtonShouldBeEnabled());
   }
 
   /**
@@ -469,9 +471,18 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
         && this.mTextColor != null && this.mBackgroundColor != null;
   }
 
+  /**
+   * Keys used for storing and retreiving things from bundles
+   */
   public static final class IntentKeys {
+    /**
+     * Key used for pulling a rule position out of a bundle
+     */
     static final String RULE_POSITION = "rulePosition";
 
+    /**
+     * Do not instantiate this
+     */
     private IntentKeys() {
     }
   }

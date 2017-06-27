@@ -77,12 +77,12 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
   private ScrollView dataStatusScroll;
   private HorizontalScrollView wrapScroll;
 
+  private ScrollView mainScroll = null;
   private ScrollView indexScroll;
-  private ScrollView mainScroll;
+  private TabularView mainData = null;
+  private TabularView mainHeader = null;
   private TabularView indexData;
   private TabularView indexHeader;
-  private TabularView mainData;
-  private TabularView mainHeader;
 
   private View.OnTouchListener mainDataCellClickListener;
   private View.OnTouchListener mainHeaderCellClickListener;
@@ -153,7 +153,6 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
       indexData.setOnTouchListener(indexDataCellClickListener);
       indexHeader.setOnTouchListener(indexHeaderCellClickListener);
     }
-    // TODO looks like these are called before mainData and mainHeader are set?
     mainData.setOnTouchListener(mainDataCellClickListener);
     mainHeader.setOnTouchListener(mainHeaderCellClickListener);
   }
@@ -413,7 +412,6 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     completeWrapper.setVerticalFadingEdgeEnabled(true);
 
     addView(completeWrapper, wrapLp);
-    // TODO it appears mainScroll might be used before initialized
     mainScroll.setOnTouchListener(new View.OnTouchListener() {
       @Override
       public boolean onTouch(View view, MotionEvent event) {

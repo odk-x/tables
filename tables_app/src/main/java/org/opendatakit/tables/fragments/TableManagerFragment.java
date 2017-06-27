@@ -49,6 +49,10 @@ import org.opendatakit.tables.views.components.TableNameStructAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A fragment that displays a list of tables with a table actions button to the right of each of
+ * them. The default fragment created in MainMenuActivity if there is no splash screen set
+ */
 public class TableManagerFragment extends ListFragment implements DatabaseConnectionListener {
 
   private static final String TAG = TableManagerFragment.class.getSimpleName();

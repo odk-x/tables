@@ -125,6 +125,11 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
    */
   private int mCurrentIndex = 0;
 
+  /**
+   * Gets an index from the passed bundle if it exists
+   * @param bundle the bundle to pull the index from
+   * @return the index that was in the bundle or {@link #INVALID_INDEX}
+   */
   static int retrieveSavedIndexFromBundle(Bundle bundle) {
     if (bundle != null && bundle.containsKey(SAVE_KEY_INDEX)) {
       return bundle.getInt(SAVE_KEY_INDEX);
@@ -544,6 +549,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
     /**
      * Set the index of the marker that has been selected.
+     * @param i the index of the marker
      */
     void onSetSelectedItemIndex(int i);
 

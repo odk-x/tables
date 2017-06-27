@@ -19,11 +19,9 @@ import android.content.Context;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.EditText;
-import org.opendatakit.tables.R;
 
 /**
- * Basic dialog to allow editing of a name of a list view.
+ * Basic dialog to allow editing a text field
  * <p>
  * Based on Android's EditTextPreference class.
  *
@@ -31,55 +29,13 @@ import org.opendatakit.tables.R;
  */
 public class EditNameDialogPreference extends DialogPreference {
 
-  // This is the Activity that calls this object.
-  private EditSavedViewEntryHandler callingActivity;
-  private EditText mEditText = null;
-  private String mText = null;
-
-  public EditNameDialogPreference(Context context, AttributeSet attrs,
-      EditSavedViewEntryHandler callingActivity) {
+  /**
+   * Default constructor
+   * @param context unused
+   * @param attrs unused
+   */
+  public EditNameDialogPreference(Context context, AttributeSet attrs) {
     super(context, attrs);
-    this.callingActivity = callingActivity;
-  }
-
-  /**
-   * We need to override this so that we can get at our edit text that we've
-   * defined in the layout xml.
-   * <p>
-   * Normally we would find the view from a layout resource and then call
-   * findViewById on that view to get at our widgets we've defined in that xml.
-   * However, we have no way of getting at that layout, as we've hooked it into
-   * this class in the xml for this class, and the dialog is created for us,
-   * which is functionality offered by PreferenceDialog. This is common
-   * practice, so to get at your view and thus offer access to the objects they
-   * give you this method to override and bind to data.
-   */
-  @Override
-  protected void onBindDialogView(View view) {
-    super.onBindDialogView(view);
-    int viewName = R.id.edit_view_name;
-    mText = callingActivity.getCurrentViewName();
-    mEditText = (EditText) view.findViewById(viewName);
-    mEditText.setText(mText);
-
-  }
-
-  /**
-   * Return the String that is currently in the dialog. NOT necessarily
-   * what is in the EditText.
-   *
-   * @return the text in the dialog
-   */
-  public String getText() {
-    return mText;
-  }
-
-  protected void onDialogClosed(boolean positiveResult) {
-    super.onDialogClosed(positiveResult);
-    if (positiveResult) {
-      String value = mEditText.getText().toString();
-      callingActivity.tryToSaveNewName(value);
-    }
   }
 
 }

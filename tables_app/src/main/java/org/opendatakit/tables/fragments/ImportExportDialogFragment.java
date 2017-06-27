@@ -31,33 +31,59 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
  */
 public class ImportExportDialogFragment extends DialogFragment {
 
-  // dialog IDs, passed in to newInstance
+  private static final String TAG = ImportExportDialogFragment.class.getSimpleName();
+  /**
+   * The ID that tells us to show the export success dialog
+   */
   public static final int CSVEXPORT_SUCCESS_DIALOG = 1;
+  /**
+   * The ID that tells us to show the import success dialog
+   */
   public static final int CSVIMPORT_SUCCESS_DIALOG = 2;
+  /**
+   * The ID that tells us to show the export in progress dialog
+   */
   public static final int EXPORT_IN_PROGRESS_DIALOG = 3;
+  /**
+   * The ID that tells us to show the import in progress dialog
+   */
   public static final int IMPORT_IN_PROGRESS_DIALOG = 4;
+  /**
+   * The ID that tells us to show the import failure dialog
+   */
   public static final int CSVIMPORT_FAIL_DIALOG = 5;
+  /**
+   * The ID that tells us to show the export failure dialog
+   */
   public static final int CSVEXPORT_FAIL_DIALOG = 6;
-  // This is intended to say that "your csv exported successfully, but there
-  // was a problem with the key value store setting mapping.
+  /**
+   * This is intended to say that "your csv exported successfully, but there was a problem with
+   * the key value store setting mapping.
+   */
   public static final int CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 7;
   // private IDs that are put in the bundle of arguments to determine which type of dialog to create
   // can't use an enum because you can't (safely) put an enum in a bundle
   private static final int ALERT_DIALOG = 0;
   private static final int PROGRESS_DIALOG = 1;
-  // the active dialog holder. Dismissing it won't set this to null, so make sure it's still
-  // displayed when you go to change its message
+  /**
+   * the active dialog holder. Dismissing it won't set this to null, so make sure it's still
+   * displayed when you go to change its message
+   */
   public static ImportExportDialogFragment activeDialogFragment = null;
-  // both ImportCSVActivity and ExportCSVActivity set a valid fragment manager in their onCreate
-  // handlers. This means if an ImportTask or an ExportTask tries to create a dialog (i.e. an
-  // Import Complete alert), but their invoking ImportCSVActivity has been destroyed because the
-  // user rotated the screen while the import was in progress, it will have been populated with a
-  // new and valid fragment manager instead of trying to use the one saved off in context which
-  // will then be invalid. The only thing we keep context around for is getAppName which
-  // thankfully doesn't crash the app when you call it on a destroyed object, unlike
-  // getFragmentManager
+  /**
+   * both ImportCSVActivity and ExportCSVActivity set a valid fragment manager in their onCreate
+   * handlers. This means if an ImportTask or an ExportTask tries to create a dialog (i.e. an
+   * Import Complete alert), but their invoking ImportCSVActivity has been destroyed because the
+   * user rotated the screen while the import was in progress, it will have been populated with a
+   * new and valid fragment manager instead of trying to use the one saved off in context which
+   * will then be invalid. The only thing we keep context around for is getAppName which
+   * thankfully doesn't crash the app when you call it on a destroyed object, unlike
+   * getFragmentManager
+   */
   public static FragmentManager fragman = null;
-  // Used for logging
+  /**
+   * Used for logging
+   */
   private String appName;
 
   /**
@@ -112,7 +138,7 @@ public class ImportExportDialogFragment extends DialogFragment {
     if (fragman != null) {
       frag.show(fragman, "dialog");
     } else {
-      WebLogger.getLogger(frag.appName).a("IED", "Someone forgot to give me a fragment manager. "
+      WebLogger.getLogger(frag.appName).a(TAG, "Someone forgot to give me a fragment manager. "
           + "Trying to use the one from context, but it will almost certainly crash if android "
           + "reloaded it");
       frag.show(act.getFragmentManager(), "dialog");
@@ -124,6 +150,7 @@ public class ImportExportDialogFragment extends DialogFragment {
    * Takes a message and sets the dialog's text to that message. That's all.
    *
    * @param task   used for running on the UI thread
+   * @param id     the string resource to get
    * @param status the message to set the dialog's text to
    */
   public void updateProgressDialogStatusString(AbsBaseActivity task, final int id,
@@ -133,7 +160,7 @@ public class ImportExportDialogFragment extends DialogFragment {
       public void run() {
         Dialog d = activeDialogFragment.getDialog();
         if (d == null) {
-          WebLogger.getLogger(appName).a("IED", "Undismissable dialog was dismissed somehow!");
+          WebLogger.getLogger(appName).a(TAG, "Undismissable dialog was dismissed somehow!");
           return;
         }
         if (getArguments().getInt("type") == PROGRESS_DIALOG) {

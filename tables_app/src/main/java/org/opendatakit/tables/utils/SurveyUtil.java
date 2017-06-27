@@ -44,7 +44,7 @@ import java.util.UUID;
  *
  * @author sudar.sam@gmail.com
  */
-public class SurveyUtil {
+public final class SurveyUtil {
 
   /**
    * Used for logging
@@ -69,6 +69,12 @@ public class SurveyUtil {
   private static final String SURVEY_ADDROW_FORM_ID_PREFIX = "_generated_";
 
   /**
+   * Do not instantiate this class
+   */
+  private SurveyUtil() {
+  }
+
+  /**
    * Return the formId for the single file that will be written when there is no
    * custom form defined for a table.
    *
@@ -80,9 +86,9 @@ public class SurveyUtil {
   }
 
   /**
-   * Acquire an intent that will be set up to add a row using Survey. It
-   * should eventually be able to prepopulate the row with the values in
-   * elementKeyToValue. However! Much of this is still unimplemented.
+   * Acquire an intent that will be set up to add a row using Survey. It should eventually be
+   * able to prepopulate the row with the values in elementKeyToValue. However! Much of this is
+   * still unimplemented.
    *
    * @param appName              the app name
    * @param tableId              the id of the table we want to add a row to
@@ -155,7 +161,7 @@ public class SurveyUtil {
   private static Uri getUriForSurveyAddRow(String appName, String tableId,
       SurveyFormParameters surveyFormParameters, Map<String, Object> elementKeyToValue) {
     // We'll create a UUID, as that will tell survey we want a new one.
-    String newUuid = INSTANCE_UUID_PREFIX + UUID.randomUUID().toString();
+    String newUuid = INSTANCE_UUID_PREFIX + UUID.randomUUID();
     return getUriForSurveyHelper(appName, tableId, surveyFormParameters, newUuid,
         elementKeyToValue);
   }
@@ -442,6 +448,13 @@ public class SurveyUtil {
       this.mIsUserDefined = isUserDefined;
     }
 
+    /**
+     * Puts its properties in a key value store entry and sets the table metadata to that entry
+     * @param appName the app name
+     * @param db a database handle to use
+     * @param tableId the id of the table to change the metadata of
+     * @throws ServicesAvailabilityException if the database is down
+     */
     public void persist(String appName, DbHandle db, String tableId)
         throws ServicesAvailabilityException {
       KeyValueStoreEntry entry = KeyValueStoreUtils

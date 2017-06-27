@@ -16,11 +16,8 @@
 package org.opendatakit.tables.utils;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.widget.Toast;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.database.data.Row;
@@ -38,10 +35,18 @@ import java.util.Map;
 /**
  * Some utilities, mostly used for launching survey
  */
-public class ActivityUtil {
+public final class ActivityUtil {
 
-  // Used for logging
+  /**
+   * Used for logging
+   */
   private static final String TAG = ActivityUtil.class.getSimpleName();
+
+  /**
+   * Do not instantiate this
+   */
+  private ActivityUtil() {
+  }
 
   /**
    * Switch to survey to edit a row in SpreadsheetFragment
@@ -54,7 +59,7 @@ public class ActivityUtil {
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId, Row row)
       throws ServicesAvailabilityException {
-    FormType formType = FormType.constructFormType(activity, appName, tableId);
+    FormType formType = FormType.constructFormType(appName, tableId);
 
     // If no formId has been specified, show toast and exit
     if (formType.getFormId() == null) {
@@ -64,7 +69,8 @@ public class ActivityUtil {
 
     SurveyFormParameters params = formType.getSurveyFormParameters();
 
-    Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(appName, tableId, params, row.getDataByKey(DataTableColumns.ID));
+    Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(appName, tableId, params,
+        row.getDataByKey(DataTableColumns.ID));
     if (intent != null) {
       SurveyUtil
           .launchSurveyToEditRow(activity, tableId, intent, row.getDataByKey(DataTableColumns.ID));
@@ -110,7 +116,7 @@ public class ActivityUtil {
    */
   public static void addRow(AbsBaseActivity activity, String appName, String tableId,
       Map<String, Object> prepopulatedValues) throws ServicesAvailabilityException {
-    FormType formType = FormType.constructFormType(activity, appName, tableId);
+    FormType formType = FormType.constructFormType(appName, tableId);
 
     // If no formId has been specified, show toast and exit
     if (formType.getFormId() == null) {
@@ -191,33 +197,6 @@ public class ActivityUtil {
     IntentUtil.addElementKeyToBundle(extras, elementKey);
     intent.putExtras(extras);
     activity.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_COLOR_RULE_LIST);
-  }
-
-  /**
-   * This method is unused
-   * Checks if the device is a tablet or a phone
-   *
-   * @param activityContext The Activity Context.
-   * @return Returns true if the device is a Tablet
-   */
-  @SuppressWarnings("unused")
-  public static boolean isTabletDevice(Context activityContext) {
-    // Verifies if the Generalized Size of the device is XLARGE to be
-    // considered a Tablet
-    boolean xlarge = ((activityContext.getResources().getConfiguration().screenLayout
-        & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE);
-    // If XLarge, checks if the Generalized Density is at least MDPI
-    // (160dpi)
-    if (xlarge) {
-      DisplayMetrics metrics = new DisplayMetrics();
-      Activity activity = (Activity) activityContext;
-      activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
-      // MDPI=160, DEFAULT=160, DENSITY_HIGH=240, DENSITY_MEDIUM=160,
-      // DENSITY_TV=213, DENSITY_XHIGH=320
-      return metrics.densityDpi >= DisplayMetrics.DENSITY_DEFAULT;
-    }
-    // No, this is not a tablet!
-    return false;
   }
 
 }

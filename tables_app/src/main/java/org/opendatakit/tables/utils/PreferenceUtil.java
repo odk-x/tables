@@ -22,15 +22,25 @@ import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 
 /**
  * @author sudar.sam@gmail.com
  */
-public class PreferenceUtil {
+public final class PreferenceUtil {
 
+  /**
+   * Used for logging
+   */
   @SuppressWarnings("unused")
   private static final String TAG = PreferenceUtil.class.getSimpleName();
+
+  /**
+   * Do not instantiate this class
+   */
+  private PreferenceUtil() {
+  }
 
   /**
    * Save viewType (i.e. spreadsheet, detail, map...) to be the default view type for the tableId
@@ -77,6 +87,14 @@ public class PreferenceUtil {
     return result;
   }
 
+  /**
+   * Sets the column width in the database. Reset when you sync
+   * @param context A context used for displaying an error message
+   * @param appName the app name
+   * @param tableId the id of the table that has the column
+   * @param elementKey the id of the column to change the width of
+   * @param newColumnWidth the new width of the column, in pixels
+   */
   public static void setColumnWidth(Context context, String appName, String tableId,
       String elementKey, int newColumnWidth) {
 
@@ -85,7 +103,7 @@ public class PreferenceUtil {
           .atomicSetColumnWidth(Tables.getInstance().getDatabase(), appName, tableId, elementKey,
               newColumnWidth);
     } catch (ServicesAvailabilityException e) {
-      Toast.makeText(context, "Unable to change Column Width", Toast.LENGTH_LONG).show();
+      Toast.makeText(context, R.string.change_column_width_error, Toast.LENGTH_LONG).show();
     }
   }
 

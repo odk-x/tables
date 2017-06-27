@@ -25,13 +25,18 @@ import org.opendatakit.utilities.ODKFileUtils;
  *
  * @author sudar.sam@gmail.com
  */
-public class TableFileUtils {
+public final class TableFileUtils {
 
   private static final String TAG = TableFileUtils.class.getSimpleName();
 
+  /**
+   * Do not instantiate this class
+   */
+  private TableFileUtils() {
+  }
+
   public static String getDefaultAppName() {
     Log.i(TAG, "appName is null on intent");
-    Thread.dumpStack();
     return ODKFileUtils.getOdkDefaultAppName();
   }
 }

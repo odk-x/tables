@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.types;
 
-import android.content.Context;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.service.DbHandle;
@@ -30,26 +29,57 @@ import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
  * @author sudar.sam@gmail.com
  */
 public class FormType {
+  /**
+   * The key value store triplet's partition
+   */
   public static final String KVS_PARTITION = "FormType";
+  /**
+   * The key value store triplet's aspect
+   */
   public static final String KVS_ASPECT = "default";
+  /**
+   * The key value store triplet's key
+   */
   public static final String KEY_FORM_TYPE = "FormType.formType";
+  /**
+   * Used for logging
+   */
+  @SuppressWarnings("unused")
   private static final String TAG = "FormType";
   private Type type;
   private SurveyFormParameters mSurveyParams;
 
-  public FormType(Context context, String appName, String tableId, SurveyFormParameters params) {
+  /**
+   * Constructs a new FormType object
+   *
+   * @param params a SurveyFormParemeters object that contains the right form id, whether the
+   *               form is user defined or not and the form's screen path
+   */
+  public FormType(SurveyFormParameters params) {
     this.type = Type.SURVEY;
     this.mSurveyParams = params;
   }
 
-  public static FormType constructFormType(Context context, String appName, String tableId)
+  /**
+   * Constructs a new survey form parameters using the default form for the table, then returns
+   * {@link #FormType(SurveyFormParameters)}
+   * @param appName the app name
+   * @param tableId the id of the table that the form will be for
+   * @return a new FormType object configured with the default form for the passed table
+   * @throws ServicesAvailabilityException if the database is down
+   */
+  public static FormType constructFormType(String appName, String tableId)
       throws ServicesAvailabilityException {
-    return new FormType(context, appName, tableId,
-        SurveyFormParameters.constructSurveyFormParameters(appName, tableId));
+    return new FormType(SurveyFormParameters.constructSurveyFormParameters(appName, tableId));
   }
 
-  public void persist(Context context, String appName, String tableId)
-      throws ServicesAvailabilityException {
+  /**
+   * Puts the form type in the database as the default form for the table
+   * @param appName the app name
+   * @param tableId the id of the table to set the default form on
+   * @throws ServicesAvailabilityException if the database is down
+   */
+  public void persist(String appName, String tableId) throws ServicesAvailabilityException {
     DbHandle db = null;
     try {
       KeyValueStoreEntry entry = KeyValueStoreUtils
@@ -87,9 +117,10 @@ public class FormType {
     }
   }
 
-  /*
+  /**
    * Currently only a Survey form is valid.
    */
+  @SuppressWarnings("JavaDoc")
   public enum Type {
     SURVEY
   }

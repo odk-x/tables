@@ -64,7 +64,7 @@ public class MainActivity extends AbsBaseWebActivity
    * The active screen -- retained state
    */
   ScreenType activeScreenType = ScreenType.TABLE_MANAGER_SCREEN;
-  File webFileToDisplay = null;
+  private File webFileToDisplay = null;
   /**
    * used to determine whether we need to change the menu (action bar) because of a change in the
    * active fragment.
@@ -195,14 +195,13 @@ public class MainActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Retrieve the app-relative file name from either the
-   * saved instance state or the {@link Intent} that was
-   * used to create the activity.
+   * Retrieve the app-relative file name from either the saved instance state or the
+   * {@link Intent} that was used to create the activity.
    * <p>
-   * If none supplied, then return the default home screen
-   * if we are configured to show it. If we are configured
-   * to show it and it is not present, clear that flag.
+   * If none supplied, then return the default home screen if we are configured to show it. If we
+   * are configured to show it and it is not present, clear that flag.
    *
+   * @param savedInstanceState the bundle to pull the filename out of
    * @return the file used to display the home screen
    */
   protected File getHomeScreen(Bundle savedInstanceState) {

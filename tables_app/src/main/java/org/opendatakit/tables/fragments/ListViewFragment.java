@@ -30,9 +30,4 @@ public class ListViewFragment extends AbsWebTableFragment {
    */
   @SuppressWarnings("unused")
   private static final String TAG = ListViewFragment.class.getSimpleName();
-
-  public ViewFragmentType getFragmentType() {
-    return ViewFragmentType.LIST;
-  }
-
 }

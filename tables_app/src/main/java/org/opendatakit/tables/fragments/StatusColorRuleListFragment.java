@@ -51,6 +51,9 @@ public class StatusColorRuleListFragment extends ListFragment {
    * The group of color rules being displayed by this list.
    */
   ColorRuleGroup mColorRuleGroup = null;
+  /**
+   * The array adapter from a color rule group to the list of rules displayed in this fragment
+   */
   ColorRuleAdapter mColorRuleAdapter = null;
 
   /**
@@ -118,6 +121,12 @@ public class StatusColorRuleListFragment extends ListFragment {
     this.registerForContextMenu(this.getListView());
   }
 
+  /**
+   * Creates an adapter using the same color rule type
+   * @param adminColumns a list of hidden columns in the table
+   * @param colDisplayNames a list of the display names of the columns in the table
+   * @return a new ColorRuleAdapter with the right color rule type
+   */
   ColorRuleAdapter createColorRuleAdapter(String[] adminColumns,
       Map<String, String> colDisplayNames) {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
@@ -156,19 +165,22 @@ public class StatusColorRuleListFragment extends ListFragment {
     return retrieveTableLevelPreferencesActivity().getTableId();
   }
 
+  /**
+   * Returns a color rule group with the color rules for the status column
+   * @param dbInterface a database handle to use
+   * @param db an open database connection
+   * @param adminColumns a list of the hidden columns in the table
+   * @return a ColorRuleGroup containing all the color rules for the status column
+   * @throws ServicesAvailabilityException if the database is down
+   */
   ColorRuleGroup retrieveColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
       String[] adminColumns) throws ServicesAvailabilityException {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
-    ColorRuleGroup result;
-    switch (type) {
-    case STATUS_COLUMN:
-      result = ColorRuleGroup
-          .getStatusColumnRuleGroup(dbInterface, getAppName(), db, getTableId(), adminColumns);
-      break;
-    default:
+    if (type != ColorRuleGroup.Type.STATUS_COLUMN) {
       throw new IllegalArgumentException("unrecognized color rule group type: " + type);
     }
-    return result;
+    return ColorRuleGroup
+        .getStatusColumnRuleGroup(dbInterface, getAppName(), db, getTableId(), adminColumns);
   }
 
 }

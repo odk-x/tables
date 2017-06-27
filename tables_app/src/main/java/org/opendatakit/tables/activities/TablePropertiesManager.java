@@ -137,6 +137,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
 
   private void init() {
 
+    // TODO this is deprecated
     PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
 
     // general category

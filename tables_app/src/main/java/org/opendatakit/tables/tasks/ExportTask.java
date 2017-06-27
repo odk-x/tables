@@ -29,6 +29,9 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 
+/**
+ * Represents a task to export a table to some csv files using CsvUtil
+ */
 public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     implements ExportListener {
 
@@ -73,8 +76,8 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
           .getUserDefinedColumns(appName, db, tableId); // export goes to output/csv directory...
       return cu.exportSeparable(this, db, tableId, orderedDefinitions, request.getFileQualifier());
     } catch (ServicesAvailabilityException e) {
-      WebLogger.getLogger(appName).printStackTrace(e);
       WebLogger.getLogger(appName).e(TAG, "Unable to access database");
+      WebLogger.getLogger(appName).printStackTrace(e);
       return false;
     } finally {
       if (db != null) {

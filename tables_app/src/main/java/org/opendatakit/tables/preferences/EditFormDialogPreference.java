@@ -71,7 +71,7 @@ public class EditFormDialogPreference extends DialogPreference {
   private FormType retrieveFormType() throws ServicesAvailabilityException {
     AbsTableActivity tableActivity = (AbsTableActivity) getContext();
     return FormType
-        .constructFormType(tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
+        .constructFormType(tableActivity.getAppName(), tableActivity.getTableId());
   }
 
   /**
@@ -131,7 +131,7 @@ public class EditFormDialogPreference extends DialogPreference {
 
       try {
         this.mFormType
-            .persist(tableActivity, tableActivity.getAppName(), tableActivity.getTableId());
+            .persist(tableActivity.getAppName(), tableActivity.getTableId());
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(tableActivity.getAppName()).printStackTrace(e);
         Toast.makeText(getContext(), getContext().getString(R.string.unable_to_save_db_changes),

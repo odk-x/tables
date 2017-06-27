@@ -24,13 +24,40 @@ import org.opendatakit.database.queries.BindArgs;
  */
 public class SQLQueryStruct {
 
+  /**
+   * A sql clause that narrows down the list of returned rows
+   */
   public String whereClause;
+  /**
+   * TODO
+   */
   public BindArgs selectionArgs;
+  /**
+   * A list of columns to group by
+   */
   public String[] groupBy;
+  /**
+   * A SQL having clause
+   */
   public String having;
+  /**
+   * The column id of the column to sort the results by
+   */
   public String orderByElementKey;
+  /**
+   * the direction to sort by, ASC for ascending, DESC for descending
+   */
   public String orderByDirection;
 
+  /**
+   * A simple constructor that stores its properties
+   * @param whereClause       A sql clause that narrows down the list of returned rows
+   * @param selectionArgs     TODO
+   * @param groupBy           A list of columns to group by
+   * @param having            A SQL having clause
+   * @param orderByElementKey The column id of the column to sort the results by
+   * @param orderByDirection  the direction to sort by, ASC for ascending, DESC for descending
+   */
   public SQLQueryStruct(String whereClause, BindArgs selectionArgs, String[] groupBy, String having,
       String orderByElementKey, String orderByDirection) {
     this.whereClause = whereClause;

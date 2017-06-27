@@ -59,6 +59,9 @@ public class ColorRuleListFragment extends ListFragment {
    * The group of color rules being displayed by this list.
    */
   ColorRuleGroup mColorRuleGroup;
+  /**
+   * An adapter for the group of color rules being displayed by this list.
+   */
   ColorRuleAdapter mColorRuleAdapter;
 
   /**
@@ -135,6 +138,12 @@ public class ColorRuleListFragment extends ListFragment {
     this.registerForContextMenu(this.getListView());
   }
 
+  /**
+   * Creates an adapter using the same color rule type
+   * @param adminColumns a list of hidden columns in the table
+   * @param colDisplayNames a list of the display names of the columns in the table
+   * @return a new ColorRuleAdapter with the right color rule type
+   */
   ColorRuleAdapter createColorRuleAdapter(String[] adminColumns,
       Map<String, String> colDisplayNames) {
     ColorRuleGroup.Type type = this.retrieveColorRuleType();
@@ -304,6 +313,14 @@ public class ColorRuleListFragment extends ListFragment {
     return retrieveTableLevelPreferencesActivity().getTableId();
   }
 
+  /**
+   * Returns a color rule group with the color rules for the color rule type
+   * @param dbInterface a database handle to use
+   * @param db an open database connection
+   * @param adminColumns a list of the hidden columns in the table
+   * @return a ColorRuleGroup containing all the color rules for the status column
+   * @throws ServicesAvailabilityException if the database is down
+   */
   ColorRuleGroup retrieveColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
       String[] adminColumns) throws ServicesAvailabilityException {
     ColorRuleGroup.Type type = retrieveColorRuleType();

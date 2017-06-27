@@ -30,6 +30,11 @@ public class EditColorPreference extends Preference {
 
   private Context mContext;
 
+  /**
+   * Default constructor, saves context
+   * @param context Passed into ColorPickerDialog
+   * @param attrs unused
+   */
   public EditColorPreference(Context context, AttributeSet attrs) {
     super(context, attrs);
     this.mContext = context;

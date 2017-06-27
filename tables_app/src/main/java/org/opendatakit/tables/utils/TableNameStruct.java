@@ -25,6 +25,11 @@ public class TableNameStruct {
   private String mTableId;
   private String mLocalizedDisplayName;
 
+  /**
+   * Initializes
+   * @param tableId stored
+   * @param localizedDisplayName stored
+   */
   public TableNameStruct(String tableId, String localizedDisplayName) {
     this.mTableId = tableId;
     this.mLocalizedDisplayName = localizedDisplayName;
@@ -43,8 +48,8 @@ public class TableNameStruct {
     final int prime = 31;
     int result = 1;
     result =
-        prime * result + ((mLocalizedDisplayName == null) ? 0 : mLocalizedDisplayName.hashCode());
-    result = prime * result + ((mTableId == null) ? 0 : mTableId.hashCode());
+        prime * result + (mLocalizedDisplayName == null ? 0 : mLocalizedDisplayName.hashCode());
+    result = prime * result + (mTableId == null ? 0 : mTableId.hashCode());
     return result;
   }
 

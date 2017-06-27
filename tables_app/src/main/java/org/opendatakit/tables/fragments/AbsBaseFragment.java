@@ -31,8 +31,11 @@ import org.opendatakit.tables.application.Tables;
  */
 public abstract class AbsBaseFragment extends Fragment implements DatabaseConnectionListener {
 
-  private static final String LOGTAG = "AbsBaseFragment";
+  private static final String TAG = "AbsBaseFragment";
 
+  /**
+   * The app name
+   */
   protected String mAppName;
 
   public void onAttach(Context context) {
@@ -72,7 +75,7 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
         mAppName = ((IAppAwareActivity) activity).getAppName();
       }
       WebLogger.getLogger(mAppName)
-          .d(LOGTAG, "mAppName was null and has been set using the activity");
+          .d(TAG, "mAppName was null and has been set using the activity");
     }
     return mAppName;
   }

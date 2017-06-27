@@ -378,7 +378,8 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
   }
 
   /**
-   * Does nothing, this is handled in EditFormDialogPreference
+   * Does nothing, this is handled in
+   * {@link org.opendatakit.tables.preferences.EditFormDialogPreference}
    */
   private void initializeDefaultForm() {
   }

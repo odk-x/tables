@@ -48,7 +48,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   private static final String QUEUED_ACTIONS = "queuedActions";
   private static final String RESPONSE_JSON = "responseJSON";
-  LinkedList<String> queueResponseJSON = new LinkedList<>();
+  private LinkedList<String> queueResponseJSON = new LinkedList<>();
   private String dispatchStringWaitingForData = null;
   private String actionWaitingForData = null;
   private Bundle sessionVariables = new Bundle();

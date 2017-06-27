@@ -51,17 +51,26 @@ import java.util.List;
  */
 public abstract class AbsBaseActivity extends BaseActivity {
 
-  // used for logging
+  /**
+   * Used for logging
+   */
   private static String TAG = AbsBaseActivity.class.getSimpleName();
-  // the app name
+  /**
+   * The app name
+   */
   protected String mAppName;
-  // Holds the account name and password for AbsBaseWebActivity, and the users locale
+  /**
+   * Holds the account name and password for AbsBaseWebActivity, and the users locale
+   */
   protected PropertiesSingleton mProps;
-  // The id of the table that will be passed along to survey when it is started to add or edit a row
-  protected String mActionTableId = null;
+  /**
+   * The id of the table that will be passed along to survey when it is started to add or edit a
+   * row
+   */
+  private String mActionTableId = null;
 
-  Bundle mCheckpointTables = new Bundle();
-  Bundle mConflictTables = new Bundle();
+  private Bundle mCheckpointTables = new Bundle();
+  private Bundle mConflictTables = new Bundle();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -303,6 +312,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
 
   /**
    * Attempts to handle an error upon not being able to access services
+   *
    * @param e an exception to log
    */
   private void handleError(Throwable e) {

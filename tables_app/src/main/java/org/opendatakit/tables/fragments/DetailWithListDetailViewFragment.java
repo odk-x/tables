@@ -51,8 +51,4 @@ public class DetailWithListDetailViewFragment extends AbsWebTableFragment {
     webView.setContainerFragmentID(Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL);
     return newView;
   }
-
-  public ViewFragmentType getFragmentType() {
-    return ViewFragmentType.DETAIL_WITH_LIST;
-  }
 }

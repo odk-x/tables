@@ -31,6 +31,9 @@ import org.opendatakit.tables.views.webkits.OdkTablesWebView;
  */
 public class MapListViewFragment extends ListViewFragment implements IMapListViewCallbacks {
 
+  /**
+   * Represents an index that can't possibly be in the list
+   */
   public static final int INVALID_INDEX = -1;
   private static final String TAG = MapListViewFragment.class.getSimpleName();
   /**
@@ -49,7 +52,7 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
     if (savedInstanceState != null) {
       this.mSelectedItemIndex = savedInstanceState.containsKey(INTENT_KEY_SELECTED_INDEX) ?
           savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX) :
-          -1;
+          INVALID_INDEX;
     }
   }
 

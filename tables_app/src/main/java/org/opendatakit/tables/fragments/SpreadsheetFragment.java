@@ -190,15 +190,6 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   }
 
   /**
-   * Logs a message on resume
-   */
-  @Override
-  public void onResume() {
-    super.onResume();
-    WebLogger.getLogger(mAppName).i(TAG, "onResume done being called");
-  }
-
-  /**
    * Does nothing when the database goes away
    */
   @Override

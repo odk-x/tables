@@ -33,6 +33,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * A class that can be used to launch a file picker and get the selected filename in the textbox
+ */
 public class FileSelectorPreference extends EditTextPreference {
 
   /**
@@ -42,6 +45,11 @@ public class FileSelectorPreference extends EditTextPreference {
   private Fragment mFragment = null;
   private String mAppName = null;
 
+  /**
+   * Default constructor
+   * @param context unused
+   * @param attrs unused
+   */
   public FileSelectorPreference(Context context, AttributeSet attrs) {
     super(context, attrs);
   }

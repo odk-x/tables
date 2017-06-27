@@ -30,8 +30,4 @@ public class DetailViewFragment extends AbsWebTableFragment {
    */
   @SuppressWarnings("unused")
   private static final String TAG = DetailViewFragment.class.getSimpleName();
-
-  public ViewFragmentType getFragmentType() {
-    return ViewFragmentType.DETAIL;
-  }
 }

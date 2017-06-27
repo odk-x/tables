@@ -19,9 +19,16 @@ import org.opendatakit.tables.R;
 
 import java.lang.ref.WeakReference;
 
+/**
+ * The application, holds a reference to itself and a very helpful getDatabase method
+ */
 public class Tables extends CommonApplication {
 
-  public static final String TAG = Tables.class.getSimpleName();
+  /**
+   * Used for logging
+   */
+  @SuppressWarnings("unused")
+  private static final String TAG = Tables.class.getSimpleName();
 
   private static WeakReference<Tables> singleton = new WeakReference<>(null);
 
