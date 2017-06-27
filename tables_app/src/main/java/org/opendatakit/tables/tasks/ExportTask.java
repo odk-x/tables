@@ -65,14 +65,14 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
       @Override
       public UserDbInterface getDatabase() {
-        return Tables.getInstance().getDatabase();
+        return Tables.getInstance(context).getDatabase();
       }
     }, appName);
     DbHandle db = null;
     try {
       String tableId = request.getTableId();
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      OrderedColumns orderedDefinitions = Tables.getInstance().getDatabase()
+      db = Tables.getInstance(context).getDatabase().openDatabase(appName);
+      OrderedColumns orderedDefinitions = Tables.getInstance(context).getDatabase()
           .getUserDefinedColumns(appName, db, tableId); // export goes to output/csv directory...
       return cu.exportSeparable(this, db, tableId, orderedDefinitions, request.getFileQualifier());
     } catch (ServicesAvailabilityException e) {
@@ -82,7 +82,7 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     } finally {
       if (db != null) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
+          Tables.getInstance(context).getDatabase().closeDatabase(appName, db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
           WebLogger.getLogger(appName).e(TAG, "Unable to close database");

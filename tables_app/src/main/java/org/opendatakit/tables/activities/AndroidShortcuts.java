@@ -215,7 +215,7 @@ public class AndroidShortcuts extends BaseActivity {
    * @param errorMsg   what message to display to the user
    * @param shouldExit whether we should finish() the activity if the user clicks the "yes" button
    */
-  private void createErrorDialog(String errorMsg, final boolean shouldExit) {
+  private void createErrorDialog(CharSequence errorMsg, final boolean shouldExit) {
     AlertDialog mAlertDialog = new AlertDialog.Builder(this).create();
     mAlertDialog.setIcon(android.R.drawable.ic_dialog_info);
     mAlertDialog.setMessage(errorMsg);
@@ -239,7 +239,7 @@ public class AndroidShortcuts extends BaseActivity {
    */
   @Override
   public String getAppName() {
-    return Tables.getInstance().getToolName();
+    return Tables.getInstance(this).getToolName();
   }
 
   /**

@@ -59,7 +59,7 @@ public final class ActivityUtil {
    */
   public static void editRow(AbsBaseActivity activity, String appName, String tableId, Row row)
       throws ServicesAvailabilityException {
-    FormType formType = FormType.constructFormType(appName, tableId);
+    FormType formType = FormType.constructFormType(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit
     if (formType.getFormId() == null) {
@@ -90,7 +90,7 @@ public final class ActivityUtil {
       throws ServicesAvailabilityException {
     WebLogger.getLogger(appName).d(TAG, "[editRow] using survey form");
     SurveyFormParameters surveyFormParameters = SurveyFormParameters
-        .constructSurveyFormParameters(appName, tableId);
+        .constructSurveyFormParameters(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit
     if (surveyFormParameters.getFormId() == null) {
@@ -116,7 +116,7 @@ public final class ActivityUtil {
    */
   public static void addRow(AbsBaseActivity activity, String appName, String tableId,
       Map<String, Object> prepopulatedValues) throws ServicesAvailabilityException {
-    FormType formType = FormType.constructFormType(appName, tableId);
+    FormType formType = FormType.constructFormType(activity, appName, tableId);
 
     // If no formId has been specified, show toast and exit
     if (formType.getFormId() == null) {

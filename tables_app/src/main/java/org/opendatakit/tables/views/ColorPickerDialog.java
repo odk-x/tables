@@ -50,7 +50,7 @@ public class ColorPickerDialog extends Dialog {
    * @param title        The title for the dialog
    */
   public ColorPickerDialog(Context context, OnColorChangedListener listener, String key,
-      int initialColor, int defaultColor, String title) {
+      int initialColor, int defaultColor, CharSequence title) {
     super(context);
 
     mListener = listener;

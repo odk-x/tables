@@ -17,6 +17,7 @@ package org.opendatakit.tables.activities;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
@@ -137,13 +138,13 @@ public class ExportCSVActivity extends AbsBaseActivity {
     ruler3.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
     v.addView(ruler3, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
     // adding the export button
-    Button button = new Button(this);
+    TextView button = new Button(this);
     button.setId(R.id.EXPORTBUTTON_ID);
     button.setText(getString(R.string.export_button));
     button.setOnClickListener(new ExportButtonListener());
     v.addView(button);
     // wrapping in a scroll view
-    ScrollView scroll = new ScrollView(this);
+    ViewGroup scroll = new ScrollView(this);
     scroll.addView(v);
     return scroll;
   }
@@ -155,7 +156,7 @@ public class ExportCSVActivity extends AbsBaseActivity {
     String tableId = tableIds[tableSpin.getSelectedItemPosition()];
     ImportExportDialogFragment
         .newInstance(ImportExportDialogFragment.EXPORT_IN_PROGRESS_DIALOG, this);
-    ExportTask task = new ExportTask(appName, this);
+    AsyncTask<ExportRequest, Integer, Boolean> task = new ExportTask(appName, this);
     task.execute(new ExportRequest(appName, tableId, qualifierTextBox.getText().toString().trim()));
   }
 
@@ -185,9 +186,9 @@ public class ExportCSVActivity extends AbsBaseActivity {
   public void databaseAvailable() {
     super.databaseAvailable();
 
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(this).getDatabase();
     if (dbInterface != null) {
-      PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
+      PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(this), appName);
       String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
       DbHandle db = null;
       try {

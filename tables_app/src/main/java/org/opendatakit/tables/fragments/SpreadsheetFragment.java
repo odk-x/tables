@@ -331,12 +331,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       throws ServicesAvailabilityException, ActionNotAuthorizedException {
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-      Tables.getInstance().getDatabase()
+      db = Tables.getInstance(getActivity()).getDatabase().openDatabase(getAppName());
+      Tables.getInstance(getActivity()).getDatabase()
           .deleteRowWithId(getAppName(), db, getTableId(), getColumnDefinitions(), rowId);
     } finally {
       if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+        Tables.getInstance(getActivity()).getDatabase().closeDatabase(getAppName(), db);
       }
     }
   }
@@ -365,7 +365,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   public boolean onContextItemSelected(MenuItem item) {
     getProps().headerMenuOpen = false;
     getProps().dataMenuOpen = false;
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
 
     // TEMP code to try and fix the crash on return-edit
     if (spreadsheetTable == null) {
@@ -617,7 +617,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // check a join association with this column; add a join... option if
     // it is applicable.
     ArrayList<JoinColumn> joinColumns;
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());

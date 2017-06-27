@@ -90,9 +90,9 @@ public class StatusColorRuleListFragment extends ListFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     //this.setHasOptionsMenu(true);
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
     TableUtil.TableColumns tc = null;
     DbHandle db = null;
     try {

@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.preferences;
 
+import android.app.Activity;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.preference.ListPreference;
@@ -30,7 +31,7 @@ import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 import org.opendatakit.tables.views.components.TableViewTypeAdapter;
@@ -84,11 +85,12 @@ public class DefaultViewTypePreference extends ListPreference {
     CharSequence[] mEntryValues = mContext.getResources()
         .getTextArray(R.array.table_view_types_values);
 
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance((Activity) getContext()).getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(mAppName);
-      mPossibleViewTypes = new PossibleTableViewTypes(mAppName, db, tableId, orderedDefns);
+      mPossibleViewTypes = new PossibleTableViewTypes(dbInterface, mAppName, db, tableId,
+          orderedDefns);
       // Let's set the currently selected one.
       defaultViewType = TableUtil.get().getDefaultViewType(dbInterface, mAppName, db, tableId);
     } finally {
@@ -117,8 +119,8 @@ public class DefaultViewTypePreference extends ListPreference {
     if (mPossibleViewTypes == null) {
       // The user rotated the screen and TablePreferenceFragment.initializeDefaultViewType hasn't
       // been called yet to call setFields
-      if (mContext instanceof TableLevelPreferencesActivity) {
-        TableLevelPreferencesActivity act = (TableLevelPreferencesActivity) mContext;
+      if (mContext instanceof AbsTableActivity) {
+        AbsTableActivity act = (AbsTableActivity) mContext;
         try {
           setFields(act.getTableId(), act.getColumnDefinitions());
         } catch (ServicesAvailabilityException e) {

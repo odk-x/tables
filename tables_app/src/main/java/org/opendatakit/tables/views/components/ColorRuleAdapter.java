@@ -21,7 +21,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.RadioButton;
 import android.widget.TextView;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.data.ColorRule;
@@ -148,7 +147,7 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
     exampleView.setBackgroundColor(backgroundColor);
     exampleView.setVisibility(View.VISIBLE);
     // The radio button is meaningless here, so get it off the screen.
-    final RadioButton radioButton = (RadioButton) row.findViewById(R.id.radio_button);
+    final View radioButton = row.findViewById(R.id.radio_button);
     radioButton.setVisibility(View.GONE);
 
     return row;

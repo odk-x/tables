@@ -31,6 +31,10 @@ class OdkTablesIf {
 
   private WeakReference<OdkTables> weakControl;
 
+  /**
+   * TODO needs documentation
+   * @param odkTables
+   */
   OdkTablesIf(OdkTables odkTables) {
     weakControl = new WeakReference<>(odkTables);
   }

@@ -31,10 +31,7 @@ import org.opendatakit.tables.activities.IOdkTablesActivity;
 import org.opendatakit.views.ExecutorContext;
 import org.opendatakit.views.ExecutorProcessor;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author mitchellsundt@gmail.com
@@ -60,8 +57,8 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
   }
 
   private static void constructRowColorObjects(UserDbInterface dbInterface, DbHandle db,
-      UserTable userTable, String[] adminCols, ArrayList<RowColorObject> colors,
-      ColorRuleType crType, String elementKey) throws ServicesAvailabilityException {
+      UserTable userTable, String[] adminCols, Collection<RowColorObject> colors,
+      Object crType, String elementKey) throws ServicesAvailabilityException {
     // Should reuse this code for column and status color rules
 
     ColorRuleGroup crg;
@@ -109,9 +106,9 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
     // TODO: construct color rule data here...
     String[] adminCols = ADMIN_COLUMNS.toArray(new String[ADMIN_COLUMNS.size()]);
 
-    ArrayList<RowColorObject> rowColors = new ArrayList<>();
-    ArrayList<RowColorObject> statusColors = new ArrayList<>();
-    HashMap<String, ArrayList<RowColorObject>> colColors = new HashMap<>();
+    Collection<RowColorObject> rowColors = new ArrayList<>();
+    Collection<RowColorObject> statusColors = new ArrayList<>();
+    Map<String, ArrayList<RowColorObject>> colColors = new HashMap<>();
 
     try {
       // Need to get the tables color rules and determine which rows are affected

@@ -250,7 +250,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     // Grab the color group
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(activity.getAppName());
@@ -394,14 +394,14 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     return TableUtil.get()
-        .getMapListViewLatitudeElementKey(Tables.getInstance().getDatabase(), activity.getAppName(),
+        .getMapListViewLatitudeElementKey(Tables.getInstance(getActivity()).getDatabase(), activity.getAppName(),
             dbHandle, activity.getTableId(), orderedDefns);
   }
 
   private String getLongitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    return TableUtil.get().getMapListViewLongitudeElementKey(Tables.getInstance().getDatabase(),
+    return TableUtil.get().getMapListViewLongitudeElementKey(Tables.getInstance(getActivity()).getDatabase(),
         activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
   }
 

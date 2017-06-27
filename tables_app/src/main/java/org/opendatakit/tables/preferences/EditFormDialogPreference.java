@@ -24,18 +24,27 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import org.opendatakit.activities.IAppAwareActivity;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
 
+/**
+ * TODO what does this class do?
+ */
 public class EditFormDialogPreference extends DialogPreference {
 
-  // Used for logging
+  /**
+   * used for logging
+   */
   private static final String TAG = EditFormDialogPreference.class.getName();
 
   // The context and activity we're running in
@@ -54,7 +63,7 @@ public class EditFormDialogPreference extends DialogPreference {
   public EditFormDialogPreference(Context context, AttributeSet attrs) {
     super(context, attrs);
     this.mContext = context;
-    Activity activity = (Activity) getContext();
+    Object activity = getContext();
     if (!(activity instanceof AbsTableActivity)) {
       throw new IllegalArgumentException(
           "EditFormDialogPreference must be associated with an AbsTableActivity");
@@ -70,8 +79,8 @@ public class EditFormDialogPreference extends DialogPreference {
    */
   private FormType retrieveFormType() throws ServicesAvailabilityException {
     AbsTableActivity tableActivity = (AbsTableActivity) getContext();
-    return FormType
-        .constructFormType(tableActivity.getAppName(), tableActivity.getTableId());
+    return FormType.constructFormType((Activity) getContext(), tableActivity.getAppName(),
+        tableActivity.getTableId());
   }
 
   /**
@@ -81,7 +90,7 @@ public class EditFormDialogPreference extends DialogPreference {
    */
   @Override
   protected View onCreateDialogView() {
-    AbsTableActivity tableActivity = (AbsTableActivity) getContext();
+    IAppAwareActivity tableActivity = (IAppAwareActivity) getContext();
     WebLogger.getLogger(tableActivity.getAppName()).d(TAG, "in onCreateDialogView");
     LayoutInflater inflater = (LayoutInflater) this.mContext
         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -129,13 +138,26 @@ public class EditFormDialogPreference extends DialogPreference {
       this.mFormType.setFormId(formId);
       AbsTableActivity tableActivity = (AbsTableActivity) getContext();
 
+      UserDbInterface dbInt = Tables.getInstance(tableActivity).getDatabase();
+      DbHandle db = null;
       try {
-        this.mFormType
-            .persist(tableActivity.getAppName(), tableActivity.getTableId());
+        db = dbInt.openDatabase(tableActivity.getAppName());
+        this.mFormType.persist(dbInt, tableActivity.getAppName(), db, tableActivity.getTableId());
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(tableActivity.getAppName()).printStackTrace(e);
         Toast.makeText(getContext(), getContext().getString(R.string.unable_to_save_db_changes),
             Toast.LENGTH_LONG).show();
+      } finally {
+        if (db != null) {
+          try {
+            dbInt.closeDatabase(tableActivity.getAppName(), db);
+          } catch (ServicesAvailabilityException e) {
+            Toast.makeText(tableActivity, R.string.unable_to_save_db_changes, Toast.LENGTH_LONG)
+                .show();
+            WebLogger.getLogger(tableActivity.getAppName()).e(TAG, "Failed to save default form");
+            WebLogger.getLogger(tableActivity.getAppName()).printStackTrace(e);
+          }
+        }
       }
     }
   }

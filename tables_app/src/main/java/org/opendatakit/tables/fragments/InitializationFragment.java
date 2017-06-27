@@ -101,7 +101,7 @@ public class InitializationFragment extends Fragment
     WebLogger.getLogger(appName).d(TAG, "in private void intializeAppName() {");
     // set up the first dialog, but don't show it...
     mAlertTitle = getString(R.string.configuring_app,
-        getString(Tables.getInstance().getApkDisplayNameResourceId()));
+        getString(Tables.getInstance(getActivity()).getApkDisplayNameResourceId()));
     mAlertMsg = getString(R.string.please_wait);
     mDialogState = DialogState.Progress;
 
@@ -109,7 +109,7 @@ public class InitializationFragment extends Fragment
 
     // launch the copy operation
     WebLogger.getLogger(appName).i(TAG, "initializeAppName called ");
-    Tables.getInstance().initializeAppName(((IAppAwareActivity) getActivity()).getAppName(), this);
+    Tables.getInstance(getActivity()).initializeAppName(((IAppAwareActivity) getActivity()).getAppName(), this);
   }
 
   /**
@@ -152,7 +152,7 @@ public class InitializationFragment extends Fragment
       }
 
       // re-attach to the task for task notifications...
-      Tables.getInstance().establishInitializationListener(this);
+      Tables.getInstance(getActivity()).establishInitializationListener(this);
     }
   }
 
@@ -163,7 +163,7 @@ public class InitializationFragment extends Fragment
   public void onStart() {
     WebLogger.getLogger(appName).d(TAG, "in public void onStart() {");
     super.onStart();
-    Tables.getInstance().possiblyFireDatabaseCallback(getActivity(), this);
+    Tables.getInstance(getActivity()).possiblyFireDatabaseCallback(getActivity(), this);
   }
 
   /**
@@ -208,7 +208,7 @@ public class InitializationFragment extends Fragment
       WebLogger.getLogger(appName).printStackTrace(e);
     }
 
-    Tables.getInstance().clearInitializationTask();
+    Tables.getInstance(getActivity()).clearInitializationTask();
 
     if (overallSuccess && result.isEmpty()) {
       // do not require an OK if everything went well
@@ -273,7 +273,7 @@ public class InitializationFragment extends Fragment
         .d(TAG, "in private void updateProgressDialogMessage(String message) {");
     if (mDialogState == DialogState.Progress) {
       mAlertTitle = getString(R.string.configuring_app,
-          getString(Tables.getInstance().getApkDisplayNameResourceId()));
+          getString(Tables.getInstance(getActivity()).getApkDisplayNameResourceId()));
       mAlertMsg = message;
       restoreProgressDialog();
     }
@@ -374,7 +374,7 @@ public class InitializationFragment extends Fragment
     // but keep the notification path...
     // the task will call back with a copyExpansionFilesComplete()
     // to report status (cancelled).
-    Tables.getInstance().cancelInitializationTask();
+    Tables.getInstance(getActivity()).cancelInitializationTask();
   }
 
   /**
@@ -385,7 +385,7 @@ public class InitializationFragment extends Fragment
   public void databaseAvailable() {
     WebLogger.getLogger(appName).d(TAG, "in public void databaseAvailable() {");
     if (mDialogState == DialogState.Progress) {
-      Tables.getInstance().initializeAppName(appName, this);
+      Tables.getInstance(getActivity()).initializeAppName(appName, this);
     }
   }
 

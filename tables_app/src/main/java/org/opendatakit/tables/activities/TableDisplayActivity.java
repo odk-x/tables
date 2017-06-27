@@ -360,7 +360,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     WebLogger.getLogger(getAppName()).i(TAG, "databaseAvailable called");
     if (pullFromDatabase) {
       try {
-        UserDbInterface dbInt = Tables.getInstance().getDatabase();
+        UserDbInterface dbInt = Tables.getInstance(this).getDatabase();
         DbHandle db = dbInt.openDatabase(mAppName);
         props.setSortOrder(TableUtil.get().getSortOrder(dbInt, mAppName, db, getTableId()));
         props.setSort(TableUtil.get().getSortColumn(dbInt, mAppName, db, getTableId()));
@@ -413,7 +413,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     if (mUserTable == null) {
       DbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+        db = Tables.getInstance(this).getDatabase().openDatabase(getAppName());
         SQLQueryStruct sqlQueryStruct = IntentUtil
             .getSQLQueryStructFromBundle(this.getIntent().getExtras());
 
@@ -426,7 +426,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         sqlQueryStruct.orderByDirection = props.getSortOrder();
 
         String[] emptyArray = {};
-        mUserTable = Tables.getInstance().getDatabase()
+        mUserTable = Tables.getInstance(this).getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
                 sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
                 sqlQueryStruct.groupBy == null ? emptyArray : sqlQueryStruct.groupBy,
@@ -441,7 +441,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       } finally {
         if (db != null) {
           try {
-            Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+            Tables.getInstance(this).getDatabase().closeDatabase(getAppName(), db);
           } catch (ServicesAvailabilityException e) {
             Toast.makeText(this, R.string.database_unavailable, Toast.LENGTH_LONG).show();
             WebLogger.getLogger(getAppName()).printStackTrace(e);
@@ -538,21 +538,21 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       // this isn't a webkit
       return null;
     case LIST:
-      ListViewFragment listViewFragment = (ListViewFragment) fragmentManager
+      IWebFragment listViewFragment = (IWebFragment) fragmentManager
           .findFragmentByTag(ViewFragmentType.LIST.name());
       if (listViewFragment != null) {
         return listViewFragment.getWebKit();
       }
       break;
     case MAP:
-      MapListViewFragment mapListViewFragment = (MapListViewFragment) fragmentManager
+      IWebFragment mapListViewFragment = (IWebFragment) fragmentManager
           .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
       if (mapListViewFragment != null) {
         return mapListViewFragment.getWebKit();
       }
       break;
     case DETAIL:
-      DetailViewFragment detailViewFragment = (DetailViewFragment) fragmentManager
+      IWebFragment detailViewFragment = (IWebFragment) fragmentManager
           .findFragmentByTag(ViewFragmentType.DETAIL.name());
       if (detailViewFragment != null) {
         return detailViewFragment.getWebKit();
@@ -561,14 +561,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     case DETAIL_WITH_LIST:
     case SUB_LIST:
       if (viewID == null || viewID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL)) {
-        DetailWithListDetailViewFragment detailWithListDetailViewFragment = (DetailWithListDetailViewFragment) fragmentManager
+        IWebFragment detailWithListDetailViewFragment = (IWebFragment) fragmentManager
             .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL);
         if (detailWithListDetailViewFragment != null) {
           return detailWithListDetailViewFragment.getWebKit();
         }
       } else if (viewID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
         // webkit to get
-        DetailWithListListViewFragment subListViewFragment = (DetailWithListListViewFragment) fragmentManager
+        IWebFragment subListViewFragment = (IWebFragment) fragmentManager
             .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
         if (subListViewFragment != null) {
           return subListViewFragment.getWebKit();
@@ -799,12 +799,13 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    */
   private void possiblySupplyDefaults() {
 
-    if (mPossibleTableViewTypes == null && Tables.getInstance().getDatabase() != null) {
+    if (mPossibleTableViewTypes == null && Tables.getInstance(this).getDatabase() != null) {
+      UserDbInterface dbInterface = Tables.getInstance(this).getDatabase();
       DbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-        mPossibleTableViewTypes = new PossibleTableViewTypes(getAppName(), db, getTableId(),
-            getColumnDefinitions());
+        db = dbInterface.openDatabase(getAppName());
+        mPossibleTableViewTypes = new PossibleTableViewTypes(dbInterface, getAppName(), db,
+            getTableId(), getColumnDefinitions());
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         WebLogger.getLogger(getAppName()).e(TAG, "[databaseAvailable] unable to access database");
@@ -813,7 +814,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       } finally {
         if (db != null) {
           try {
-            Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+            Tables.getInstance(this).getDatabase().closeDatabase(getAppName(), db);
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName())
@@ -869,19 +870,17 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     FragmentManager fragmentManager = this.getFragmentManager();
     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
     // First acquire all the possible fragments.
-    AbsBaseFragment spreadsheetFragment = (AbsBaseFragment) fragmentManager
+    Fragment spreadsheetFragment = fragmentManager
         .findFragmentByTag(ViewFragmentType.SPREADSHEET.name());
-    AbsBaseFragment listViewFragment = (AbsBaseFragment) fragmentManager
-        .findFragmentByTag(ViewFragmentType.LIST.name());
-    AbsBaseFragment mapListViewFragment = (AbsBaseFragment) fragmentManager
+    Fragment listViewFragment = fragmentManager.findFragmentByTag(ViewFragmentType.LIST.name());
+    Fragment mapListViewFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
     Fragment innerMapFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.MAP_INNER_MAP);
-    AbsBaseFragment detailViewFragment = (AbsBaseFragment) fragmentManager
-        .findFragmentByTag(ViewFragmentType.DETAIL.name());
-    AbsWebTableFragment detailWithListViewDetailFragment = (AbsWebTableFragment) fragmentManager
+    Fragment detailViewFragment = fragmentManager.findFragmentByTag(ViewFragmentType.DETAIL.name());
+    Fragment detailWithListViewDetailFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL);
-    AbsWebTableFragment detailWithListViewListFragment = (AbsWebTableFragment) fragmentManager
+    Fragment detailWithListViewListFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
 
     // Hide all fragments other than the current fragment type...
@@ -1058,7 +1057,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     FragmentManager fragmentManager = this.getFragmentManager();
     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-    AbsWebTableFragment detailWithListViewListFragment = (AbsWebTableFragment) fragmentManager
+    Fragment detailWithListViewListFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
 
     if (detailWithListViewListFragment != null) {
@@ -1110,7 +1109,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     View onePaneContent = findViewById(R.id.activity_table_display_activity_one_pane_content);
     View splitContent = findViewById(R.id.activity_table_display_activity_split_content);
     View mapContent = findViewById(R.id.activity_table_display_activity_map_content);
-    for (View v : new View[] {onePaneContent, splitContent, mapContent}) {
+    for (View v : new View[] { onePaneContent, splitContent, mapContent }) {
       v.setVisibility(View.GONE);
     }
     switch (viewFragmentType) {
@@ -1169,38 +1168,26 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   public void initializationCompleted() {
   }
 
-  /**
-   * The fragment types this activity could be displaying.
-   *
-   * @author sudar.sam@gmail.com
-   */
-  @SuppressWarnings("JavaDoc")
-  public enum ViewFragmentType {
-    SPREADSHEET, LIST, MAP, DETAIL, DETAIL_WITH_LIST, SUB_LIST
-  }
-
   private void removeAllFragments() {
     FragmentManager fragmentManager = this.getFragmentManager();
     FragmentTransaction fragmentTransaction = null;
     // First acquire all the possible fragments.
-    AbsBaseFragment spreadsheetFragment = (AbsBaseFragment) fragmentManager
+    Fragment spreadsheetFragment = fragmentManager
         .findFragmentByTag(ViewFragmentType.SPREADSHEET.name());
-    AbsBaseFragment listViewFragment = (AbsBaseFragment) fragmentManager
-        .findFragmentByTag(ViewFragmentType.LIST.name());
-    AbsBaseFragment mapListViewFragment = (AbsBaseFragment) fragmentManager
+    Fragment listViewFragment = fragmentManager.findFragmentByTag(ViewFragmentType.LIST.name());
+    Fragment mapListViewFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
     Fragment innerMapFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.MAP_INNER_MAP);
-    AbsBaseFragment detailViewFragment = (AbsBaseFragment) fragmentManager
-        .findFragmentByTag(ViewFragmentType.DETAIL.name());
-    AbsWebTableFragment detailWithListViewDetailFragment = (AbsWebTableFragment) fragmentManager
+    Fragment detailViewFragment = fragmentManager.findFragmentByTag(ViewFragmentType.DETAIL.name());
+    Fragment detailWithListViewDetailFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL);
-    AbsWebTableFragment detailWithListViewListFragment = (AbsWebTableFragment) fragmentManager
+    Fragment detailWithListViewListFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
 
-    for (Fragment f : new Fragment[] {spreadsheetFragment, listViewFragment, mapListViewFragment,
+    for (Fragment f : new Fragment[] { spreadsheetFragment, listViewFragment, mapListViewFragment,
         innerMapFragment, detailViewFragment, detailWithListViewDetailFragment,
-        detailWithListViewListFragment}) {
+        detailWithListViewListFragment }) {
       if (f != null) {
         if (fragmentTransaction == null) {
           fragmentTransaction = fragmentManager.beginTransaction();
@@ -1211,6 +1198,16 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     if (fragmentTransaction != null) {
       fragmentTransaction.commit();
     }
+  }
+
+  /**
+   * The fragment types this activity could be displaying.
+   *
+   * @author sudar.sam@gmail.com
+   */
+  @SuppressWarnings("JavaDoc")
+  public enum ViewFragmentType {
+    SPREADSHEET, LIST, MAP, DETAIL, DETAIL_WITH_LIST, SUB_LIST
   }
 
 }

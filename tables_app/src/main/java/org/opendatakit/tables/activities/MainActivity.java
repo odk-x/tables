@@ -334,12 +334,12 @@ public class MainActivity extends AbsBaseWebActivity
     }
 
     // and see if we should re-initialize...
-    if (activeScreenType != ScreenType.INITIALIZATION_SCREEN && Tables.getInstance()
+    if (activeScreenType != ScreenType.INITIALIZATION_SCREEN && Tables.getInstance(this)
         .shouldRunInitializationTask(getAppName())) {
       WebLogger.getLogger(getAppName())
           .i(TAG, "swapToFragmentView -- calling clearRunInitializationTask");
       // and immediately clear the should-run flag...
-      Tables.getInstance().clearRunInitializationTask(getAppName());
+      Tables.getInstance(this).clearRunInitializationTask(getAppName());
       // OK we should swap to the InitializationFragment view
       // this will skip the transition to whatever screen we were trying to
       // go to and will instead show the InitializationFragment view. We

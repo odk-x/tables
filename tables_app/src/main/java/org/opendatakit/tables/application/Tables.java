@@ -14,6 +14,8 @@
 
 package org.opendatakit.tables.application;
 
+import android.app.Activity;
+import android.app.Application;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.tables.R;
 
@@ -30,18 +32,13 @@ public class Tables extends CommonApplication {
   @SuppressWarnings("unused")
   private static final String TAG = Tables.class.getSimpleName();
 
-  private static WeakReference<Tables> singleton = new WeakReference<>(null);
 
-  public static Tables getInstance() {
-    return singleton.get();
-  }
-
-  @Override
-  public void onCreate() {
-    super.onCreate();
-    if (singleton.get() == null) {
-      singleton = new WeakReference<>(this);
+  public static CommonApplication getInstance(Activity act) {
+    Application app = act.getApplication();
+    if (app instanceof CommonApplication) {
+      return (CommonApplication) app;
     }
+    throw new IllegalArgumentException("Bad app");
   }
 
   @Override

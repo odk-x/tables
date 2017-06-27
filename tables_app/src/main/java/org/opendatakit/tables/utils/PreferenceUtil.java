@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.widget.Toast;
 import org.opendatakit.data.TableViewType;
@@ -22,6 +23,7 @@ import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 
@@ -45,9 +47,9 @@ public final class PreferenceUtil {
   /**
    * Save viewType (i.e. spreadsheet, detail, map...) to be the default view type for the tableId
    *
-   * @param context a context used for displaying an error
-   * @param appName the app name
-   * @param tableId the id of the table to set the view type on
+   * @param context  a context used for displaying an error
+   * @param appName  the app name
+   * @param tableId  the id of the table to set the view type on
    * @param viewType the view type to save
    */
   public static void setDefaultViewType(Context context, String appName, String tableId,
@@ -55,9 +57,11 @@ public final class PreferenceUtil {
 
     try {
       TableUtil.get()
-          .atomicSetDefaultViewType(Tables.getInstance().getDatabase(), appName, tableId, viewType);
-    } catch (ServicesAvailabilityException e) {
-      Toast.makeText(context, "Unable to change default view type", Toast.LENGTH_LONG).show();
+          .atomicSetDefaultViewType(Tables.getInstance((Activity) context).getDatabase(), appName,
+              tableId, viewType);
+    } catch (ServicesAvailabilityException ignored) {
+      Toast.makeText(context, R.string.unable_to_change_default_view_type, Toast.LENGTH_LONG)
+          .show();
     }
   }
 
@@ -65,23 +69,24 @@ public final class PreferenceUtil {
    * Get the width that has been set for the column. If none has been set,
    * returns {@see DEFAULT_COL_WIDTH}.
    *
-   * @param appName the app name
-   * @param tableId the table id that the column is in
+   * @param act        an activity used to get the UserDbInterface object
+   * @param appName    the app name
+   * @param tableId    the table id that the column is in
    * @param elementKey the column id of the column to get the width for
    * @return a width in pixels for the column
    * @throws ServicesAvailabilityException if the database is down
    */
-  public static int getColumnWidth(String appName, String tableId, String elementKey)
+  public static int getColumnWidth(Activity act, String appName, String tableId, String elementKey)
       throws ServicesAvailabilityException {
     Integer result = null;
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
+      db = Tables.getInstance(act).getDatabase().openDatabase(appName);
       result = ColumnUtil.get()
-          .getColumnWidth(Tables.getInstance().getDatabase(), appName, db, tableId, elementKey);
+          .getColumnWidth(Tables.getInstance(act).getDatabase(), appName, db, tableId, elementKey);
     } finally {
       if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
+        Tables.getInstance(act).getDatabase().closeDatabase(appName, db);
       }
     }
     return result;
@@ -89,10 +94,11 @@ public final class PreferenceUtil {
 
   /**
    * Sets the column width in the database. Reset when you sync
-   * @param context A context used for displaying an error message
-   * @param appName the app name
-   * @param tableId the id of the table that has the column
-   * @param elementKey the id of the column to change the width of
+   *
+   * @param context        A context used for displaying an error message
+   * @param appName        the app name
+   * @param tableId        the id of the table that has the column
+   * @param elementKey     the id of the column to change the width of
    * @param newColumnWidth the new width of the column, in pixels
    */
   public static void setColumnWidth(Context context, String appName, String tableId,
@@ -100,10 +106,11 @@ public final class PreferenceUtil {
 
     try {
       ColumnUtil.get()
-          .atomicSetColumnWidth(Tables.getInstance().getDatabase(), appName, tableId, elementKey,
-              newColumnWidth);
+          .atomicSetColumnWidth(Tables.getInstance((Activity) context).getDatabase(), appName,
+              tableId, elementKey, newColumnWidth);
     } catch (ServicesAvailabilityException e) {
       Toast.makeText(context, R.string.change_column_width_error, Toast.LENGTH_LONG).show();
+      WebLogger.getLogger(appName).printStackTrace(e);
     }
   }
 

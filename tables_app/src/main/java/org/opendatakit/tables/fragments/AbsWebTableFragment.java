@@ -63,7 +63,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implem
     WebView webView = (WebView) getView().findViewById(R.id.webkit);
     TextView noDatabase = (TextView) getView().findViewById(android.R.id.empty);
 
-    if (Tables.getInstance().getDatabase() != null) {
+    if (Tables.getInstance(getActivity()).getDatabase() != null) {
       webView.setVisibility(View.VISIBLE);
       noDatabase.setVisibility(View.GONE);
     } else {

@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
@@ -94,7 +95,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
     fn.addView(filenameValField);
     v.addView(fn);
     // The button for selecting a file
-    Button pickFileButton = new Button(this);
+    TextView pickFileButton = new Button(this);
     pickFileButton.setText(getString(R.string.import_choose_csv_file));
     pickFileButton.setOnClickListener(
         new PickFileButtonListener(this.appName, getString(R.string.import_choose_csv_file)));
@@ -109,9 +110,9 @@ public class ImportCSVActivity extends AbsBaseActivity {
     this.mImportButton.setText(getString(R.string.import_append_table));
     this.mImportButton.setOnClickListener(new ImportButtonListener());
     v.addView(this.mImportButton);
-    this.mImportButton.setEnabled(Tables.getInstance().getDatabase() != null);
+    this.mImportButton.setEnabled(Tables.getInstance(this).getDatabase() != null);
     // wrapping in a scroll view
-    ScrollView scroll = new ScrollView(this);
+    ViewGroup scroll = new ScrollView(this);
     scroll.addView(v);
     return scroll;
   }
@@ -162,7 +163,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
 
     ImportExportDialogFragment
         .newInstance(ImportExportDialogFragment.IMPORT_IN_PROGRESS_DIALOG, this);
-    ImportTask task = new ImportTask(appName, this);
+    AsyncTask<ImportRequest, Integer, Boolean> task = new ImportTask(appName, this);
     task.execute(request);
   }
 
@@ -233,7 +234,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
   @Override
   public void databaseAvailable() {
     super.databaseAvailable();
-    this.mImportButton.setEnabled(Tables.getInstance().getDatabase() != null);
+    this.mImportButton.setEnabled(Tables.getInstance(this).getDatabase() != null);
   }
 
   /**
@@ -242,7 +243,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
   @Override
   public void databaseUnavailable() {
     super.databaseUnavailable();
-    this.mImportButton.setEnabled(Tables.getInstance().getDatabase() != null);
+    this.mImportButton.setEnabled(Tables.getInstance(this).getDatabase() != null);
   }
 
   /**

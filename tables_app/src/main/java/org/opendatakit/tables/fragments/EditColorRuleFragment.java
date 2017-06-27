@@ -137,7 +137,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     super.onResume();
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      db = Tables.getInstance(getActivity()).getDatabase().openDatabase(getAppName());
       this.initializeStateRequiringContext(db);
       this.initializeAllPreferences(db);
     } catch (ServicesAvailabilityException e) {
@@ -146,7 +146,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     } finally {
       if (db != null) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+          Tables.getInstance(getActivity()).getDatabase().closeDatabase(getAppName(), db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           Toast.makeText(getActivity(), "Error releasing database", Toast.LENGTH_LONG).show();
@@ -161,9 +161,9 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
    * @throws ServicesAvailabilityException if the database is down
    */
   private void initializeStateRequiringContext(DbHandle db) throws ServicesAvailabilityException {
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
     // 1) First fill in the color rule group and list.
     TableUtil.TableColumns tc = TableUtil.get()
         .getTableColumns(userSelectedDefaultLocale, dbInterface, getAppName(), db, getTableId());
@@ -254,11 +254,11 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
       this.getPreferenceScreen().removePreference(pref);
       return;
     }
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
     pref.setEntries(this.mColumnDisplayNames);
     pref.setEntryValues(mColumnElementKeys);
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
     if (!isUnpersistedNewRule()) {
       String localizedDisplayName;
       localizedDisplayName = ColumnUtil.get()
@@ -274,10 +274,10 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         WebLogger.getLogger(getAppName())
             .d(TAG, "onPreferenceChance callback invoked for value: " + newValue);
-        PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+        PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), getAppName());
         String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
-        UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+        UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
         mElementKey = (String) newValue;
         String localizedDisplayName = null;
         DbHandle db = null;
@@ -399,7 +399,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     } else {
       this.mColorRuleGroup.getColorRules().set(mRulePosition, newRule);
     }
-    mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
+    mColorRuleGroup.saveRuleList(Tables.getInstance(getActivity()).getDatabase());
     updateStateOfSaveButton();
   }
 

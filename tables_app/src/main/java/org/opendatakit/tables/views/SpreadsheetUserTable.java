@@ -72,10 +72,11 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
     if (act instanceof ISpreadsheetFragmentContainer) {
       props = ((ISpreadsheetFragmentContainer) act).getProps();
     }
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(frag.getActivity()), getAppName
+        ());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(frag.getActivity()).getDatabase();
     ArrayList<String> colOrder;
     DbHandle db = null;
     try {
@@ -132,6 +133,15 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
     return fragment.getColumnDefinitions();
   }
 
+  /**
+   * TODO document
+   * @param dbInterface
+   * @param db
+   * @param elementKey
+   * @param adminColumns
+   * @return
+   * @throws ServicesAvailabilityException
+   */
   ColorRuleGroup getColumnColorRuleGroup(UserDbInterface dbInterface, DbHandle db,
       String elementKey, String[] adminColumns) throws ServicesAvailabilityException {
     return ColorRuleGroup
@@ -210,6 +220,11 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
     return cell;
   }
 
+  /**
+   * TODO document
+   * @param headerCellNum
+   * @return
+   */
   ColumnDefinition getColumnByIndex(int headerCellNum) {
     return getColumnByElementKey(spreadsheetIndexToElementKey[headerCellNum]);
   }
@@ -227,6 +242,11 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
     return header.length;
   }
 
+  /**
+   * TODO document
+   * @param elementKey
+   * @return
+   */
   Integer getColumnIndexOfElementKey(String elementKey) {
     return elementKeyToSpreadsheetIndex.get(elementKey);
   }
@@ -261,7 +281,13 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
      * The actual data in the cell
      */
     public String value;
+    /**
+     * TODO document
+     */
     int rowNum; // of the row
+    /**
+     * TODO document
+     */
     String displayText;
   }
 }

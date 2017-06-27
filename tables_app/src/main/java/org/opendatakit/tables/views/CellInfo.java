@@ -42,12 +42,21 @@ public class CellInfo implements Parcelable {
    */
   public final int rowId;
   // this is ONLY relevant to this TabularView
+  /**
+   * TODO document
+   */
   final int colPos;
   /**
    * The column of the cell
    */
   public String elementKey;
 
+  /**
+   * TODO document
+   * @param elementKey
+   * @param colPos
+   * @param rowId
+   */
   CellInfo(String elementKey, int colPos, int rowId) {
     this.elementKey = elementKey;
     this.colPos = colPos;

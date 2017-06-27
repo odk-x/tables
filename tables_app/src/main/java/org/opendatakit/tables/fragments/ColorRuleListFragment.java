@@ -107,9 +107,9 @@ public class ColorRuleListFragment extends ListFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     this.setHasOptionsMenu(true);
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
     TableUtil.TableColumns tc = null;
     DbHandle db = null;
     try {
@@ -244,7 +244,7 @@ public class ColorRuleListFragment extends ListFragment {
           WebLogger.getLogger(appName).d(TAG, "trying to delete rule at position: " + position);
           mColorRuleGroup.getColorRules().remove(position);
           try {
-            mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
+            mColorRuleGroup.saveRuleList(Tables.getInstance(getActivity()).getDatabase());
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName()).e(TAG, "Error while saving color rules");
@@ -282,7 +282,7 @@ public class ColorRuleListFragment extends ListFragment {
       // replace the rules.
       List<ColorRule> newList = new ArrayList<>(ColorRuleUtil.getDefaultSyncStateColorRules());
       this.mColorRuleGroup.replaceColorRuleList(newList);
-      this.mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
+      this.mColorRuleGroup.saveRuleList(Tables.getInstance(getActivity()).getDatabase());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     case COLUMN:
@@ -290,7 +290,7 @@ public class ColorRuleListFragment extends ListFragment {
       // We want to just wipe all the columns for both of these types.
       List<ColorRule> emptyList = new ArrayList<>();
       this.mColorRuleGroup.replaceColorRuleList(emptyList);
-      this.mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
+      this.mColorRuleGroup.saveRuleList(Tables.getInstance(getActivity()).getDatabase());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     }

@@ -222,7 +222,7 @@ public class SpreadsheetProps implements Parcelable {
    * @param dest the parcel to write to
    * @param cell the cell to write to the parcel
    */
-  private static void writeCellInfo(Parcel dest, CellInfo cell) {
+  private static void writeCellInfo(Parcel dest, Parcelable cell) {
     if (cell == null) {
       dest.writeByte((byte) 0);
     } else {

@@ -163,11 +163,11 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
 
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());
-      PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+      PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), getAppName());
       String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
       String localizedDisplayName = ColumnUtil.get()
           .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, getAppName(), db,
@@ -216,7 +216,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     final String appName = activity.getAppName();
     final EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.WIDTH);
-    int columnWidth = PreferenceUtil.getColumnWidth(getAppName(), getTableId(),
+    int columnWidth = PreferenceUtil.getColumnWidth(getActivity(), getAppName(), getTableId(),
         retrieveColumnDefinition().getElementKey());
     pref.setSummary(Integer.toString(columnWidth));
 

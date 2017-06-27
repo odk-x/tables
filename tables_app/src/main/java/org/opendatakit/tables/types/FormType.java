@@ -15,9 +15,11 @@
  */
 package org.opendatakit.tables.types;
 
+import android.app.Activity;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.application.Tables;
@@ -68,9 +70,9 @@ public class FormType {
    * @return a new FormType object configured with the default form for the passed table
    * @throws ServicesAvailabilityException if the database is down
    */
-  public static FormType constructFormType(String appName, String tableId)
+  public static FormType constructFormType(Activity act, String appName, String tableId)
       throws ServicesAvailabilityException {
-    return new FormType(SurveyFormParameters.constructSurveyFormParameters(appName, tableId));
+    return new FormType(SurveyFormParameters.constructSurveyFormParameters(act, appName, tableId));
   }
 
   /**
@@ -79,26 +81,19 @@ public class FormType {
    * @param tableId the id of the table to set the default form on
    * @throws ServicesAvailabilityException if the database is down
    */
-  public void persist(String appName, String tableId) throws ServicesAvailabilityException {
-    DbHandle db = null;
-    try {
-      KeyValueStoreEntry entry = KeyValueStoreUtils
-          .buildEntry(tableId, FormType.KVS_PARTITION, FormType.KVS_ASPECT, FormType.KEY_FORM_TYPE,
-              ElementDataType.string, type.name());
+  public void persist(UserDbInterface dbInterface, String appName, DbHandle db, String tableId)
+      throws ServicesAvailabilityException {
+    KeyValueStoreEntry entry = KeyValueStoreUtils
+        .buildEntry(tableId, FormType.KVS_PARTITION, FormType.KVS_ASPECT, FormType.KEY_FORM_TYPE,
+            ElementDataType.string, type.name());
 
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      // don't use a transaction, but ensure that if we are transitioning to
-      // the survey type (or updating it), that we update its settings first.
-      this.mSurveyParams.persist(appName, db, tableId);
-      Tables.getInstance().getDatabase().replaceTableMetadata(appName, db, entry);
-      // and once we have transitioned, then we alter the settings
-      // of the form type we are no longer using.
-      this.mSurveyParams.persist(appName, db, tableId);
-    } finally {
-      if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
-      }
-    }
+    // don't use a transaction, but ensure that if we are transitioning to
+    // the survey type (or updating it), that we update its settings first.
+    this.mSurveyParams.persist(dbInterface, appName, db, tableId);
+    dbInterface.replaceTableMetadata(appName, db, entry);
+    // and once we have transitioned, then we alter the settings
+    // of the form type we are no longer using.
+    this.mSurveyParams.persist(dbInterface, appName, db, tableId);
   }
 
   public String getFormId() {

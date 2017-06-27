@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.utils;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +27,7 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.dependencies.DependencyChecker;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -364,13 +366,13 @@ public final class SurveyUtil {
      * should open
      * @throws ServicesAvailabilityException if the database is down
      */
-    public static SurveyFormParameters constructSurveyFormParameters(String appName, String tableId)
-        throws ServicesAvailabilityException {
+    public static SurveyFormParameters constructSurveyFormParameters(Activity act, String appName,
+        String tableId) throws ServicesAvailabilityException {
       String formId;
       DbHandle db = null;
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        List<KeyValueStoreEntry> kvsList = Tables.getInstance().getDatabase()
+        db = Tables.getInstance(act).getDatabase().openDatabase(appName);
+        List<KeyValueStoreEntry> kvsList = Tables.getInstance(act).getDatabase()
             .getTableMetadata(appName, db, tableId,
                 LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,
                 LocalKeyValueStoreConstants.DefaultSurveyForm.ASPECT,
@@ -382,7 +384,7 @@ public final class SurveyUtil {
         }
       } finally {
         if (db != null) {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
+          Tables.getInstance(act).getDatabase().closeDatabase(appName, db);
         }
       }
       if (formId == null) {
@@ -450,12 +452,14 @@ public final class SurveyUtil {
 
     /**
      * Puts its properties in a key value store entry and sets the table metadata to that entry
+     *
+     * @param dbInt   a database interface
      * @param appName the app name
-     * @param db a database handle to use
+     * @param db      a database handle to use
      * @param tableId the id of the table to change the metadata of
      * @throws ServicesAvailabilityException if the database is down
      */
-    public void persist(String appName, DbHandle db, String tableId)
+    public void persist(UserDbInterface dbInt, String appName, DbHandle db, String tableId)
         throws ServicesAvailabilityException {
       KeyValueStoreEntry entry = KeyValueStoreUtils
           .buildEntry(tableId, LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,
@@ -463,7 +467,7 @@ public final class SurveyUtil {
               LocalKeyValueStoreConstants.DefaultSurveyForm.KEY_FORM_ID, ElementDataType.string,
               this.isUserDefined() ? this.mFormId : null);
 
-      Tables.getInstance().getDatabase().replaceTableMetadata(appName, db, entry);
+      dbInt.replaceTableMetadata(appName, db, entry);
     }
   }
 

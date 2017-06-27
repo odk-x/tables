@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.views;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
@@ -123,7 +124,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // if a custom font size is defined in the KeyValueStore, use that if not, use the general
     // font size defined in preferences
     String appName = table.getAppName();
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance((Activity) context).getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(appName);
@@ -402,7 +403,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     wrapLp.weight = 1;
     wrapScroll.setHorizontalFadingEdgeEnabled(true); // works
 
-    LinearLayout completeWrapper = new LinearLayout(context);
+    ViewGroup completeWrapper = new LinearLayout(context);
     View statusWrapper = buildStatusTable();
     statusWrapper.setHorizontalFadingEdgeEnabled(true);
     statusWrapper.setVerticalFadingEdgeEnabled(true);
@@ -442,11 +443,11 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     wrapScroll.addView(mainWrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
         LinearLayout.LayoutParams.MATCH_PARENT);
     wrapScroll.setHorizontalFadingEdgeEnabled(true);
-    LinearLayout wrapper = new LinearLayout(context);
+    ViewGroup wrapper = new LinearLayout(context);
     wrapper.addView(indexWrapper);
     wrapper.addView(wrapScroll);
 
-    LinearLayout completeWrapper = new LinearLayout(context);
+    ViewGroup completeWrapper = new LinearLayout(context);
     View statusWrapper = buildStatusTable();
     completeWrapper.addView(statusWrapper);
     completeWrapper.addView(wrapper);
@@ -676,8 +677,8 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     String appName = table.getAppName();
 
     Map<String, Integer> colWidths = ColumnUtil.get()
-        .getColumnWidths(Tables.getInstance().getDatabase(), appName, db, table.getTableId(),
-            table.getColumnDefinitions());
+        .getColumnWidths(Tables.getInstance((Activity) getContext()).getDatabase(), appName, db,
+            table.getTableId(), table.getColumnDefinitions());
 
     for (int i = 0; i < numberOfDisplayColumns; i++) {
       ColumnDefinition cd = table.getColumnByIndex(i);

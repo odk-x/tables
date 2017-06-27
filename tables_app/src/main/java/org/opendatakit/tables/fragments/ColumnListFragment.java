@@ -99,9 +99,9 @@ public class ColumnListFragment extends ListFragment {
     AbsTableActivity activity = retrieveTableActivity();
     String appName = activity.getAppName();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
     TableUtil.TableColumns tc;
     DbHandle db = null;
     try {

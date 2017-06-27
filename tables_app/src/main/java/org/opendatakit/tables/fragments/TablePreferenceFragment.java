@@ -126,7 +126,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     }
     */
     // this way still sucks, just slightly less
-    if (Tables.getInstance().getDatabase() == null) {
+    if (Tables.getInstance(getActivity()).getDatabase() == null) {
       //WebLogger.getLogger(getAppName()).i(TAG, "Database not up yet! Sleeping");
       Thread t = new Thread(new Runnable() {
         @Override
@@ -222,7 +222,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
   void setListViewFileName(String relativePath) {
     try {
       TableUtil.get()
-          .atomicSetListViewFilename(Tables.getInstance().getDatabase(), getAppName(), getTableId(),
+          .atomicSetListViewFilename(Tables.getInstance(getActivity()).getDatabase(), getAppName(), getTableId(),
               relativePath);
     } catch (ServicesAvailabilityException ignored) {
       Toast.makeText(getActivity(), "Unable to save List View filename", Toast.LENGTH_LONG).show();
@@ -236,7 +236,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    */
   void setDetailViewFileName(String relativePath) {
     try {
-      TableUtil.get().atomicSetDetailViewFilename(Tables.getInstance().getDatabase(), getAppName(),
+      TableUtil.get().atomicSetDetailViewFilename(Tables.getInstance(getActivity()).getDatabase(), getAppName(),
           getTableId(), relativePath);
     } catch (ServicesAvailabilityException ignored) {
       Toast.makeText(getActivity(), "Unable to set Detail View filename", Toast.LENGTH_LONG).show();
@@ -250,7 +250,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    */
   void setMapListViewFileName(String relativePath) {
     try {
-      TableUtil.get().atomicSetMapListViewFilename(Tables.getInstance().getDatabase(), getAppName(),
+      TableUtil.get().atomicSetMapListViewFilename(Tables.getInstance(getActivity()).getDatabase(), getAppName(),
           getTableId(), relativePath);
     } catch (ServicesAvailabilityException ignored) {
       Toast.makeText(getActivity(), "Unable to set Map List View Filename", Toast.LENGTH_LONG)
@@ -268,7 +268,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
   protected void initializeAllPreferences() throws ServicesAvailabilityException {
     DbHandle db = null;
     try {
-      UserDbInterface temp = Tables.getInstance().getDatabase();
+      UserDbInterface temp = Tables.getInstance(getActivity()).getDatabase();
       // This happens when the user clicks the back button in the file picker for some reason
       if (temp == null) {
         WebLogger.getLogger(getAppName()).a(TAG, "DbInterface is null. This shouldn't happen!");
@@ -315,7 +315,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
       this.initializeColumns();
     } finally {
       if (db != null) {
-        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+        Tables.getInstance(getActivity()).getDatabase().closeDatabase(getAppName(), db);
       }
     }
   }
@@ -331,13 +331,13 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
         .findEditTextPreference(Constants.PreferenceKeys.Table.DISPLAY_NAME);
 
     /*
-     * String rawDisplayName = TableUtil.get().getRawDisplayName(Tables.getInstance().getDatabase(), getAppName(), db, getTableId());
+     * String rawDisplayName = TableUtil.get().getRawDisplayName(Tables.getInstance(getActivity()).getDatabase(), getAppName(), db, getTableId());
      */
 
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), getAppName());
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
     String localizedDisplayName = TableUtil.get()
-        .getLocalizedDisplayName(userSelectedDefaultLocale, Tables.getInstance().getDatabase(),
+        .getLocalizedDisplayName(userSelectedDefaultLocale, Tables.getInstance(getActivity()).getDatabase(),
             getAppName(), db, getTableId());
     displayPref.setSummary(localizedDisplayName);
 
@@ -414,7 +414,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     listPref.setFields(this, Constants.RequestCodes.CHOOSE_LIST_FILE,
         ((IAppAwareActivity) getActivity()).getAppName());
     listPref.setSummary(TableUtil.get()
-        .getListViewFilename(Tables.getInstance().getDatabase(), getAppName(), db, getTableId()));
+        .getListViewFilename(Tables.getInstance(getActivity()).getDatabase(), getAppName(), db, getTableId()));
   }
 
   /**
@@ -429,7 +429,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     mapListPref.setFields(this, Constants.RequestCodes.CHOOSE_MAP_FILE,
         ((IAppAwareActivity) getActivity()).getAppName());
     String mapListViewFileName = TableUtil.get()
-        .getMapListViewFilename(Tables.getInstance().getDatabase(), getAppName(), db, getTableId());
+        .getMapListViewFilename(Tables.getInstance(getActivity()).getDatabase(), getAppName(), db, getTableId());
     WebLogger.getLogger(getAppName())
         .d(TAG, "[initializeMapListFile] file is: " + mapListViewFileName);
     mapListPref.setSummary(mapListViewFileName);
@@ -447,7 +447,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     detailPref.setFields(this, Constants.RequestCodes.CHOOSE_DETAIL_FILE,
         ((IAppAwareActivity) getActivity()).getAppName());
     detailPref.setSummary(TableUtil.get()
-        .getDetailViewFilename(Tables.getInstance().getDatabase(), getAppName(), db, getTableId()));
+        .getDetailViewFilename(Tables.getInstance(getActivity()).getDatabase(), getAppName(), db, getTableId()));
   }
 
   /**
@@ -480,7 +480,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
         .findListPreference(Constants.PreferenceKeys.Table.MAP_COLOR_RULE);
 
     TableUtil.MapViewColorRuleInfo mvcri = TableUtil.get()
-        .getMapListViewColorRuleInfo(Tables.getInstance().getDatabase(), getAppName(), db,
+        .getMapListViewColorRuleInfo(Tables.getInstance(getActivity()).getDatabase(), getAppName(), db,
             getTableId());
 
     String initColorType;
@@ -527,11 +527,11 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
             colorRuleType = LocalKeyValueStoreConstants.Map.COLOR_TYPE_NONE;
           }
 
-          db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+          db = Tables.getInstance(getActivity()).getDatabase().openDatabase(getAppName());
           TableUtil.MapViewColorRuleInfo mvcri = new TableUtil.MapViewColorRuleInfo(colorRuleType,
               null);
           TableUtil.get()
-              .setMapListViewColorRuleInfo(Tables.getInstance().getDatabase(), getAppName(), db,
+              .setMapListViewColorRuleInfo(Tables.getInstance(getActivity()).getDatabase(), getAppName(), db,
                   getTableId(), mvcri);
           return true;
 
@@ -543,7 +543,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
         } finally {
           if (db != null) {
             try {
-              Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+              Tables.getInstance(getActivity()).getDatabase().closeDatabase(getAppName(), db);
             } catch (ServicesAvailabilityException re) {
               WebLogger.getLogger(getAppName()).e(TAG,
                   "[onPreferenceChange] for map color rule preference. "

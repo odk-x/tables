@@ -22,7 +22,6 @@ import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.application.Tables;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -31,7 +30,7 @@ import java.util.Set;
  * Contains information about which {@see TableViewType}s are valid for a
  * table based on its configuration. A List view may only be appropriate if a
  * list file has been set, for example.
- *
+ * <p>
  * See {@see TableViewTypeAdapter}, {@see DefaultViewTypePreference}
  *
  * @author sudar.sam@gmail.com
@@ -50,15 +49,16 @@ public class PossibleTableViewTypes {
   /**
    * Constructs a new PossibleTableViewTypes object, which determines whether the user is able to
    * select a particular view type (spreadsheet, map, etc...)
-   * @param appName the app name
-   * @param db a database handle
-   * @param tableId the id of the table we're editing
+   *
+   * @param dbInterface  The database interface to use
+   * @param appName      the app name
+   * @param db           a database handle
+   * @param tableId      the id of the table we're editing
    * @param orderedDefns the columns in the table
    * @throws ServicesAvailabilityException if the database is down
    */
-  public PossibleTableViewTypes(String appName, DbHandle db, String tableId,
-      OrderedColumns orderedDefns) throws ServicesAvailabilityException {
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+  public PossibleTableViewTypes(UserDbInterface dbInterface, String appName, DbHandle db,
+      String tableId, OrderedColumns orderedDefns) throws ServicesAvailabilityException {
     TableViewType defaultViewType = TableUtil.get()
         .getDefaultViewType(dbInterface, appName, db, tableId);
     if (defaultViewType != null) {

@@ -97,15 +97,15 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
 
     String appName = baseActivity.getAppName();
 
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(), appName);
+    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
-    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
     DbHandle db = null;
 
     List<TableNameStruct> tableNameStructs = new ArrayList<>();
 
-    if (Tables.getInstance().getDatabase() != null) {
+    if (Tables.getInstance(getActivity()).getDatabase() != null) {
 
       try {
         db = dbInterface.openDatabase(appName);
@@ -150,7 +150,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       TextView none = (TextView) this.getView().findViewById(android.R.id.empty);
       View listing = this.getView().findViewById(android.R.id.list);
       if (tableNameStructs.isEmpty()) {
-        if (Tables.getInstance().getDatabase() == null) {
+        if (Tables.getInstance(getActivity()).getDatabase() == null) {
           none.setText(R.string.database_unavailable);
         } else {
           none.setText(R.string.no_table_data);
@@ -219,12 +219,12 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
           DbHandle db = null;
           try {
             try {
-              db = Tables.getInstance().getDatabase().openDatabase(appName);
-              Tables.getInstance().getDatabase()
+              db = Tables.getInstance(getActivity()).getDatabase().openDatabase(appName);
+              Tables.getInstance(getActivity()).getDatabase()
                   .deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
             } finally {
               if (db != null) {
-                Tables.getInstance().getDatabase().closeDatabase(appName, db);
+                Tables.getInstance(getActivity()).getDatabase().closeDatabase(appName, db);
               }
             }
             // Now update the list.

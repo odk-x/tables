@@ -50,6 +50,7 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
    * @param context the context that we need to give the progress dialog
    */
   public ImportTask(String appName, AbsBaseActivity context) {
+    super();
     this.appName = appName;
     this.context = context;
   }
@@ -66,7 +67,7 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
     CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
       @Override
       public UserDbInterface getDatabase() {
-        return Tables.getInstance().getDatabase();
+        return Tables.getInstance(context).getDatabase();
       }
     }, appName);
     try {
