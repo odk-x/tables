@@ -16,13 +16,15 @@
 package org.opendatakit.tables.fragments;
 
 import android.app.Activity;
+import android.app.Application;
 import android.app.Fragment;
 import android.content.Context;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
+import org.opendatakit.application.CommonApplication;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.application.Tables;
 
 /**
  * Base class that all fragments should extend.
@@ -51,7 +53,23 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
   @Override
   public void onResume() {
     super.onResume();
-    Tables.getInstance(getActivity()).possiblyFireDatabaseCallback(getActivity(), this);
+    getCommonApplication().possiblyFireDatabaseCallback(getActivity(), this);
+  }
+
+  public CommonApplication getCommonApplication() {
+    Application app = getActivity().getApplication();
+    if (app instanceof CommonApplication) {
+      return (CommonApplication) app;
+    }
+    throw new IllegalStateException("Bad app");
+  }
+
+  public BaseActivity getBaseActivity() {
+    Activity act = getActivity();
+    if (act instanceof BaseActivity) {
+      return (BaseActivity) act;
+    }
+    throw new IllegalStateException("Bad activity");
   }
 
   /**
@@ -74,8 +92,7 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
         }
         mAppName = ((IAppAwareActivity) activity).getAppName();
       }
-      WebLogger.getLogger(mAppName)
-          .d(TAG, "mAppName was null and has been set using the activity");
+      WebLogger.getLogger(mAppName).d(TAG, "mAppName was null and has been set using the activity");
     }
     return mAppName;
   }

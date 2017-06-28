@@ -31,7 +31,6 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
  */
 public class ImportExportDialogFragment extends DialogFragment {
 
-  private static final String TAG = ImportExportDialogFragment.class.getSimpleName();
   /**
    * The ID that tells us to show the export success dialog
    */
@@ -61,6 +60,7 @@ public class ImportExportDialogFragment extends DialogFragment {
    * the key value store setting mapping.
    */
   public static final int CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 7;
+  private static final String TAG = ImportExportDialogFragment.class.getSimpleName();
   // private IDs that are put in the bundle of arguments to determine which type of dialog to create
   // can't use an enum because you can't (safely) put an enum in a bundle
   private static final int ALERT_DIALOG = 0;

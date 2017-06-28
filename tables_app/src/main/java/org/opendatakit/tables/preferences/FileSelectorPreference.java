@@ -47,8 +47,9 @@ public class FileSelectorPreference extends EditTextPreference {
 
   /**
    * Default constructor
+   *
    * @param context unused
-   * @param attrs unused
+   * @param attrs   unused
    */
   public FileSelectorPreference(Context context, AttributeSet attrs) {
     super(context, attrs);

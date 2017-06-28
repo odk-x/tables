@@ -27,7 +27,8 @@ public class TableNameStruct {
 
   /**
    * Initializes
-   * @param tableId stored
+   *
+   * @param tableId              stored
    * @param localizedDisplayName stored
    */
   public TableNameStruct(String tableId, String localizedDisplayName) {

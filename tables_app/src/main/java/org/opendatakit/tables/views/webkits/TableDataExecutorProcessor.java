@@ -57,8 +57,8 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
   }
 
   private static void constructRowColorObjects(UserDbInterface dbInterface, DbHandle db,
-      UserTable userTable, String[] adminCols, Collection<RowColorObject> colors,
-      Object crType, String elementKey) throws ServicesAvailabilityException {
+      UserTable userTable, String[] adminCols, Collection<RowColorObject> colors, Object crType,
+      String elementKey) throws ServicesAvailabilityException {
     // Should reuse this code for column and status color rules
 
     ColorRuleGroup crg;

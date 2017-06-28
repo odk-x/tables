@@ -18,7 +18,6 @@ package org.opendatakit.tables.preferences;
 import android.content.Context;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
-import android.view.View;
 
 /**
  * Basic dialog to allow editing a text field
@@ -31,8 +30,9 @@ public class EditNameDialogPreference extends DialogPreference {
 
   /**
    * Default constructor
+   *
    * @param context unused
-   * @param attrs unused
+   * @param attrs   unused
    */
   public EditNameDialogPreference(Context context, AttributeSet attrs) {
     super(context, attrs);

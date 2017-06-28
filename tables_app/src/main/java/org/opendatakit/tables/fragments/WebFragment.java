@@ -20,10 +20,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
-import android.widget.TextView;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
@@ -41,8 +40,8 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
-    WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView] activity is: " + getActivity()
-        .getClass().getSimpleName());
+    WebLogger.getLogger(getAppName())
+        .d(TAG, "[onCreateView] activity is: " + getActivity().getClass().getSimpleName());
 
     return inflater.inflate(R.layout.web_view_container, container, false);
   }
@@ -60,10 +59,10 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
       return;
     }
 
-    OdkTablesWebView webView = (OdkTablesWebView) getView().findViewById(R.id.webkit);
-    TextView noDatabase = (TextView) getView().findViewById(android.R.id.empty);
+    View webView = getView().findViewById(R.id.webkit);
+    View noDatabase = getView().findViewById(android.R.id.empty);
 
-    if (Tables.getInstance(getActivity()).getDatabase() != null) {
+    if (((BaseActivity) getActivity()).getDatabase() != null) {
       webView.setVisibility(View.VISIBLE);
       noDatabase.setVisibility(View.GONE);
     } else {

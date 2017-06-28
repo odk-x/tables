@@ -22,7 +22,7 @@ import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ScrollView;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.views.components.WScrollView;
+import org.opendatakit.views.WScrollView;
 
 /**
  * Based heavily upon:
@@ -70,11 +70,11 @@ public class ColorPickerDialog extends Dialog {
       }
     };
 
-		/* BIDIRECTIONAL SCROLLVIEW */
+    // BIDIRECTIONAL SCROLLVIEW
     ScrollView sv = new ScrollView(this.getContext());
     WScrollView hsv = new WScrollView(this.getContext());
     hsv.sv = sv;
-    /* END OF BIDIRECTIONAL SCROLLVIEW */
+    // END OF BIDIRECTIONAL SCROLLVIEW
 
     sv.addView(new ColorPickerView(getContext(), l, mInitialColor, mDefaultColor),
         new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
@@ -110,11 +110,6 @@ public class ColorPickerDialog extends Dialog {
     private boolean afterFirstDown = false;
     private float startX;
     private float startY;
-
-    @SuppressWarnings("NumericCastThatLosesPrecision")
-    private static int floor(double d) {
-      return (int) d;
-    }
 
     ColorPickerView(Context c, OnColorChangedListener l, int color, int defaultColor) {
       super(c);
@@ -173,6 +168,19 @@ public class ColorPickerDialog extends Dialog {
       mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
       mPaint.setTextAlign(Paint.Align.CENTER);
       mPaint.setTextSize(12);
+    }
+
+    @SuppressWarnings("NumericCastThatLosesPrecision")
+    private static int floor(double d) {
+      return (int) d;
+    }
+
+    private static int getInverseColor(int color) {
+      int red = Color.red(color);
+      int green = Color.green(color);
+      int blue = Color.blue(color);
+      int alpha = Color.alpha(color);
+      return Color.argb(alpha, 255 - red, 255 - green, 255 - blue);
     }
 
     // Get the current selected color from the hue bar
@@ -289,14 +297,6 @@ public class ColorPickerDialog extends Dialog {
       canvas.drawText(getContext().getString(R.string.cancel), 202, 340, mPaint);
     }
 
-    private static int getInverseColor(int color) {
-      int red = Color.red(color);
-      int green = Color.green(color);
-      int blue = Color.blue(color);
-      int alpha = Color.alpha(color);
-      return Color.argb(alpha, 255 - red, 255 - green, 255 - blue);
-    }
-
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
       setMeasuredDimension(276, 366);
@@ -313,8 +313,8 @@ public class ColorPickerDialog extends Dialog {
       if (action == MotionEvent.ACTION_CANCEL) {
         afterFirstDown = false;
       } else //noinspection UnnecessaryParentheses
-        if (pointerCount == 1 && (action == MotionEvent.ACTION_DOWN || (!afterFirstDown &&
-            action == MotionEvent.ACTION_MOVE))) {
+        if (pointerCount == 1 && (action == MotionEvent.ACTION_DOWN || (!afterFirstDown
+            && action == MotionEvent.ACTION_MOVE))) {
           afterFirstDown = true;
           startX = event.getX();
           startY = event.getY();

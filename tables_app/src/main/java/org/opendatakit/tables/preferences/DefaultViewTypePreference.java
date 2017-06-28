@@ -15,13 +15,13 @@
  */
 package org.opendatakit.tables.preferences;
 
-import android.app.Activity;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.preference.ListPreference;
 import android.util.AttributeSet;
 import android.widget.ListAdapter;
 import android.widget.Toast;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.TableViewType;
 import org.opendatakit.data.utilities.TableUtil;
@@ -32,7 +32,6 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 import org.opendatakit.tables.views.components.TableViewTypeAdapter;
 
@@ -85,7 +84,7 @@ public class DefaultViewTypePreference extends ListPreference {
     CharSequence[] mEntryValues = mContext.getResources()
         .getTextArray(R.array.table_view_types_values);
 
-    UserDbInterface dbInterface = Tables.getInstance((Activity) getContext()).getDatabase();
+    UserDbInterface dbInterface = ((BaseActivity) getContext()).getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(mAppName);

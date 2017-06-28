@@ -53,6 +53,7 @@ public class CellInfo implements Parcelable {
 
   /**
    * TODO document
+   *
    * @param elementKey
    * @param colPos
    * @param rowId

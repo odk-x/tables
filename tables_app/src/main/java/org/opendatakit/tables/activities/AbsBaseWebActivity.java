@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import org.json.JSONObject;
-import org.opendatakit.application.CommonApplication;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
@@ -336,7 +335,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   @Override
   public UserDbInterface getDatabase() {
-    return ((CommonApplication) getApplication()).getDatabase();
+    return getCommonApplication().getDatabase();
   }
 
   @Override

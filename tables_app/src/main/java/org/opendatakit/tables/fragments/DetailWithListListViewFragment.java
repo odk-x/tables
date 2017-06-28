@@ -21,7 +21,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.views.ODKWebView;
 

@@ -28,6 +28,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.data.JoinColumn;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.database.data.ColumnDefinition;
@@ -43,7 +44,6 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.ISpreadsheetFragmentContainer;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -127,7 +127,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   /**
    * When the database becomes available, replace the view in theView with a new
    * SpreadsheetUserTable, or an error message if we can't
-   *
+   * <p>
    * It is a bit of a strange interaction, when the screen is rotated, first TableDisplayActivity
    * gets restored, then this gets restored, then databaseAvailable is called on
    * TableDisplayActivity which promptly detaches and destroys this fragment, then databaseAvailable
@@ -135,12 +135,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
    * will be called twice, once on a recently-destroyed fragment and again on a good and attached
    * fragment. getActivity() will return null on the detached fragment, so we have to check that
    * or we'll get a null pointer exception and crash tables
-   *
+   * <p>
    * Also note that the database is always up on first creation, because first creation of this
    * fragment only happens in two cases, creation on the first creation of TableDisplayActivity
    * which needs to get the default view type (spreadsheet vs list vs map) from the database, and
    * again when this fragment is destroyed and a new one created in TDA's databaseAvailable.
-   *
+   * <p>
    * However in all cases, this method is called
    */
   @Override
@@ -180,8 +180,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       }
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
-      WebLogger.getLogger(getAppName())
-          .e(TAG, "Error while constructing spreadsheet view: " + e);
+      WebLogger.getLogger(getAppName()).e(TAG, "Error while constructing spreadsheet view: " + e);
       TextView textView = new TextView(getActivity());
       textView.setText(getString(R.string.error_accessing_database));
       theView.removeAllViews();
@@ -239,6 +238,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
 
   /**
    * Returns the current order in which we are sorting, either ASC or DESC
+   *
    * @return what direction the table is sorted
    */
   private String getSortOrder() {
@@ -301,7 +301,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     IntentUtil.addTableIdToBundle(extras, this.getTableId());
     IntentUtil.addSQLQueryStructToBundle(extras, sqlQueryStruct);
     IntentUtil.addFragmentViewTypeToBundle(extras, ViewFragmentType.SPREADSHEET);
-      extras.putParcelable("props", getProps());
+    extras.putParcelable("props", getProps());
     // This tells it to ignore any groupBy and just use an empty array
     extras.putString("inCollection", "");
     // This tells it to get props from the intent
@@ -331,12 +331,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       throws ServicesAvailabilityException, ActionNotAuthorizedException {
     DbHandle db = null;
     try {
-      db = Tables.getInstance(getActivity()).getDatabase().openDatabase(getAppName());
-      Tables.getInstance(getActivity()).getDatabase()
+      db = ((BaseActivity) getActivity()).getDatabase().openDatabase(getAppName());
+      ((BaseActivity) getActivity()).getDatabase()
           .deleteRowWithId(getAppName(), db, getTableId(), getColumnDefinitions(), rowId);
     } finally {
       if (db != null) {
-        Tables.getInstance(getActivity()).getDatabase().closeDatabase(getAppName(), db);
+        ((BaseActivity) getActivity()).getDatabase().closeDatabase(getAppName(), db);
       }
     }
   }
@@ -365,7 +365,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   public boolean onContextItemSelected(MenuItem item) {
     getProps().headerMenuOpen = false;
     getProps().dataMenuOpen = false;
-    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
+    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
 
     // TEMP code to try and fix the crash on return-edit
     if (spreadsheetTable == null) {
@@ -617,7 +617,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // check a join association with this column; add a join... option if
     // it is applicable.
     ArrayList<JoinColumn> joinColumns;
-    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
+    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());

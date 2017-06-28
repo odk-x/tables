@@ -29,7 +29,6 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.activities.ISpreadsheetFragmentContainer;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
 import java.util.ArrayList;
@@ -59,6 +58,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
 
   /**
    * Constructs a SpreadsheetUserTable
+   *
    * @param frag the fragment we're embedded in
    * @throws ServicesAvailabilityException if the database is down
    */
@@ -72,11 +72,10 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
     if (act instanceof ISpreadsheetFragmentContainer) {
       props = ((ISpreadsheetFragmentContainer) act).getProps();
     }
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(frag.getActivity()), getAppName
-        ());
+    PropertiesSingleton props = CommonToolProperties.get(frag.getCommonApplication(), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
-    UserDbInterface dbInterface = Tables.getInstance(frag.getActivity()).getDatabase();
+    UserDbInterface dbInterface = frag.getBaseActivity().getDatabase();
     ArrayList<String> colOrder;
     DbHandle db = null;
     try {
@@ -135,6 +134,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
 
   /**
    * TODO document
+   *
    * @param dbInterface
    * @param db
    * @param elementKey
@@ -159,6 +159,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
 
   /**
    * Gets the row at the requested index from the table, or null if the index is out of bounds
+   *
    * @param index the index of the row
    * @return the requested row or null
    */
@@ -193,6 +194,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
 
   /**
    * Tries to determine if the table has any data in it or not
+   *
    * @return whether there is data in the user table
    */
   public boolean hasData() {
@@ -202,6 +204,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
 
   /**
    * Gets a cell from the given CellInfo object. Used in SpreadsheetFragment
+   *
    * @param cellInfo an object that has a row id and column (elementKey) in it
    * @return a SpreadsheetCell object from the CellInfo object
    */
@@ -222,6 +225,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
 
   /**
    * TODO document
+   *
    * @param headerCellNum
    * @return
    */
@@ -231,6 +235,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
 
   /**
    * Finds a column definition given a column key
+   *
    * @param elementKey the id of the requested column
    * @return a column definition object for the column with that id
    */
@@ -244,6 +249,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
 
   /**
    * TODO document
+   *
    * @param elementKey
    * @return
    */

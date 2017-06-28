@@ -40,7 +40,6 @@ import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.provider.TableDefinitionsColumns;
 import org.opendatakit.provider.TablesProviderAPI;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
@@ -239,7 +238,7 @@ public class AndroidShortcuts extends BaseActivity {
    */
   @Override
   public String getAppName() {
-    return Tables.getInstance(this).getToolName();
+    return getCommonApplication().getToolName();
   }
 
   /**
@@ -257,11 +256,11 @@ public class AndroidShortcuts extends BaseActivity {
   }
 
   private static class Choice {
-    final int iconResourceId;
-    final Uri command;
     public final Bitmap icon;
     public final String name;
     public final String appName;
+    final int iconResourceId;
+    final Uri command;
 
     Choice(int iconResourceId, Bitmap icon, Uri command, String name, String appName) {
       this.iconResourceId = iconResourceId;

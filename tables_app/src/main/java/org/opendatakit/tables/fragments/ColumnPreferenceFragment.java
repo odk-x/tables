@@ -21,6 +21,7 @@ import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.widget.Toast;
 import org.apache.commons.lang3.StringUtils;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
@@ -34,7 +35,6 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.PreferenceUtil;
 
@@ -163,11 +163,12 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
 
-    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
+    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());
-      PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), getAppName());
+      PropertiesSingleton props = CommonToolProperties
+          .get(getActivity().getApplication(), getAppName());
       String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
       String localizedDisplayName = ColumnUtil.get()
           .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, getAppName(), db,
@@ -216,8 +217,9 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     final String appName = activity.getAppName();
     final EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.WIDTH);
-    int columnWidth = PreferenceUtil.getColumnWidth(getActivity(), getAppName(), getTableId(),
-        retrieveColumnDefinition().getElementKey());
+    int columnWidth = PreferenceUtil
+        .getColumnWidth((BaseActivity) getActivity(), getAppName(), getTableId(),
+            retrieveColumnDefinition().getElementKey());
     pref.setSummary(Integer.toString(columnWidth));
 
     pref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {

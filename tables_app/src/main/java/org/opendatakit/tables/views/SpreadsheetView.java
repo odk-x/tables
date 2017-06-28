@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.views;
 
-import android.app.Activity;
 import android.content.Context;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
@@ -25,6 +24,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Toast;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
@@ -34,7 +34,6 @@ import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -124,7 +123,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     // if a custom font size is defined in the KeyValueStore, use that if not, use the general
     // font size defined in preferences
     String appName = table.getAppName();
-    UserDbInterface dbInterface = Tables.getInstance((Activity) context).getDatabase();
+    UserDbInterface dbInterface = ((BaseActivity) context).getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(appName);
@@ -677,7 +676,7 @@ public class SpreadsheetView extends LinearLayout implements TabularView.Control
     String appName = table.getAppName();
 
     Map<String, Integer> colWidths = ColumnUtil.get()
-        .getColumnWidths(Tables.getInstance((Activity) getContext()).getDatabase(), appName, db,
+        .getColumnWidths(((BaseActivity) getContext()).getDatabase(), appName, db,
             table.getTableId(), table.getColumnDefinitions());
 
     for (int i = 0; i < numberOfDisplayColumns; i++) {

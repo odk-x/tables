@@ -175,8 +175,8 @@ final class TabularView extends View {
           if (this.mColumnColorGuideGroup == null) {
             this.mColumnColorGuideGroup = new TreeMap<>();
           }
-          this.mColumnColorGuideGroup.put(
-              stringColorRuleGroupEntry.getKey(), new ColorGuideGroup(crg, mTable.getUserTable()));
+          this.mColumnColorGuideGroup.put(stringColorRuleGroupEntry.getKey(),
+              new ColorGuideGroup(crg, mTable.getUserTable()));
         }
       }
     }

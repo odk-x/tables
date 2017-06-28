@@ -62,7 +62,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
   public synchronized OrderedColumns getColumnDefinitions() {
     if (this.mColumnDefinitions == null) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] building mColumnDefinitions.");
-      CommonApplication app = (CommonApplication) getApplication();
+      CommonApplication app = getCommonApplication();
       if (app.getDatabase() != null) {
         DbHandle db = null;
         try {

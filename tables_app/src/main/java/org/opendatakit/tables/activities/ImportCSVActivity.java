@@ -28,7 +28,6 @@ import android.widget.*;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 import org.opendatakit.tables.tasks.ImportRequest;
 import org.opendatakit.tables.tasks.ImportTask;
@@ -110,7 +109,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
     this.mImportButton.setText(getString(R.string.import_append_table));
     this.mImportButton.setOnClickListener(new ImportButtonListener());
     v.addView(this.mImportButton);
-    this.mImportButton.setEnabled(Tables.getInstance(this).getDatabase() != null);
+    this.mImportButton.setEnabled(getDatabase() != null);
     // wrapping in a scroll view
     ViewGroup scroll = new ScrollView(this);
     scroll.addView(v);
@@ -142,11 +141,13 @@ public class ImportCSVActivity extends AbsBaseActivity {
       String tableId = null;
       String fileQualifier = null;
       if (terms.length == 2 && "csv".equals(terms[1]) || terms.length == 3 && (
-          "properties".equals(terms[1]) || "definition".equals(terms[1])) && "csv".equals(terms[2])) {
+          "properties".equals(terms[1]) || "definition".equals(terms[1])) && "csv"
+          .equals(terms[2])) {
         tableId = terms[0];
         fileQualifier = null;
       } else if (terms.length == 3 && "csv".equals(terms[2]) || terms.length == 4 && (
-          "properties".equals(terms[2]) || "definition".equals(terms[2])) && "csv".equals(terms[3])) {
+          "properties".equals(terms[2]) || "definition".equals(terms[2])) && "csv"
+          .equals(terms[3])) {
         tableId = terms[0];
         fileQualifier = terms[1];
       }
@@ -214,7 +215,8 @@ public class ImportCSVActivity extends AbsBaseActivity {
           Toast.makeText(this, "Import filename must end in .csv", Toast.LENGTH_LONG).show();
           return;
         }
-        if (terms.length == 4 && !("properties".equals(terms[2]) || "definition".equals(terms[2]))) {
+        if (terms.length == 4 && !("properties".equals(terms[2]) || "definition"
+            .equals(terms[2]))) {
           Toast.makeText(this,
               "Import filename must be of the form tableId.qualifier.properties.csv or tableId.qualifier.definition.csv",
               Toast.LENGTH_LONG).show();
@@ -234,7 +236,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
   @Override
   public void databaseAvailable() {
     super.databaseAvailable();
-    this.mImportButton.setEnabled(Tables.getInstance(this).getDatabase() != null);
+    this.mImportButton.setEnabled(getDatabase() != null);
   }
 
   /**
@@ -243,7 +245,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
   @Override
   public void databaseUnavailable() {
     super.databaseUnavailable();
-    this.mImportButton.setEnabled(Tables.getInstance(this).getDatabase() != null);
+    this.mImportButton.setEnabled(getDatabase() != null);
   }
 
   /**

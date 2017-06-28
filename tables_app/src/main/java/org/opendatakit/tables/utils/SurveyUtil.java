@@ -15,13 +15,13 @@
  */
 package org.opendatakit.tables.utils;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
@@ -34,7 +34,6 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.FormsProviderUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.application.Tables;
 
 import java.util.List;
 import java.util.Map;
@@ -366,17 +365,16 @@ public final class SurveyUtil {
      * should open
      * @throws ServicesAvailabilityException if the database is down
      */
-    public static SurveyFormParameters constructSurveyFormParameters(Activity act, String appName,
-        String tableId) throws ServicesAvailabilityException {
+    public static SurveyFormParameters constructSurveyFormParameters(BaseActivity act,
+        String appName, String tableId) throws ServicesAvailabilityException {
       String formId;
       DbHandle db = null;
       try {
-        db = Tables.getInstance(act).getDatabase().openDatabase(appName);
-        List<KeyValueStoreEntry> kvsList = Tables.getInstance(act).getDatabase()
-            .getTableMetadata(appName, db, tableId,
-                LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,
-                LocalKeyValueStoreConstants.DefaultSurveyForm.ASPECT,
-                LocalKeyValueStoreConstants.DefaultSurveyForm.KEY_FORM_ID, null).getEntries();
+        db = act.getDatabase().openDatabase(appName);
+        List<KeyValueStoreEntry> kvsList = act.getDatabase().getTableMetadata(appName, db, tableId,
+            LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,
+            LocalKeyValueStoreConstants.DefaultSurveyForm.ASPECT,
+            LocalKeyValueStoreConstants.DefaultSurveyForm.KEY_FORM_ID, null).getEntries();
         if (kvsList.size() != 1) {
           formId = null;
         } else {
@@ -384,7 +382,7 @@ public final class SurveyUtil {
         }
       } finally {
         if (db != null) {
-          Tables.getInstance(act).getDatabase().closeDatabase(appName, db);
+          act.getDatabase().closeDatabase(appName, db);
         }
       }
       if (formId == null) {

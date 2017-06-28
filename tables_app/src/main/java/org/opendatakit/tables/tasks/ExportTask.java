@@ -26,7 +26,6 @@ import org.opendatakit.listener.ExportListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 
 /**
@@ -65,14 +64,14 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
       @Override
       public UserDbInterface getDatabase() {
-        return Tables.getInstance(context).getDatabase();
+        return context.getDatabase();
       }
     }, appName);
     DbHandle db = null;
     try {
       String tableId = request.getTableId();
-      db = Tables.getInstance(context).getDatabase().openDatabase(appName);
-      OrderedColumns orderedDefinitions = Tables.getInstance(context).getDatabase()
+      db = context.getDatabase().openDatabase(appName);
+      OrderedColumns orderedDefinitions = context.getDatabase()
           .getUserDefinedColumns(appName, db, tableId); // export goes to output/csv directory...
       return cu.exportSeparable(this, db, tableId, orderedDefinitions, request.getFileQualifier());
     } catch (ServicesAvailabilityException e) {
@@ -82,7 +81,7 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     } finally {
       if (db != null) {
         try {
-          Tables.getInstance(context).getDatabase().closeDatabase(appName, db);
+          context.getDatabase().closeDatabase(appName, db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
           WebLogger.getLogger(appName).e(TAG, "Unable to close database");

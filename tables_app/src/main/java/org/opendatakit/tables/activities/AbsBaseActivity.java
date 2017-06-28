@@ -117,13 +117,13 @@ public abstract class AbsBaseActivity extends BaseActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    ((CommonApplication) getApplication()).establishDoNotFireDatabaseConnectionListener(this);
+    getCommonApplication().establishDoNotFireDatabaseConnectionListener(this);
   }
 
   @Override
   public void onPostResume() {
     super.onPostResume();
-    ((CommonApplication) getApplication()).fireDatabaseConnectionListener();
+    getCommonApplication().fireDatabaseConnectionListener();
   }
 
   public String getActionTableId() {
@@ -143,7 +143,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
     WebLogger.getLogger(getAppName())
         .i(TAG, "scanAllTables -- searching for conflicts and checkpoints ");
 
-    CommonApplication app = (CommonApplication) getApplication();
+    CommonApplication app = getCommonApplication();
     DbHandle db = null;
 
     if (app.getDatabase() == null) {

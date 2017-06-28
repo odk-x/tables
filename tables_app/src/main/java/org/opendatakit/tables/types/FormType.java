@@ -15,14 +15,13 @@
  */
 package org.opendatakit.tables.types;
 
-import android.app.Activity;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.database.utilities.KeyValueStoreUtils;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 /**
@@ -65,18 +64,20 @@ public class FormType {
   /**
    * Constructs a new survey form parameters using the default form for the table, then returns
    * {@link #FormType(SurveyFormParameters)}
+   *
    * @param appName the app name
    * @param tableId the id of the table that the form will be for
    * @return a new FormType object configured with the default form for the passed table
    * @throws ServicesAvailabilityException if the database is down
    */
-  public static FormType constructFormType(Activity act, String appName, String tableId)
+  public static FormType constructFormType(BaseActivity act, String appName, String tableId)
       throws ServicesAvailabilityException {
     return new FormType(SurveyFormParameters.constructSurveyFormParameters(act, appName, tableId));
   }
 
   /**
    * Puts the form type in the database as the default form for the table
+   *
    * @param appName the app name
    * @param tableId the id of the table to set the default form on
    * @throws ServicesAvailabilityException if the database is down

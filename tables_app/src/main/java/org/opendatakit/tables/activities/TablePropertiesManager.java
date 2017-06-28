@@ -28,7 +28,6 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.widget.Toast;
 import org.opendatakit.activities.BasePreferenceActivity;
 import org.opendatakit.activities.IAppAwareActivity;
-import org.opendatakit.application.CommonApplication;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.TableViewType;
 import org.opendatakit.data.utilities.TableUtil;
@@ -41,7 +40,6 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -59,6 +57,9 @@ import java.util.List;
 public class TablePropertiesManager extends BasePreferenceActivity
     implements DatabaseConnectionListener, IAppAwareActivity {
 
+  /**
+   * Used for logging
+   */
   @SuppressWarnings("unused")
   private static final String TAG = TablePropertiesManager.class.getSimpleName();
 
@@ -88,13 +89,13 @@ public class TablePropertiesManager extends BasePreferenceActivity
   @Override
   protected void onResume() {
     super.onResume();
-    ((CommonApplication) getApplication()).establishDoNotFireDatabaseConnectionListener(this);
+    getCommonApplication().establishDoNotFireDatabaseConnectionListener(this);
   }
 
   @Override
   protected void onPostResume() {
     super.onPostResume();
-    ((CommonApplication) getApplication()).fireDatabaseConnectionListener();
+    getCommonApplication().fireDatabaseConnectionListener();
   }
 
   @Override
@@ -103,10 +104,10 @@ public class TablePropertiesManager extends BasePreferenceActivity
   }
 
   private void createFromDatabase() {
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(this), appName);
+    PropertiesSingleton props = CommonToolProperties.get(getApplication(), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
-    UserDbInterface dbInterface = Tables.getInstance(this).getDatabase();
+    UserDbInterface dbInterface = getDatabase();
     String localizedDisplayName;
     DbHandle db = null;
     try {
@@ -146,7 +147,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
     root.addPreference(genCat);
     genCat.setTitle(getString(R.string.general_settings));
 
-    UserDbInterface dbInterface = Tables.getInstance(this).getDatabase();
+    UserDbInterface dbInterface = getDatabase();
 
     String rawDisplayName;
     DbHandle db = null;
@@ -226,7 +227,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
     // viewTypePref.setEntries(viewTypeNames);
     // viewTypePref.setValue(String.valueOf(settings.getViewType()));
 
-    UserDbInterface dbInterface = Tables.getInstance(this).getDatabase();
+    UserDbInterface dbInterface = getDatabase();
 
     TableViewType type;
     DbHandle db = null;
@@ -418,7 +419,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
     if (resultCode == RESULT_CANCELED) {
       return;
     }
-    UserDbInterface dbInterface = Tables.getInstance(this).getDatabase();
+    UserDbInterface dbInterface = getDatabase();
     Uri uri;
     String filename;
     String relativePath;
@@ -569,9 +570,9 @@ public class TablePropertiesManager extends BasePreferenceActivity
       try {
         localizedDisplayName = LocalizationUtils
             .getLocalizedDisplayName(appName, tableId, props.getUserSelectedDefaultLocale(),
-                TableUtil.get().atomicSetRawDisplayName(
-                    Tables.getInstance(TablePropertiesManager.this).getDatabase(), appName, tableId,
-                    (String) newValue));
+                TableUtil.get()
+                    .atomicSetRawDisplayName(TablePropertiesManager.this.getDatabase(), appName,
+                        tableId, (String) newValue));
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
@@ -589,8 +590,8 @@ public class TablePropertiesManager extends BasePreferenceActivity
     public boolean onPreferenceChange(Preference preference, Object newValue) {
       try {
         TableUtil.get()
-            .atomicSetDefaultViewType(Tables.getInstance(TablePropertiesManager.this).getDatabase(),
-                appName, tableId, TableViewType.valueOf((String) newValue));
+            .atomicSetDefaultViewType(TablePropertiesManager.this.getDatabase(), appName, tableId,
+                TableViewType.valueOf((String) newValue));
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(getParent(), "Unable to change default view type", Toast.LENGTH_LONG).show();

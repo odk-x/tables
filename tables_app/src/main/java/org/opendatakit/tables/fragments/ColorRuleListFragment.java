@@ -25,6 +25,7 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.Toast;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColorRuleUtil;
@@ -37,7 +38,6 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.components.ColorRuleAdapter;
 
@@ -107,9 +107,10 @@ public class ColorRuleListFragment extends ListFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     this.setHasOptionsMenu(true);
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), getAppName());
+    PropertiesSingleton props = CommonToolProperties
+        .get(getActivity().getApplication(), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
+    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
     TableUtil.TableColumns tc = null;
     DbHandle db = null;
     try {
@@ -140,7 +141,8 @@ public class ColorRuleListFragment extends ListFragment {
 
   /**
    * Creates an adapter using the same color rule type
-   * @param adminColumns a list of hidden columns in the table
+   *
+   * @param adminColumns    a list of hidden columns in the table
    * @param colDisplayNames a list of the display names of the columns in the table
    * @return a new ColorRuleAdapter with the right color rule type
    */
@@ -244,7 +246,7 @@ public class ColorRuleListFragment extends ListFragment {
           WebLogger.getLogger(appName).d(TAG, "trying to delete rule at position: " + position);
           mColorRuleGroup.getColorRules().remove(position);
           try {
-            mColorRuleGroup.saveRuleList(Tables.getInstance(getActivity()).getDatabase());
+            mColorRuleGroup.saveRuleList(((BaseActivity) getActivity()).getDatabase());
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName()).e(TAG, "Error while saving color rules");
@@ -282,7 +284,7 @@ public class ColorRuleListFragment extends ListFragment {
       // replace the rules.
       List<ColorRule> newList = new ArrayList<>(ColorRuleUtil.getDefaultSyncStateColorRules());
       this.mColorRuleGroup.replaceColorRuleList(newList);
-      this.mColorRuleGroup.saveRuleList(Tables.getInstance(getActivity()).getDatabase());
+      this.mColorRuleGroup.saveRuleList(((BaseActivity) getActivity()).getDatabase());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     case COLUMN:
@@ -290,7 +292,7 @@ public class ColorRuleListFragment extends ListFragment {
       // We want to just wipe all the columns for both of these types.
       List<ColorRule> emptyList = new ArrayList<>();
       this.mColorRuleGroup.replaceColorRuleList(emptyList);
-      this.mColorRuleGroup.saveRuleList(Tables.getInstance(getActivity()).getDatabase());
+      this.mColorRuleGroup.saveRuleList(((BaseActivity) getActivity()).getDatabase());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     }
@@ -315,8 +317,9 @@ public class ColorRuleListFragment extends ListFragment {
 
   /**
    * Returns a color rule group with the color rules for the color rule type
-   * @param dbInterface a database handle to use
-   * @param db an open database connection
+   *
+   * @param dbInterface  a database handle to use
+   * @param db           an open database connection
    * @param adminColumns a list of the hidden columns in the table
    * @return a ColorRuleGroup containing all the color rules for the status column
    * @throws ServicesAvailabilityException if the database is down

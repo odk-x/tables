@@ -13,8 +13,7 @@ public class SpreadsheetProps implements Parcelable {
   /**
    * parcelable cruft
    */
-  public static final Parcelable.Creator<SpreadsheetProps> CREATOR = new Parcelable
-      .Creator<SpreadsheetProps>() {
+  public static final Parcelable.Creator<SpreadsheetProps> CREATOR = new Parcelable.Creator<SpreadsheetProps>() {
     public SpreadsheetProps createFromParcel(Parcel in) {
       return new SpreadsheetProps(in);
     }
@@ -86,6 +85,62 @@ public class SpreadsheetProps implements Parcelable {
     deleteDialogOpen = bools[2];
     lastDataCellMenued = readCellInfo(in);
     lastHeaderCellMenued = readCellInfo(in);
+  }
+
+  /**
+   * Reads a string from a parcel if it was in there
+   *
+   * @param in the parcel to read from
+   * @return the string that was originally put in the parcelable
+   */
+  private static String readString(Parcel in) {
+    if (in.readByte() == 1) {
+      return in.readString();
+    }
+    return null;
+  }
+
+  /**
+   * Reads a cell info object from a parcel
+   *
+   * @param in the parcel to read from
+   * @return the cell info object we read
+   */
+  private static CellInfo readCellInfo(Parcel in) {
+    if (in.readByte() == 0) {
+      return null;
+    }
+    return in.readParcelable(CellInfo.class.getClassLoader());
+  }
+
+  /**
+   * Writes a string to the parcel if it's not null
+   *
+   * @param out the parcel to write to
+   * @param str the string to write
+   */
+  private static void writeString(Parcel out, String str) {
+    if (str == null) {
+      out.writeByte((byte) 0);
+    } else {
+      out.writeByte((byte) 1);
+      out.writeString(str);
+    }
+  }
+
+  /**
+   * Writes a cell info object to a parcel
+   *
+   * @param dest the parcel to write to
+   * @param cell the cell to write to the parcel
+   */
+  private static void writeCellInfo(Parcel dest, Parcelable cell) {
+    if (cell == null) {
+      dest.writeByte((byte) 0);
+    } else {
+      dest.writeByte((byte) 1);
+      dest.writeParcelable(cell, 0);
+    }
   }
 
   /**
@@ -173,62 +228,6 @@ public class SpreadsheetProps implements Parcelable {
   @Override
   public int describeContents() {
     return 0;
-  }
-
-  /**
-   * Reads a string from a parcel if it was in there
-   *
-   * @param in the parcel to read from
-   * @return the string that was originally put in the parcelable
-   */
-  private static String readString(Parcel in) {
-    if (in.readByte() == 1) {
-      return in.readString();
-    }
-    return null;
-  }
-
-  /**
-   * Reads a cell info object from a parcel
-   *
-   * @param in the parcel to read from
-   * @return the cell info object we read
-   */
-  private static CellInfo readCellInfo(Parcel in) {
-    if (in.readByte() == 0) {
-      return null;
-    }
-    return in.readParcelable(CellInfo.class.getClassLoader());
-  }
-
-  /**
-   * Writes a string to the parcel if it's not null
-   *
-   * @param out the parcel to write to
-   * @param str the string to write
-   */
-  private static void writeString(Parcel out, String str) {
-    if (str == null) {
-      out.writeByte((byte) 0);
-    } else {
-      out.writeByte((byte) 1);
-      out.writeString(str);
-    }
-  }
-
-  /**
-   * Writes a cell info object to a parcel
-   *
-   * @param dest the parcel to write to
-   * @param cell the cell to write to the parcel
-   */
-  private static void writeCellInfo(Parcel dest, Parcelable cell) {
-    if (cell == null) {
-      dest.writeByte((byte) 0);
-    } else {
-      dest.writeByte((byte) 1);
-      dest.writeParcelable(cell, 0);
-    }
   }
 
   /**

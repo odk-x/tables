@@ -11,7 +11,8 @@ public interface IOdkTablesActivity extends IOdkCommonActivity, IOdkDataActivity
   /**
    * Takes a fragment id and if that fragment exists and is a webkit, returns the url currently
    * being viewed in the fragment
-   * @param ifChanged unused
+   *
+   * @param ifChanged  unused
    * @param fragmentID the id of the webview fragment, if there are more than one
    * @return The url of the requested fragment or null
    */

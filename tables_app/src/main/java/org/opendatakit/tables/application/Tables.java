@@ -14,12 +14,8 @@
 
 package org.opendatakit.tables.application;
 
-import android.app.Activity;
-import android.app.Application;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.tables.R;
-
-import java.lang.ref.WeakReference;
 
 /**
  * The application, holds a reference to itself and a very helpful getDatabase method
@@ -31,15 +27,6 @@ public class Tables extends CommonApplication {
    */
   @SuppressWarnings("unused")
   private static final String TAG = Tables.class.getSimpleName();
-
-
-  public static CommonApplication getInstance(Activity act) {
-    Application app = act.getApplication();
-    if (app instanceof CommonApplication) {
-      return (CommonApplication) app;
-    }
-    throw new IllegalArgumentException("Bad app");
-  }
 
   @Override
   public int getApkDisplayNameResourceId() {

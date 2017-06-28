@@ -20,11 +20,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
-import android.widget.TextView;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
@@ -60,10 +58,10 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implem
       return;
     }
 
-    WebView webView = (WebView) getView().findViewById(R.id.webkit);
-    TextView noDatabase = (TextView) getView().findViewById(android.R.id.empty);
+    View webView = getView().findViewById(R.id.webkit);
+    View noDatabase = getView().findViewById(android.R.id.empty);
 
-    if (Tables.getInstance(getActivity()).getDatabase() != null) {
+    if (((BaseActivity) getActivity()).getDatabase() != null) {
       webView.setVisibility(View.VISIBLE);
       noDatabase.setVisibility(View.GONE);
     } else {

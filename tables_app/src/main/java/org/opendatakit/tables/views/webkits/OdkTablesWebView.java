@@ -15,7 +15,8 @@ public class OdkTablesWebView extends ODKWebView {
   // Used for logging
   private static final String TAG = OdkTablesWebView.class.getSimpleName();
 
-  /** IGNORE THE WARNINGS
+  /**
+   * IGNORE THE WARNINGS
    * This has to be a class property, or it will get garbage collected while the javascript is
    * still trying to use it
    */
@@ -26,7 +27,7 @@ public class OdkTablesWebView extends ODKWebView {
    * Constructs a new WebView for use with tables
    *
    * @param context Used to construct an OdkTables object
-   * @param attrs unused
+   * @param attrs   unused
    */
   /* Some information about the warning we're about to ignore
    * "For applications built for API levels below 17, WebView#addJavascriptInterface presents a

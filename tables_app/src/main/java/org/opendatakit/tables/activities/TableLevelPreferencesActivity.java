@@ -15,7 +15,6 @@
 package org.opendatakit.tables.activities;
 
 import android.app.FragmentTransaction;
-import android.os.BaseBundle;
 import android.os.Bundle;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.tables.fragments.*;
@@ -41,6 +40,45 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * associated with a column fragmnent.
    */
   String mElementKeyOfDisplayedColumn;
+
+  /**
+   * Static factory for a TablePreferenceFragment
+   *
+   * @return a new TablePreferenceFragment
+   */
+  static TablePreferenceFragment createTablePreferenceFragment() {
+    return new TablePreferenceFragment();
+  }
+
+  /**
+   * Static factory for a StatusColorRuleListFragment with a particular list of color rules
+   *
+   * @param colorRuleGroupType the list of color rules for the status column
+   * @return a new StatusColorRuleListFragment with the correct color rules
+   */
+  static StatusColorRuleListFragment createStatusColorRuleListFragment(
+      ColorRuleGroup.Type colorRuleGroupType) {
+    return StatusColorRuleListFragment.newInstance(colorRuleGroupType);
+  }
+
+  /**
+   * Static factory for a ColorRuleListFragment with a particular list of color rules
+   *
+   * @param colorRuleGroupType the list of color rules for the column
+   * @return a new ColorRuleListFragment with the correct color rules
+   */
+  static ColorRuleListFragment createColorRuleListFragment(ColorRuleGroup.Type colorRuleGroupType) {
+    return ColorRuleListFragment.newInstance(colorRuleGroupType);
+  }
+
+  /**
+   * Static factory for a ColumnPreferenceFragment
+   *
+   * @return a new ColumnPreferenceFragment
+   */
+  static ColumnListFragment createColumnListFragment() {
+    return new ColumnListFragment();
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -123,7 +161,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * Attempts to show an EditColorRuleFragment for a new color rule
    *
    * @param colorRuleGroupType the type of color rule to add
-   * @param elementKey the column the color rule operates on
+   * @param elementKey         the column the color rule operates on
    */
   public void showEditColorRuleFragmentForNewRule(ColorRuleGroup.Type colorRuleGroupType,
       String elementKey) {
@@ -163,7 +201,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * doesn't exist. Optionally adds it to the backstack
    *
    * @param colorRuleGroupType the type of color rule
-   * @param addToBackStack whether to add it to the fragment stack
+   * @param addToBackStack     whether to add it to the fragment stack
    */
   public void showStatusColorRuleListFragment(ColorRuleGroup.Type colorRuleGroupType,
       boolean addToBackStack) {
@@ -171,7 +209,8 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     StatusColorRuleListFragment statusColorRuleListFragment = this
         .findStatusColorRuleListFragment();
     if (statusColorRuleListFragment == null) {
-      statusColorRuleListFragment = TableLevelPreferencesActivity.createStatusColorRuleListFragment(colorRuleGroupType);
+      statusColorRuleListFragment = TableLevelPreferencesActivity
+          .createStatusColorRuleListFragment(colorRuleGroupType);
     }
     FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
     fragmentTransaction.replace(android.R.id.content, statusColorRuleListFragment,
@@ -186,7 +225,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * Wrapper around {@link #showColorRuleListFragment(String, ColorRuleGroup.Type, boolean)}
    * with addToBackStack set to true.
    *
-   * @param elementKey the column the rule operates on
+   * @param elementKey         the column the rule operates on
    * @param colorRuleGroupType the type of color rule
    */
   public void showColorRuleListFragment(String elementKey, ColorRuleGroup.Type colorRuleGroupType) {
@@ -197,9 +236,9 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * Shows the color rule list fragment if it already exists, or creates a new one. Optionally
    * add it to the backstack
    *
-   * @param elementKey the column to list color rules for
+   * @param elementKey         the column to list color rules for
    * @param colorRuleGroupType the type of color rules
-   * @param addToBackStack whether to add it to the back stack or not
+   * @param addToBackStack     whether to add it to the back stack or not
    */
   public void showColorRuleListFragment(String elementKey, ColorRuleGroup.Type colorRuleGroupType,
       boolean addToBackStack) {
@@ -207,7 +246,8 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     this.mCurrentFragmentType = FragmentType.COLOR_RULE_LIST;
     ColorRuleListFragment colorRuleListFragment = findColorRuleListFragment();
     if (colorRuleListFragment == null) {
-      colorRuleListFragment = TableLevelPreferencesActivity.createColorRuleListFragment(colorRuleGroupType);
+      colorRuleListFragment = TableLevelPreferencesActivity
+          .createColorRuleListFragment(colorRuleGroupType);
     }
     FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
     fragmentTransaction.replace(android.R.id.content, colorRuleListFragment,
@@ -219,44 +259,9 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
   }
 
   /**
-   * Static factory for a TablePreferenceFragment
-   * @return a new TablePreferenceFragment
-   */
-  static TablePreferenceFragment createTablePreferenceFragment() {
-    return new TablePreferenceFragment();
-  }
-
-  /**
-   * Static factory for a StatusColorRuleListFragment with a particular list of color rules
-   * @param colorRuleGroupType the list of color rules for the status column
-   * @return a new StatusColorRuleListFragment with the correct color rules
-   */
-  static StatusColorRuleListFragment createStatusColorRuleListFragment(
-      ColorRuleGroup.Type colorRuleGroupType) {
-    return StatusColorRuleListFragment
-        .newInstance(colorRuleGroupType);
-  }
-
-  /**
-   * Static factory for a ColorRuleListFragment with a particular list of color rules
-   * @param colorRuleGroupType the list of color rules for the column
-   * @return a new ColorRuleListFragment with the correct color rules
-   */
-  static ColorRuleListFragment createColorRuleListFragment(ColorRuleGroup.Type colorRuleGroupType) {
-    return ColorRuleListFragment.newInstance(colorRuleGroupType);
-  }
-
-  /**
-   * Static factory for a ColumnPreferenceFragment
-   * @return a new ColumnPreferenceFragment
-   */
-  static ColumnListFragment createColumnListFragment() {
-    return new ColumnListFragment();
-  }
-
-  /**
    * Tries to get a column preferences fragment out of the fragment manager or create it if it
    * doesn't exist. Adds to back stack
+   *
    * @param elementKey the column to open preferences for
    */
   public void showColumnPreferenceFragment(String elementKey) {
@@ -267,7 +272,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * Tries to get a column preferences fragment out of the fragment manager or create it if it
    * doesn't exist. Optionally adds to back stack
    *
-   * @param elementKey the column to open preferences for
+   * @param elementKey     the column to open preferences for
    * @param addToBackStack whether to add to the back stack or not
    */
   public void showColumnPreferenceFragment(String elementKey, boolean addToBackStack) {

@@ -51,6 +51,7 @@ public class SQLQueryStruct {
 
   /**
    * A simple constructor that stores its properties
+   *
    * @param whereClause       A sql clause that narrows down the list of returned rows
    * @param selectionArgs     TODO
    * @param groupBy           A list of columns to group by

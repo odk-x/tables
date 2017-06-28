@@ -26,6 +26,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.utilities.TableUtil;
@@ -40,7 +41,6 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableNameStruct;
@@ -97,15 +97,15 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
 
     String appName = baseActivity.getAppName();
 
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), appName);
+    PropertiesSingleton props = CommonToolProperties.get(getActivity().getApplication(), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
-    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
+    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
     DbHandle db = null;
 
     List<TableNameStruct> tableNameStructs = new ArrayList<>();
 
-    if (Tables.getInstance(getActivity()).getDatabase() != null) {
+    if (((BaseActivity) getActivity()).getDatabase() != null) {
 
       try {
         db = dbInterface.openDatabase(appName);
@@ -150,7 +150,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       TextView none = (TextView) this.getView().findViewById(android.R.id.empty);
       View listing = this.getView().findViewById(android.R.id.list);
       if (tableNameStructs.isEmpty()) {
-        if (Tables.getInstance(getActivity()).getDatabase() == null) {
+        if (((BaseActivity) getActivity()).getDatabase() == null) {
           none.setText(R.string.database_unavailable);
         } else {
           none.setText(R.string.no_table_data);
@@ -219,12 +219,12 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
           DbHandle db = null;
           try {
             try {
-              db = Tables.getInstance(getActivity()).getDatabase().openDatabase(appName);
-              Tables.getInstance(getActivity()).getDatabase()
+              db = ((BaseActivity) getActivity()).getDatabase().openDatabase(appName);
+              ((BaseActivity) getActivity()).getDatabase()
                   .deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
             } finally {
               if (db != null) {
-                Tables.getInstance(getActivity()).getDatabase().closeDatabase(appName, db);
+                ((BaseActivity) getActivity()).getDatabase().closeDatabase(appName, db);
               }
             }
             // Now update the list.

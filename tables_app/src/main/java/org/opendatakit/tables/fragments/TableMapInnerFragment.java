@@ -28,6 +28,7 @@ import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.*;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
@@ -45,7 +46,6 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.util.HashMap;
@@ -127,6 +127,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
   /**
    * Gets an index from the passed bundle if it exists
+   *
    * @param bundle the bundle to pull the index from
    * @return the index that was in the bundle or {@link #INVALID_INDEX}
    */
@@ -250,7 +251,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     // Grab the color group
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
-    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
+    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(activity.getAppName());
@@ -394,15 +395,16 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     return TableUtil.get()
-        .getMapListViewLatitudeElementKey(Tables.getInstance(getActivity()).getDatabase(), activity.getAppName(),
-            dbHandle, activity.getTableId(), orderedDefns);
+        .getMapListViewLatitudeElementKey(((BaseActivity) getActivity()).getDatabase(),
+            activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
   }
 
   private String getLongitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    return TableUtil.get().getMapListViewLongitudeElementKey(Tables.getInstance(getActivity()).getDatabase(),
-        activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
+    return TableUtil.get()
+        .getMapListViewLongitudeElementKey(((BaseActivity) getActivity()).getDatabase(),
+            activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
   }
 
   /**
@@ -549,6 +551,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
     /**
      * Set the index of the marker that has been selected.
+     *
      * @param i the index of the marker
      */
     void onSetSelectedItemIndex(int i);

@@ -9,6 +9,7 @@ import org.opendatakit.tables.views.SpreadsheetProps;
 public interface ISpreadsheetFragmentContainer {
   /**
    * Gets the spreadsheet properties (should be mutable!)
+   *
    * @return the properties for the current view
    */
   SpreadsheetProps getProps();

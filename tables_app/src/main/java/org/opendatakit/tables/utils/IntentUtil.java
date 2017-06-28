@@ -113,7 +113,7 @@ public final class IntentUtil {
   /**
    * Thin wrapper for addSQLKeysToBundle
    *
-   * @param bundle the bundle to put the query parameters into
+   * @param bundle      the bundle to put the query parameters into
    * @param queryStruct the query parameters to put into the bundle
    */
   public static void addSQLQueryStructToBundle(Bundle bundle, SQLQueryStruct queryStruct) {
@@ -237,7 +237,7 @@ public final class IntentUtil {
    * Add viewFragmentType's {@link ViewFragmentType#name()} to bundle. If
    * bundle or viewFragmentType is null, does nothing.
    *
-   * @param bundle the bundle to put the fragment view type in
+   * @param bundle           the bundle to put the fragment view type in
    * @param viewFragmentType the fragment view type to put in the bundle
    */
   public static void addFragmentViewTypeToBundle(Bundle bundle, ViewFragmentType viewFragmentType) {
@@ -273,7 +273,7 @@ public final class IntentUtil {
    * {@link IntentKeys#SQL_ORDER_BY_ELEMENT_KEY}.
    * If bundle or orderByElementKey is null, does nothing.
    *
-   * @param bundle the bundle to put the order by column in
+   * @param bundle            the bundle to put the order by column in
    * @param orderByElementKey the order by column to put in the bundle
    */
   public static void addOrderByElementKeyToBundle(Bundle bundle, String orderByElementKey) {
@@ -287,7 +287,7 @@ public final class IntentUtil {
    * {@link IntentKeys#SQL_ORDER_BY_DIRECTION}.
    * If bundle or orderByDirection is null, does nothing.
    *
-   * @param bundle the bundle to put the order by direction in
+   * @param bundle           the bundle to put the order by direction in
    * @param orderByDirection the order by direction
    */
   public static void addOrderByDirectionToBundle(Bundle bundle, String orderByDirection) {
@@ -300,7 +300,7 @@ public final class IntentUtil {
    * Add whereClause to bundle keyed to {@link IntentKeys#SQL_WHERE}.
    * If bundle or whereClause is null, does nothing.
    *
-   * @param bundle the bundle to put the where clause in
+   * @param bundle      the bundle to put the where clause in
    * @param whereClause the sql where clause
    */
   public static void addWhereClauseToBundle(Bundle bundle, String whereClause) {
@@ -314,7 +314,7 @@ public final class IntentUtil {
    * {@link IntentKeys#SQL_SELECTION_ARGS}.
    * If bundle or selectionArgs is null, does nothing.
    *
-   * @param bundle the bundle to put the selection args in
+   * @param bundle        the bundle to put the selection args in
    * @param selectionArgs TODO
    */
   public static void addSelectionArgsToBundle(Bundle bundle, BindArgs selectionArgs) {
@@ -342,7 +342,7 @@ public final class IntentUtil {
    * {@link IntentKeys#SQL_GROUP_BY_ARGS}.
    * If bundle or groupBy is null, does nothing.
    *
-   * @param bundle the bundle to put the group by columns in
+   * @param bundle  the bundle to put the group by columns in
    * @param groupBy an array of group by column IDs
    */
   public static void addGroupByToBundle(Bundle bundle, String[] groupBy) {
@@ -355,7 +355,7 @@ public final class IntentUtil {
    * Add appName to the bundle keyed to {@link IntentConsts#INTENT_KEY_APP_NAME}.
    * If bundle or appName is null, does nothing.
    *
-   * @param bundle a bundle to put the app name in
+   * @param bundle  a bundle to put the app name in
    * @param appName an app name to put in the bundle
    */
   public static void addAppNameToBundle(Bundle bundle, String appName) {
@@ -370,7 +370,7 @@ public final class IntentUtil {
    * does nothing.
    *
    * @param bundle a bundle to put a color rule group type into
-   * @param type the color rule group type to store
+   * @param type   the color rule group type to store
    */
   public static void addColorRuleGroupTypeToBundle(Bundle bundle, ColorRuleGroup.Type type) {
     if (bundle != null && type != null) {
@@ -383,7 +383,7 @@ public final class IntentUtil {
    * {@link Constants.IntentKeys#ELEMENT_KEY}. If bundle of elementKey is null,
    * does nothing.
    *
-   * @param bundle a bundle to put the element key into
+   * @param bundle     a bundle to put the element key into
    * @param elementKey the element key to put into the bundle
    */
   public static void addElementKeyToBundle(Bundle bundle, String elementKey) {
@@ -396,7 +396,7 @@ public final class IntentUtil {
    * Add tableId to bundle keyed to {@link IntentConsts#INTENT_KEY_TABLE_ID}.
    * If bundle or appName is null, does nothing.
    *
-   * @param bundle a bundle to put the table id into
+   * @param bundle  a bundle to put the table id into
    * @param tableId the table id to put into the bundle
    */
   public static void addTableIdToBundle(Bundle bundle, String tableId) {
@@ -410,7 +410,7 @@ public final class IntentUtil {
    * {@link Constants.IntentKeys#TABLE_PREFERENCE_FRAGMENT_TYPE}. If bundle
    * or fragmentType is null, does nothing.
    *
-   * @param bundle a bundle to put the table preference fragment type into
+   * @param bundle       a bundle to put the table preference fragment type into
    * @param fragmentType a table preference fragment type to put into the bundle
    */
   public static void addTablePreferenceFragmentTypeToBundle(Bundle bundle,
@@ -425,7 +425,7 @@ public final class IntentUtil {
    * If bundle or rowId is null, does nothing.
    *
    * @param bundle a bundle to put the row id into
-   * @param rowId the row id to put into the bundle
+   * @param rowId  the row id to put into the bundle
    */
   public static void addRowIdToBundle(Bundle bundle, String rowId) {
     if (bundle != null && rowId != null) {
@@ -437,7 +437,7 @@ public final class IntentUtil {
    * Add fileName to bundle keyed to {@link Constants.IntentKeys#FILE_NAME}.
    * If bundle or fileName is null, does nothing.
    *
-   * @param bundle a bundle to put the filename into
+   * @param bundle   a bundle to put the filename into
    * @param fileName the filename to add to the bundle
    */
   public static void addFileNameToBundle(Bundle bundle, String fileName) {

@@ -15,9 +15,9 @@
  */
 package org.opendatakit.tables.utils;
 
-import android.app.Activity;
 import android.content.Context;
 import android.widget.Toast;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.data.TableViewType;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
@@ -25,7 +25,6 @@ import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 
 /**
  * @author sudar.sam@gmail.com
@@ -57,8 +56,8 @@ public final class PreferenceUtil {
 
     try {
       TableUtil.get()
-          .atomicSetDefaultViewType(Tables.getInstance((Activity) context).getDatabase(), appName,
-              tableId, viewType);
+          .atomicSetDefaultViewType(((BaseActivity) context).getDatabase(), appName, tableId,
+              viewType);
     } catch (ServicesAvailabilityException ignored) {
       Toast.makeText(context, R.string.unable_to_change_default_view_type, Toast.LENGTH_LONG)
           .show();
@@ -76,17 +75,16 @@ public final class PreferenceUtil {
    * @return a width in pixels for the column
    * @throws ServicesAvailabilityException if the database is down
    */
-  public static int getColumnWidth(Activity act, String appName, String tableId, String elementKey)
-      throws ServicesAvailabilityException {
+  public static int getColumnWidth(BaseActivity act, String appName, String tableId,
+      String elementKey) throws ServicesAvailabilityException {
     Integer result = null;
     DbHandle db = null;
     try {
-      db = Tables.getInstance(act).getDatabase().openDatabase(appName);
-      result = ColumnUtil.get()
-          .getColumnWidth(Tables.getInstance(act).getDatabase(), appName, db, tableId, elementKey);
+      db = act.getDatabase().openDatabase(appName);
+      result = ColumnUtil.get().getColumnWidth(act.getDatabase(), appName, db, tableId, elementKey);
     } finally {
       if (db != null) {
-        Tables.getInstance(act).getDatabase().closeDatabase(appName, db);
+        act.getDatabase().closeDatabase(appName, db);
       }
     }
     return result;
@@ -106,8 +104,8 @@ public final class PreferenceUtil {
 
     try {
       ColumnUtil.get()
-          .atomicSetColumnWidth(Tables.getInstance((Activity) context).getDatabase(), appName,
-              tableId, elementKey, newColumnWidth);
+          .atomicSetColumnWidth(((BaseActivity) context).getDatabase(), appName, tableId,
+              elementKey, newColumnWidth);
     } catch (ServicesAvailabilityException e) {
       Toast.makeText(context, R.string.change_column_width_error, Toast.LENGTH_LONG).show();
       WebLogger.getLogger(appName).printStackTrace(e);

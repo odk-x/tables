@@ -37,7 +37,6 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 import org.opendatakit.tables.fragments.*;
 import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
@@ -360,7 +359,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     WebLogger.getLogger(getAppName()).i(TAG, "databaseAvailable called");
     if (pullFromDatabase) {
       try {
-        UserDbInterface dbInt = Tables.getInstance(this).getDatabase();
+        UserDbInterface dbInt = getDatabase();
         DbHandle db = dbInt.openDatabase(mAppName);
         props.setSortOrder(TableUtil.get().getSortOrder(dbInt, mAppName, db, getTableId()));
         props.setSort(TableUtil.get().getSortColumn(dbInt, mAppName, db, getTableId()));
@@ -413,7 +412,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     if (mUserTable == null) {
       DbHandle db = null;
       try {
-        db = Tables.getInstance(this).getDatabase().openDatabase(getAppName());
+        db = getDatabase().openDatabase(getAppName());
         SQLQueryStruct sqlQueryStruct = IntentUtil
             .getSQLQueryStructFromBundle(this.getIntent().getExtras());
 
@@ -426,7 +425,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         sqlQueryStruct.orderByDirection = props.getSortOrder();
 
         String[] emptyArray = {};
-        mUserTable = Tables.getInstance(this).getDatabase()
+        mUserTable = getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
                 sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
                 sqlQueryStruct.groupBy == null ? emptyArray : sqlQueryStruct.groupBy,
@@ -441,7 +440,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       } finally {
         if (db != null) {
           try {
-            Tables.getInstance(this).getDatabase().closeDatabase(getAppName(), db);
+            getDatabase().closeDatabase(getAppName(), db);
           } catch (ServicesAvailabilityException e) {
             Toast.makeText(this, R.string.database_unavailable, Toast.LENGTH_LONG).show();
             WebLogger.getLogger(getAppName()).printStackTrace(e);
@@ -799,8 +798,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    */
   private void possiblySupplyDefaults() {
 
-    if (mPossibleTableViewTypes == null && Tables.getInstance(this).getDatabase() != null) {
-      UserDbInterface dbInterface = Tables.getInstance(this).getDatabase();
+    if (mPossibleTableViewTypes == null && getDatabase() != null) {
+      UserDbInterface dbInterface = getDatabase();
       DbHandle db = null;
       try {
         db = dbInterface.openDatabase(getAppName());
@@ -814,7 +813,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       } finally {
         if (db != null) {
           try {
-            Tables.getInstance(this).getDatabase().closeDatabase(getAppName(), db);
+            getDatabase().closeDatabase(getAppName(), db);
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName())

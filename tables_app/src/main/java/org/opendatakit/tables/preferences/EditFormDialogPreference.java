@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.preferences;
 
-import android.app.Activity;
 import android.content.Context;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
@@ -24,6 +23,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
@@ -31,7 +31,6 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -79,7 +78,7 @@ public class EditFormDialogPreference extends DialogPreference {
    */
   private FormType retrieveFormType() throws ServicesAvailabilityException {
     AbsTableActivity tableActivity = (AbsTableActivity) getContext();
-    return FormType.constructFormType((Activity) getContext(), tableActivity.getAppName(),
+    return FormType.constructFormType((BaseActivity) getContext(), tableActivity.getAppName(),
         tableActivity.getTableId());
   }
 
@@ -138,7 +137,7 @@ public class EditFormDialogPreference extends DialogPreference {
       this.mFormType.setFormId(formId);
       AbsTableActivity tableActivity = (AbsTableActivity) getContext();
 
-      UserDbInterface dbInt = Tables.getInstance(tableActivity).getDatabase();
+      UserDbInterface dbInt = tableActivity.getDatabase();
       DbHandle db = null;
       try {
         db = dbInt.openDatabase(tableActivity.getAppName());

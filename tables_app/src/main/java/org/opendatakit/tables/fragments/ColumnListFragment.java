@@ -20,7 +20,10 @@ import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
+import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.service.DbHandle;
@@ -31,7 +34,6 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.application.Tables;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,8 +69,7 @@ public class ColumnListFragment extends ListFragment {
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    TableLevelPreferencesActivity tableLevelPreferenceActivity = (TableLevelPreferencesActivity) this
-        .getActivity();
+    IAppAwareActivity tableLevelPreferenceActivity = (IAppAwareActivity) getActivity();
     WebLogger.getLogger(tableLevelPreferenceActivity.getAppName()).d(TAG, "[onActivityCreated]");
     // All we need to do is get the columns to display.
     try {
@@ -77,7 +78,7 @@ public class ColumnListFragment extends ListFragment {
       WebLogger.getLogger(tableLevelPreferenceActivity.getAppName()).printStackTrace(e);
       return;
     }
-    ArrayAdapter<String> adapter = new ArrayAdapter<>(this.getActivity(),
+    ListAdapter adapter = new ArrayAdapter<>(this.getActivity(),
         android.R.layout.simple_list_item_1, this.mDisplayNames);
     this.setListAdapter(adapter);
   }
@@ -99,9 +100,9 @@ public class ColumnListFragment extends ListFragment {
     AbsTableActivity activity = retrieveTableActivity();
     String appName = activity.getAppName();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), appName);
+    PropertiesSingleton props = CommonToolProperties.get(getActivity().getApplication(), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
+    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
     TableUtil.TableColumns tc;
     DbHandle db = null;
     try {

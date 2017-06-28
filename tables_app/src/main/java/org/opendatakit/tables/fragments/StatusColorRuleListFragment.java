@@ -23,6 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.TableUtil;
@@ -34,7 +35,6 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.components.ColorRuleAdapter;
 
@@ -90,9 +90,10 @@ public class StatusColorRuleListFragment extends ListFragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     //this.setHasOptionsMenu(true);
-    PropertiesSingleton props = CommonToolProperties.get(Tables.getInstance(getActivity()), getAppName());
+    PropertiesSingleton props = CommonToolProperties
+        .get(getActivity().getApplication(), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = Tables.getInstance(getActivity()).getDatabase();
+    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
     TableUtil.TableColumns tc = null;
     DbHandle db = null;
     try {
@@ -123,7 +124,8 @@ public class StatusColorRuleListFragment extends ListFragment {
 
   /**
    * Creates an adapter using the same color rule type
-   * @param adminColumns a list of hidden columns in the table
+   *
+   * @param adminColumns    a list of hidden columns in the table
    * @param colDisplayNames a list of the display names of the columns in the table
    * @return a new ColorRuleAdapter with the right color rule type
    */
@@ -167,8 +169,9 @@ public class StatusColorRuleListFragment extends ListFragment {
 
   /**
    * Returns a color rule group with the color rules for the status column
-   * @param dbInterface a database handle to use
-   * @param db an open database connection
+   *
+   * @param dbInterface  a database handle to use
+   * @param db           an open database connection
    * @param adminColumns a list of the hidden columns in the table
    * @return a ColorRuleGroup containing all the color rules for the status column
    * @throws ServicesAvailabilityException if the database is down

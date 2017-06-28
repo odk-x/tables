@@ -32,7 +32,6 @@ import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.IWebFragment;
 import org.opendatakit.tables.fragments.InitializationFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
@@ -70,6 +69,12 @@ public class MainActivity extends AbsBaseWebActivity
    * active fragment.
    */
   private ScreenType lastMenuType = null;
+
+  private static String[] checkForQueryParameter(File webFile) {
+    String webFileToDisplayPath = webFile.getPath();
+    //noinspection DynamicRegexReplaceableByCompiledPattern
+    return webFileToDisplayPath.split("[" + QUERY_START_PARAM + "]", 2);
+  }
 
   /**
    * Finds the webkit object in the fragment manager and returns it, if we're on a web view screen
@@ -237,12 +242,6 @@ public class MainActivity extends AbsBaseWebActivity
     }
   }
 
-  private static String[] checkForQueryParameter(File webFile) {
-    String webFileToDisplayPath = webFile.getPath();
-    //noinspection DynamicRegexReplaceableByCompiledPattern
-    return webFileToDisplayPath.split("[" + QUERY_START_PARAM + "]", 2);
-  }
-
   private void popBackStack() {
     FragmentManager mgr = getFragmentManager();
     int idxLast = mgr.getBackStackEntryCount() - 2;
@@ -334,12 +333,12 @@ public class MainActivity extends AbsBaseWebActivity
     }
 
     // and see if we should re-initialize...
-    if (activeScreenType != ScreenType.INITIALIZATION_SCREEN && Tables.getInstance(this)
+    if (activeScreenType != ScreenType.INITIALIZATION_SCREEN && getCommonApplication()
         .shouldRunInitializationTask(getAppName())) {
       WebLogger.getLogger(getAppName())
           .i(TAG, "swapToFragmentView -- calling clearRunInitializationTask");
       // and immediately clear the should-run flag...
-      Tables.getInstance(this).clearRunInitializationTask(getAppName());
+      getCommonApplication().clearRunInitializationTask(getAppName());
       // OK we should swap to the InitializationFragment view
       // this will skip the transition to whatever screen we were trying to
       // go to and will instead show the InitializationFragment view. We

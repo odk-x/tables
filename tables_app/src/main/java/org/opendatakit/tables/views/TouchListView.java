@@ -18,17 +18,8 @@
 package org.opendatakit.tables.views;
 
 import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Bitmap;
-import android.graphics.PixelFormat;
-import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.view.*;
-import android.view.GestureDetector.SimpleOnGestureListener;
-import android.widget.AdapterView;
-import android.widget.ImageView;
 import android.widget.ListView;
-import org.opendatakit.tables.R;
 
 /**
  * A thin wrapper for ListView
