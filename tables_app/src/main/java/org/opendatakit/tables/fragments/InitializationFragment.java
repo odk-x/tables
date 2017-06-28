@@ -39,7 +39,7 @@ import java.util.ArrayList;
  *
  * @author mitchellsundt@gmail.com
  */
-public class InitializationFragment extends AbsBaseFragment
+public class InitializationFragment extends AbsTablesFragment
     implements InitializationListener, ConfirmAlertDialog, CancelProgressDialog,
     DatabaseConnectionListener {
 

@@ -27,7 +27,7 @@ import org.opendatakit.tables.activities.TableDisplayActivity;
  *
  * @author sudar.sam@gmail.com
  */
-public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
+public abstract class AbsTableDisplayFragment extends AbsTablesFragment {
 
   @Override
   public void onAttach(Context context) {

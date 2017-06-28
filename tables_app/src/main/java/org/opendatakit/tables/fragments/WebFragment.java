@@ -33,7 +33,7 @@ import org.opendatakit.tables.views.webkits.OdkTablesWebView;
  *
  * @author sudar.sam@gmail.com
  */
-public class WebFragment extends AbsBaseFragment implements IWebFragment {
+public class WebFragment extends AbsTablesFragment implements IWebFragment {
 
   private static final String TAG = WebFragment.class.getSimpleName();
 

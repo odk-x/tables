@@ -17,7 +17,6 @@ package org.opendatakit.tables.fragments;
 
 import android.app.Activity;
 import android.app.Application;
-import android.app.Fragment;
 import android.content.Context;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
@@ -31,9 +30,10 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
  *
  * @author sudar.sam@gmail.com
  */
-public abstract class AbsBaseFragment extends Fragment implements DatabaseConnectionListener {
+public abstract class AbsTablesFragment extends org.opendatakit.fragment.AbsBaseFragment
+    implements DatabaseConnectionListener {
 
-  private static final String TAG = "AbsBaseFragment";
+  private static final String TAG = AbsTablesFragment.class.getSimpleName();
 
   /**
    * The app name
@@ -44,7 +44,7 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
     super.onAttach(context);
     if (!(context instanceof AbsBaseActivity)) {
       throw new IllegalStateException(
-          AbsBaseFragment.class.getSimpleName() + " must be attached to an " + AbsBaseActivity.class
+          AbsTablesFragment.class.getSimpleName() + " must be attached to an " + AbsBaseActivity.class
               .getSimpleName());
     }
     mAppName = ((IAppAwareActivity) context).getAppName();
@@ -87,7 +87,7 @@ public abstract class AbsBaseFragment extends Fragment implements DatabaseConnec
       if (activity != null) {
         if (!(activity instanceof IAppAwareActivity)) {
           throw new IllegalStateException(
-              AbsBaseFragment.class.getSimpleName() + " must be attached to an "
+              AbsTablesFragment.class.getSimpleName() + " must be attached to an "
                   + IAppAwareActivity.class.getSimpleName());
         }
         mAppName = ((IAppAwareActivity) activity).getAppName();
