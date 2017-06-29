@@ -292,6 +292,9 @@ public final class SurveyUtil {
       Intent surveyEditIntent, String rowId) {
     // Should already be in there but just in case
     Bundle extras = surveyEditIntent.getExtras();
+    if (extras == null) {
+      extras = new Bundle();
+    }
     IntentUtil.addRowIdToBundle(extras, rowId);
     surveyEditIntent.putExtras(extras);
     Context ctxt = activityToAwaitReturn.getApplicationContext();

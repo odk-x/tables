@@ -184,7 +184,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
    */
   @Override
   public String getWebViewContentUri() {
-    Uri u = UrlUtils.getWebViewContentUri(this);
+    Uri u = UrlUtils.getWebViewContentUri();
 
     String uriString = u.toString();
 

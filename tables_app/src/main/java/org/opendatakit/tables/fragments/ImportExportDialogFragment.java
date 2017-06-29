@@ -153,18 +153,23 @@ public class ImportExportDialogFragment extends DialogFragment {
    * @param id     the string resource to get
    * @param status the message to set the dialog's text to
    */
-  public void updateProgressDialogStatusString(AbsBaseActivity task, final int id,
-      final int status) {
+  public void updateProgressDialogStatusString(Activity task, final int id,
+      final int status, final int total) {
     task.runOnUiThread(new Runnable() {
       @Override
       public void run() {
+        if (getActivity() == null) {
+          // not attached, happens when we get an update while the user is in the middle of
+          // rotating the screen
+          return;
+        }
         Dialog d = activeDialogFragment.getDialog();
         if (d == null) {
           WebLogger.getLogger(appName).a(TAG, "Undismissable dialog was dismissed somehow!");
           return;
         }
         if (getArguments().getInt("type") == PROGRESS_DIALOG) {
-          String message = getString(id, status);
+          String message = getString(id, status, total);
           ((AlertDialog) d).setMessage(message);
           getArguments().putString("message", message); // in case the screen is rotated and the
           // dialog gets recreated, don't reset to the default message
@@ -175,8 +180,7 @@ public class ImportExportDialogFragment extends DialogFragment {
 
   /**
    * DO NOT CALL THIS METHOD
-   * It's called automatically by the parent class. Even though there's no @Override tag. I don't
-   * know how that works
+   * It's called automatically by the parent class.
    * If you do call this method on a new ImportExportDialogFragment(), args will be empty and you'll get
    * a null pointer exception. If you call this method on an ImportExportDialogFragment created with
    * newInstance you'll get a dialog that you'll have to manage yourself, defeating the purpose
@@ -188,6 +192,7 @@ public class ImportExportDialogFragment extends DialogFragment {
    * @param savedState unused
    * @return the dialog object to be displayed to the user.
    */
+  @Override
   public Dialog onCreateDialog(Bundle savedState) {
     activeDialogFragment = this;
     super.onCreateDialog(savedState);

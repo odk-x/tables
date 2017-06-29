@@ -112,8 +112,10 @@
     <string name="expansion_unzipping_without_detail">Unzipping resources. Extracting %1$s (%2$d of %3$d)</string>
     <string name="expansion_create_dir_detail">Creating directory</string>
     <string name="scanning_for_table_definitions">Scanning for table definitions. Creating %1$s (%2$d of %3$d).</string>
+    <!--
     <string name="importing_file_without_detail">Importing file (%1$d of %2$d): %3$s</string>
     <string name="importing_file">Importing file (%1$d of %2$d): %3$s\n(%4$s)</string>
+    -->
     <string name="bad_config_properties_file">bad config.properties file</string>
     <string name="error">error</string>
     <string name="config_summary">Configuration Summary:</string>
@@ -271,8 +273,8 @@
     <string name="import_in_progress">File import in progress&#8230;</string>
     <string name="import_success">File import was successful.</string>
     <string name="import_failure">File import failed.</string>
-    <string name="import_in_progress_row">Importing row %1$d</string>
-    <string name="export_in_progress_row">Exporting row %1$d</string>
+    <string name="import_in_progress_row">Importing row %1$d of %2$d</string>
+    <string name="export_in_progress_row">Exporting row %1$d of %2$d</string>
     <string name="export_to_csv">Exporting table:</string>
     <string name="export_options">Export Options:</string>
     <string name="export_opt_include_metadata">Include Metadata to Allow for Import</string>

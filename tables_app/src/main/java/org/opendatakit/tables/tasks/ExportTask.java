@@ -123,9 +123,9 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
    * @param row the string to set in the window, like "Exporting row 10"
    */
   @Override
-  public void updateProgressDetail(int row) {
+  public void updateProgressDetail(int row, int total) {
     ImportExportDialogFragment.activeDialogFragment
-        .updateProgressDialogStatusString(context, R.string.export_in_progress_row, row);
+        .updateProgressDialogStatusString(context, R.string.export_in_progress_row, row, total);
   }
 
 }

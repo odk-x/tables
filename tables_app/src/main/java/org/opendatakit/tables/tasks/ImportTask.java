@@ -96,9 +96,9 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
    * @param row the row we're currently importing
    */
   @Override
-  public void updateProgressDetail(int row) {
+  public void updateProgressDetail(int row, int total) {
     ImportExportDialogFragment.activeDialogFragment
-        .updateProgressDialogStatusString(context, R.string.import_in_progress_row, row);
+        .updateProgressDialogStatusString(context, R.string.import_in_progress_row, row, total);
   }
 
   /**
