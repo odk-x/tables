@@ -38,6 +38,7 @@ import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
+import org.opendatakit.tables.data.ViewFragmentType;
 import org.opendatakit.tables.fragments.*;
 import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
 import org.opendatakit.tables.utils.ActivityUtil;
@@ -1197,16 +1198,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     if (fragmentTransaction != null) {
       fragmentTransaction.commit();
     }
-  }
-
-  /**
-   * The fragment types this activity could be displaying.
-   *
-   * @author sudar.sam@gmail.com
-   */
-  @SuppressWarnings("JavaDoc")
-  public enum ViewFragmentType {
-    SPREADSHEET, LIST, MAP, DETAIL, DETAIL_WITH_LIST, SUB_LIST
   }
 
 }

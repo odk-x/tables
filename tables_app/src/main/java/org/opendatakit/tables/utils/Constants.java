@@ -16,9 +16,6 @@
 package org.opendatakit.tables.utils;
 
 import android.graphics.Color;
-import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.fragments.SpreadsheetFragment;
 
 /**
  * @author sudar.sam@gmail.com
@@ -91,7 +88,7 @@ public final class Constants {
     public static final String CHECKPOINT_TABLES = "checkpointTables";
 
     /**
-     * Tells {@link TableDisplayActivity} what time of view it should be
+     * Tells TableDisplayActivity what time of view it should be
      * displaying.
      */
     public static final String TABLE_DISPLAY_VIEW_TYPE = "tableDisplayViewType";
@@ -110,8 +107,8 @@ public final class Constants {
      */
     public static final String COLOR_RULE_TYPE = "colorRuleType";
     /**
-     * The {@link TableLevelPreferencesActivity.FragmentType} that should be
-     * displayed when launching a {@link TableLevelPreferencesActivity}.
+     * The TableLevelPreferencesActivity.FragmentType that should be
+     * displayed when launching a TableLevelPreferencesActivity.
      */
     public static final String TABLE_PREFERENCE_FRAGMENT_TYPE = "tablePreferenceFragmentType";
     /**
@@ -363,8 +360,8 @@ public final class Constants {
    */
   public static final class RequestCodes {
     /**
-     * Used to view a collection or a join table in a {@link SpreadsheetFragment} in
-     * {@link TableDisplayActivity}
+     * Used to view a collection or a join table in a SpreadsheetFragment in
+     * TableDisplayActivity
      */
     public static final int DISPLAY_VIEW = 1;
     /**

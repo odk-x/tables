@@ -19,7 +19,7 @@ import android.os.Bundle;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.database.queries.BindArgs;
-import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.data.ViewFragmentType;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.views.OdkData;
