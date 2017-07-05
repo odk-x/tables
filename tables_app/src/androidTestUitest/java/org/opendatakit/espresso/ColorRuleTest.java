@@ -1,5 +1,9 @@
 package org.opendatakit.espresso;
 
+import android.app.Application;
+import android.app.Activity;
+import org.opendatakit.tables.application.Tables;
+import android.content.Context;
 import android.graphics.Rect;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
@@ -44,7 +48,7 @@ import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class ColorRuleTest {
+public class ColorRuleTest extends AbsBaseTest {
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
   private final String tableId = T_HOUSE_E_TABLE_ID;
@@ -60,6 +64,9 @@ public class ColorRuleTest {
     @Override
     protected void beforeActivityLaunched() {
       super.beforeActivityLaunched();
+      if (c == null) {
+        new AbsBaseTest()._setUpC();
+      }
 
       if (initSuccess == null) {
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
@@ -67,9 +74,9 @@ public class ColorRuleTest {
       }
 
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
+        db = c.getDatabase().openDatabase(APP_NAME);
         adminColumns = TableUtil.get()
-            .getTableColumns(Locale.US.getCountry(), Tables.getInstance().getDatabase(), APP_NAME,
+            .getTableColumns(Locale.US.getCountry(), c.getDatabase(), APP_NAME,
                 db, tableId).adminColumns;
       } catch (ServicesAvailabilityException e) {
         e.printStackTrace();
@@ -81,7 +88,7 @@ public class ColorRuleTest {
       super.afterActivityFinished();
 
       try {
-        Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
+        c.getDatabase().closeDatabase(APP_NAME, db);
       } catch (ServicesAvailabilityException e) {
         e.printStackTrace();
       }
@@ -126,7 +133,7 @@ public class ColorRuleTest {
         try {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(Tables.getInstance().getDatabase());
+          crg.saveRuleList(c.getDatabase());
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -164,7 +171,7 @@ public class ColorRuleTest {
         try {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(Tables.getInstance().getDatabase());
+          crg.saveRuleList(c.getDatabase());
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -196,7 +203,7 @@ public class ColorRuleTest {
         try {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(Tables.getInstance().getDatabase());
+          crg.saveRuleList(c.getDatabase());
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -236,7 +243,7 @@ public class ColorRuleTest {
         try {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(Tables.getInstance().getDatabase());
+          crg.saveRuleList(c.getDatabase());
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -273,7 +280,7 @@ public class ColorRuleTest {
     }
 
     crg.replaceColorRuleList(new ArrayList<ColorRule>());
-    crg.saveRuleList(Tables.getInstance().getDatabase());
+    crg.saveRuleList(c.getDatabase());
 
     return rules;
   }
@@ -301,15 +308,15 @@ public class ColorRuleTest {
       throws ServicesAvailabilityException {
     if (type == ColorRuleGroup.Type.TABLE) {
       return ColorRuleGroup
-          .getTableColorRuleGroup(Tables.getInstance().getDatabase(), APP_NAME, db, tableId,
+          .getTableColorRuleGroup(c.getDatabase(), APP_NAME, db, tableId,
               adminColumns);
     } else if (type == ColorRuleGroup.Type.COLUMN) {
       return ColorRuleGroup
-          .getColumnColorRuleGroup(Tables.getInstance().getDatabase(), APP_NAME, db, tableId,
+          .getColumnColorRuleGroup(c.getDatabase(), APP_NAME, db, tableId,
               elementKeyId, adminColumns);
     } else {
       return ColorRuleGroup
-          .getStatusColumnRuleGroup(Tables.getInstance().getDatabase(), APP_NAME, db, tableId,
+          .getStatusColumnRuleGroup(c.getDatabase(), APP_NAME, db, tableId,
               adminColumns);
     }
   }

@@ -13,10 +13,10 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.views.SpreadsheetView;
 import org.opendatakit.util.DisableAnimationsRule;
@@ -39,7 +39,7 @@ import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class InteropTest {
+public class InteropTest extends AbsBaseTest {
   private static final int WAIT = 1000;
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
@@ -155,8 +155,10 @@ public class InteropTest {
 
     String currFormId = null;
     try {
-      currFormId = FormType.constructFormType(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID)
-          .getFormId();
+      currFormId = FormType.constructFormType(
+          (BaseActivity) android.support.test.InstrumentationRegistry.getInstrumentation()
+              .getTargetContext(), //TODO
+          APP_NAME, T_HOUSE_E_TABLE_ID).getFormId();
 
       //change form id to something invalid
       onData(withKey(DEFAULT_FORM)).perform(click());
@@ -165,7 +167,7 @@ public class InteropTest {
       onView(withId(android.R.id.button1)).perform(click());
 
       //attempt to add row
-      pressBack();
+      android.support.test.espresso.action.ViewActions.pressBack();
       onView(withId(R.id.top_level_table_menu_add)).perform(click());
 
       //wait for Survey to start
@@ -183,10 +185,13 @@ public class InteropTest {
     } finally {
       //restore original formId
       try {
-        FormType ft = FormType
-            .constructFormType(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
+        FormType ft = FormType.constructFormType(
+            (BaseActivity) android.support.test.InstrumentationRegistry.getInstrumentation()
+                .getTargetContext(), //TODO
+            APP_NAME, T_HOUSE_E_TABLE_ID);
         ft.setFormId(currFormId);
-        ft.persist(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
+        ft.persist(c.getDatabase(), APP_NAME, c.getDatabase().openDatabase(APP_NAME),
+            T_HOUSE_E_TABLE_ID);
       } catch (ServicesAvailabilityException e) {
         e.printStackTrace();
       }

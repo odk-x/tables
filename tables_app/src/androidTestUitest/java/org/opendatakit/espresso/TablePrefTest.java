@@ -52,7 +52,7 @@ import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class TablePrefTest {
+public class TablePrefTest extends AbsBaseTest {
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
   private Boolean initSuccess = null;
@@ -83,8 +83,8 @@ public class TablePrefTest {
     String file = null;
 
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
-      file = TableUtil.get().getListViewFilename(Tables.getInstance().getDatabase(), APP_NAME, db,
+      db = c.getDatabase().openDatabase(APP_NAME);
+      file = TableUtil.get().getListViewFilename(c.getDatabase(), APP_NAME, db,
           T_HOUSE_E_TABLE_ID);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
@@ -94,7 +94,7 @@ public class TablePrefTest {
     } finally {
       if (db != null) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
+          c.getDatabase().closeDatabase(APP_NAME, db);
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -106,7 +106,7 @@ public class TablePrefTest {
 
   private static void setListViewFile(String filename) {
     try {
-      TableUtil.get().atomicSetListViewFilename(Tables.getInstance().getDatabase(), APP_NAME,
+      TableUtil.get().atomicSetListViewFilename(c.getDatabase(), APP_NAME,
           T_HOUSE_E_TABLE_ID, filename);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
@@ -118,8 +118,8 @@ public class TablePrefTest {
     String file = null;
 
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
-      file = TableUtil.get().getDetailViewFilename(Tables.getInstance().getDatabase(), APP_NAME, db,
+      db = c.getDatabase().openDatabase(APP_NAME);
+      file = TableUtil.get().getDetailViewFilename(c.getDatabase(), APP_NAME, db,
           T_HOUSE_E_TABLE_ID);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
@@ -129,7 +129,7 @@ public class TablePrefTest {
     } finally {
       if (db != null) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
+          c.getDatabase().closeDatabase(APP_NAME, db);
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -141,7 +141,7 @@ public class TablePrefTest {
 
   private static void setDetailViewFile(String filename) {
     try {
-      TableUtil.get().atomicSetDetailViewFilename(Tables.getInstance().getDatabase(), APP_NAME,
+      TableUtil.get().atomicSetDetailViewFilename(c.getDatabase(), APP_NAME,
           T_HOUSE_E_TABLE_ID, filename);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
@@ -153,9 +153,9 @@ public class TablePrefTest {
     String file = null;
 
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
+      db = c.getDatabase().openDatabase(APP_NAME);
       file = TableUtil.get()
-          .getMapListViewFilename(Tables.getInstance().getDatabase(), APP_NAME, db,
+          .getMapListViewFilename(c.getDatabase(), APP_NAME, db,
               T_HOUSE_E_TABLE_ID);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
@@ -165,7 +165,7 @@ public class TablePrefTest {
     } finally {
       if (db != null) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
+          c.getDatabase().closeDatabase(APP_NAME, db);
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -177,7 +177,7 @@ public class TablePrefTest {
 
   private static void setMapViewFile(String filename) {
     try {
-      TableUtil.get().atomicSetMapListViewFilename(Tables.getInstance().getDatabase(), APP_NAME,
+      TableUtil.get().atomicSetMapListViewFilename(c.getDatabase(), APP_NAME,
           T_HOUSE_E_TABLE_ID, filename);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
