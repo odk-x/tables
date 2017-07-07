@@ -28,7 +28,7 @@ public class AbsBaseTest {
     if (c == null)
       throw new java.lang.IllegalStateException();
   }
-  @Before public void _setUpC(Object context) throws Exception {
+  public void _setUpC(Object context) throws Exception {
     if (context instanceof Application) {
       c = (Tables) context;
     } else if (context instanceof Activity) {
