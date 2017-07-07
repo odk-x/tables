@@ -523,7 +523,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
    * @param marker The marker to be selected.
    */
   private void selectMarker(Marker marker) {
-    if (mCurrentMarker.equals(marker))
+    if (mCurrentMarker != null && mCurrentMarker.equals(marker))
       return;
     marker.setIcon(BitmapDescriptorFactory.defaultMarker(DEFAULT_SELECTED_MARKER_HUE));
     mCurrentMarker = marker;
