@@ -1,41 +1,46 @@
 package org.opendatakit.espresso;
 
+import android.app.Application;
+import android.app.Activity;
+import org.opendatakit.tables.application.Tables;
+import android.content.Context;
 import android.graphics.Rect;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.view.View;
 import android.widget.ScrollView;
 import org.hamcrest.Matcher;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
-import org.opendatakit.util.DisableAnimationsRule;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static android.support.test.espresso.Espresso.*;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.longClick;
-import static android.support.test.espresso.assertion.ViewAssertions.*;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
 import static org.hamcrest.Matchers.*;
@@ -43,26 +48,27 @@ import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class ColorRuleTest {
-  private Boolean initSuccess = null;
-  private UiDevice mDevice;
-
-  private DbHandle db;
-  private String[] adminColumns;
-
+public class ColorRuleTest extends AbsBaseTest {
+  @ClassRule
+  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
   private final String tableId = T_HOUSE_E_TABLE_ID;
   private final String elementKeyName = "House id";
   private final String elementKeyId = "House_id";
-
-  @ClassRule
-  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
-
+  private Boolean initSuccess = null;
+  private UiDevice mDevice;
+  private DbHandle db;
+  private String[] adminColumns;
   @Rule
   public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
       MainActivity.class) {
     @Override
     protected void beforeActivityLaunched() {
       super.beforeActivityLaunched();
+      if (c == null) {
+        try {
+          new AbsBaseTest()._setUpC();
+        } catch (Exception ignored) {}
+      }
 
       if (initSuccess == null) {
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
@@ -70,10 +76,10 @@ public class ColorRuleTest {
       }
 
       try {
-        db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
-        adminColumns =
-            TableUtil.get().getTableColumns(Tables.getInstance(), APP_NAME, db, tableId)
-                .adminColumns;
+        db = c.getDatabase().openDatabase(APP_NAME);
+        adminColumns = TableUtil.get()
+            .getTableColumns(Locale.US.getCountry(), c.getDatabase(), APP_NAME,
+                db, tableId).adminColumns;
       } catch (ServicesAvailabilityException e) {
         e.printStackTrace();
       }
@@ -84,7 +90,7 @@ public class ColorRuleTest {
       super.afterActivityFinished();
 
       try {
-        Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
+        c.getDatabase().closeDatabase(APP_NAME, db);
       } catch (ServicesAvailabilityException e) {
         e.printStackTrace();
       }
@@ -129,7 +135,7 @@ public class ColorRuleTest {
         try {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(Tables.getInstance());
+          crg.saveRuleList(c.getDatabase());
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -167,7 +173,7 @@ public class ColorRuleTest {
         try {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(Tables.getInstance());
+          crg.saveRuleList(c.getDatabase());
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -199,7 +205,7 @@ public class ColorRuleTest {
         try {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(Tables.getInstance());
+          crg.saveRuleList(c.getDatabase());
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -239,7 +245,7 @@ public class ColorRuleTest {
         try {
           ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
           crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(Tables.getInstance());
+          crg.saveRuleList(c.getDatabase());
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();
         }
@@ -259,6 +265,7 @@ public class ColorRuleTest {
     //obtain bounds of color picker
     Rect bounds = mDevice.findObject(By.clazz(ScrollView.class)).getVisibleBounds();
     //center coordinate of "OK" button is hard coded in ColorRulesDialog.java
+    // TODO update this? ColorRulesDialog.java is dead
     mDevice.click(74 + bounds.left, 336 + bounds.top);
 
     return color;
@@ -269,19 +276,19 @@ public class ColorRuleTest {
 
     List<ColorRule> rules = new ArrayList<>();
     for (ColorRule cr : crg.getColorRules()) {
-      rules.add(new ColorRule(
-          cr.getRuleId(), cr.getColumnElementKey(), cr.getOperator(), cr.getVal(),
-          cr.getForeground(), cr.getBackground()
-      ));
+      rules.add(
+          new ColorRule(cr.getRuleId(), cr.getColumnElementKey(), cr.getOperator(), cr.getVal(),
+              cr.getForeground(), cr.getBackground()));
     }
 
     crg.replaceColorRuleList(new ArrayList<ColorRule>());
-    crg.saveRuleList(Tables.getInstance());
+    crg.saveRuleList(c.getDatabase());
 
     return rules;
   }
 
-  private void CRGCheck(List<ColorRule> rules, ColorRuleGroup.Type type) throws ServicesAvailabilityException {
+  private void CRGCheck(List<ColorRule> rules, ColorRuleGroup.Type type)
+      throws ServicesAvailabilityException {
     //Make sure we are in color rule edit window
     onView(withId(R.id.menu_color_rule_list_new)).check(matches(isCompletelyDisplayed()));
 
@@ -302,29 +309,28 @@ public class ColorRuleTest {
   private ColorRuleGroup getCRG(ColorRuleGroup.Type type, DbHandle db, String[] adminColumns)
       throws ServicesAvailabilityException {
     if (type == ColorRuleGroup.Type.TABLE) {
-      return ColorRuleGroup.getTableColorRuleGroup(
-          Tables.getInstance(), APP_NAME, db, tableId, adminColumns
-      );
-    } else if(type == ColorRuleGroup.Type.COLUMN) {
-      return ColorRuleGroup.getColumnColorRuleGroup(
-          Tables.getInstance(), APP_NAME, db, tableId, elementKeyId, adminColumns
-      );
+      return ColorRuleGroup
+          .getTableColorRuleGroup(c.getDatabase(), APP_NAME, db, tableId,
+              adminColumns);
+    } else if (type == ColorRuleGroup.Type.COLUMN) {
+      return ColorRuleGroup
+          .getColumnColorRuleGroup(c.getDatabase(), APP_NAME, db, tableId,
+              elementKeyId, adminColumns);
     } else {
-      return ColorRuleGroup.getStatusColumnRuleGroup(
-          Tables.getInstance(), APP_NAME, db, tableId, adminColumns
-      );
+      return ColorRuleGroup
+          .getStatusColumnRuleGroup(c.getDatabase(), APP_NAME, db, tableId,
+              adminColumns);
     }
   }
 
   private ColorRule addColorRule(boolean isColumn, boolean setTextColor, boolean setBgColor) {
     //Make sure we are in color rule edit window
-    onView(withId(R.id.menu_color_rule_list_new))
-        .check(matches(isCompletelyDisplayed()))
+    onView(withId(R.id.menu_color_rule_list_new)).check(matches(isCompletelyDisplayed()))
         .perform(click());
 
     //start with a default rule
-    ColorRule rule = new ColorRule(
-        elementKeyId, null, EspressoUtils.getString(mActivityRule, R.string.compared_to_value),
+    ColorRule rule = new ColorRule(elementKeyId, null,
+        EspressoUtils.getString(mActivityRule, R.string.compared_to_value),
         Constants.DEFAULT_TEXT_COLOR, Constants.DEFAULT_BACKGROUND_COLOR);
 
     //this option doesn't exist for column color rules
@@ -338,8 +344,8 @@ public class ColorRuleTest {
     final String comparisonKey = "pref_color_rule_comp_type";
     onData(withKey(comparisonKey)).perform(click());
     EspressoUtils.getFirstItem().perform(click());
-    rule.setOperator(ColorRule.RuleType.getEnumFromString(EspressoUtils.getPrefSummary(
-        comparisonKey)));
+    rule.setOperator(
+        ColorRule.RuleType.getEnumFromString(EspressoUtils.getPrefSummary(comparisonKey)));
 
     if (setTextColor) {
       onData(withKey("pref_color_rule_text_color")).perform(click());

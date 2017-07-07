@@ -14,106 +14,68 @@
 
 package org.opendatakit.tables.views.webkits;
 
+import android.content.Context;
+import android.widget.Toast;
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.RowColorObject;
+import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.IOdkTablesActivity;
 import org.opendatakit.views.ExecutorContext;
 import org.opendatakit.views.ExecutorProcessor;
-import org.opendatakit.database.data.KeyValueStoreEntry;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.tables.activities.AbsBaseWebActivity;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.fragments.MapListViewFragment;
-import org.opendatakit.tables.utils.Constants;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author mitchellsundt@gmail.com
  */
 public class TableDataExecutorProcessor extends ExecutorProcessor {
 
-  private AbsBaseWebActivity mActivity;
+  private static final String ROW_COLORS = "rowColors";
+  private static final String STATUS_COLORS = "statusColors";
+  private static final String COLUMN_COLORS = "columnColors";
+  private static final String MAP_INDEX = "mapIndex";
+  private IOdkTablesActivity mActivity;
 
-  protected static final String ROW_COLORS = "rowColors";
-  protected static final String STATUS_COLORS = "statusColors";
-  protected static final String COLUMN_COLORS = "columnColors";
-  protected static final String MAP_INDEX = "mapIndex";
-
-  enum colorRuleType {
-    TABLE,
-    COLUMN,
-    STATUS
-  };
-
-  public TableDataExecutorProcessor(ExecutorContext context, AbsBaseWebActivity activity) {
+  /**
+   * Constructs a TableExecutorProcessor with the tables object given
+   *
+   * @param context  unused
+   * @param activity saved for later so we can store the index of the selected map item in the
+   *                 metadata
+   */
+  public TableDataExecutorProcessor(ExecutorContext context, IOdkTablesActivity activity) {
     super(context);
-    this.mActivity = activity;
+    mActivity = activity;
   }
 
-  @Override
-  protected void extendQueryMetadata(DbHandle db, List<KeyValueStoreEntry> entries, UserTable userTable, Map<String, Object> metadata) {
-    // TODO: construct color rule data here...
-    String [] adminCols = ADMIN_COLUMNS.toArray(new String[0]);
-
-
-    ArrayList<RowColorObject> rowColors = new ArrayList<RowColorObject>();
-    ArrayList<RowColorObject> statusColors = new ArrayList<RowColorObject>();
-    HashMap<String, ArrayList<RowColorObject>> colColors = new HashMap<String, ArrayList<RowColorObject>>();
-
-    try {
-      // Need to get the tables color rules and determine which rows are affected
-      constructRowColorObjects(db, userTable, adminCols, rowColors, colorRuleType.TABLE, null);
-
-      // Need to get the status color rules and determine which rows are affected
-      constructRowColorObjects(db, userTable, adminCols, statusColors, colorRuleType.STATUS, null);
-
-      // Need to get column color rules working
-      Map<String, Integer> elementKeyMap = (Map<String, Integer>) metadata.get("elementKeyMap");
-      for (String elementKey : elementKeyMap.keySet()) {
-        ArrayList<RowColorObject> colColorGuide = new ArrayList<RowColorObject>();
-        constructRowColorObjects(db, userTable, adminCols, colColorGuide, colorRuleType.COLUMN, elementKey);
-        if (colColorGuide.size() > 0) {
-          colColors.put(elementKey, colColorGuide);
-        }
-      }
-
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
-    }
-
-    metadata.put(ROW_COLORS, rowColors);
-    metadata.put(STATUS_COLORS, statusColors);
-    metadata.put(COLUMN_COLORS, colColors);
-
-    if (mActivity != null) {
-      MapListViewFragment mlvFragment = (MapListViewFragment) mActivity.getFragmentManager().findFragmentByTag(Constants.FragmentTags.MAP_LIST);
-      if (mlvFragment != null && mlvFragment.isVisible()) {
-        int mapIndex = mlvFragment.getIndexOfSelectedItem();
-        metadata.put(MAP_INDEX, mapIndex);
-      }
-    }
-  }
-
-  private void constructRowColorObjects(DbHandle db, UserTable userTable, String[] adminCols, ArrayList<RowColorObject>colors, colorRuleType crType, String elementKey) throws
-      ServicesAvailabilityException {
+  private static void constructRowColorObjects(UserDbInterface dbInterface, DbHandle db,
+      UserTable userTable, String[] adminCols, Collection<RowColorObject> colors, Object crType,
+      String elementKey) throws ServicesAvailabilityException {
     // Should reuse this code for column and status color rules
 
-    ColorRuleGroup crg = null;
+    ColorRuleGroup crg;
 
     // Get the table color rules and determine which rows are affected
-    if (crType == colorRuleType.TABLE) {
-      crg = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), userTable.getAppName(), db, userTable.getTableId(), adminCols);
-    } else if (crType == colorRuleType.COLUMN) {
-      crg = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(), userTable.getAppName(), db, userTable.getTableId(), elementKey, adminCols);
-    } else if (crType == colorRuleType.STATUS) {
-      crg = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), userTable.getAppName(), db, userTable.getTableId(), adminCols);
+    if (crType == ColorRuleType.TABLE) {
+      crg = ColorRuleGroup
+          .getTableColorRuleGroup(dbInterface, userTable.getAppName(), db, userTable.getTableId(),
+              adminCols);
+    } else if (crType == ColorRuleType.COLUMN) {
+      crg = ColorRuleGroup
+          .getColumnColorRuleGroup(dbInterface, userTable.getAppName(), db, userTable.getTableId(),
+              elementKey, adminCols);
+    } else if (crType == ColorRuleType.STATUS) {
+      crg = ColorRuleGroup
+          .getStatusColumnRuleGroup(dbInterface, userTable.getAppName(), db, userTable.getTableId(),
+              adminCols);
 
     } else {
       return;
@@ -127,12 +89,77 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
 
       if (tcg != null) {
         //String hexFgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getForeground());
-        String hexFgString = String.format("#%06X", (0xFFFFFF & tcg.getForeground()));
+        //noinspection MagicNumber NOTE THAT NUMBER IS ONLY 3 BYTES, NOT 4!
+        String hexFgString = String.format("#%06X", 0xFFFFFF & tcg.getForeground());
         //String hexBgString = "#" + Integer.toHexString(0x00FFFFFF & tcg.getBackground());
-        String hexBgString = String.format("#%06X", (0xFFFFFF & tcg.getBackground()));
+        //noinspection MagicNumber
+        String hexBgString = String.format("#%06X", 0xFFFFFF & tcg.getBackground());
         RowColorObject rco = new RowColorObject(userTable.getRowId(i), i, hexFgString, hexBgString);
         colors.add(rco);
       }
     }
+  }
+
+  @Override
+  protected void extendQueryMetadata(UserDbInterface dbInterface, DbHandle db,
+      List<KeyValueStoreEntry> entries, UserTable userTable, Map<String, Object> metadata) {
+    // TODO: construct color rule data here...
+    String[] adminCols = ADMIN_COLUMNS.toArray(new String[ADMIN_COLUMNS.size()]);
+
+    Collection<RowColorObject> rowColors = new ArrayList<>();
+    Collection<RowColorObject> statusColors = new ArrayList<>();
+    Map<String, ArrayList<RowColorObject>> colColors = new HashMap<>();
+
+    try {
+      // Need to get the tables color rules and determine which rows are affected
+      constructRowColorObjects(dbInterface, db, userTable, adminCols, rowColors,
+          ColorRuleType.TABLE, null);
+
+      // Need to get the status color rules and determine which rows are affected
+      constructRowColorObjects(dbInterface, db, userTable, adminCols, statusColors,
+          ColorRuleType.STATUS, null);
+
+      // Need to get column color rules working
+      Object ekm = metadata.get("elementKeyMap");
+      if (ekm instanceof Map) {
+        //noinspection rawtypes <-- so we don't have to cast to Map<String, Object> which is unsafe
+        Map elementKeyMap = (Map) ekm;
+        for (Object elementKey : elementKeyMap.keySet()) {
+          if (elementKey instanceof String) { // always true
+            ArrayList<RowColorObject> colColorGuide = new ArrayList<>();
+            constructRowColorObjects(dbInterface, db, userTable, adminCols, colColorGuide,
+                ColorRuleType.COLUMN, (String) elementKey);
+            if (!colColorGuide.isEmpty()) {
+              colColors.put((String) elementKey, colColorGuide);
+            }
+          }
+        }
+      }
+
+    } catch (ServicesAvailabilityException e) {
+      WebLogger.getLogger(mActivity.getAppName()).printStackTrace(e);
+      if (mActivity instanceof Context) {
+        String text = ((Context) mActivity).getString(R.string.database_unavailable);
+        Toast.makeText((Context) mActivity, text, Toast.LENGTH_LONG).show();
+      }
+    }
+
+    metadata.put(ROW_COLORS, rowColors);
+    metadata.put(STATUS_COLORS, statusColors);
+    metadata.put(COLUMN_COLORS, colColors);
+
+    if (mActivity != null) {
+      Integer indexOfSelectedItem = mActivity.getIndexOfSelectedItem();
+      if (indexOfSelectedItem != null) {
+        metadata.put(MAP_INDEX, indexOfSelectedItem);
+      }
+    }
+  }
+
+  /**
+   * Not to be confused with ColorRule.Type or ColorRuleGroup.Type
+   */
+  private enum ColorRuleType {
+    TABLE, COLUMN, STATUS
   }
 }

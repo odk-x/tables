@@ -15,47 +15,61 @@
  */
 package org.opendatakit.tables.views.components;
 
-import java.util.List;
-
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.utils.TableNameStruct;
-
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.utils.TableNameStruct;
+
+import java.util.List;
 
 /**
  * An adapter for displaying TableProperties.
- * 
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class TableNameStructAdapter extends ArrayAdapter<TableNameStruct> {
 
+  /**
+   * Used for logging
+   */
+  @SuppressWarnings("unused")
   private static final String TAG = TableNameStructAdapter.class.getSimpleName();
-  
-  private String mAppName;
 
+  /**
+   * Constructs a new TableNameStructAdapter with a set of values to be added
+   *
+   * @param context unused
+   * @param values  All added to the array adapter
+   */
   public TableNameStructAdapter(AbsBaseActivity context, List<TableNameStruct> values) {
     super(context, R.layout.row_item_with_preference);
-    this.mAppName = context.getAppName();
     this.clear();
     this.addAll(values);
   }
 
+  @NonNull
   @Override
-  public View getView(int position, android.view.View convertView, android.view.ViewGroup parent) {
-    if ( convertView == null ) {
-      convertView = LayoutInflater.from(getContext()).inflate(R.layout.row_item_with_preference, parent, false);
+  public View getView(int position, android.view.View convertView,
+      @NonNull android.view.ViewGroup parent) {
+    if (convertView == null) {
+      convertView = LayoutInflater.from(getContext())
+          .inflate(R.layout.row_item_with_preference, parent, false);
     }
     final RelativeLayout view = (RelativeLayout) convertView;
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
 
     TableNameStruct nameStruct = getItem(position);
+    if (nameStruct == null) { // should never happen
+      TextView failure = new TextView(parent.getContext());
+      failure.setText(R.string.error);
+      return failure;
+    }
 
     textView.setText(nameStruct.getLocalizedDisplayName());
     ImageView imageView = (ImageView) view.findViewById(R.id.row_item_icon);

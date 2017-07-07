@@ -15,74 +15,70 @@
  */
 package org.opendatakit.tables.views.components;
 
+import android.content.Context;
+import android.widget.ArrayAdapter;
 import org.opendatakit.data.TableViewType;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 
-import android.content.Context;
-import android.widget.ArrayAdapter;
-
 /**
  * Adapter that displays {@see TableViewType} options.
- * @author sudar.sam@gmail.com
+ * <p>
+ * Used in DefaultViewTypePreference
  *
+ * @author sudar.sam@gmail.com
  */
 public class TableViewTypeAdapter extends ArrayAdapter<CharSequence> {
-  
+
+  /**
+   * Used for logging
+   */
   private static final String TAG = TableViewTypeAdapter.class.getSimpleName();
-  
+  /**
+   * The app name
+   */
+  private final String mAppName;
   private PossibleTableViewTypes mPossibleViewTypes;
   private CharSequence[] mViewTypeValues;
-  private final String mAppName;
 
-  public TableViewTypeAdapter(
-      Context context,
-      String appName,
-      int resource,
-      CharSequence[] entries,
-      CharSequence[] entryValues,
-      PossibleTableViewTypes viewTypes) {
+  /**
+   * Sets up local variables for a TableViewTypeAdapter
+   *
+   * @param context     unused
+   * @param appName     the app name
+   * @param resource    unused
+   * @param entries     unused
+   * @param entryValues A list of all view types, spreadsheet, list and map
+   * @param viewTypes   An object with methods that can tell us which view types (map, spreadsheet,
+   *                    list) the user should be able to select
+   */
+  public TableViewTypeAdapter(Context context, String appName, int resource, CharSequence[] entries,
+      CharSequence[] entryValues, PossibleTableViewTypes viewTypes) {
     super(context, resource, entries);
-    this.mAppName = appName;
-    this.mViewTypeValues = entryValues;
-    this.mPossibleViewTypes = viewTypes;
+    mAppName = appName;
+    mViewTypeValues = entryValues;
+    mPossibleViewTypes = viewTypes;
   }
-  
+
   @Override
   public boolean areAllItemsEnabled() {
     // so we get asked about individual availability.
     return false;
   }
-  
-  
-  
-  
-  
+
   @Override
   public boolean isEnabled(int position) {
     if (this.mPossibleViewTypes == null) {
       return false;
     }
 
-    String currentItem = this.mViewTypeValues[position].toString();
+    String currentItem = mViewTypeValues[position].toString();
     if (currentItem.equals(TableViewType.SPREADSHEET.name())) {
-      if (this.mPossibleViewTypes.spreadsheetViewIsPossible()) {
-        return true;
-      } else {
-        return false;
-      }
+      return mPossibleViewTypes.spreadsheetViewIsPossible();
     } else if (currentItem.equals(TableViewType.LIST.name())) {
-      if (this.mPossibleViewTypes.listViewIsPossible()) {
-        return true;
-      } else {
-        return false;
-      }
+      return mPossibleViewTypes.listViewIsPossible();
     } else if (currentItem.equals(TableViewType.MAP.name())) {
-      if (this.mPossibleViewTypes.mapViewIsPossible()) {
-        return true;
-      } else {
-        return false;
-      }
+      return mPossibleViewTypes.mapViewIsPossible();
     } else {
       // Enable it.
       WebLogger.getLogger(mAppName).e(TAG, "unrecognized entryValue: " + currentItem);

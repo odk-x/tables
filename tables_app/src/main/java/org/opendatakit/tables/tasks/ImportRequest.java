@@ -15,33 +15,65 @@
  */
 package org.opendatakit.tables.tasks;
 
-
+/**
+ * Describes a request to import a csv file
+ */
 public class ImportRequest {
 
-    private final String fileQualifier;
+  // The prefix for the csv file to import
+  private final String fileQualifier;
+  // whether to create the table if it doesn't already exist
+  private final boolean createTable;
+  // the id of the table to import
+  private final String tableId;
 
-    private final boolean createTable;
-    private final String tableId;
-
-    public ImportRequest(String tableId, String fileQualifier) {
-      this(true, tableId, fileQualifier);
+  /**
+   * forwards request to the three argument constructor
+   *
+   * @param tableId       table id
+   * @param fileQualifier filename prefix
+   */
+  public ImportRequest(String tableId, String fileQualifier) {
+    this(true, tableId, fileQualifier);
   }
 
-    public ImportRequest(boolean createTable, String tableId, String fileQualifier) {
-      this.createTable = createTable;
-      this.tableId = tableId;
-      this.fileQualifier = fileQualifier;
+  /**
+   * simple constructor that stores its three arguments
+   *
+   * @param createTable   whether to create the table if it doesn't exist
+   * @param tableId       the id of the table
+   * @param fileQualifier the prefix for the csv file to import
+   */
+  private ImportRequest(boolean createTable, String tableId, String fileQualifier) {
+    this.createTable = createTable;
+    this.tableId = tableId;
+    this.fileQualifier = fileQualifier;
   }
 
-    public boolean getCreateTable() {
-        return createTable;
-    }
+  /**
+   * standard getter for whether we should create the table if it doesn't already exist
+   *
+   * @return whether we should create the table if it doesn't already exist
+   */
+  boolean getCreateTable() {
+    return createTable;
+  }
 
-    public String getTableId() {
-        return tableId;
-    }
+  /**
+   * standard getter for the table id
+   *
+   * @return the table id
+   */
+  public String getTableId() {
+    return tableId;
+  }
 
-    public String getFileQualifier() {
-      return fileQualifier;
-    }
+  /**
+   * standard getter for the filename prefix
+   *
+   * @return the prefix for the filename
+   */
+  String getFileQualifier() {
+    return fileQualifier;
+  }
 }

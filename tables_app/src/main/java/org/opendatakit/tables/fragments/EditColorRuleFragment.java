@@ -15,48 +15,51 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import org.opendatakit.data.ColorRule;
-import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.data.utilities.ColumnUtil;
-import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.preferences.EditColorPreference;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;
-
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.widget.Toast;
+import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.data.ColorRule;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.utilities.ColumnUtil;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsTableActivity;
+import org.opendatakit.tables.preferences.EditColorPreference;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
- * 
  * @author sudar.sam@gmail.com
- *
  */
-public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment implements
-    OnColorChangedListener {
+public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
+    implements OnColorChangedListener {
 
-  private static final String TAG = EditColorRuleFragment.class.getSimpleName();
-
-  public static class IntentKeys {
-    public static final String RULE_POSITION = "rulePosition";
-  }
-
-  // The keys for communicating with EditColorPreference.
+  /**
+   * Key for communicating text color with EditColorPreference.
+   */
   public static final String COLOR_PREF_KEY_TEXT = "textKey";
+  /**
+   * Key for communicating background color with EditColorPreference.
+   */
   public static final String COLOR_PREF_KEY_BACKGROUND = "backgroundKey";
-
+  /**
+   * A value signifying the fragment is being used to add a new rule.
+   */
+  public static final int INVALID_RULE_POSITION = -1;
+  private static final String TAG = EditColorRuleFragment.class.getSimpleName();
   // These are the fields that define the rule.
   private String mElementKey;
   private String mRuleValue;
@@ -69,41 +72,29 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   private CharSequence[] mColumnDisplayNames;
   private CharSequence[] mColumnElementKeys;
   private ColorRuleGroup mColorRuleGroup;
-  /** The position in the rule list that we are editing. */
+  /**
+   * The position in the rule list that we are editing.
+   */
   private int mRulePosition;
   private ColorRuleGroup.Type mColorRuleGroupType;
 
-  /** A value signifying the fragment is being used to add a new rule. */
-  public static final int INVALID_RULE_POSITION = -1;
-
   /**
-   * 
-   * @param colorRuleGroupType
-   * @param elementKey
-   *          the elementKey the rule is for, if this is in a group of type
-   *          {@link ColorRuleGroup.Type#COLUMN}. If it is not, pass null.
-   * @return
+   * @param colorRuleGroupType added to the arguments for the new EditColorRuleFragment
+   * @param elementKey         the elementKey the rule is for, if this is in a group of type
+   *                           {@link ColorRuleGroup.Type#COLUMN}. If it is not, pass null.
+   * @return a new EditColorRuleFragment with the requested color rule group type and column
    */
   public static EditColorRuleFragment newInstanceForNewRule(ColorRuleGroup.Type colorRuleGroupType,
       String elementKey) {
-    Bundle arguments = new Bundle();
-    arguments.putInt(IntentKeys.RULE_POSITION, INVALID_RULE_POSITION);
-    IntentUtil.addColorRuleGroupTypeToBundle(arguments, colorRuleGroupType);
-    IntentUtil.addElementKeyToBundle(arguments, elementKey);
-    EditColorRuleFragment result = new EditColorRuleFragment();
-    result.setArguments(arguments);
-    return result;
+    return newInstanceForExistingRule(colorRuleGroupType, elementKey, INVALID_RULE_POSITION);
   }
 
   /**
-   * 
-   * @param colorRuleGroupType
-   * @param elementKey
-   *          the element key the rule is for if this is in a group of type
-   *          {@link ColorRuleGroup.Type#COLUMN}. If it is not, pass null.
-   * @param rulePosition
-   *          the position of the rule in the group you're editing
-   * @return
+   * @param colorRuleGroupType added to the arguments for the new EditColorRuleFragment
+   * @param elementKey         the element key the rule is for if this is in a group of type
+   *                           {@link ColorRuleGroup.Type#COLUMN}. If it is not, pass null.
+   * @param rulePosition       the position of the rule in the group you're editing
+   * @return a new EditColorRuleFragment with the requested options
    */
   public static EditColorRuleFragment newInstanceForExistingRule(
       ColorRuleGroup.Type colorRuleGroupType, String elementKey, int rulePosition) {
@@ -137,8 +128,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     this.mRulePosition = rulePosition;
     if (this.mColorRuleGroupType == ColorRuleGroup.Type.COLUMN) {
       // then we also need to pull out the element key.
-      String elementKey = IntentUtil.retrieveElementKeyFromBundle(arguments);
-      this.mElementKey = elementKey;
+      mElementKey = IntentUtil.retrieveElementKeyFromBundle(arguments);
     }
   }
 
@@ -147,16 +137,16 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     super.onResume();
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      db = ((BaseActivity) getActivity()).getDatabase().openDatabase(getAppName());
       this.initializeStateRequiringContext(db);
       this.initializeAllPreferences(db);
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
       Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         try {
-          Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+          ((BaseActivity) getActivity()).getDatabase().closeDatabase(getAppName(), db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           Toast.makeText(getActivity(), "Error releasing database", Toast.LENGTH_LONG).show();
@@ -167,30 +157,35 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
 
   /**
    * Set up the objects that require a context.
-   * @throws ServicesAvailabilityException
+   *
+   * @throws ServicesAvailabilityException if the database is down
    */
   private void initializeStateRequiringContext(DbHandle db) throws ServicesAvailabilityException {
-    TableLevelPreferencesActivity activity = retrieveTableLevelPreferenceActivity();
-
+    PropertiesSingleton props = CommonToolProperties
+        .get(getActivity().getApplication(), getAppName());
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
     // 1) First fill in the color rule group and list.
-    TableUtil.TableColumns tc = TableUtil.get().getTableColumns(Tables.getInstance(), getAppName(), db, getTableId());
-    
+    TableUtil.TableColumns tc = TableUtil.get()
+        .getTableColumns(userSelectedDefaultLocale, dbInterface, getAppName(), db, getTableId());
+
     switch (this.mColorRuleGroupType) {
     case COLUMN:
-      this.mColorRuleGroup = ColorRuleGroup.getColumnColorRuleGroup(Tables.getInstance(), getAppName(),
-          db, getTableId(), this.mElementKey, tc.adminColumns);
+      this.mColorRuleGroup = ColorRuleGroup
+          .getColumnColorRuleGroup(dbInterface, getAppName(), db, getTableId(), this.mElementKey,
+              tc.adminColumns);
       break;
     case TABLE:
-      this.mColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(Tables.getInstance(), getAppName(),
-          db, getTableId(), tc.adminColumns);
+      this.mColorRuleGroup = ColorRuleGroup
+          .getTableColorRuleGroup(dbInterface, getAppName(), db, getTableId(), tc.adminColumns);
       break;
     case STATUS_COLUMN:
-      this.mColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(Tables.getInstance(), getAppName(),
-          db, getTableId(), tc.adminColumns);
+      this.mColorRuleGroup = ColorRuleGroup
+          .getStatusColumnRuleGroup(dbInterface, getAppName(), db, getTableId(), tc.adminColumns);
       break;
     default:
-      throw new IllegalArgumentException("unrecognized color rule group type: "
-          + this.mColorRuleGroupType);
+      throw new IllegalArgumentException(
+          "unrecognized color rule group type: " + this.mColorRuleGroupType);
     }
     // 2) then fill in the starting state for the rule.
     if (this.isUnpersistedNewRule()) {
@@ -210,12 +205,15 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
       this.mElementKey = startingRule.getColumnElementKey();
     }
     // 3) then fill in the static things backing the dialogs.
-    this.mOperatorHumanFriendlyValues = ColorRule.RuleType.getValues();
-    this.mOperatorEntryValues = ColorRule.RuleType.getValues();
+    String type = ((AbsTableActivity) getActivity()).getColumnDefinitions().find(mElementKey)
+        .getType().getElementType();
+    this.mOperatorHumanFriendlyValues = ColorRule.RuleType.getValues(type);
+    this.mOperatorEntryValues = ColorRule.RuleType.getValues(type);
 
-    ArrayList<String> colorColElementKeys = new ArrayList<String>(tc.orderedDefns.getRetentionColumnNames());
-    ArrayList<String> colorColDisplayNames = new ArrayList<String>();
-    for ( String elementKey : colorColElementKeys ) {
+    ArrayList<String> colorColElementKeys = new ArrayList<>(
+        tc.orderedDefns.getRetentionColumnNames());
+    ArrayList<String> colorColDisplayNames = new ArrayList<>();
+    for (String elementKey : colorColElementKeys) {
       String localizedDisplayName = tc.localizedDisplayNames.get(elementKey);
       colorColDisplayNames.add(localizedDisplayName);
     }
@@ -242,8 +240,8 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   /**
    * Return true if we are currently displaying a new rule that has not yet been
    * saved.
-   * 
-   * @return
+   *
+   * @return whether the rule hasn't been saved yet
    */
   boolean isUnpersistedNewRule() {
     return this.mRulePosition == INVALID_RULE_POSITION;
@@ -257,13 +255,18 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
       this.getPreferenceScreen().removePreference(pref);
       return;
     }
+    PropertiesSingleton props = CommonToolProperties
+        .get(getActivity().getApplication(), getAppName());
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
     pref.setEntries(this.mColumnDisplayNames);
     pref.setEntryValues(mColumnElementKeys);
+    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
     if (!isUnpersistedNewRule()) {
       String localizedDisplayName;
-      localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
-          db, getTableId(),
-          this.mColorRuleGroup.getColorRules().get(mRulePosition).getColumnElementKey());
+      localizedDisplayName = ColumnUtil.get()
+          .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, getAppName(), db,
+              getTableId(),
+              this.mColorRuleGroup.getColorRules().get(mRulePosition).getColumnElementKey());
       pref.setSummary(localizedDisplayName);
       pref.setValueIndex(pref.findIndexOfValue(mElementKey));
     }
@@ -271,28 +274,33 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
 
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "onPreferenceChance callback invoked for value: " + newValue);
+        WebLogger.getLogger(getAppName())
+            .d(TAG, "onPreferenceChance callback invoked for value: " + newValue);
+        PropertiesSingleton props = CommonToolProperties
+            .get(getActivity().getApplication(), getAppName());
+        String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+
+        UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
         mElementKey = (String) newValue;
         String localizedDisplayName = null;
         DbHandle db = null;
         try {
-          db = Tables.getInstance().getDatabase().openDatabase(getAppName());
-          localizedDisplayName = ColumnUtil.get().getLocalizedDisplayName(Tables.getInstance(), getAppName(),
-              db, getTableId(),
-              mElementKey);
+          db = dbInterface.openDatabase(getAppName());
+          localizedDisplayName = ColumnUtil.get()
+              .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, getAppName(), db,
+                  getTableId(), mElementKey);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
         } finally {
           if (db != null) {
             try {
-              Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
+              dbInterface.closeDatabase(getAppName(), db);
             } catch (ServicesAvailabilityException e) {
               WebLogger.getLogger(getAppName()).printStackTrace(e);
             }
           }
         }
-        if ( localizedDisplayName == null ) {
+        if (localizedDisplayName == null) {
           return false;
         }
         pref.setSummary(localizedDisplayName);
@@ -305,7 +313,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   }
 
   private void initializeComparisonType() {
-    final ListPreference pref = (ListPreference) this
+    final ListPreference pref = this
         .findListPreference(Constants.PreferenceKeys.ColorRule.COMPARISON_TYPE);
     pref.setEntries(this.mOperatorHumanFriendlyValues);
     pref.setEntryValues(this.mOperatorEntryValues);
@@ -319,10 +327,9 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         // Here we want to update the rule and also persist it.
-        WebLogger.getLogger(getAppName()).d(TAG,
-            "onPreferenceChange callback invoked for value: " + (String) newValue);
-        ColorRule.RuleType newOperator = ColorRule.RuleType.getEnumFromString((String) newValue);
-        mRuleOperator = newOperator;
+        WebLogger.getLogger(getAppName())
+            .d(TAG, "onPreferenceChange callback invoked for value: " + newValue);
+        mRuleOperator = ColorRule.RuleType.getEnumFromString((String) newValue);
         preference.setSummary(mRuleOperator.getSymbol());
         pref.setValueIndex(pref.findIndexOfValue(mRuleOperator.getSymbol()));
         updateStateOfSaveButton();
@@ -343,6 +350,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         String newValueStr = (String) newValue;
         pref.setSummary(newValueStr);
+        pref.setText(newValueStr);
         mRuleValue = newValueStr;
         updateStateOfSaveButton();
         return false;
@@ -375,7 +383,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
             saveRule();
             return true;
           } catch (ServicesAvailabilityException e) {
-            e.printStackTrace();
+            WebLogger.getLogger(getAppName()).printStackTrace(e);
             return false;
           }
         }
@@ -394,18 +402,22 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
     } else {
       this.mColorRuleGroup.getColorRules().set(mRulePosition, newRule);
     }
-    mColorRuleGroup.saveRuleList(Tables.getInstance());
+    mColorRuleGroup.saveRuleList(((BaseActivity) getActivity()).getDatabase());
     updateStateOfSaveButton();
   }
 
   @Override
   public void colorChanged(String key, int color) {
-    if (key.equals(COLOR_PREF_KEY_TEXT)) {
+    switch (key) {
+    case COLOR_PREF_KEY_TEXT:
       this.mTextColor = color;
-    } else if (key.equals(COLOR_PREF_KEY_BACKGROUND)) {
+      break;
+    case COLOR_PREF_KEY_BACKGROUND:
       this.mBackgroundColor = color;
-    } else {
+      break;
+    default:
       WebLogger.getLogger(getAppName()).e(TAG, "unrecognized key: " + key);
+      break;
     }
     updateStateOfSaveButton();
   }
@@ -413,29 +425,30 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   /**
    * Return a new {@link ColorRule} based on the state. If the rule is not
    * valid, returns null
-   * 
+   *
    * @return the rule, or null if it is not valid
    */
   ColorRule constructColorRuleFromState() {
     if (preferencesDefineValidRule()) {
-      return new ColorRule(this.mElementKey, this.mRuleOperator, this.mRuleValue,
-          this.mTextColor.intValue(), this.mBackgroundColor.intValue());
+      return new ColorRule(mElementKey, mRuleOperator, mRuleValue, mTextColor, mBackgroundColor);
     } else {
       return null;
     }
   }
 
+  /**
+   * Sets the save button to be enabled or disabled based on whether it should be enabled or not
+   */
   void updateStateOfSaveButton() {
-    Preference savePref = this.findPreference(Constants.PreferenceKeys.ColorRule.SAVE);
-    boolean enableButton = this.saveButtonShouldBeEnabled();
-    savePref.setEnabled(enableButton);
+    Preference savePref = findPreference(Constants.PreferenceKeys.ColorRule.SAVE);
+    savePref.setEnabled(saveButtonShouldBeEnabled());
   }
 
   /**
    * Return true if the save button should be enabled. This depends on if the
    * rule is valid as well as if it differs from the saved version.
-   * 
-   * @return
+   *
+   * @return whether the save button should be enabled
    */
   boolean saveButtonShouldBeEnabled() {
     if (preferencesDefineValidRule()) {
@@ -446,11 +459,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
         return true;
       } else { // isUnpersistedRule
         ColorRule existingRule = this.mColorRuleGroup.getColorRules().get(this.mRulePosition);
-        if (userDefinedRule.equalsWithoutId(existingRule)) {
-          return false;
-        } else {
-          return true;
-        }
+        return !userDefinedRule.equalsWithoutId(existingRule);
       }
     } else { // preferencesDefineValidRule
       return false;
@@ -458,7 +467,6 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   }
 
   /**
-   * 
    * @return true if the current preference fields in the UI define a valid rule
    */
   boolean preferencesDefineValidRule() {
@@ -467,14 +475,19 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment imple
   }
 
   /**
-   * Retrieve the {@link TableLevelPreferencesActivity} associated with this
-   * fragment.
-   * 
-   * @return
+   * Keys used for storing and retreiving things from bundles
    */
-  TableLevelPreferencesActivity retrieveTableLevelPreferenceActivity() {
-    TableLevelPreferencesActivity result = (TableLevelPreferencesActivity) this.getActivity();
-    return result;
+  public static final class IntentKeys {
+    /**
+     * Key used for pulling a rule position out of a bundle
+     */
+    static final String RULE_POSITION = "rulePosition";
+
+    /**
+     * Do not instantiate this
+     */
+    private IntentKeys() {
+    }
   }
 
 }

@@ -15,66 +15,64 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.consts.IntentConsts;
+import android.os.Bundle;
 import org.opendatakit.application.CommonApplication;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
-
-import android.os.Bundle;
 
 /**
  * This class is the base for any Activity that will display information about
  * a particular table. Callers must pass in a table id in the bundle with the
  * key {@link IntentConsts#INTENT_KEY_TABLE_ID}.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public abstract class AbsTableActivity extends AbsBaseActivity {
-  
-  private static final String TAG = 
-      AbsTableActivity.class.getSimpleName();
-  
+
+  private static final String TAG = AbsTableActivity.class.getSimpleName();
+
   private String mTableId;
   private OrderedColumns mColumnDefinitions;
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     mTableId = retrieveTableIdFromIntent();
     if (mTableId == null) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] table id was not present in Intent.");
-      throw new IllegalStateException(
-          "A table id was not passed to a table activity");
-    }  
+    }
   }
-  
+
   /**
    * Retrieve the table id from the intent. Returns null if not present.
-   * @return
+   *
+   * @return the table id used to launch the activity
    */
   String retrieveTableIdFromIntent() {
-    return this.getIntent().getStringExtra(IntentConsts.INTENT_KEY_TABLE_ID);
+    return getIntent().getStringExtra(IntentConsts.INTENT_KEY_TABLE_ID);
   }
 
   public String getTableId() {
     return this.mTableId;
   }
-  
+
   public synchronized OrderedColumns getColumnDefinitions() {
-    if ( this.mColumnDefinitions == null ) {
+    if (this.mColumnDefinitions == null) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] building mColumnDefinitions.");
-      CommonApplication app = (CommonApplication) getApplication();
-      if ( app.getDatabase() != null ) {
+      CommonApplication app = getCommonApplication();
+      if (app.getDatabase() != null) {
         DbHandle db = null;
         try {
           db = app.getDatabase().openDatabase(getAppName());
-          mColumnDefinitions = app.getDatabase().getUserDefinedColumns(getAppName(), db, getTableId());
+          mColumnDefinitions = app.getDatabase()
+              .getUserDefinedColumns(getAppName(), db, getTableId());
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to access database.");
           WebLogger.getLogger(getAppName()).printStackTrace(e);
-          throw new IllegalStateException("database went down -- handle this! " + e.toString());
+          throw new IllegalStateException("database went down -- handle this! " + e);
         } finally {
           if (db != null) {
             try {
@@ -82,7 +80,6 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
             } catch (ServicesAvailabilityException e) {
               WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] unable to close database.");
               WebLogger.getLogger(getAppName()).printStackTrace(e);
-              throw new IllegalStateException("database went down -- handle this! " + e.toString());
             }
           }
         }

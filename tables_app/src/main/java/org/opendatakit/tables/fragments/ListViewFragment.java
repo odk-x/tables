@@ -16,20 +16,17 @@
 package org.opendatakit.tables.fragments;
 
 import android.app.Fragment;
-import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 
 /**
  * {@link Fragment} for displaying a List view.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class ListViewFragment extends AbsWebTableFragment {
-  
+
+  /**
+   * Used for logging
+   */
+  @SuppressWarnings("unused")
   private static final String TAG = ListViewFragment.class.getSimpleName();
-
-  @Override
-  public ViewFragmentType getFragmentType() {
-    return ViewFragmentType.LIST;
-  }
-
 }

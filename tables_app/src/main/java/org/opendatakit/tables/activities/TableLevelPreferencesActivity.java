@@ -14,58 +14,77 @@
 
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.tables.fragments.StatusColorRuleListFragment;
-import org.opendatakit.tables.fragments.ColorRuleListFragment;
-import org.opendatakit.tables.fragments.ColumnListFragment;
-import org.opendatakit.tables.fragments.ColumnPreferenceFragment;
-import org.opendatakit.tables.fragments.EditColorRuleFragment;
-import org.opendatakit.tables.fragments.TablePreferenceFragment;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.IntentUtil;
-
-import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
-
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.tables.fragments.*;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
 
 /**
  * Displays preferences for a table to the user. This includes all preferences
  * that apply at a table level.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class TableLevelPreferencesActivity extends AbsTableActivity {
-  
+
   /**
-   * Fragment types this activity could be displaying. Used in restoring
-   * instance state.
-   * @author sudar.sam@gmail.com
-   *
+   * The fragment type currently being used, typically a {@link TablePreferenceFragment},
+   * {@link ColumnListFragment}, {@link ColumnPreferenceFragment},
+   * {@link ColorRuleListFragment}, or {@link StatusColorRuleListFragment}
    */
-  public enum FragmentType {
-    TABLE_PREFERENCE,
-    COLUMN_LIST,
-    COLUMN_PRFERENCE,
-    COLOR_RULE_LIST,
-    STATUS_COLOR_RULE_LIST;
-  }
-      
   FragmentType mCurrentFragmentType;
   /**
    * The element key of the column we're displaying, if this activity is
-   *  associated with a column fragmnent.
+   * associated with a column fragmnent.
    */
   String mElementKeyOfDisplayedColumn;
-  
+
+  /**
+   * Static factory for a TablePreferenceFragment
+   *
+   * @return a new TablePreferenceFragment
+   */
+  static TablePreferenceFragment createTablePreferenceFragment() {
+    return new TablePreferenceFragment();
+  }
+
+  /**
+   * Static factory for a StatusColorRuleListFragment with a particular list of color rules
+   *
+   * @param colorRuleGroupType the list of color rules for the status column
+   * @return a new StatusColorRuleListFragment with the correct color rules
+   */
+  static StatusColorRuleListFragment createStatusColorRuleListFragment(
+      ColorRuleGroup.Type colorRuleGroupType) {
+    return StatusColorRuleListFragment.newInstance(colorRuleGroupType);
+  }
+
+  /**
+   * Static factory for a ColorRuleListFragment with a particular list of color rules
+   *
+   * @param colorRuleGroupType the list of color rules for the column
+   * @return a new ColorRuleListFragment with the correct color rules
+   */
+  static ColorRuleListFragment createColorRuleListFragment(ColorRuleGroup.Type colorRuleGroupType) {
+    return ColorRuleListFragment.newInstance(colorRuleGroupType);
+  }
+
+  /**
+   * Static factory for a ColumnPreferenceFragment
+   *
+   * @return a new ColumnPreferenceFragment
+   */
+  static ColumnListFragment createColumnListFragment() {
+    return new ColumnListFragment();
+  }
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    FragmentType fragmentTypeToDisplay =
-        this.retrieveFragmentTypeFromBundleOrActivity(savedInstanceState);
-    this.mCurrentFragmentType = fragmentTypeToDisplay;
-    String elementKey =
-        this.retrieveElementKeyFromBundleOrActivity(savedInstanceState);
+    this.mCurrentFragmentType = retrieveFragmentTypeFromBundleOrActivity(savedInstanceState);
+    String elementKey = this.retrieveElementKeyFromBundleOrActivity(savedInstanceState);
     // May be null--that is ok.
     this.mElementKeyOfDisplayedColumn = elementKey;
     switch (this.mCurrentFragmentType) {
@@ -76,347 +95,318 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
       this.showColumnListFragment();
       break;
     case COLUMN_PRFERENCE:
-      this.showColumnPreferenceFragment(elementKey);
+      this.showColumnPreferenceFragment(elementKey, false);
       break;
     case COLOR_RULE_LIST:
-      ColorRuleGroup.Type colorRuleGroupType =
-        IntentUtil.retrieveColorRuleTypeFromBundle(
-            this.getIntent().getExtras());
+      ColorRuleGroup.Type colorRuleGroupType = IntentUtil
+          .retrieveColorRuleTypeFromBundle(this.getIntent().getExtras());
       this.showColorRuleListFragment(elementKey, colorRuleGroupType, false);
       break;
-      case STATUS_COLOR_RULE_LIST:
-        ColorRuleGroup.Type statusColorRuleGroupType =
-                IntentUtil.retrieveColorRuleTypeFromBundle(
-                        this.getIntent().getExtras());
-        this.showStatusColorRuleListFragment(statusColorRuleGroupType, false);
-        break;
+    case STATUS_COLOR_RULE_LIST:
+      ColorRuleGroup.Type statusColorRuleGroupType = IntentUtil
+          .retrieveColorRuleTypeFromBundle(this.getIntent().getExtras());
+      this.showStatusColorRuleListFragment(statusColorRuleGroupType, false);
+      break;
     default:
       throw new IllegalArgumentException(
-          "Unrecognized fragment type: " +
-              this.mCurrentFragmentType);
+          "Unrecognized fragment type: " + this.mCurrentFragmentType);
     }
   }
 
+  /**
+   * Tries to get the table preference fragment out of the fragment manager and show it, or
+   * creates a new one and adds it if it didn't exist
+   */
   public void showTablePreferenceFragment() {
     this.mCurrentFragmentType = FragmentType.TABLE_PREFERENCE;
-    FragmentManager fragmentManager = this.getFragmentManager();
-    TablePreferenceFragment tablePreferenceFragment =
-        this.findTablePreferenceFragment();
+    TablePreferenceFragment tablePreferenceFragment = findTablePreferenceFragment();
 
-    if (tablePreferenceFragment == null ) {
-      tablePreferenceFragment = this.createTablePreferenceFragment();
+    if (tablePreferenceFragment == null) {
+      tablePreferenceFragment = createTablePreferenceFragment();
 
-      fragmentManager.beginTransaction().replace(
-              android.R.id.content,
-              tablePreferenceFragment,
-              Constants.FragmentTags.TABLE_PREFERENCE)
-              .commit();
+      getFragmentManager().beginTransaction().replace(android.R.id.content, tablePreferenceFragment,
+          Constants.FragmentTags.TABLE_PREFERENCE).commit();
     }
   }
-  
+
+  /**
+   * Tries to get the column list fragment out of the fragment manager and show it, or
+   * creates a new one and adds it if it didn't exist
+   */
   public void showColumnListFragment() {
     this.mCurrentFragmentType = FragmentType.COLUMN_LIST;
-    FragmentManager fragmentManager = this.getFragmentManager();
-    ColumnListFragment columnManagerFragment =
-        this.findColumnListFragment();
-      if (columnManagerFragment == null) {
-        columnManagerFragment = this.createColumnListFragment();
-      }
-      fragmentManager.beginTransaction().replace(
-          android.R.id.content,
-          columnManagerFragment,
-          Constants.FragmentTags.COLUMN_LIST)
-        .addToBackStack(null)
-        .commit();
+    ColumnListFragment columnManagerFragment = findColumnListFragment();
+    if (columnManagerFragment == null) {
+      columnManagerFragment = TableLevelPreferencesActivity.createColumnListFragment();
+    }
+    getFragmentManager().beginTransaction()
+        .replace(android.R.id.content, columnManagerFragment, Constants.FragmentTags.COLUMN_LIST)
+        .addToBackStack(null).commit();
   }
-  
+
   /**
    * Show the fragment to edit color rules.
-   * @param colorRuleGroupType
-   * @param elementKey should be null if the color rule group is not of type
-   * {@link ColorRuleGroup.Type#COLUMN}
-   * @param rulePosition
+   *
+   * @param colorRuleGroupType the type of color rule
+   * @param elementKey         should be null if the color rule group is not of type
+   *                           {@link ColorRuleGroup.Type#COLUMN}
+   * @param rulePosition       the index into the list of color rules
    */
-  public void showEditColorRuleFragmentForExistingRule(
-      ColorRuleGroup.Type colorRuleGroupType,
-      String elementKey,
-      int rulePosition) {
-    this.helperShowEditColorRuleFragment(
-            false,
-            colorRuleGroupType,
-            elementKey,
-            rulePosition);
+  public void showEditColorRuleFragmentForExistingRule(ColorRuleGroup.Type colorRuleGroupType,
+      String elementKey, int rulePosition) {
+    helperShowEditColorRuleFragment(false, colorRuleGroupType, elementKey, rulePosition);
   }
-  
-  public void showEditColorRuleFragmentForNewRule(
-      ColorRuleGroup.Type colorRuleGroupType,
+
+  /**
+   * Attempts to show an EditColorRuleFragment for a new color rule
+   *
+   * @param colorRuleGroupType the type of color rule to add
+   * @param elementKey         the column the color rule operates on
+   */
+  public void showEditColorRuleFragmentForNewRule(ColorRuleGroup.Type colorRuleGroupType,
       String elementKey) {
-    this.helperShowEditColorRuleFragment(
-            true,
-            colorRuleGroupType,
-            elementKey,
-            EditColorRuleFragment.INVALID_RULE_POSITION);
+    helperShowEditColorRuleFragment(true, colorRuleGroupType, elementKey,
+        EditColorRuleFragment.INVALID_RULE_POSITION);
   }
-  
-  private void helperShowEditColorRuleFragment(
-      boolean isNewRule,
-      ColorRuleGroup.Type colorRuleGroupType,
-      String elementKey,
-      int rulePosition) {
+
+  private void helperShowEditColorRuleFragment(boolean isNewRule,
+      ColorRuleGroup.Type colorRuleGroupType, String elementKey, int rulePosition) {
     this.mElementKeyOfDisplayedColumn = elementKey;
     // So much state is stored in this that we're just going to always create
     // a new one for now.
-    EditColorRuleFragment fragment = null;
+    EditColorRuleFragment fragment;
     if (isNewRule) {
-      fragment = EditColorRuleFragment.newInstanceForNewRule(
-          colorRuleGroupType,
-          elementKey);
+      fragment = EditColorRuleFragment.newInstanceForNewRule(colorRuleGroupType, elementKey);
     } else {
-      fragment = EditColorRuleFragment.newInstanceForExistingRule(
-          colorRuleGroupType,
-          elementKey,
-          rulePosition);
+      fragment = EditColorRuleFragment
+          .newInstanceForExistingRule(colorRuleGroupType, elementKey, rulePosition);
     }
-    FragmentManager fragmentManager = this.getFragmentManager();
-    fragmentManager.beginTransaction().replace(
-        android.R.id.content,
-        fragment,
-        Constants.FragmentTags.EDIT_COLOR_RULE)
-      .addToBackStack(null)
-      .commit();
+    getFragmentManager().beginTransaction()
+        .replace(android.R.id.content, fragment, Constants.FragmentTags.EDIT_COLOR_RULE)
+        .addToBackStack(null).commit();
   }
 
-  public void showStatusColorRuleListFragment(
-          ColorRuleGroup.Type colorRuleGroupType) {
-    this.showStatusColorRuleListFragment(colorRuleGroupType, true);
+  /**
+   * Attempts to find the color rule list fragment in the fragment manager, or create it if it
+   * doesn't exist. Adds it to the back stack
+   *
+   * @param colorRuleGroupType the type of color rule
+   */
+  public void showStatusColorRuleListFragment(ColorRuleGroup.Type colorRuleGroupType) {
+    showStatusColorRuleListFragment(colorRuleGroupType, true);
   }
 
-  public void showStatusColorRuleListFragment(
-          ColorRuleGroup.Type colorRuleGroupType,
-          boolean addToBackStack) {
-    this.mCurrentFragmentType = FragmentType.STATUS_COLOR_RULE_LIST;
-    StatusColorRuleListFragment statusColorRuleListFragment =
-            this.findStatusColorRuleListFragment();
+  /**
+   * Attempts to find the color rule list fragment in the fragment manager, or create it if it
+   * doesn't exist. Optionally adds it to the backstack
+   *
+   * @param colorRuleGroupType the type of color rule
+   * @param addToBackStack     whether to add it to the fragment stack
+   */
+  public void showStatusColorRuleListFragment(ColorRuleGroup.Type colorRuleGroupType,
+      boolean addToBackStack) {
+    mCurrentFragmentType = FragmentType.STATUS_COLOR_RULE_LIST;
+    StatusColorRuleListFragment statusColorRuleListFragment = this
+        .findStatusColorRuleListFragment();
     if (statusColorRuleListFragment == null) {
-      statusColorRuleListFragment =
-              this.createStatusColorRuleListFragment(colorRuleGroupType);
+      statusColorRuleListFragment = TableLevelPreferencesActivity
+          .createStatusColorRuleListFragment(colorRuleGroupType);
     }
-    FragmentManager fragmentManager = this.getFragmentManager();
-    FragmentTransaction fragmentTransaction =
-            fragmentManager.beginTransaction();
-    fragmentTransaction.replace(
-            android.R.id.content,
-            statusColorRuleListFragment,
-            Constants.FragmentTags.STATUS_COLOR_RULE_LIST);
+    FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+    fragmentTransaction.replace(android.R.id.content, statusColorRuleListFragment,
+        Constants.FragmentTags.STATUS_COLOR_RULE_LIST);
     if (addToBackStack) {
       fragmentTransaction.addToBackStack(null);
     }
     fragmentTransaction.commit();
   }
-  
+
   /**
-   * Wrapper around {@link #showColorRuleListFragment(String, ColorRuleGroup.Type)}
+   * Wrapper around {@link #showColorRuleListFragment(String, ColorRuleGroup.Type, boolean)}
    * with addToBackStack set to true.
    *
-   * @param elementKey
-   * @param colorRuleGroupType
+   * @param elementKey         the column the rule operates on
+   * @param colorRuleGroupType the type of color rule
    */
-  public void showColorRuleListFragment(
-      String elementKey,
-      ColorRuleGroup.Type colorRuleGroupType) {
-    this.showColorRuleListFragment(elementKey, colorRuleGroupType, true);
+  public void showColorRuleListFragment(String elementKey, ColorRuleGroup.Type colorRuleGroupType) {
+    showColorRuleListFragment(elementKey, colorRuleGroupType, true);
   }
-  
-  public void showColorRuleListFragment(
-      String elementKey,
-      ColorRuleGroup.Type colorRuleGroupType,
+
+  /**
+   * Shows the color rule list fragment if it already exists, or creates a new one. Optionally
+   * add it to the backstack
+   *
+   * @param elementKey         the column to list color rules for
+   * @param colorRuleGroupType the type of color rules
+   * @param addToBackStack     whether to add it to the back stack or not
+   */
+  public void showColorRuleListFragment(String elementKey, ColorRuleGroup.Type colorRuleGroupType,
       boolean addToBackStack) {
     this.mElementKeyOfDisplayedColumn = elementKey;
     this.mCurrentFragmentType = FragmentType.COLOR_RULE_LIST;
-    ColorRuleListFragment colorRuleListFragment =
-        this.findColorRuleListFragment();
+    ColorRuleListFragment colorRuleListFragment = findColorRuleListFragment();
     if (colorRuleListFragment == null) {
-      colorRuleListFragment =
-          this.createColorRuleListFragment(colorRuleGroupType);
+      colorRuleListFragment = TableLevelPreferencesActivity
+          .createColorRuleListFragment(colorRuleGroupType);
     }
-    FragmentManager fragmentManager = this.getFragmentManager();
-    FragmentTransaction fragmentTransaction =
-        fragmentManager.beginTransaction();
-    fragmentTransaction.replace(
-        android.R.id.content,
-        colorRuleListFragment,
+    FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+    fragmentTransaction.replace(android.R.id.content, colorRuleListFragment,
         Constants.FragmentTags.COLOR_RULE_LIST);
     if (addToBackStack) {
       fragmentTransaction.addToBackStack(null);
     }
     fragmentTransaction.commit();
   }
-  
-  TablePreferenceFragment createTablePreferenceFragment() {
-    TablePreferenceFragment result = new TablePreferenceFragment();
-    return result;
+
+  /**
+   * Tries to get a column preferences fragment out of the fragment manager or create it if it
+   * doesn't exist. Adds to back stack
+   *
+   * @param elementKey the column to open preferences for
+   */
+  public void showColumnPreferenceFragment(String elementKey) {
+    showColumnPreferenceFragment(elementKey, true);
   }
 
-  StatusColorRuleListFragment createStatusColorRuleListFragment(
-          ColorRuleGroup.Type colorRuleGroupType) {
-    StatusColorRuleListFragment result =
-            StatusColorRuleListFragment.newInstance(colorRuleGroupType);
-    return result;
-  }
-  
-  ColorRuleListFragment createColorRuleListFragment(
-      ColorRuleGroup.Type colorRuleGroupType) {
-    ColorRuleListFragment result =
-        ColorRuleListFragment.newInstance(colorRuleGroupType);
-    return result;
-  }
-  
-  ColumnListFragment createColumnListFragment() {
-    ColumnListFragment result = new ColumnListFragment();
-    return result;
-  }
-  
-  public void showColumnPreferenceFragment(String elementKey) {
-    this.mElementKeyOfDisplayedColumn = elementKey;
-    this.mCurrentFragmentType = FragmentType.COLUMN_PRFERENCE;
-    FragmentManager fragmentManager = this.getFragmentManager();
-    ColumnPreferenceFragment columnPreferenceFragment =
-        this.findColumnPreferenceFragment();
+  /**
+   * Tries to get a column preferences fragment out of the fragment manager or create it if it
+   * doesn't exist. Optionally adds to back stack
+   *
+   * @param elementKey     the column to open preferences for
+   * @param addToBackStack whether to add to the back stack or not
+   */
+  public void showColumnPreferenceFragment(String elementKey, boolean addToBackStack) {
+    mElementKeyOfDisplayedColumn = elementKey;
+    mCurrentFragmentType = FragmentType.COLUMN_PRFERENCE;
+    ColumnPreferenceFragment columnPreferenceFragment = findColumnPreferenceFragment();
     if (columnPreferenceFragment == null) {
       columnPreferenceFragment = new ColumnPreferenceFragment();
     }
-    fragmentManager.beginTransaction().replace(
-        android.R.id.content,
-        columnPreferenceFragment,
-        Constants.FragmentTags.COLUMN_PREFERENCE)
-      .addToBackStack(null)
-      .commit();
-    
+    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+    transaction.replace(android.R.id.content, columnPreferenceFragment,
+        Constants.FragmentTags.COLUMN_PREFERENCE);
+    if (addToBackStack) {
+      transaction.addToBackStack(null);
+    }
+    transaction.commit();
+
   }
-  
+
   /**
    * Get the element key of the column being displayed. May be null if there
    * is no associated column.
-   * @return
+   *
+   * @return the column that the current fragment is operating on
    */
   public String getElementKey() {
     return this.mElementKeyOfDisplayedColumn;
   }
-  
+
   /**
    * Find the {@link TablePreferenceFragment} associated with this activity or
    * null if one does not exist.
-   * @return
+   *
+   * @return the preference fragment from the fragment manager if it exists, else null
    */
   TablePreferenceFragment findTablePreferenceFragment() {
-    FragmentManager fragmentManager = this.getFragmentManager();
-    TablePreferenceFragment result = (TablePreferenceFragment) 
-        fragmentManager.findFragmentByTag(
-            Constants.FragmentTags.TABLE_PREFERENCE);
-    return result;
+    return (TablePreferenceFragment) getFragmentManager()
+        .findFragmentByTag(Constants.FragmentTags.TABLE_PREFERENCE);
   }
-  
+
   /**
    * Find the {@link ColumnListFragment} associated with this activity or
    * null if one does not exist.
-   * @return
+   *
+   * @return the active ColumnListFragment if it exists or null
    */
   ColumnListFragment findColumnListFragment() {
-    FragmentManager fragmentManager = this.getFragmentManager();
-    ColumnListFragment result = (ColumnListFragment) 
-        fragmentManager.findFragmentByTag(
-            Constants.FragmentTags.COLUMN_LIST);
-    return result;
+    return (ColumnListFragment) getFragmentManager()
+        .findFragmentByTag(Constants.FragmentTags.COLUMN_LIST);
   }
-  
-  EditColorRuleFragment findEditColorRuleFragment() {
-    FragmentManager fragmentManager = this.getFragmentManager();
-    EditColorRuleFragment result = (EditColorRuleFragment)
-        fragmentManager.findFragmentByTag(
-            Constants.FragmentTags.EDIT_COLOR_RULE);
-    return result;
-  }
-  
+
   /**
    * Find the {@link ColumnPreferenceFragment} associated with this activity or
    * null if one does not exist.
-   * @return
+   *
+   * @return the active column preferences fragment if it exists, or null
    */
   ColumnPreferenceFragment findColumnPreferenceFragment() {
-    FragmentManager fragmentManager = this.getFragmentManager();
-    ColumnPreferenceFragment result = (ColumnPreferenceFragment) 
-        fragmentManager.findFragmentByTag(
-            Constants.FragmentTags.COLUMN_PREFERENCE);
-    return result;
+    return (ColumnPreferenceFragment) getFragmentManager()
+        .findFragmentByTag(Constants.FragmentTags.COLUMN_PREFERENCE);
   }
 
   /**
    * Find the {@link StatusColorRuleListFragment} associated with this activity or null if
    * one does not exist.
-   * @return
+   *
+   * @return the active color rule list fragment if it exists, or null
    */
   StatusColorRuleListFragment findStatusColorRuleListFragment() {
-    FragmentManager fragmentManager = this.getFragmentManager();
-    StatusColorRuleListFragment result = (StatusColorRuleListFragment)
-            fragmentManager.findFragmentByTag(
-                    Constants.FragmentTags.STATUS_COLOR_RULE_LIST);
-    return result;
+    return (StatusColorRuleListFragment) getFragmentManager()
+        .findFragmentByTag(Constants.FragmentTags.STATUS_COLOR_RULE_LIST);
   }
 
   /**
    * Find the {@link ColorRuleListFragment} associated with this activity or null if
    * one does not exist.
-   * @return
+   *
+   * @return the active ColorRuleListFragment if it exists, or null
    */
   ColorRuleListFragment findColorRuleListFragment() {
-    FragmentManager fragmentManager = this.getFragmentManager();
-    ColorRuleListFragment result = (ColorRuleListFragment)
-        fragmentManager.findFragmentByTag(
-            Constants.FragmentTags.COLOR_RULE_LIST);
-    return result;
+    return (ColorRuleListFragment) getFragmentManager()
+        .findFragmentByTag(Constants.FragmentTags.COLOR_RULE_LIST);
   }
-  
+
   /**
    * Retrieve the {@link FragmentType}. A value stored in
-   * savedInstanceState takes precedence. If not present of savedInstanceState
-   * is null, returns the value from the intent.
-   * @param savedInstanceState
-   * @return
+   * savedInstanceState takes precedence. If not present of savedInstanceState is null, returns
+   * the value from the intent.
+   *
+   * @param savedInstanceState the bundle we saved in onSaveInstanceState
+   * @return the fragment type stored in the bundle
    */
-  FragmentType retrieveFragmentTypeFromBundleOrActivity(
-      Bundle savedInstanceState) {
+  FragmentType retrieveFragmentTypeFromBundleOrActivity(Bundle savedInstanceState) {
     String fragmentTypeStr = null;
-    if (savedInstanceState != null &&
-        savedInstanceState.containsKey(
-            Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE)) {
-      fragmentTypeStr = savedInstanceState.getString(
-          Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE);
+    if (savedInstanceState != null && savedInstanceState
+        .containsKey(Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE)) {
+      fragmentTypeStr = savedInstanceState
+          .getString(Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE);
     }
     if (fragmentTypeStr == null) {
-      fragmentTypeStr = this.getIntent().getStringExtra(
-          Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE);
+      fragmentTypeStr = this.getIntent()
+          .getStringExtra(Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE);
     }
-    FragmentType result = FragmentType.valueOf(fragmentTypeStr);
-    return result;
+    return FragmentType.valueOf(fragmentTypeStr);
   }
-  
+
   /**
    * Retrieve the element key from either the savedInstanceState or this
    * activity's intent. Any value in savedInstanceState gets precedence.
-   * @param savedInstanceState
-   * @return
+   *
+   * @param savedInstanceState the bundle we saved in onSaveInstanceState
+   * @return the column key stored in the bundle
    */
   String retrieveElementKeyFromBundleOrActivity(Bundle savedInstanceState) {
     String result = null;
-    if (savedInstanceState != null &&
-        savedInstanceState.containsKey(Constants.IntentKeys.ELEMENT_KEY)) {
+    if (savedInstanceState != null && savedInstanceState
+        .containsKey(Constants.IntentKeys.ELEMENT_KEY)) {
       result = savedInstanceState.getString(Constants.IntentKeys.ELEMENT_KEY);
     }
     if (result == null) {
-      result =
-          this.getIntent().getStringExtra(Constants.IntentKeys.ELEMENT_KEY);
+      result = this.getIntent().getStringExtra(Constants.IntentKeys.ELEMENT_KEY);
     }
     return result;
+  }
+
+  /**
+   * Fragment types this activity could be displaying. Used in restoring
+   * instance state.
+   *
+   * @author sudar.sam@gmail.com
+   */
+  @SuppressWarnings("JavaDoc")
+  public enum FragmentType {
+    TABLE_PREFERENCE, COLUMN_LIST, COLUMN_PRFERENCE, COLOR_RULE_LIST, STATUS_COLOR_RULE_LIST
   }
 
 }

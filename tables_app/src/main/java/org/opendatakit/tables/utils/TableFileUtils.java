@@ -22,16 +22,21 @@ import org.opendatakit.utilities.ODKFileUtils;
  * This is a general place for utils regarding odktables files. These are files
  * that are associated with various tables, such as html files for different
  * views, etc.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
-public class TableFileUtils {
+public final class TableFileUtils {
 
   private static final String TAG = TableFileUtils.class.getSimpleName();
 
-  public static final String getDefaultAppName() {
+  /**
+   * Do not instantiate this class
+   */
+  private TableFileUtils() {
+  }
+
+  public static String getDefaultAppName() {
     Log.i(TAG, "appName is null on intent");
-    Thread.dumpStack();
     return ODKFileUtils.getOdkDefaultAppName();
   }
 }
