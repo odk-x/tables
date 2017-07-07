@@ -17,6 +17,8 @@ package org.opendatakit.tables.application;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.tables.R;
 
+import java.lang.ref.WeakReference;
+
 /**
  * The application, holds a reference to itself and a very helpful getDatabase method
  */
@@ -27,6 +29,14 @@ public class Tables extends CommonApplication {
    */
   @SuppressWarnings("unused")
   private static final String TAG = Tables.class.getSimpleName();
+  private static WeakReference<Tables> ref = null;
+
+  @Deprecated
+  public static Tables _please_dont_use_getInstance() {
+    if (ref == null)
+      return null;
+    return ref.get();
+  }
 
   @Override
   public int getApkDisplayNameResourceId() {
@@ -51,5 +61,11 @@ public class Tables extends CommonApplication {
   public String getVersionedToolName() {
     String versionDetail = this.getVersionDetail();
     return getString(R.string.app_name) + versionDetail;
+  }
+
+  @Override
+  public void onCreate() {
+    ref = new WeakReference<>(this);
+    super.onCreate();
   }
 }
