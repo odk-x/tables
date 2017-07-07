@@ -65,7 +65,9 @@ public class ColorRuleTest extends AbsBaseTest {
     protected void beforeActivityLaunched() {
       super.beforeActivityLaunched();
       if (c == null) {
-        new AbsBaseTest()._setUpC();
+        try {
+          new AbsBaseTest()._setUpC();
+        } catch (Exception ignored) {}
       }
 
       if (initSuccess == null) {
