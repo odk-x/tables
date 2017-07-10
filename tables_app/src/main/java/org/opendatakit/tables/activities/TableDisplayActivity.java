@@ -1067,9 +1067,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       fragmentTransaction.remove(detailWithListViewListFragment);
     }
     detailWithListViewListFragment = new DetailWithListListViewFragment();
-    fragmentTransaction.add(R.id.bottom_pane, detailWithListViewListFragment,
-        Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
-    fragmentTransaction.commit();
+    if (!isDestroyed()) {
+      fragmentTransaction.add(R.id.bottom_pane, detailWithListViewListFragment,
+          Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
+      fragmentTransaction.commit();
+    }
   }
 
   /**
