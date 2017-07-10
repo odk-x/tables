@@ -636,6 +636,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return super.onCreateOptionsMenu(menu);
   }
 
+  private void clearProps() {
+    props.dataMenuOpen = false;
+    props.lastDataCellMenued = null;
+    props.lastHeaderCellMenued = null;
+  }
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     String filename = null;
@@ -646,6 +651,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       setCurrentFragmentType(ViewFragmentType.SPREADSHEET, null, null);
       return true;
     case R.id.top_level_table_menu_view_list_view:
+      clearProps();
       if (mOriginalFragmentType != null && mOriginalFragmentType == ViewFragmentType.LIST) {
         filename = mOriginalFileName;
       }
@@ -657,6 +663,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       setCurrentFragmentType(ViewFragmentType.LIST, filename, null);
       return true;
     case R.id.top_level_table_menu_view_map_view:
+      clearProps();
       if (mOriginalFragmentType != null && mOriginalFragmentType == ViewFragmentType.MAP) {
         filename = mOriginalFileName;
       }
