@@ -20,56 +20,49 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
-import android.widget.TextView;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
  * Displays an HTML file that is not associated with a particular table.
- * Consequently it does not add a data JavaScript interface to its 
- * {@link WebView}. To display data about a table, see 
+ * Consequently it does not add a data JavaScript interface to its
+ * {@link WebView}. To display data about a table, see
  * {@link AbsWebTableFragment} and its subclasses.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
-public class WebFragment extends AbsBaseFragment implements IWebFragment {
-  
+public class WebFragment extends AbsTablesFragment implements IWebFragment {
+
   private static final String TAG = WebFragment.class.getSimpleName();
 
-  private static final int ID = R.layout.web_view_container;
-
   @Override
-  public View onCreateView(
-      LayoutInflater inflater,
-      ViewGroup container,
+  public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
-    WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView] activity is: " + this.getActivity());
-    
-    View v = inflater.inflate(
-        R.layout.web_view_container,
-        container,
-        false);
+    WebLogger.getLogger(getAppName())
+        .d(TAG, "[onCreateView] activity is: " + getActivity().getClass().getSimpleName());
 
-    return v;
+    return inflater.inflate(R.layout.web_view_container, container, false);
   }
 
   @Override
   public OdkTablesWebView getWebKit() {
+    if (getView() == null)
+      return null;
     return (OdkTablesWebView) getView().findViewById(R.id.webkit);
   }
 
   @Override
   public void setWebKitVisibility() {
-    if ( getView() == null ) {
+    if (getView() == null) {
       return;
     }
 
-    OdkTablesWebView webView = (OdkTablesWebView) getView().findViewById(R.id.webkit);
-    TextView noDatabase = (TextView) getView().findViewById(android.R.id.empty);
-    
-    if ( Tables.getInstance().getDatabase() != null ) {
+    View webView = getView().findViewById(R.id.webkit);
+    View noDatabase = getView().findViewById(android.R.id.empty);
+
+    if (((BaseActivity) getActivity()).getDatabase() != null) {
       webView.setVisibility(View.VISIBLE);
       noDatabase.setVisibility(View.GONE);
     } else {
@@ -77,11 +70,11 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
       noDatabase.setVisibility(View.VISIBLE);
     }
   }
-  
+
   @Override
   public void databaseAvailable() {
 
-    if ( getView() != null ) {
+    if (getView() != null) {
       setWebKitVisibility();
       getWebKit().reloadPage();
     }
@@ -89,7 +82,7 @@ public class WebFragment extends AbsBaseFragment implements IWebFragment {
 
   @Override
   public void databaseUnavailable() {
-    if ( getView() != null ) {
+    if (getView() != null) {
       setWebKitVisibility();
       getWebKit().setForceLoadDuringReload();
     }

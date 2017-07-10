@@ -22,20 +22,20 @@ import org.opendatakit.tables.views.webkits.OdkTablesWebView;
  * {@link org.opendatakit.views.ODKWebView }.
  *
  * @author sudar.sam@gmail.com
- *
  */
 public interface IWebFragment {
 
   /**
    * Get the webkit in this fragment
-   * @return
+   *
+   * @return the webkit in the fragment
    */
-  public OdkTablesWebView getWebKit();
+  OdkTablesWebView getWebKit();
 
   /**
-   * Toggles visibility of the "database unavailable" text box and 
+   * Toggles visibility of the "database unavailable" text box and
    * the webkit based upon the accessibility of the database.
    */
-  public abstract void setWebKitVisibility();
+  void setWebKitVisibility();
 
 }

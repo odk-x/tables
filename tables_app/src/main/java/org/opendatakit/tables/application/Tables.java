@@ -15,25 +15,27 @@
 package org.opendatakit.tables.application;
 
 import org.opendatakit.application.CommonApplication;
-import org.opendatakit.properties.CommonToolProperties;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 
+import java.lang.ref.WeakReference;
+
+/**
+ * The application, holds a reference to itself and a very helpful getDatabase method
+ */
 public class Tables extends CommonApplication {
 
-  public static final String t = "Tables";
+  /**
+   * Used for logging
+   */
+  @SuppressWarnings("unused")
+  private static final String TAG = Tables.class.getSimpleName();
+  private static WeakReference<Tables> ref = null;
 
-  private static Tables singleton = null;
-
-  public static Tables getInstance() {
-    return singleton;
-  }
-
-  @Override
-  public void onCreate() {
-    singleton = this;
-
-    super.onCreate();
+  @Deprecated
+  public static Tables _please_dont_use_getInstance() {
+    if (ref == null)
+      return null;
+    return ref.get();
   }
 
   @Override
@@ -56,8 +58,14 @@ public class Tables extends CommonApplication {
     return -1; // R.id.webkit;
   }
 
-  public String getVersionedAppName() {
+  public String getVersionedToolName() {
     String versionDetail = this.getVersionDetail();
     return getString(R.string.app_name) + versionDetail;
+  }
+
+  @Override
+  public void onCreate() {
+    ref = new WeakReference<>(this);
+    super.onCreate();
   }
 }

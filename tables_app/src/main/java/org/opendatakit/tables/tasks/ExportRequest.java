@@ -15,45 +15,55 @@
  */
 package org.opendatakit.tables.tasks;
 
-
+/**
+ * this class describes a request to export a table to a csv file
+ */
 public class ExportRequest {
 
+  // the app name
   private final String appName;
+  // the id of the table to export
   private final String tableId;
-    private final String fileQualifier;
+  // the prefix for the filename of the exported csv files
+  private final String fileQualifier;
 
-    /**
-     * New style CSV export.
-     * Exports two csv files to the output/csv directory under the appName:
-     * <ul>
-     * <li>tableid.fileQualifier.csv - data table</li>
-     * <li>tableid.fileQualifier.properties.csv - metadata definition of this table</li>
-     * </ul>
-     * If fileQualifier is null or an empty string, then it emits to
-     * <ul>
-     * <li>tableid.csv - data table</li>
-     * <li>tableid.properties.csv - metadata definition of this table</li>
-     * </ul>
-     *
-     * @param tp
-     * @param directory
-     * @param fileQualifier
-     */
-    public ExportRequest(String appName, String tableId, String fileQualifier) {
-      this.appName = appName;
-      this.tableId = tableId;
-      this.fileQualifier = fileQualifier;
-    }
+  /**
+   * All the actual exporting is handled by androidlibrary/builder/CsvUtil
+   *
+   * @param appName       the app name
+   * @param tableId       the id of the table to export
+   * @param fileQualifier the prefix for the filename of the exported csv files
+   */
+  public ExportRequest(String appName, String tableId, String fileQualifier) {
+    this.appName = appName;
+    this.tableId = tableId;
+    this.fileQualifier = fileQualifier;
+  }
 
-    public String getAppName() {
-      return appName;
-    }
-    
-    public String getTableId() {
-      return tableId;
-    }
+  /**
+   * standard getter for the app name
+   *
+   * @return the app name
+   */
+  public String getAppName() {
+    return appName;
+  }
 
-    public String getFileQualifier() {
-      return fileQualifier;
-    }
+  /**
+   * standard getter for the table id
+   *
+   * @return the id of the table to export
+   */
+  public String getTableId() {
+    return tableId;
+  }
+
+  /**
+   * standard getter for the file qualifier
+   *
+   * @return the prefix for the csv filenames
+   */
+  String getFileQualifier() {
+    return fileQualifier;
+  }
 }

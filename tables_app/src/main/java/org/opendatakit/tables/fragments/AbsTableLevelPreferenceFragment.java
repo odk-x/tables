@@ -15,13 +15,13 @@
  */
 package org.opendatakit.tables.fragments;
 
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.tables.activities.AbsTableActivity;
-
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.PreferenceFragment;
+import org.opendatakit.activities.IAppAwareActivity;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.tables.activities.AbsTableActivity;
 
 /**
  * This fragment should be extended to display any preferences that apply at a
@@ -29,11 +29,10 @@ import android.preference.PreferenceFragment;
  * to be available should extend this fragment.
  * <p>
  * This Fragment can only be used inside a {@link AbsTableActivity}.
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
-public abstract class AbsTableLevelPreferenceFragment
-    extends PreferenceFragment {
+public abstract class AbsTableLevelPreferenceFragment extends PreferenceFragment {
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
@@ -41,26 +40,22 @@ public abstract class AbsTableLevelPreferenceFragment
     // We have to verify that we are attached to an AbsTableActivity, or else
     // we won't have a tableId available.
     if (!(this.getActivity() instanceof AbsTableActivity)) {
-      throw new IllegalStateException("AbsTableLevelPreferenceFragment can " +
-      		"only be used with AbsTableActivity. " +
-            this.getActivity().getClass() +
-      		" is not appropriate.");
+      throw new IllegalStateException(
+          "AbsTableLevelPreferenceFragment can " + "only be used with AbsTableActivity. " + this
+              .getActivity().getClass() + " is not appropriate.");
     }
   }
 
   String getAppName() {
-    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
-    return activity.getAppName();
+    return ((IAppAwareActivity) getActivity()).getAppName();
   }
-  
+
   String getTableId() {
-    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
-    return activity.getTableId();
+    return ((AbsTableActivity) getActivity()).getTableId();
   }
-  
+
   OrderedColumns getColumnDefinitions() {
-    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
-    return activity.getColumnDefinitions();
+    return ((AbsTableActivity) getActivity()).getColumnDefinitions();
   }
 
   /**
@@ -68,25 +63,24 @@ public abstract class AbsTableLevelPreferenceFragment
    * Convenience method for
    * calling {@link PreferenceFragment#findPreference(CharSequence)} and
    * casting it to {@link EditTextPreference}.
-   * @param key
-   * @return
+   *
+   * @param key the key to search the fragment for
+   * @return the edit text preference with that key or null if it wasn't found
    */
   EditTextPreference findEditTextPreference(String key) {
-    EditTextPreference preference =
-        (EditTextPreference) this.findPreference(key);
-    return preference;
+    return (EditTextPreference) this.findPreference(key);
   }
 
   /**
    * Find a {@link ListPreference} with the given key. Convenience method for
    * calling {@link PreferenceFragment#findPreference(CharSequence)} and
    * casting it to {@link ListPreference}.
-   * @param key
-   * @return
+   *
+   * @param key the key to search the fragment for
+   * @return the list preference with that key or null if it wasn't found
    */
   ListPreference findListPreference(String key) {
-    ListPreference preference = (ListPreference) findPreference(key);
-    return preference;
+    return (ListPreference) findPreference(key);
   }
 
 }
