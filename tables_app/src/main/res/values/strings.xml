@@ -288,7 +288,8 @@
     <string name="export_button">Export</string>
     <string name="export_success">File export was successful.</string>
     <string name="export_failure">File export failed.</string>
-    <string name="export_in_progress">File export in progress&#8230;</string>
+    <string name="export_in_progress">Exporting row %1$d of %2$d</string>
+    <string name="export_in_progress_generic">File export in progress&#8230;</string>
     <string name="export_partial_success">Data exported, but some customized settings were not able to exported.</string>
     <string name="confirm_delete_row">Confirm Delete Row</string>
     <string name="are_you_sure_delete_row">Please confirm deletion of row: %1$s</string>
