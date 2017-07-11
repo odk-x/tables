@@ -15,90 +15,117 @@
  */
 package org.opendatakit.tables.tasks;
 
+import android.os.AsyncTask;
+import org.opendatakit.builder.CsvUtil;
 import org.opendatakit.builder.CsvUtilSupervisor;
 import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.builder.CsvUtil;
-import org.opendatakit.logging.WebLogger;
 import org.opendatakit.listener.ExportListener;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.tables.activities.ExportCSVActivity;
-import org.opendatakit.tables.application.Tables;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 
-import android.os.AsyncTask;
+/**
+ * Represents a task to export a table to some csv files using CsvUtil
+ */
+public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
+    implements ExportListener {
 
-public class ExportTask
-        extends AsyncTask<ExportRequest, Integer, Boolean> implements ExportListener {
+  // Used for logging
+  private static final String TAG = ExportTask.class.getSimpleName();
+  // The app name
+  private final String appName;
+  // The context the progress dialog needs
+  private AbsBaseActivity context;
 
-  private static final String TAG = "ExportTask";
   /**
-	 *
-	 */
-	private final ExportCSVActivity exportCSVActivity;
-	private final String appName;
+   * Constructor that stores off its arguments
+   *
+   * @param appName the app name
+   * @param context the activity that the progress dialog is running in
+   */
+  public ExportTask(String appName, AbsBaseActivity context) {
+    super();
+    this.appName = appName;
+    this.context = context;
+  }
 
-	/**
-	 * @param exportCSVActivity
-	 */
-	public ExportTask(ExportCSVActivity exportCSVActivity, String appName) {
-		this.exportCSVActivity = exportCSVActivity;
-		this.appName = appName;
-	}
-
-// This says whether or not the secondary entries in the key value store
-  // were written successfully.
-  private boolean keyValueStoreSuccessful = true;
-
-    protected Boolean doInBackground(ExportRequest... exportRequests) {
-        ExportRequest request = exportRequests[0];
-        CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
-           @Override public UserDbInterface getDatabase() {
-              return Tables.getInstance().getDatabase();
-           }
-        }, appName);
-        DbHandle db = null;
+  /**
+   * Tells services to export the csv file
+   *
+   * @param exportRequests what request to act on
+   * @return whether it was successful or not
+   */
+  protected Boolean doInBackground(ExportRequest... exportRequests) {
+    ExportRequest request = exportRequests[0];
+    CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
+      @Override
+      public UserDbInterface getDatabase() {
+        return context.getDatabase();
+      }
+    }, appName);
+    DbHandle db = null;
+    try {
+      String tableId = request.getTableId();
+      db = context.getDatabase().openDatabase(appName);
+      OrderedColumns orderedDefinitions = context.getDatabase()
+          .getUserDefinedColumns(appName, db, tableId); // export goes to output/csv directory...
+      return cu.exportSeparable(this, db, tableId, orderedDefinitions, request.getFileQualifier());
+    } catch (ServicesAvailabilityException e) {
+      WebLogger.getLogger(appName).e(TAG, "Unable to access database");
+      WebLogger.getLogger(appName).printStackTrace(e);
+      return false;
+    } finally {
+      if (db != null) {
         try {
-          String tableId = request.getTableId();
-          db = Tables.getInstance().getDatabase().openDatabase(appName);
-          OrderedColumns orderedDefns = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);          // export goes to output/csv directory...
-          return cu.exportSeparable(this, db, tableId, orderedDefns, request.getFileQualifier());
+          context.getDatabase().closeDatabase(appName, db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
-          WebLogger.getLogger(appName).e(TAG, "Unable to access database");
-          e.printStackTrace();
-          return false;
-        } finally {
-          if ( db != null ) {
-            try {
-              Tables.getInstance().getDatabase().closeDatabase(appName, db);
-            } catch (ServicesAvailabilityException e) {
-              WebLogger.getLogger(appName).printStackTrace(e);
-              WebLogger.getLogger(appName).e(TAG, "Unable to close database");
-            }
-          }
+          WebLogger.getLogger(appName).e(TAG, "Unable to close database");
         }
+      }
     }
+  }
 
-    @Override
-    public void exportComplete(boolean outcome) {
-      keyValueStoreSuccessful = outcome;
-    }
+  /**
+   * does nothing
+   *
+   * @param progress unknown
+   */
+  protected void onProgressUpdate(Integer... progress) {
+    // do nothing
+  }
 
-    protected void onProgressUpdate(Integer... progress) {
-        // do nothing
+  /**
+   * Called when the export is done. Dismisses the "Import in progress..." dialog, and displays
+   * a success alert dialog or one of the failure alert dialogs, which will be dismissed by the user
+   *
+   * @param result Whether the import was successful
+   */
+  protected void onPostExecute(Boolean result) {
+    ImportExportDialogFragment.activeDialogFragment.dismiss();
+    if (result) {
+      ImportExportDialogFragment
+          .newInstance(ImportExportDialogFragment.CSVEXPORT_SUCCESS_DIALOG, context);
+    } else {
+      ImportExportDialogFragment
+          .newInstance(ImportExportDialogFragment.CSVEXPORT_FAIL_DIALOG, context);
     }
+  }
 
-    protected void onPostExecute(Boolean result) {
-        this.exportCSVActivity.dismissDialog(ExportCSVActivity.EXPORT_IN_PROGRESS_DIALOG);
-        if (result) {
-          if (keyValueStoreSuccessful) {
-            this.exportCSVActivity.showDialog(ExportCSVActivity.CSVEXPORT_SUCCESS_DIALOG);
-          } else {
-            this.exportCSVActivity.showDialog(ExportCSVActivity.CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG);
-          }
-        } else {
-            this.exportCSVActivity.showDialog(ExportCSVActivity.CSVEXPORT_FAIL_DIALOG);
-        }
-    }
+  /**
+   * Updates the open progress dialog with the new status
+   * just passes along the request to ImportExportDialogFragment
+   *
+   * @param row the string to set in the window, like "Exporting row 10"
+   */
+  @Override
+  public void updateProgressDetail(int row, int total) {
+    ImportExportDialogFragment.activeDialogFragment
+        .updateProgressDialogStatusString(context, R.string.export_in_progress_row, row, total);
+  }
+
 }

@@ -5,41 +5,39 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import org.json.JSONObject;
-import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.application.AppAwareApplication;
-import org.opendatakit.application.CommonApplication;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.DynamicPropertiesCallback;
-import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.properties.PropertyManager;
-import org.opendatakit.webkitserver.utilities.SerializationUtils;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
 import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.webkitserver.utilities.UrlUtils;
-import org.opendatakit.logging.WebLogger;
 import org.opendatakit.views.ExecutorContext;
 import org.opendatakit.views.ExecutorProcessor;
 import org.opendatakit.views.ODKWebView;
-import org.opendatakit.database.service.UserDbInterface;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
+import org.opendatakit.webkitserver.utilities.DoActionUtils;
+import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 
 /**
  * @author mitchellsundt@gmail.com
- *
- * Derived classes must implement:
- *   public String getTableId();
- *   public String getInstanceId();
- *   public ODKWebView getWebKitView();
- *   public void databaseAvailable();
- *   public void databaseUnavailable();
- *   public void initializationCompleted();
+ *         <p>
+ *         Derived classes must implement:
+ *         public String getTableId();
+ *         public String getInstanceId();
+ *         public ODKWebView getWebKitView();
+ *         public void databaseAvailable();
+ *         public void databaseUnavailable();
+ *         public void initializationCompleted();
  */
-public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdkTablesActivity {
-  private static final String t = "AbsBaseWebActivity";
+public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOdkTablesActivity {
+  // used for logging
+  private static final String TAG = AbsBaseWebActivity.class.getSimpleName();
 
   // tags for retained context
   private static final String DISPATCH_STRING_WAITING_FOR_DATA = "dispatchStringWaitingForData";
@@ -49,16 +47,11 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
 
   private static final String QUEUED_ACTIONS = "queuedActions";
   private static final String RESPONSE_JSON = "responseJSON";
-
+  private LinkedList<String> queueResponseJSON = new LinkedList<>();
   private String dispatchStringWaitingForData = null;
   private String actionWaitingForData = null;
-
   private Bundle sessionVariables = new Bundle();
-
-  private LinkedList<String> queuedActions = new LinkedList<String>();
-
-  LinkedList<String> queueResponseJSON = new LinkedList<String>();
-
+  private LinkedList<String> queuedActions = new LinkedList<>();
   /**
    * Member variables that do not need to be preserved across orientation
    * changes, etc.
@@ -69,10 +62,22 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
   // no need to preserve
   private PropertyManager mPropertyManager;
 
-  public abstract String getTableId();
   public abstract String getInstanceId();
-  public abstract ODKWebView getWebKitView();
 
+  /**
+   * Gets the active webkit view
+   *
+   * @param viewID The id for the webkit in the view heirarchy, if there are multiple
+   * @return the webkit if it was found, or else null
+   */
+  public abstract ODKWebView getWebKitView(String viewID);
+
+  /**
+   * We need to save whether we were waiting for data (a json string), our session variables, our
+   * queued actions and the queue response.
+   *
+   * @param outState the state to be saved
+   */
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
@@ -86,18 +91,24 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
 
     outState.putBundle(SESSION_VARIABLES, sessionVariables);
 
-    if ( !queuedActions.isEmpty() ) {
+    if (!queuedActions.isEmpty()) {
       String[] actionOutcomesArray = new String[queuedActions.size()];
       queuedActions.toArray(actionOutcomesArray);
       outState.putStringArray(QUEUED_ACTIONS, actionOutcomesArray);
     }
 
-    if ( !queueResponseJSON.isEmpty() ) {
+    if (!queueResponseJSON.isEmpty()) {
       String[] qra = queueResponseJSON.toArray(new String[queueResponseJSON.size()]);
       outState.putStringArray(RESPONSE_JSON, qra);
     }
   }
 
+  /**
+   * Pulls out the things we saved earlier, including whether we were waiting for data, our
+   * session variables, our queued actions and the queued response
+   *
+   * @param savedInstanceState the state we saved in onSaveInstanceState
+   */
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -107,11 +118,13 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
     if (savedInstanceState != null) {
       // if we are restoring, assume that initialization has already occurred.
 
-      dispatchStringWaitingForData =
-          savedInstanceState.containsKey(DISPATCH_STRING_WAITING_FOR_DATA) ?
-              savedInstanceState.getString(DISPATCH_STRING_WAITING_FOR_DATA) : null;
-      actionWaitingForData = savedInstanceState.containsKey(ACTION_WAITING_FOR_DATA) ? savedInstanceState
-          .getString(ACTION_WAITING_FOR_DATA) : null;
+      dispatchStringWaitingForData = savedInstanceState
+          .containsKey(DISPATCH_STRING_WAITING_FOR_DATA) ?
+          savedInstanceState.getString(DISPATCH_STRING_WAITING_FOR_DATA) :
+          null;
+      actionWaitingForData = savedInstanceState.containsKey(ACTION_WAITING_FOR_DATA) ?
+          savedInstanceState.getString(ACTION_WAITING_FOR_DATA) :
+          null;
 
       if (savedInstanceState.containsKey(SESSION_VARIABLES)) {
         sessionVariables = savedInstanceState.getBundle(SESSION_VARIABLES);
@@ -120,41 +133,58 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
       if (savedInstanceState.containsKey(QUEUED_ACTIONS)) {
         String[] actionOutcomesArray = savedInstanceState.getStringArray(QUEUED_ACTIONS);
         queuedActions.clear();
-        queuedActions.addAll(Arrays.asList(actionOutcomesArray));
+        if (actionOutcomesArray != null) {
+          queuedActions.addAll(Arrays.asList(actionOutcomesArray));
+        }
       }
 
       if (savedInstanceState.containsKey(RESPONSE_JSON)) {
         String[] pendingResponseJSON = savedInstanceState.getStringArray(RESPONSE_JSON);
         queueResponseJSON.clear();
-        queueResponseJSON.addAll(Arrays.asList(pendingResponseJSON));
+        if (pendingResponseJSON != null) {
+          queueResponseJSON.addAll(Arrays.asList(pendingResponseJSON));
+        }
       }
     }
   }
 
+  /**
+   * Tries to pull the active user from the database
+   *
+   * @return the active user according to the database, or anonymous if the database is down
+   */
   @Override
   public String getActiveUser() {
-    PropertiesSingleton props = CommonToolProperties.get(this, getAppName());
-
-    return props.getActiveUser();
+    try {
+      return getDatabase().getActiveUser(mAppName);
+    } catch (ServicesAvailabilityException e) {
+      WebLogger.getLogger(mAppName).printStackTrace(e);
+      return CommonToolProperties.ANONYMOUS_USER;
+    }
   }
 
+  /**
+   * Tries to retrieve a property from the PropertyManager, if possible
+   *
+   * @param propertyId the property to get
+   * @return the value of the property
+   */
   @Override
   public String getProperty(String propertyId) {
-    PropertiesSingleton props = CommonToolProperties.get(this, getAppName());
+    final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(), getTableId(),
+        getInstanceId(), getActiveUser(), mProps.getUserSelectedDefaultLocale());
 
-    final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
-        getTableId(), getInstanceId(),
-        props.getActiveUser(), props.getLocale(),
-        props.getProperty(CommonToolProperties.KEY_USERNAME),
-        props.getProperty(CommonToolProperties.KEY_ACCOUNT));
-
-    String value = mPropertyManager.getSingularProperty(propertyId, cb);
-    return value;
+    return mPropertyManager.getSingularProperty(propertyId, cb);
   }
 
+  /**
+   * Gets the URI of the current webview
+   *
+   * @return the URI of the current web view
+   */
   @Override
   public String getWebViewContentUri() {
-    Uri u = UrlUtils.getWebViewContentUri(this);
+    Uri u = UrlUtils.getWebViewContentUri();
 
     String uriString = u.toString();
 
@@ -178,162 +208,37 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
 
   /**
    * Invoked from within Javascript to launch an activity.
+   * <p>
+   * See interface for argument spec.
    *
-   * @param dispatchString   Opaque string -- typically identifies prompt and user action
-   *
-   * @param action
-   *          -- the intent to be launched
-   * @param valueContentMap
-   *          -- parameters to pass to the intent
-   *          {
-   *            uri: uriValue, // parse to a uri and set as the data of the
-   *                           // intent
-   *            extras: extrasMap, // added as extras to the intent
-   *            package: packageStr, // the name of a package to launch
-   *            type: typeStr, // will be set as the type
-   *            data: dataUri // will be parsed to a uri and set as the data of
-   *                          // the intent. For now this is equivalent to the
-   *                          // uri field, although that name is less precise.
-   *          }
+   * @return "OK" if successfully launched intent
    */
   @Override
-  public String doAction(
-      String dispatchString,
-      String action,
+  public String doAction(String dispatchStructAsJSONstring, String action,
       JSONObject valueContentMap) {
 
     // android.os.Debug.waitForDebugger();
 
     if (isWaitingForBinaryData()) {
-      WebLogger.getLogger(getAppName()).w(t, "Already waiting for data -- ignoring");
+      WebLogger.getLogger(getAppName()).w(TAG, "Already waiting for data -- ignoring");
       return "IGNORE";
     }
 
-    Intent i;
-    boolean isCurrentApp = false;
-    String currentApp = "org.opendatakit." + ((AppAwareApplication) getApplication()).getToolName();
+    Intent i = DoActionUtils
+        .buildIntent(this, mPropertyManager, dispatchStructAsJSONstring, action, valueContentMap);
 
-    boolean isOpendatakitApp = false;
-    if (action.startsWith(currentApp)) {
-      Class<?> clazz;
-      try {
-        clazz = Class.forName(action);
-        i = new Intent(this, clazz);
-        isCurrentApp = true;
-      } catch (ClassNotFoundException e) {
-        WebLogger.getLogger(getAppName()).printStackTrace(e);
-        i = new Intent(action);
-      }
-    } else {
-      i = new Intent(action);
+    if (i == null) {
+      return "JSONException";
     }
 
-    if (action.startsWith("org.opendatakit.")) {
-      isOpendatakitApp = true;
-    }
-
-    try {
-
-      String uriKey = "uri";
-      String extrasKey = "extras";
-      String packageKey = "package";
-      String typeKey = "type";
-      String dataKey = "data";
-
-      JSONObject valueMap = null;
-      if (valueContentMap != null) {
-
-        // do type first, as it says in the spec this call deletes any other
-        // data (eg by setData()) on the intent.
-        if (valueContentMap.has(typeKey)) {
-          String type = valueContentMap.getString(typeKey);
-          i.setType(type);
-        }
-
-        if (valueContentMap.has(uriKey) || valueContentMap.has(dataKey)) {
-          // as it currently stands, the data property can be in either the uri
-          // or data keys.
-          String uriValueStr = null;
-          if (valueContentMap.has(uriKey)) {
-            uriValueStr = valueContentMap.getString(uriKey);
-          }
-          // go ahead and overwrite with data if it's present.
-          if (valueContentMap.has(dataKey)) {
-            uriValueStr = valueContentMap.getString(dataKey);
-          }
-          if (uriValueStr != null) {
-            Uri uri = Uri.parse(uriValueStr);
-            i.setData(uri);
-          }
-        }
-
-        if (valueContentMap.has(extrasKey)) {
-          valueMap = valueContentMap.getJSONObject(extrasKey);
-        }
-
-        if (valueContentMap.has(packageKey)) {
-          String packageStr = valueContentMap.getString(packageKey);
-          i.setPackage(packageStr);
-        }
-
-      }
-
-      if (valueMap != null) {
-        Bundle b;
-        PropertiesSingleton props = CommonToolProperties.get(this, getAppName());
-
-        final DynamicPropertiesCallback cb = new DynamicPropertiesCallback(getAppName(),
-            getTableId(), getInstanceId(),
-            props.getActiveUser(), props.getLocale(),
-            props.getProperty(CommonToolProperties.KEY_USERNAME),
-            props.getProperty(CommonToolProperties.KEY_ACCOUNT));
-
-        b = SerializationUtils.convertToBundle(valueMap, new SerializationUtils.MacroStringExpander() {
-
-          @Override
-          public String expandString(String value) {
-            if (value != null && value.startsWith("opendatakit-macro(") && value.endsWith(")")) {
-              String term = value.substring("opendatakit-macro(".length(), value.length() - 1)
-                  .trim();
-              String v = mPropertyManager.getSingularProperty(term, cb);
-              if (v != null) {
-                return v;
-              } else {
-                WebLogger.getLogger(getAppName()).e(t, "Unable to process opendatakit-macro: " + value);
-                throw new IllegalArgumentException(
-                    "Unable to process opendatakit-macro expression: " + value);
-              }
-            } else {
-              return value;
-            }
-          }
-        });
-
-        i.putExtras(b);
-      }
-
-      if (isOpendatakitApp) {
-        // ensure that we supply our appName...
-        if (!i.hasExtra(IntentConsts.INTENT_KEY_APP_NAME)) {
-          i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
-          WebLogger.getLogger(getAppName()).w(t, "doAction into Survey or Tables does not supply an appName. Adding: "
-              + getAppName());
-        }
-      }
-    } catch (Exception ex) {
-      WebLogger.getLogger(getAppName()).e(t, "JSONException: " + ex.toString());
-      WebLogger.getLogger(getAppName()).printStackTrace(ex);
-      return "JSONException: " + ex.toString();
-    }
-
-    dispatchStringWaitingForData = dispatchString;
+    dispatchStringWaitingForData = dispatchStructAsJSONstring;
     actionWaitingForData = action;
 
     try {
       startActivityForResult(i, Constants.RequestCodes.LAUNCH_DOACTION);
       return "OK";
     } catch (ActivityNotFoundException ex) {
-      WebLogger.getLogger(getAppName()).e(t, "Unable to launch activity: " + ex.toString());
+      WebLogger.getLogger(getAppName()).e(TAG, "Unable to launch activity: " + ex);
       WebLogger.getLogger(getAppName()).printStackTrace(ex);
       return "Application not found";
     }
@@ -341,49 +246,14 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-    WebLogger.getLogger(getAppName()).i(t, "onActivityResult");
-    ODKWebView view = getWebKitView();
+    WebLogger.getLogger(getAppName()).i(TAG, "onActivityResult");
+    ODKWebView view = getWebKitView(null);
 
     if (requestCode == Constants.RequestCodes.LAUNCH_DOACTION) {
       try {
-        String jsonObject = null;
-        Bundle b = (intent == null) ? null : intent.getExtras();
-        JSONObject val = (b == null) ? null : SerializationUtils.convertFromBundle(getAppName(), b);
-        JSONObject jsonValue = new JSONObject();
-        jsonValue.put("status", resultCode);
-        if ( val != null ) {
-          jsonValue.put("result", val);
-        }
-        JSONObject result = new JSONObject();
-        result.put("dispatchString", dispatchStringWaitingForData);
-        result.put("action",  actionWaitingForData);
-        result.put("jsonValue", jsonValue);
-
-        String actionOutcome = result.toString();
-        this.queueActionOutcome(actionOutcome);
-
-        WebLogger.getLogger(getAppName()).i(t, "Constants.RequestCodes.LAUNCH_DOACTION: " + jsonObject);
-
-        if ( view != null ) {
-          view.signalQueuedActionAvailable();
-        }
-      } catch (Exception e) {
-        try {
-          JSONObject jsonValue = new JSONObject();
-          jsonValue.put("status", 0);
-          jsonValue.put("result", e.toString());
-          JSONObject result = new JSONObject();
-          result.put("dispatchString", dispatchStringWaitingForData);
-          result.put("action",  actionWaitingForData);
-          result.put("jsonValue", jsonValue);
-          this.queueActionOutcome(result.toString());
-
-          if ( view != null ) {
-            view.signalQueuedActionAvailable();
-          }
-        } catch (Exception ex) {
-          ex.printStackTrace();
-        }
+        DoActionUtils
+            .processActivityResult(this, view, resultCode, intent, dispatchStringWaitingForData,
+                actionWaitingForData);
       } finally {
         dispatchStringWaitingForData = null;
         actionWaitingForData = null;
@@ -406,36 +276,34 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
     try {
       String jsonEncoded = ODKFileUtils.mapper.writeValueAsString(hash);
       queuedActions.addLast(jsonEncoded);
-    } catch ( Exception e ) {
-      e.printStackTrace();
+    } catch (Exception e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
   }
 
   @Override
   public String viewFirstQueuedAction() {
-    String outcome =
-        queuedActions.isEmpty() ? null : queuedActions.getFirst();
-    return outcome;
+    return queuedActions.isEmpty() ? null : queuedActions.getFirst();
   }
 
   @Override
   public void removeFirstQueuedAction() {
-    if ( !queuedActions.isEmpty() ) {
+    if (!queuedActions.isEmpty()) {
       queuedActions.removeFirst();
     }
   }
 
   @Override
-  public void signalResponseAvailable(String responseJSON) {
-    if ( responseJSON == null ) {
-      WebLogger.getLogger(getAppName()).e(t, "signalResponseAvailable -- got null responseJSON!");
+  public void signalResponseAvailable(String responseJSON, String viewID) {
+    if (responseJSON == null) {
+      WebLogger.getLogger(getAppName()).e(TAG, "signalResponseAvailable -- got null responseJSON!");
     } else {
-      WebLogger.getLogger(getAppName()).e(t, "signalResponseAvailable -- got "
-          + responseJSON.length() + " long responseJSON!");
+      WebLogger.getLogger(getAppName()).e(TAG,
+          "signalResponseAvailable -- got " + responseJSON.length() + " long responseJSON!");
     }
-    if ( responseJSON != null) {
+    if (responseJSON != null) {
       this.queueResponseJSON.push(responseJSON);
-      final ODKWebView webView = getWebKitView();
+      final ODKWebView webView = getWebKitView(viewID);
       if (webView != null) {
         runOnUiThread(new Runnable() {
           @Override
@@ -447,28 +315,31 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
     }
   }
 
-  @Override public String getResponseJSON() {
-    if ( queueResponseJSON.isEmpty() ) {
+  @Override
+  public String getResponseJSON() {
+    if (queueResponseJSON.isEmpty()) {
       return null;
     }
-    String responseJSON = queueResponseJSON.removeFirst();
-    return responseJSON;
+    return queueResponseJSON.removeFirst();
   }
 
-  @Override public ExecutorProcessor newExecutorProcessor(ExecutorContext context) {
+  @Override
+  public ExecutorProcessor newExecutorProcessor(ExecutorContext context) {
     return new TableDataExecutorProcessor(context, this);
   }
 
-  @Override public void registerDatabaseConnectionBackgroundListener(
-      DatabaseConnectionListener listener) {
+  @Override
+  public void registerDatabaseConnectionBackgroundListener(DatabaseConnectionListener listener) {
     mIOdkDataDatabaseListener = listener;
   }
 
-  @Override public UserDbInterface getDatabase() {
-    return ((CommonApplication) getApplication()).getDatabase();
+  @Override
+  public UserDbInterface getDatabase() {
+    return getCommonApplication().getDatabase();
   }
 
-  @Override public Bundle getIntentExtras() {
+  @Override
+  public Bundle getIntentExtras() {
     return this.getIntent().getExtras();
   }
 
@@ -476,7 +347,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
   public void databaseAvailable() {
     super.databaseAvailable();
 
-    if ( mIOdkDataDatabaseListener != null ) {
+    if (mIOdkDataDatabaseListener != null) {
       mIOdkDataDatabaseListener.databaseAvailable();
     }
   }
@@ -485,7 +356,7 @@ public abstract class AbsBaseWebActivity extends AbsBaseActivity implements IOdk
   public void databaseUnavailable() {
     super.databaseUnavailable();
 
-    if ( mIOdkDataDatabaseListener != null ) {
+    if (mIOdkDataDatabaseListener != null) {
       mIOdkDataDatabaseListener.databaseUnavailable();
     }
   }

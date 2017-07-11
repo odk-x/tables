@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 University of Washington
+ * Copyright (C) 2017 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,370 +13,115 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package org.opendatakit.tables.views.webkits;
 
-import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.views.ODKWebView;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.database.queries.BindArgs;
 import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.utils.*;
-import org.opendatakit.tables.utils.Constants.RequestCodes;
-import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
+import org.opendatakit.tables.data.ViewFragmentType;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.views.ODKWebView;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
 
-public class OdkTables {
+/**
+ * TODO what does this class do?
+ */
+class OdkTables {
 
+  /**
+   * Used for logging
+   */
+  @SuppressWarnings("unused")
   private static final String TAG = OdkTables.class.getSimpleName();
-
+  private Context mActivity;
   private WeakReference<ODKWebView> mWebView;
-  protected AbsBaseActivity mActivity;
-  protected String mDefaultTableId;
-  protected Map<String, OrderedColumns> mCachedOrderedDefns = new HashMap<String, OrderedColumns>();
-  private List<String> mTableIds = null;
 
-  public OdkTablesIf getJavascriptInterfaceWithWeakReference() {
+  /**
+   * Constructs
+   *
+   * @param context the activity that will be holding the view
+   * @param webView the webview to hold
+   */
+  OdkTables(Context context, ODKWebView webView) {
+    this.mActivity = context;
+    this.mWebView = new WeakReference<>(webView);
+  }
+
+  boolean isInactive() {
+    return mWebView.get() == null || mWebView.get().isInactive();
+  }
+
+  OdkTablesIf getJavascriptInterfaceWithWeakReference() {
     return new OdkTablesIf(this);
   }
 
   /**
-   * This construct requires an activity rather than a context because we want
-   * to be able to launch intents for result rather than merely launch them on
-   * their own.
+   * Set the list view contents for a detail with list view
    *
-   * @param activity
-   *          the activity that will be holding the view
+   * @param tableId              the table id
+   * @param relativePath         the path relative to the app folder
+   * @param sqlWhereClause       an sql selection parameter to limit what rows get shown
+   * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
+   *                             numeric, boolean and string types.
+   * @param sqlGroupBy           an array of column IDs (element keys) to group by
+   * @param sqlHaving            a sql having argument
+   * @param sqlOrderByElementKey the id of the column the result set will be sorted by
+   * @param sqlOrderByDirection  ASC for ascending DESC for descending
    */
-  public OdkTables(AbsBaseActivity activity, ODKWebView webView, String defaultTableId) {
-    this.mActivity = activity;
-    this.mWebView = new WeakReference<ODKWebView>(webView);
-    this.mDefaultTableId = defaultTableId;
-  }
-
-  public boolean isInactive() {
-    return (mWebView.get() == null) || mWebView.get().isInactive();
-  }
-
-  private List<String> getTableIds() throws ServicesAvailabilityException {
-    if ( mTableIds == null ) {
-      String appName = mActivity.getAppName();
-      DbHandle db = null;
-      try {
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        mTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
-      } finally {
-        if (db != null) {
-          Tables.getInstance().getDatabase().closeDatabase(appName, db);
-        }
-      }
-    }
-    return mTableIds;
+  void helperSetSubListView(String tableId, String relativePath, String sqlWhereClause,
+      String sqlSelectionArgsJSON, String[] sqlGroupBy, String sqlHaving,
+      String sqlOrderByElementKey, String sqlOrderByDirection) {
+    helperUpdateView(tableId, sqlWhereClause, sqlSelectionArgsJSON, sqlGroupBy, sqlHaving,
+        sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.SUB_LIST, relativePath);
   }
 
   /**
-   * Return the ordered array of ColumnDefinition objects.
-   * 
-   * @param tableId
-   * @return
-   * @throws ServicesAvailabilityException
-   */
-  synchronized OrderedColumns retrieveColumnDefinitions(DbHandle db,
-      String tableId) throws  ServicesAvailabilityException {
-
-    OrderedColumns answer = this.mCachedOrderedDefns.get(tableId);
-    if (answer != null) {
-      return answer;
-    }
-
-    String appName = mActivity.getAppName();
-    answer = Tables.getInstance().getDatabase().getUserDefinedColumns(appName, db, tableId);
-    this.mCachedOrderedDefns.put(tableId, answer);
-    return answer;
-  }
-
-  /**
-   * Start the detail view.
-   * 
-   * @param tableId
-   * @param rowId
-   * @param relativePath
-   * @return
-   */
-  boolean helperLaunchDetailView(String tableId, String rowId, String relativePath) {
-    Bundle bundle = new Bundle();
-    String appName = retrieveAppName();
-    IntentUtil.addDetailViewKeysToIntent(bundle, appName, tableId, rowId, relativePath);
-    Intent intent = this.getTableDisplayActivityIntentWithBundle(bundle);
-    this.mActivity.startActivityForResult(intent, RequestCodes.LAUNCH_VIEW);
-    return true;
-  }
-
-  /**
-   * Retrieve the app name that should be used from the parent activity.
-   * 
-   * @return
-   */
-  String retrieveAppName() {
-    if (!(this.mActivity instanceof AbsBaseActivity)) {
-      throw new IllegalStateException(OdkTables.class.getSimpleName() + " must be have an "
-          + AbsBaseActivity.class.getSimpleName());
-    }
-    AbsBaseActivity baseActivity = (AbsBaseActivity) this.mActivity;
-    return baseActivity.getAppName();
-  }
-
-  /**
-   * @see {@link OdkTablesIf#openDetailView(String, String, String)}
-   */
-  public boolean openDetailViewWithFile(String tableId, String rowId, String relativePath) {
-    return this.helperLaunchDetailView(tableId, rowId, relativePath);
-  }
-
-  /**
-   * Actually open the table. The sql-related parameters are null safe, so only
-   * pass them in if necessary.
+   * Send a bundle to update a view without opening a new activity.
    *
-   * @see {@see OdkTablesIf#openTableWithSqlQuery(String, String, String[])}
-   * @param tableId
-   * @param sqlWhereClause
-   * @param sqlSelectionArgs
-   * @return
+   * @param tableId              the table id
+   * @param sqlWhereClause       an sql selection parameter to limit what rows get shown
+   * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
+   *                             numeric, boolean and string types.
+   * @param sqlGroupBy           an array of column IDs (element keys) to group by
+   * @param sqlHaving            a sql having argument
+   * @param sqlOrderByElementKey the id of the column the result set will be sorted by
+   * @param sqlOrderByDirection  ASC for ascending DESC for descending
+   * @param viewType             Must be ViewFragmentType.SUB_LIST right now
+   * @param relativePath         the path relative to the app folder
+   * @throws IllegalArgumentException if viewType is not a sub view
    */
-  public boolean helperOpenTable(String tableId, String sqlWhereClause, String[] sqlSelectionArgs,
-      String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementName,
-      String sqlOrderByDirection) {
-    return this.helperLaunchDefaultView(tableId, sqlWhereClause, sqlSelectionArgs, sqlGroupBy,
-        sqlHaving, sqlOrderByElementName, sqlOrderByDirection);
-  }
-
-  /**
-   * Actually open the table. The sql-related parameters are null safe, so only
-   * pass them in if necessary.
-   *
-   * @see {@see OdkTablesIf#openTableWithSqlQuery(String, String, String[])}
-   * @param tableId
-   * @param sqlWhereClause
-   * @param sqlSelectionArgs
-   * @return
-   */
-  boolean helperLaunchDefaultView(String tableId, String sqlWhereClause, String[] sqlSelectionArgs,
-      String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey, String sqlOrderByDirection) {
-    return this.helperLaunchView(tableId, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
-        sqlOrderByElementKey, sqlOrderByDirection, null, null);
-  }
-
-  /**
-   * Open the table to the given view type. The relativePath parameter is null
-   * safe, and if not present will not be added. The default behavior of the
-   * corresponding fragment will be followed, which should be to try and use a
-   * default file.
-   * 
-   * @param tableId
-   * @param sqlWhereClause
-   * @param sqlSelectionArgs
-   * @param sqlGroupBy
-   * @param sqlHaving
-   * @param sqlOrderByElementKey
-   * @param sqlOrderByDirection
-   * @param viewType
-   *          the view type. Cannot be {@link ViewFragmentType#DETAIL}, which
-   *          has its own method,
-   *          {@link #helperLaunchDefaultView(String, String, String[], String[], String, String, String)}
-   *          with additional parameters.
-   * @param relativePath
-   * @return
-   * @throws IllegalArgumentException
-   *           if viewType is {@link ViewFragmentType#DETAIL}.
-   */
-  boolean helperLaunchView(String tableId, String sqlWhereClause, String[] sqlSelectionArgs,
+  private void helperUpdateView(String tableId, String sqlWhereClause, String sqlSelectionArgsJSON,
       String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey,
       String sqlOrderByDirection, ViewFragmentType viewType, String relativePath) {
-    if (viewType == ViewFragmentType.DETAIL) {
-      throw new IllegalArgumentException("Cannot use this method to "
-          + "launch a detail view. Use helperLaunchDetailView instead.");
+    if (viewType != ViewFragmentType.SUB_LIST) {
+      throw new IllegalArgumentException("Cannot use this method to update a view that doesn't "
+          + "support updates. Currently only DetailWithListView's Sub List supports this action");
     }
-    Bundle bundle = new Bundle();
-    IntentUtil.addSQLKeysToBundle(bundle, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
+    BindArgs bindArgs = new BindArgs(sqlSelectionArgsJSON);
+    final Bundle bundle = new Bundle();
+    IntentUtil.addSQLKeysToBundle(bundle, sqlWhereClause, bindArgs, sqlGroupBy, sqlHaving,
         sqlOrderByElementKey, sqlOrderByDirection);
     IntentUtil.addTableIdToBundle(bundle, tableId);
     IntentUtil.addFragmentViewTypeToBundle(bundle, viewType);
     IntentUtil.addFileNameToBundle(bundle, relativePath);
-    Intent intent = getTableDisplayActivityIntentWithBundle(bundle);
-    this.mActivity.startActivityForResult(intent, RequestCodes.LAUNCH_VIEW);
-    return true;
-  }
 
-  /**
-   * Create a new {@link Intent} to launch {@link TableDisplayActivity} with the
-   * contents of bundle added to the intent's extras. The appName is already
-   * added to the bundle.
-   * 
-   * @param bundle
-   * @return
-   */
-  private Intent getTableDisplayActivityIntentWithBundle(Bundle bundle) {
-    Intent intent = new Intent(this.mActivity, TableDisplayActivity.class);
-    intent.putExtras(bundle);
-    String appName = retrieveAppName();
-    IntentUtil.addAppNameToBundle(intent.getExtras(), appName);
-    return intent;
-  }
-
-  /**
-   * Actually open the table with the file. see
-   * {@see OdkTablesIf#launchListView(String, String, String, String[], String[], String, String, String)}
-   *
-   * @param tableId
-   * @param relativePath
-   *          the path relative to the app folder
-   * @param sqlWhereClause
-   * @param sqlSelectionArgs
-   * @return
-   */
-  public boolean helperOpenTableWithFile(String tableId, String relativePath,
-      String sqlWhereClause, String[] sqlSelectionArgs, String[] sqlGroupBy, String sqlHaving,
-      String sqlOrderByElementKey, String sqlOrderByDirection) {
-    // ViewFragmentType.LIST displays a file with information about the
-    // entire table, so we use that here.
-    return this.helperLaunchView(tableId, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
-        sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.LIST, relativePath);
-  }
-
-  /**
-   * Open the table to the map view.
-   *
-   * @see {@see OdkTablesIf#openTableToMapViewWithSqlQuery(String, String, String[])}
-   * @param tableId
-   * @param sqlWhereClause
-   * @param sqlSelectionArgs
-   * @return
-   */
-  public boolean helperOpenTableToMapView(String tableId, String relativePath,
-      String sqlWhereClause, String[] sqlSelectionArgs, String[] sqlGroupBy, String sqlHaving,
-      String sqlOrderByElementKey, String sqlOrderByDirection) {
-    String appName = mActivity.getAppName();
-    WebLogger.getLogger(appName).e(TAG, "NOTE THAT THE SPECIFIC MAP VIEW FILE IS NOT SUPPORTED");
-    return this.helperLaunchView(tableId, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
-        sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.MAP, relativePath);
-  }
-
-  /**
-   * Open the table to the spreadsheet view.
-   *
-   * @see {@see OdkTablesIf#openTableToSpreadsheetViewWithSqlQuery(String, String, String[])}
-   * @param tableId
-   * @param sqlWhereClause
-   * @param sqlSelectionArgs
-   * @return
-   */
-  public boolean helperOpenTableToSpreadsheetView(String tableId, String sqlWhereClause,
-      String[] sqlSelectionArgs, String[] sqlGroupBy, String sqlHaving,
-      String sqlOrderByElementKey, String sqlOrderByDirection) {
-    // No relativePath for spreadsheet.
-    return this.helperLaunchView(tableId, sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving,
-        sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.SPREADSHEET, null);
-  }
-
-  /**
-   * Launch the with the custom filename to
-   * display. The return type on this method currently is always true, should
-   * probably check if the file exists first.
-   *
-   * @param relativePath
-   */
-  public boolean launchHTML(String relativePath) {
-    String appName = mActivity.getAppName();
-    WebLogger.getLogger(appName).d(TAG, "[launchHTML] launching relativePath: " + relativePath);
-    Intent intent = new Intent(this.mActivity, MainActivity.class);
-    Bundle bundle = new Bundle();
-    IntentUtil.addAppNameToBundle(bundle, appName);
-    IntentUtil.addFileNameToBundle(bundle, relativePath);
-    intent.putExtras(bundle);
-    this.mActivity.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_WEB_VIEW);
-    return true;
-  }
-
-  /**
-   * Add a row with survey using the specified formId and screenPath. The
-   * jsonMap should be a Stringified json map mapping elementName to values to
-   * prepopulate with the add row request.
-   *
-   * @param tableId
-   * @param formId
-   *          if null, uses the default form
-   * @param screenPath
-   * @param jsonMap
-   * @return true if the launch succeeded, false if something went wrong
-   * @throws ServicesAvailabilityException
-   */
-  public boolean helperAddRowWithSurvey(String tableId, String formId, String screenPath,
-      String jsonMap) throws ServicesAvailabilityException {
-    String appName = mActivity.getAppName();
-    // does this "to receive add" call make sense with survey? unclear.
-    if (!getTableIds().contains(tableId)) {
-      WebLogger.getLogger(appName).e(TAG,
-          "table [" + tableId + "] could not be found. " + "returning.");
-      return false;
-    }
-    SurveyFormParameters surveyFormParameters = null;
-    if (formId == null) {
-      surveyFormParameters = SurveyFormParameters.constructSurveyFormParameters(mActivity,
-          appName, tableId);
-      formId = surveyFormParameters.getFormId();
+    if (mActivity instanceof TableDisplayActivity) {
+      final TableDisplayActivity activity = (TableDisplayActivity) mActivity;
+      // Run on ui thread to try and prevent a race condition with the two webkits
+      activity.runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          activity.updateFragment(Constants.FragmentTags.DETAIL_WITH_LIST_LIST, bundle);
+        }
+      });
     } else {
-      surveyFormParameters = new SurveyFormParameters(true, formId, screenPath);
+      throw new IllegalArgumentException(
+          "Cannot update an activity without an updateFragment " + "method");
     }
-    Map<String, String> map = null;
-    // Do this null check and only parse and return errors if the jsonMap
-    // is not null. This allows other methods doing similar things to call
-    // through using this method and passing null values.
-    if (jsonMap != null) {
-      map = WebViewUtil.getMapFromJson(appName, jsonMap);
-      if (map == null) {
-        WebLogger.getLogger(appName).e(TAG, "couldn't parse values into map to give to Survey");
-        return false;
-      }
-    }
-    SurveyUtil.addRowWithSurvey(this.mActivity, appName, tableId, surveyFormParameters, map);
-    return true;
   }
 
-  /**
-   * Launch survey to edit the row.
-   *
-   * @param tableId
-   * @param rowId
-   * @param formId
-   * @param screenPath
-   * @return true if the edit was launched successfully, else false
-   * @throws ServicesAvailabilityException
-   */
-  public boolean helperEditRowWithSurvey(String tableId, String rowId, String formId,
-      String screenPath) throws ServicesAvailabilityException {
-    String appName = mActivity.getAppName();
-    if (!getTableIds().contains(tableId)) {
-      WebLogger.getLogger(appName).e(TAG,
-          "table [" + tableId + "] could not be found. " + "returning.");
-      return false;
-    }
-    SurveyFormParameters surveyFormParameters = null;
-    if (formId == null) {
-      surveyFormParameters = SurveyFormParameters.constructSurveyFormParameters(mActivity,
-          appName, tableId);
-    } else {
-      surveyFormParameters = new SurveyFormParameters(true, formId, screenPath);
-    }
-    SurveyUtil.editRowWithSurvey(this.mActivity, appName, tableId, rowId,
-        surveyFormParameters);
-    return true;
-  }
 }

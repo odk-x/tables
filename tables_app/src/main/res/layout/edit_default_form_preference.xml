@@ -1,28 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical" >
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical">
 
     <TextView
-        android:text="@string/use_survey_form"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        />
+            android:text="@string/use_survey_form"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
 
     <TextView
-        android:text="@string/title_form_id"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        />
+            android:text="@string/title_form_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+
     <EditText
-        android:id="@+id/edit_form_id"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:paddingRight="35dip"
-        android:inputType="textNoSuggestions"
-        android:autoText="false"
-        android:capitalize="none"
-        android:enabled="false"
-        />
+            android:id="@+id/edit_form_id"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingRight="35dip"
+            android:inputType="textNoSuggestions"
+            android:autoText="false"
+            android:capitalize="none"
+            android:enabled="false"
+            />
 </LinearLayout>

@@ -3,33 +3,31 @@ package org.opendatakit.espresso;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
+import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
-import android.test.suitebuilder.annotation.LargeTest;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.views.SpreadsheetView;
+import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
-import org.opendatakit.util.DisableAnimationsRule;
 
 import java.net.MalformedURLException;
 
 import static android.support.test.espresso.Espresso.*;
-import static android.support.test.espresso.action.ViewActions.clearText;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.action.ViewActions.typeText;
+import static android.support.test.espresso.action.ViewActions.*;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.*;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
@@ -41,15 +39,12 @@ import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class InteropTest {
+public class InteropTest extends AbsBaseTest {
   private static final int WAIT = 1000;
-
-  private Boolean initSuccess = null;
-  private UiDevice mDevice;
-
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
-
+  private Boolean initSuccess = null;
+  private UiDevice mDevice;
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
       MainActivity.class) {
@@ -113,9 +108,8 @@ public class InteropTest {
     //Move to Survey
     onView(withId(R.id.menu_edit_row)).perform(click());
 
-    intended(ODKMatchers.hasTable(
-        "femaleClients", "femaleClients", "906c2b4f-b9d2-4aa1-bbb0-e754d66325ff"
-    ));
+    intended(ODKMatchers
+        .hasTable("femaleClients", "femaleClients", "906c2b4f-b9d2-4aa1-bbb0-e754d66325ff"));
 
     //Some background tasks are slow (for example ColorRule), force a wait
     Thread.sleep(WAIT);
@@ -129,7 +123,8 @@ public class InteropTest {
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
     try {
       Thread.sleep(TABLE_MGR_WAIT);
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
 
     //Open "Tea houses editable"
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
@@ -140,44 +135,48 @@ public class InteropTest {
     //Edit the row
     onView(withText(EspressoUtils.getString(mActivityRule, R.string.edit_row))).perform(click());
 
-    intended(ODKMatchers.hasTable(
-        T_HOUSE_E_TABLE_ID, T_HOUSE_E_TABLE_ID, "1ed5404f-c501-4308-ac0f-a080c13ae5c4"
-    ));
+    intended(ODKMatchers
+        .hasTable(T_HOUSE_E_TABLE_ID, T_HOUSE_E_TABLE_ID, "1ed5404f-c501-4308-ac0f-a080c13ae5c4"));
 
     Thread.sleep(WAIT);
   }
 
   @Test
-  public void crossApp_badFormId() {
+  public void crossApp_badFormId() throws InterruptedException {
     //Open table manager
     onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
 
     //Open "Tea houses editable"
-    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
+    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click()); // Sometimes it fails on
+    // this line because tables didn't start. It's a problem with the test framework, not the app.
 
     //go to table pref
     onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
 
     String currFormId = null;
     try {
-      currFormId = FormType.constructFormType(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID)
-          .getFormId();
+      currFormId = FormType.constructFormType(
+          (BaseActivity) android.support.test.InstrumentationRegistry.getInstrumentation()
+              .getTargetContext(), //TODO
+          APP_NAME, T_HOUSE_E_TABLE_ID).getFormId();
 
       //change form id to something invalid
       onData(withKey(DEFAULT_FORM)).perform(click());
-      onView(withId(R.id.edit_form_id))
-          .perform(click())
-          .perform(clearText())
+      onView(withId(R.id.edit_form_id)).perform(click()).perform(clearText())
           .perform(typeText("invalid_form_id"));
       onView(withId(android.R.id.button1)).perform(click());
 
       //attempt to add row
-      pressBack();
+      android.support.test.espresso.action.ViewActions.pressBack();
       onView(withId(R.id.top_level_table_menu_add)).perform(click());
 
       //wait for Survey to start
       mDevice.wait(Until.hasObject(By.pkg(SURVEY_PKG_NAME).depth(0)), APP_START_TIMEOUT);
-      mDevice.wait(Until.findObject(By.text("OK")), APP_INIT_TIMEOUT).click();
+      Thread.sleep(2000);
+      //mDevice.wait(Until.hasObject(By.textContains("Survey")), APP_INIT_TIMEOUT);
+      mDevice.pressBack();
+      Thread.sleep(2000);
+      mDevice.wait(Until.findObject(By.text("Ignore Changes")), APP_INIT_TIMEOUT).click();
 
       //check that we're back to Tables
       onView(withClassName(is(SpreadsheetView.class.getName()))).check(matches(isDisplayed()));
@@ -186,10 +185,13 @@ public class InteropTest {
     } finally {
       //restore original formId
       try {
-        FormType ft =
-            FormType.constructFormType(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
+        FormType ft = FormType.constructFormType(
+            (BaseActivity) android.support.test.InstrumentationRegistry.getInstrumentation()
+                .getTargetContext(), //TODO
+            APP_NAME, T_HOUSE_E_TABLE_ID);
         ft.setFormId(currFormId);
-        ft.persist(Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID);
+        ft.persist(c.getDatabase(), APP_NAME, c.getDatabase().openDatabase(APP_NAME),
+            T_HOUSE_E_TABLE_ID);
       } catch (ServicesAvailabilityException e) {
         e.printStackTrace();
       }
