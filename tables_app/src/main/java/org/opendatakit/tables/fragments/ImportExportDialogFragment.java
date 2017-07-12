@@ -108,11 +108,11 @@ public class ImportExportDialogFragment extends DialogFragment {
       break;
     case EXPORT_IN_PROGRESS_DIALOG:
       type = PROGRESS_DIALOG;
-      message = act.getString(R.string.export_in_progress);
+      message = act.getString(R.string.export_in_progress_generic);
       break;
     case IMPORT_IN_PROGRESS_DIALOG:
       type = PROGRESS_DIALOG;
-      message = act.getString(R.string.import_in_progress);
+      message = act.getString(R.string.import_in_progress_generic);
       break;
     case CSVIMPORT_FAIL_DIALOG:
       message = act.getString(R.string.import_failure);
