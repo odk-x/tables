@@ -20,6 +20,7 @@ import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.widget.Toast;
+
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.data.ColorRuleGroup;
@@ -32,7 +33,6 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.preferences.EditColorPreference;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -205,10 +205,8 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
       this.mElementKey = startingRule.getColumnElementKey();
     }
     // 3) then fill in the static things backing the dialogs.
-    String type = ((AbsTableActivity) getActivity()).getColumnDefinitions().find(mElementKey)
-        .getType().getElementType();
-    this.mOperatorHumanFriendlyValues = ColorRule.RuleType.getValues(type);
-    this.mOperatorEntryValues = ColorRule.RuleType.getValues(type);
+    this.mOperatorHumanFriendlyValues = ColorRule.RuleType.getValues();
+    this.mOperatorEntryValues = ColorRule.RuleType.getValues();
 
     ArrayList<String> colorColElementKeys = new ArrayList<>(
         tc.orderedDefns.getRetentionColumnNames());

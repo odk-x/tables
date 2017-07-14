@@ -189,11 +189,12 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       this.map = map;
 
       clearAndInitializeMap();
-      //if (savedLatitude != initCameraValue && savedLongitude != initCameraValue
-      //&& savedZoom != initCameraValue) {
-      this.map.moveCamera(
-          CameraUpdateFactory.newLatLngZoom(new LatLng(savedLatitude, savedLongitude), savedZoom));
-      //}
+      // TODO: These are floats being compared, so we should probably not be testing straight equality
+      if (savedLatitude != initCameraValue && savedLongitude != initCameraValue
+              && savedZoom != initCameraValue) {
+        this.map.moveCamera(
+                CameraUpdateFactory.newLatLngZoom(new LatLng(savedLatitude, savedLongitude), savedZoom));
+      }
 
       this.map.setMyLocationEnabled(true);
       this.map.setOnMapLongClickListener(getOnMapLongClickListener());
@@ -523,7 +524,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
    * @param marker The marker to be selected.
    */
   private void selectMarker(Marker marker) {
-    if (mCurrentMarker.equals(marker))
+    if (mCurrentMarker != null && mCurrentMarker.equals(marker))
       return;
     marker.setIcon(BitmapDescriptorFactory.defaultMarker(DEFAULT_SELECTED_MARKER_HUE));
     mCurrentMarker = marker;
