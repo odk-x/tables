@@ -27,6 +27,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 import org.opendatakit.activities.IInitResumeActivity;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
@@ -414,17 +415,17 @@ public class MainActivity extends AbsBaseWebActivity
           IntentConsts.AppProperties.ACTIVITY_NAME));
       preferenceIntent.setAction(Intent.ACTION_DEFAULT);
       preferenceIntent.putExtras(bundle);
-      this.startActivityForResult(preferenceIntent, Constants.RequestCodes.LAUNCH_DISPLAY_PREFS);
+      this.startActivityForResult(preferenceIntent, RequestCodeConsts.RequestCodes.LAUNCH_DISPLAY_PREFS);
       return true;
     case R.id.menu_table_manager_import:
       Intent importIntent = new Intent(this, ImportCSVActivity.class);
       importIntent.putExtras(bundle);
-      this.startActivityForResult(importIntent, Constants.RequestCodes.LAUNCH_IMPORT);
+      this.startActivityForResult(importIntent, RequestCodeConsts.RequestCodes.LAUNCH_IMPORT);
       return true;
     case R.id.menu_table_manager_export:
       Intent exportIntent = new Intent(this, ExportCSVActivity.class);
       exportIntent.putExtras(bundle);
-      this.startActivityForResult(exportIntent, Constants.RequestCodes.LAUNCH_EXPORT);
+      this.startActivityForResult(exportIntent, RequestCodeConsts.RequestCodes.LAUNCH_EXPORT);
       return true;
     case R.id.menu_table_manager_sync:
       try {
@@ -433,7 +434,7 @@ public class MainActivity extends AbsBaseWebActivity
             new ComponentName(IntentConsts.Sync.APPLICATION_NAME, IntentConsts.Sync.ACTIVITY_NAME));
         syncIntent.setAction(Intent.ACTION_DEFAULT);
         syncIntent.putExtras(bundle);
-        this.startActivityForResult(syncIntent, Constants.RequestCodes.LAUNCH_SYNC);
+        this.startActivityForResult(syncIntent, RequestCodeConsts.RequestCodes.LAUNCH_SYNC);
       } catch (ActivityNotFoundException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
@@ -452,14 +453,14 @@ public class MainActivity extends AbsBaseWebActivity
     String tableId = this.getActionTableId();
     if (tableId != null) {
       switch (requestCode) {
-      case Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
-      case Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER:
+      case RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER:
+      case RequestCodeConsts.RequestCodes.LAUNCH_CONFLICT_RESOLVER:
         // don't let the user cancel out of these...
         break;
       // For now, we will just refresh the table if something could have
       // changed.
-      case Constants.RequestCodes.ADD_ROW_SURVEY:
-      case Constants.RequestCodes.EDIT_ROW_SURVEY:
+      case RequestCodeConsts.RequestCodes.ADD_ROW_SURVEY:
+      case RequestCodeConsts.RequestCodes.EDIT_ROW_SURVEY:
         if (resultCode == Activity.RESULT_OK) {
           WebLogger.getLogger(getAppName())
               .d(TAG, "[onActivityResult] result ok, refreshing backing table");

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import org.json.JSONObject;
+import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
@@ -235,7 +236,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     actionWaitingForData = action;
 
     try {
-      startActivityForResult(i, Constants.RequestCodes.LAUNCH_DOACTION);
+      startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_DOACTION);
       return "OK";
     } catch (ActivityNotFoundException ex) {
       WebLogger.getLogger(getAppName()).e(TAG, "Unable to launch activity: " + ex);
@@ -249,7 +250,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     WebLogger.getLogger(getAppName()).i(TAG, "onActivityResult");
     ODKWebView view = getWebKitView(null);
 
-    if (requestCode == Constants.RequestCodes.LAUNCH_DOACTION) {
+    if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_DOACTION) {
       try {
         DoActionUtils
             .processActivityResult(this, view, resultCode, intent, dispatchStringWaitingForData,

@@ -24,6 +24,7 @@ import android.widget.Toast;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.service.DbHandle;
@@ -234,7 +235,7 @@ public final class SurveyUtil {
     if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)) {
       activityToAwaitReturn.setActionTableId(tableId);
       activityToAwaitReturn
-          .startActivityForResult(surveyAddIntent, Constants.RequestCodes.ADD_ROW_SURVEY);
+          .startActivityForResult(surveyAddIntent, RequestCodeConsts.RequestCodes.ADD_ROW_SURVEY);
 
     } else {
       Toast.makeText(ctxt, ctxt.getString(R.string.survey_not_installed), Toast.LENGTH_LONG).show();
@@ -301,7 +302,7 @@ public final class SurveyUtil {
     if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)) {
       activityToAwaitReturn.setActionTableId(tableId);
       activityToAwaitReturn
-          .startActivityForResult(surveyEditIntent, Constants.RequestCodes.EDIT_ROW_SURVEY);
+          .startActivityForResult(surveyEditIntent, RequestCodeConsts.RequestCodes.EDIT_ROW_SURVEY);
     } else {
       Toast.makeText(ctxt, ctxt.getString(R.string.survey_not_installed), Toast.LENGTH_LONG).show();
     }
