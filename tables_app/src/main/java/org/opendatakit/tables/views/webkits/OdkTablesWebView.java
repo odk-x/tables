@@ -40,7 +40,7 @@ public class OdkTablesWebView extends ODKWebView {
   @SuppressLint("AddJavascriptInterface")
   public OdkTablesWebView(Context context, AttributeSet attrs) {
     super(context, attrs);
-    setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+    //setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     // stomp on the odkTablesIf object...
     //noinspection ThisEscapedInObjectConstruction -- We're already in a stable state here
     tables = new OdkTables(context, this);
