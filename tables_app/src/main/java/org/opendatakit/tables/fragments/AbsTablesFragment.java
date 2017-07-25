@@ -17,6 +17,7 @@ package org.opendatakit.tables.fragments;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.Fragment;
 import android.content.Context;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
@@ -30,7 +31,7 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
  *
  * @author sudar.sam@gmail.com
  */
-public abstract class AbsTablesFragment extends org.opendatakit.fragment.AbsBaseFragment
+public abstract class AbsTablesFragment extends Fragment
     implements DatabaseConnectionListener {
 
   private static final String TAG = AbsTablesFragment.class.getSimpleName();

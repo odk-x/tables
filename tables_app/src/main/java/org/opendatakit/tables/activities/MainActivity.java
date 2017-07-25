@@ -33,6 +33,7 @@ import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.IWebFragment;
 import org.opendatakit.tables.fragments.InitializationFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
@@ -334,12 +335,12 @@ public class MainActivity extends AbsBaseWebActivity
     }
 
     // and see if we should re-initialize...
-    if (activeScreenType != ScreenType.INITIALIZATION_SCREEN && getCommonApplication()
+    if (activeScreenType != ScreenType.INITIALIZATION_SCREEN && Tables.getInstance()
         .shouldRunInitializationTask(getAppName())) {
       WebLogger.getLogger(getAppName())
           .i(TAG, "swapToFragmentView -- calling clearRunInitializationTask");
       // and immediately clear the should-run flag...
-      getCommonApplication().clearRunInitializationTask(getAppName());
+      Tables.getInstance().clearRunInitializationTask(getAppName());
       // OK we should swap to the InitializationFragment view
       // this will skip the transition to whatever screen we were trying to
       // go to and will instead show the InitializationFragment view. We

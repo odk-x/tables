@@ -22,6 +22,7 @@ import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.application.Tables;
 
 /**
  * This class is the base for any Activity that will display information about
@@ -62,7 +63,7 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
   public synchronized OrderedColumns getColumnDefinitions() {
     if (this.mColumnDefinitions == null) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreate] building mColumnDefinitions.");
-      CommonApplication app = getCommonApplication();
+      CommonApplication app = Tables.getInstance();
       if (app.getDatabase() != null) {
         DbHandle db = null;
         try {

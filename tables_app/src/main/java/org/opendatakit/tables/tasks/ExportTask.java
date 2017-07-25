@@ -26,6 +26,7 @@ import org.opendatakit.listener.ExportListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 
 /**
@@ -64,14 +65,14 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
       @Override
       public UserDbInterface getDatabase() {
-        return context.getDatabase();
+        return Tables.getInstance().getDatabase();
       }
     }, appName);
     DbHandle db = null;
     try {
       String tableId = request.getTableId();
-      db = context.getDatabase().openDatabase(appName);
-      OrderedColumns orderedDefinitions = context.getDatabase()
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
+      OrderedColumns orderedDefinitions = Tables.getInstance().getDatabase()
           .getUserDefinedColumns(appName, db, tableId); // export goes to output/csv directory...
       return cu.exportSeparable(this, db, tableId, orderedDefinitions, request.getFileQualifier());
     } catch (ServicesAvailabilityException e) {
@@ -81,7 +82,7 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     } finally {
       if (db != null) {
         try {
-          context.getDatabase().closeDatabase(appName, db);
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(appName).printStackTrace(e);
           WebLogger.getLogger(appName).e(TAG, "Unable to close database");
@@ -122,10 +123,16 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
    *
    * @param row the string to set in the window, like "Exporting row 10"
    */
-  @Override
+  //@Override
   public void updateProgressDetail(int row, int total) {
     ImportExportDialogFragment.activeDialogFragment
         .updateProgressDialogStatusString(context, R.string.export_in_progress_row, row, total);
   }
 
+  // TODO TODO
+  @Override
+  public void updateProgressDetail(int row) {
+    ImportExportDialogFragment.activeDialogFragment
+            .updateProgressDialogStatusString(context, R.string.export_in_progress_row, row, -1);
+  }
 }

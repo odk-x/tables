@@ -40,6 +40,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.utilities.LocalizationUtils;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -89,13 +90,13 @@ public class TablePropertiesManager extends BasePreferenceActivity
   @Override
   protected void onResume() {
     super.onResume();
-    getCommonApplication().establishDoNotFireDatabaseConnectionListener(this);
+    Tables.getInstance().establishDoNotFireDatabaseConnectionListener(this);
   }
 
   @Override
   protected void onPostResume() {
     super.onPostResume();
-    getCommonApplication().fireDatabaseConnectionListener();
+    Tables.getInstance().fireDatabaseConnectionListener();
   }
 
   @Override
@@ -107,7 +108,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
     PropertiesSingleton props = CommonToolProperties.get(getApplication(), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
-    UserDbInterface dbInterface = getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     String localizedDisplayName;
     DbHandle db = null;
     try {
@@ -147,7 +148,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
     root.addPreference(genCat);
     genCat.setTitle(getString(R.string.general_settings));
 
-    UserDbInterface dbInterface = getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
 
     String rawDisplayName;
     DbHandle db = null;
@@ -227,7 +228,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
     // viewTypePref.setEntries(viewTypeNames);
     // viewTypePref.setValue(String.valueOf(settings.getViewType()));
 
-    UserDbInterface dbInterface = getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
 
     TableViewType type;
     DbHandle db = null;
@@ -419,7 +420,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
     if (resultCode == RESULT_CANCELED) {
       return;
     }
-    UserDbInterface dbInterface = getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     Uri uri;
     String filename;
     String relativePath;
@@ -571,7 +572,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
         localizedDisplayName = LocalizationUtils
             .getLocalizedDisplayName(appName, tableId, props.getUserSelectedDefaultLocale(),
                 TableUtil.get()
-                    .atomicSetRawDisplayName(TablePropertiesManager.this.getDatabase(), appName,
+                    .atomicSetRawDisplayName(Tables.getInstance().getDatabase(), appName,
                         tableId, (String) newValue));
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(appName).printStackTrace(e);
@@ -590,7 +591,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
     public boolean onPreferenceChange(Preference preference, Object newValue) {
       try {
         TableUtil.get()
-            .atomicSetDefaultViewType(TablePropertiesManager.this.getDatabase(), appName, tableId,
+            .atomicSetDefaultViewType(Tables.getInstance().getDatabase(), appName, tableId,
                 TableViewType.valueOf((String) newValue));
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(appName).printStackTrace(e);

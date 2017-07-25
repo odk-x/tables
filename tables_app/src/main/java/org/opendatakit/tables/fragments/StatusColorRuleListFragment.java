@@ -35,6 +35,7 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.components.ColorRuleAdapter;
 
@@ -93,7 +94,7 @@ public class StatusColorRuleListFragment extends ListFragment {
     PropertiesSingleton props = CommonToolProperties
         .get(getActivity().getApplication(), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     TableUtil.TableColumns tc = null;
     DbHandle db = null;
     try {
