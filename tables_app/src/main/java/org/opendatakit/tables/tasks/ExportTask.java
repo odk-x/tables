@@ -73,7 +73,7 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
       String tableId = request.getTableId();
       db = Tables.getInstance().getDatabase().openDatabase(appName);
       OrderedColumns orderedDefinitions = Tables.getInstance().getDatabase()
-          .getUserDefinedColumns(appName, db, tableId); // export goes to output/csv directory...
+              .getUserDefinedColumns(appName, db, tableId); // export goes to output/csv directory...
       return cu.exportSeparable(this, db, tableId, orderedDefinitions, request.getFileQualifier());
     } catch (ServicesAvailabilityException e) {
       WebLogger.getLogger(appName).e(TAG, "Unable to access database");
@@ -110,10 +110,10 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
     ImportExportDialogFragment.activeDialogFragment.dismiss();
     if (result) {
       ImportExportDialogFragment
-          .newInstance(ImportExportDialogFragment.CSVEXPORT_SUCCESS_DIALOG, context);
+              .newInstance(ImportExportDialogFragment.CSVEXPORT_SUCCESS_DIALOG, context);
     } else {
       ImportExportDialogFragment
-          .newInstance(ImportExportDialogFragment.CSVEXPORT_FAIL_DIALOG, context);
+              .newInstance(ImportExportDialogFragment.CSVEXPORT_FAIL_DIALOG, context);
     }
   }
 
@@ -123,16 +123,9 @@ public class ExportTask extends AsyncTask<ExportRequest, Integer, Boolean>
    *
    * @param row the string to set in the window, like "Exporting row 10"
    */
-  //@Override
+  @Override
   public void updateProgressDetail(int row, int total) {
     ImportExportDialogFragment.activeDialogFragment
-        .updateProgressDialogStatusString(context, R.string.export_in_progress_row, row, total);
-  }
-
-  // TODO TODO
-  @Override
-  public void updateProgressDetail(int row) {
-    ImportExportDialogFragment.activeDialogFragment
-            .updateProgressDialogStatusString(context, R.string.export_in_progress_row, row, -1);
+            .updateProgressDialogStatusString(context, R.string.export_in_progress_row, row, total);
   }
 }
