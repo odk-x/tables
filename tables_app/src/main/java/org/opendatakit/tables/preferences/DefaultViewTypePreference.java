@@ -32,6 +32,7 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
 import org.opendatakit.tables.views.components.TableViewTypeAdapter;
 
@@ -84,7 +85,7 @@ public class DefaultViewTypePreference extends ListPreference {
     CharSequence[] mEntryValues = mContext.getResources()
         .getTextArray(R.array.table_view_types_values);
 
-    UserDbInterface dbInterface = ((BaseActivity) getContext()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(mAppName);

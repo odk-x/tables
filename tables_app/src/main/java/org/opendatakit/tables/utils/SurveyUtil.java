@@ -35,6 +35,7 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.FormsProviderUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
 
 import java.util.List;
 import java.util.Map;
@@ -374,8 +375,8 @@ public final class SurveyUtil {
       String formId;
       DbHandle db = null;
       try {
-        db = act.getDatabase().openDatabase(appName);
-        List<KeyValueStoreEntry> kvsList = act.getDatabase().getTableMetadata(appName, db, tableId,
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        List<KeyValueStoreEntry> kvsList = Tables.getInstance().getDatabase().getTableMetadata(appName, db, tableId,
             LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,
             LocalKeyValueStoreConstants.DefaultSurveyForm.ASPECT,
             LocalKeyValueStoreConstants.DefaultSurveyForm.KEY_FORM_ID, null).getEntries();
@@ -386,7 +387,7 @@ public final class SurveyUtil {
         }
       } finally {
         if (db != null) {
-          act.getDatabase().closeDatabase(appName, db);
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
       if (formId == null) {

@@ -33,6 +33,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.preferences.EditColorPreference;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -137,7 +138,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     super.onResume();
     DbHandle db = null;
     try {
-      db = ((BaseActivity) getActivity()).getDatabase().openDatabase(getAppName());
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
       this.initializeStateRequiringContext(db);
       this.initializeAllPreferences(db);
     } catch (ServicesAvailabilityException e) {
@@ -146,7 +147,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     } finally {
       if (db != null) {
         try {
-          ((BaseActivity) getActivity()).getDatabase().closeDatabase(getAppName(), db);
+          Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
         } catch (ServicesAvailabilityException e) {
           WebLogger.getLogger(getAppName()).printStackTrace(e);
           Toast.makeText(getActivity(), "Error releasing database", Toast.LENGTH_LONG).show();
@@ -164,7 +165,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     PropertiesSingleton props = CommonToolProperties
         .get(getActivity().getApplication(), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     // 1) First fill in the color rule group and list.
     TableUtil.TableColumns tc = TableUtil.get()
         .getTableColumns(userSelectedDefaultLocale, dbInterface, getAppName(), db, getTableId());
@@ -258,7 +259,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
     pref.setEntries(this.mColumnDisplayNames);
     pref.setEntryValues(mColumnElementKeys);
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     if (!isUnpersistedNewRule()) {
       String localizedDisplayName;
       localizedDisplayName = ColumnUtil.get()
@@ -278,7 +279,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
             .get(getActivity().getApplication(), getAppName());
         String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
-        UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+        UserDbInterface dbInterface = Tables.getInstance().getDatabase();
         mElementKey = (String) newValue;
         String localizedDisplayName = null;
         DbHandle db = null;
@@ -400,7 +401,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     } else {
       this.mColorRuleGroup.getColorRules().set(mRulePosition, newRule);
     }
-    mColorRuleGroup.saveRuleList(((BaseActivity) getActivity()).getDatabase());
+    mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
     updateStateOfSaveButton();
   }
 

@@ -13,6 +13,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.DynamicPropertiesCallback;
 import org.opendatakit.properties.PropertyManager;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -185,7 +186,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
    */
   @Override
   public String getWebViewContentUri() {
-    Uri u = UrlUtils.getWebViewContentUri();
+    Uri u = UrlUtils.getWebViewContentUri(null);
 
     String uriString = u.toString();
 
@@ -336,7 +337,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   @Override
   public UserDbInterface getDatabase() {
-    return getCommonApplication().getDatabase();
+    return Tables.getInstance().getDatabase();
   }
 
   @Override

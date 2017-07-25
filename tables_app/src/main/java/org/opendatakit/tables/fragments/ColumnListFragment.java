@@ -34,6 +34,7 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,7 +103,7 @@ public class ColumnListFragment extends ListFragment {
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     PropertiesSingleton props = CommonToolProperties.get(getActivity().getApplication(), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     TableUtil.TableColumns tc;
     DbHandle db = null;
     try {

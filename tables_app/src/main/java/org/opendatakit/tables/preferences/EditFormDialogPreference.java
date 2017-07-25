@@ -31,6 +31,7 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.utilities.ODKFileUtils;
 
@@ -137,7 +138,7 @@ public class EditFormDialogPreference extends DialogPreference {
       this.mFormType.setFormId(formId);
       AbsTableActivity tableActivity = (AbsTableActivity) getContext();
 
-      UserDbInterface dbInt = tableActivity.getDatabase();
+      UserDbInterface dbInt = Tables.getInstance().getDatabase();
       DbHandle db = null;
       try {
         db = dbInt.openDatabase(tableActivity.getAppName());

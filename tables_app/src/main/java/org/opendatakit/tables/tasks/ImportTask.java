@@ -24,6 +24,7 @@ import org.opendatakit.listener.ImportListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 
 /**
@@ -66,7 +67,7 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
     CsvUtil cu = new CsvUtil(new CsvUtilSupervisor() {
       @Override
       public UserDbInterface getDatabase() {
-        return context.getDatabase();
+        return Tables.getInstance().getDatabase();
       }
     }, appName);
     try {
@@ -77,6 +78,11 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
       WebLogger.getLogger(appName).e(TAG, "Unable to access database");
       return false;
     }
+  }
+
+  @Override
+  public void updateProgressDetail(int progressDetailString) {
+    // TODO
   }
 
   /**
@@ -95,7 +101,7 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
    *
    * @param row the row we're currently importing
    */
-  @Override
+  //@Override
   public void updateProgressDetail(int row, int total) {
     ImportExportDialogFragment.activeDialogFragment
         .updateProgressDialogStatusString(context, R.string.import_in_progress_row, row, total);

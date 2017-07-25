@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
@@ -61,7 +62,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implem
     View webView = getView().findViewById(R.id.webkit);
     View noDatabase = getView().findViewById(android.R.id.empty);
 
-    if (((BaseActivity) getActivity()).getDatabase() != null) {
+    if (Tables.getInstance().getDatabase() != null) {
       webView.setVisibility(View.VISIBLE);
       noDatabase.setVisibility(View.GONE);
     } else {

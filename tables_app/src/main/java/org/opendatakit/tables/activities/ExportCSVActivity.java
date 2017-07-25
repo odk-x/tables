@@ -33,6 +33,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.ImportExportDialogFragment;
 import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
@@ -185,7 +186,7 @@ public class ExportCSVActivity extends AbsBaseActivity {
   public void databaseAvailable() {
     super.databaseAvailable();
 
-    UserDbInterface dbInterface = getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     if (dbInterface != null) {
       PropertiesSingleton props = CommonToolProperties.get(getApplication(), appName);
       String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();

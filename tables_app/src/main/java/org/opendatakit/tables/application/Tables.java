@@ -31,10 +31,10 @@ public class Tables extends CommonApplication {
   private static final String TAG = Tables.class.getSimpleName();
   private static WeakReference<Tables> ref = null;
 
-  @Deprecated
-  public static Tables _please_dont_use_getInstance() {
+  public static Tables getInstance() {
     if (ref == null)
-      return null;
+      // shut the IDE up
+      throw new IllegalStateException("not possible");
     return ref.get();
   }
 

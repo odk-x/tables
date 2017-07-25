@@ -44,6 +44,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.ISpreadsheetFragmentContainer;
 import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.ViewFragmentType;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
@@ -332,12 +333,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       throws ServicesAvailabilityException, ActionNotAuthorizedException {
     DbHandle db = null;
     try {
-      db = ((BaseActivity) getActivity()).getDatabase().openDatabase(getAppName());
-      ((BaseActivity) getActivity()).getDatabase()
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      Tables.getInstance().getDatabase()
           .deleteRowWithId(getAppName(), db, getTableId(), getColumnDefinitions(), rowId);
     } finally {
       if (db != null) {
-        ((BaseActivity) getActivity()).getDatabase().closeDatabase(getAppName(), db);
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
   }
@@ -366,7 +367,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   public boolean onContextItemSelected(MenuItem item) {
     getProps().headerMenuOpen = false;
     getProps().dataMenuOpen = false;
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
 
     // TEMP code to try and fix the crash on return-edit
     if (spreadsheetTable == null) {
@@ -618,7 +619,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // check a join association with this column; add a join... option if
     // it is applicable.
     ArrayList<JoinColumn> joinColumns;
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());

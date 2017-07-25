@@ -38,6 +38,7 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.components.ColorRuleAdapter;
 
@@ -110,7 +111,7 @@ public class ColorRuleListFragment extends ListFragment {
     PropertiesSingleton props = CommonToolProperties
         .get(getActivity().getApplication(), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     TableUtil.TableColumns tc = null;
     DbHandle db = null;
     try {
@@ -246,7 +247,7 @@ public class ColorRuleListFragment extends ListFragment {
           WebLogger.getLogger(appName).d(TAG, "trying to delete rule at position: " + position);
           mColorRuleGroup.getColorRules().remove(position);
           try {
-            mColorRuleGroup.saveRuleList(((BaseActivity) getActivity()).getDatabase());
+            mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName()).e(TAG, "Error while saving color rules");
@@ -284,7 +285,7 @@ public class ColorRuleListFragment extends ListFragment {
       // replace the rules.
       List<ColorRule> newList = new ArrayList<>(ColorRuleUtil.getDefaultSyncStateColorRules());
       this.mColorRuleGroup.replaceColorRuleList(newList);
-      this.mColorRuleGroup.saveRuleList(((BaseActivity) getActivity()).getDatabase());
+      this.mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     case COLUMN:
@@ -292,7 +293,7 @@ public class ColorRuleListFragment extends ListFragment {
       // We want to just wipe all the columns for both of these types.
       List<ColorRule> emptyList = new ArrayList<>();
       this.mColorRuleGroup.replaceColorRuleList(emptyList);
-      this.mColorRuleGroup.saveRuleList(((BaseActivity) getActivity()).getDatabase());
+      this.mColorRuleGroup.saveRuleList(Tables.getInstance().getDatabase());
       this.mColorRuleAdapter.notifyDataSetChanged();
       break;
     }

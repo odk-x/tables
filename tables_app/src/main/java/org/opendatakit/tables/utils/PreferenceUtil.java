@@ -25,6 +25,7 @@ import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 
 /**
  * @author sudar.sam@gmail.com
@@ -56,7 +57,7 @@ public final class PreferenceUtil {
 
     try {
       TableUtil.get()
-          .atomicSetDefaultViewType(((BaseActivity) context).getDatabase(), appName, tableId,
+          .atomicSetDefaultViewType(Tables.getInstance().getDatabase(), appName, tableId,
               viewType);
     } catch (ServicesAvailabilityException ignored) {
       Toast.makeText(context, R.string.unable_to_change_default_view_type, Toast.LENGTH_LONG)
@@ -80,11 +81,11 @@ public final class PreferenceUtil {
     Integer result = null;
     DbHandle db = null;
     try {
-      db = act.getDatabase().openDatabase(appName);
-      result = ColumnUtil.get().getColumnWidth(act.getDatabase(), appName, db, tableId, elementKey);
+      db = Tables.getInstance().getDatabase().openDatabase(appName);
+      result = ColumnUtil.get().getColumnWidth(Tables.getInstance().getDatabase(), appName, db, tableId, elementKey);
     } finally {
       if (db != null) {
-        act.getDatabase().closeDatabase(appName, db);
+        Tables.getInstance().getDatabase().closeDatabase(appName, db);
       }
     }
     return result;
@@ -104,7 +105,7 @@ public final class PreferenceUtil {
 
     try {
       ColumnUtil.get()
-          .atomicSetColumnWidth(((BaseActivity) context).getDatabase(), appName, tableId,
+          .atomicSetColumnWidth(Tables.getInstance().getDatabase(), appName, tableId,
               elementKey, newColumnWidth);
     } catch (ServicesAvailabilityException e) {
       Toast.makeText(context, R.string.change_column_width_error, Toast.LENGTH_LONG).show();
