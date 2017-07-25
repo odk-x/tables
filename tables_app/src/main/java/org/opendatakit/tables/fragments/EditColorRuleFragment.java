@@ -213,6 +213,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
         tc.orderedDefns.getRetentionColumnNames());
     ArrayList<String> colorColDisplayNames = new ArrayList<>();
     for (String elementKey : colorColElementKeys) {
+      if (elementKey.charAt(0) == '_') continue;
       String localizedDisplayName = tc.localizedDisplayNames.get(elementKey);
       colorColDisplayNames.add(localizedDisplayName);
     }
