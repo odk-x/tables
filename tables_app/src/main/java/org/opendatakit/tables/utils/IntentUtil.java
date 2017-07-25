@@ -15,20 +15,25 @@
  */
 package org.opendatakit.tables.utils;
 
+import android.os.Bundle;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.database.queries.BindArgs;
+import org.opendatakit.tables.data.ViewFragmentType;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
-
-import android.os.Bundle;
+import org.opendatakit.views.OdkData;
 
 /**
- *
  * @author sudar.sam@gmail.com
- *
  */
-public class IntentUtil {
+public final class IntentUtil {
+
+  /**
+   * Do not instantiate this class
+   */
+  private IntentUtil() {
+  }
 
   /**
    * Retrieve the file name from the saved instance state or from the
@@ -38,14 +43,14 @@ public class IntentUtil {
    * <p>
    * If the file name is non-null in both bundles, savedInstanceState takes
    * precedent.
-   * @param savedInstanceState
+   *
+   * @param savedInstanceState      The bundle used to get the filename first
    * @param argumentsOrIntentExtras the bundle from either the activity's
-   * starting intent or the fragment's arguments.
+   *                                starting intent or the fragment's arguments.
    * @return the file name, or null if the value does not exist in either
    * bundle.
    */
-  public static String retrieveFileNameFromSavedStateOrArguments(
-      Bundle savedInstanceState,
+  public static String retrieveFileNameFromSavedStateOrArguments(Bundle savedInstanceState,
       Bundle argumentsOrIntentExtras) {
     String result = null;
     if (savedInstanceState != null) {
@@ -60,67 +65,89 @@ public class IntentUtil {
   /**
    * Retrieve a {@link SQLQueryStruct} from bundle. The various components
    * should be keyed to the SQL intent keys in {@link Constants.IntentKeys}.
-   * @param bundle
-   * @return
+   *
+   * @param bundle the bundle to try and pull the query params from
+   * @return the sql query struct pulled from the bundle
    */
   public static SQLQueryStruct getSQLQueryStructFromBundle(Bundle bundle) {
-    String sqlWhereClause =
-        bundle.getString(IntentKeys.SQL_WHERE);
-    String[] sqlSelectionArgs = null;
-    if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
-       sqlSelectionArgs = bundle.getStringArray(
-          IntentKeys.SQL_SELECTION_ARGS);
+    String sqlWhereClause = bundle.containsKey(IntentKeys.SQL_WHERE) ?
+        bundle.getString(IntentKeys.SQL_WHERE) :
+        null;
+
+    BindArgs sqlBindArgs;
+    {
+      String sqlSelectionArgsString = null;
+      if (sqlWhereClause != null && !sqlWhereClause.isEmpty()) {
+        sqlSelectionArgsString = bundle.containsKey(IntentKeys.SQL_SELECTION_ARGS) ?
+            bundle.getString(IntentKeys.SQL_SELECTION_ARGS) :
+            null;
+      }
+      sqlBindArgs = new BindArgs(sqlSelectionArgsString);
     }
-    String[] sqlGroupBy = bundle.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS);
+
+    String[] sqlGroupBy = bundle.containsKey(IntentKeys.SQL_GROUP_BY_ARGS) ?
+        bundle.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS) :
+        null;
     String sqlHaving = null;
-    if ( sqlGroupBy != null && sqlGroupBy.length != 0 ) {
-      sqlHaving = bundle.getString(IntentKeys.SQL_HAVING);
+    if (sqlGroupBy != null && sqlGroupBy.length != 0) {
+      sqlHaving = bundle.containsKey(IntentKeys.SQL_HAVING) ?
+          bundle.getString(IntentKeys.SQL_HAVING) :
+          null;
     }
-    String sqlOrderByElementKey = bundle.getString(
-        IntentKeys.SQL_ORDER_BY_ELEMENT_KEY);
+    String sqlOrderByElementKey = bundle.containsKey(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) ?
+        bundle.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) :
+        null;
     String sqlOrderByDirection = null;
-    if ( sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0 ) {
-      sqlOrderByDirection = bundle.getString(
-          IntentKeys.SQL_ORDER_BY_DIRECTION);
-      if ( sqlOrderByDirection == null || sqlOrderByDirection.length() == 0 ) {
+    if (sqlOrderByElementKey != null && !sqlOrderByElementKey.isEmpty()) {
+      sqlOrderByDirection = bundle.containsKey(IntentKeys.SQL_ORDER_BY_DIRECTION) ?
+          bundle.getString(IntentKeys.SQL_ORDER_BY_DIRECTION) :
+          null;
+      if (sqlOrderByDirection == null || sqlOrderByDirection.isEmpty()) {
         sqlOrderByDirection = "ASC";
       }
     }
-    SQLQueryStruct result = new SQLQueryStruct(
-        sqlWhereClause,
-        sqlSelectionArgs,
-        sqlGroupBy,
-        sqlHaving,
-        sqlOrderByElementKey,
-        sqlOrderByDirection);
-    return result;
+    return new SQLQueryStruct(sqlWhereClause, sqlBindArgs, sqlGroupBy, sqlHaving,
+        sqlOrderByElementKey, sqlOrderByDirection);
+  }
+
+  /**
+   * Thin wrapper for addSQLKeysToBundle
+   *
+   * @param bundle      the bundle to put the query parameters into
+   * @param queryStruct the query parameters to put into the bundle
+   */
+  public static void addSQLQueryStructToBundle(Bundle bundle, SQLQueryStruct queryStruct) {
+    IntentUtil.addSQLKeysToBundle(bundle, queryStruct.whereClause, queryStruct.selectionArgs,
+        queryStruct.groupBy, queryStruct.having, queryStruct.orderByElementKey,
+        queryStruct.orderByDirection);
+
   }
 
   /**
    * Return the file name from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
    * {@link Constants.IntentKeys#FILE_NAME}.
-   * @param bundle
+   *
+   * @param bundle the bundle to try and pull the filename from
    * @return the file name, null if it does not exist or if bundle is null
    */
   public static String retrieveFileNameFromBundle(Bundle bundle) {
     if (bundle == null) {
       return null;
     }
-    String fileName = bundle.getString(Constants.IntentKeys.FILE_NAME);
-    return fileName;
+    return bundle.getString(IntentKeys.FILE_NAME);
   }
-  
+
   /**
    * Return the {@link ColorRuleGroup.Type} from the bundle. Convenience method
    * for calling {@link Bundle#get(String)} with
    * {@link Constants.IntentKeys#COLOR_RULE_TYPE} and parsing the resultant
    * value.
-   * @param bundle
-   * @return
+   *
+   * @param bundle a bundle to try and pull a color rule group type from
+   * @return the color rule group type in the bundle if it exists, otherwise null
    */
-  public static ColorRuleGroup.Type retrieveColorRuleTypeFromBundle(
-      Bundle bundle) {
+  public static ColorRuleGroup.Type retrieveColorRuleTypeFromBundle(Bundle bundle) {
     if (bundle == null) {
       return null;
     }
@@ -136,123 +163,103 @@ public class IntentUtil {
    * Return the table id from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
    * {@link IntentConsts#INTENT_KEY_TABLE_ID}.
-   * @param bundle
+   *
+   * @param bundle the bundle to get the table id from
    * @return the table id, null if it does not exist or if bundle is null
    */
   public static String retrieveTableIdFromBundle(Bundle bundle) {
     if (bundle == null) {
       return null;
     }
-    String tableId = bundle.getString(IntentConsts.INTENT_KEY_TABLE_ID);
-    return tableId;
+    return bundle.getString(IntentConsts.INTENT_KEY_TABLE_ID);
+  }
+
+  /**
+   * Return the fragment view type from the bundle.
+   *
+   * @param bundle the bundle to get the fragment view type from
+   * @return the fragment view type, null if it does not exist or if the bundle is null
+   */
+  public static String retrieveFragmentViewTypeFromBundle(Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    return bundle.getString(OdkData.IntentKeys.TABLE_DISPLAY_VIEW_TYPE);
   }
 
   /**
    * Return the app name from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
    * {@link IntentConsts#INTENT_KEY_APP_NAME}.
-   * @param bundle
+   *
+   * @param bundle the bundle for getting an app name from
    * @return the app name, null if it does not exist or if bundle is null
    */
   public static String retrieveAppNameFromBundle(Bundle bundle) {
     if (bundle == null) {
       return null;
     }
-    String appName = bundle.getString(IntentConsts.INTENT_KEY_APP_NAME);
-    return appName;
+    return bundle.getString(IntentConsts.INTENT_KEY_APP_NAME);
   }
-  
+
   /**
    * Return the element key from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
    * {@link Constants.IntentKeys#ELEMENT_KEY}.
-   * @param bundle
+   *
+   * @param bundle the bundle to get the element key from
    * @return the element key, null if it does not exist or if the bundle is
    * null
    */
   public static String retrieveElementKeyFromBundle(Bundle bundle) {
-    if (bundle == null) { 
+    if (bundle == null) {
       return null;
     }
-    String elementKey = bundle.getString(IntentKeys.ELEMENT_KEY);
-    return elementKey;
+    return bundle.getString(IntentKeys.ELEMENT_KEY);
   }
 
   /**
    * Return the row id from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
    * {@link IntentConsts#INTENT_KEY_INSTANCE_ID}.
-   * @param bundle
+   *
+   * @param bundle the bundle to get a row id from
    * @return the row id, null if it does not exist or if bundle is null
    */
   public static String retrieveRowIdFromBundle(Bundle bundle) {
     if (bundle == null) {
       return null;
     }
-    String rowId = bundle.getString(IntentConsts.INTENT_KEY_INSTANCE_ID);
-    return rowId;
-  }
-
-  /**
-   * Add values to intent to prepare to launch a detail view. Convenience
-   * method for calling the corresponding methods in this class, including
-   * {@link #addFragmentViewTypeToBundle(Bundle, ViewFragmentType)} with
-   * {@link ViewFragmentType#DETAIL}.
-   *
-   * @param bundle
-   * @param appName
-   * @param tableId
-   * @param rowId
-   * @param fileName
-   */
-  public static void addDetailViewKeysToIntent(
-      Bundle bundle,
-      String appName,
-      String tableId,
-      String rowId,
-      String fileName) {
-    addAppNameToBundle(bundle, appName);
-    addTableIdToBundle(bundle, tableId);
-    addRowIdToBundle(bundle, rowId);
-    addFileNameToBundle(bundle, fileName);
-    addFragmentViewTypeToBundle(bundle, ViewFragmentType.DETAIL);
+    return bundle.getString(IntentConsts.INTENT_KEY_INSTANCE_ID);
   }
 
   /**
    * Add viewFragmentType's {@link ViewFragmentType#name()} to bundle. If
    * bundle or viewFragmentType is null, does nothing.
-   * @param bundle
-   * @param viewFragmentType
+   *
+   * @param bundle           the bundle to put the fragment view type in
+   * @param viewFragmentType the fragment view type to put in the bundle
    */
-  public static void addFragmentViewTypeToBundle(
-      Bundle bundle,
-      ViewFragmentType viewFragmentType) {
+  public static void addFragmentViewTypeToBundle(Bundle bundle, ViewFragmentType viewFragmentType) {
     if (bundle != null && viewFragmentType != null) {
-      bundle.putString(
-          IntentKeys.TABLE_DISPLAY_VIEW_TYPE,
-          viewFragmentType.name());
+      bundle.putString(IntentKeys.TABLE_DISPLAY_VIEW_TYPE, viewFragmentType.name());
     }
   }
 
   /**
    * Add the sql keys to the bundle. Convenience method for calling the
    * corresponding add methods in this class.
-   * @param bundle
-   * @param whereClause
-   * @param selectionArgs
-   * @param groupBy
-   * @param having
-   * @param orderByElementKey
-   * @param orderByDirection
+   *
+   * @param bundle            the bundle to put the other arguments in
+   * @param whereClause       A sql clause that narrows down the list of returned rows
+   * @param selectionArgs     TODO
+   * @param groupBy           A list of columns to group by
+   * @param having            A SQL having clause
+   * @param orderByElementKey The column id of the column to sort the results by
+   * @param orderByDirection  the direction to sort by, ASC for ascending, DESC for descending
    */
-  public static void addSQLKeysToBundle(
-      Bundle bundle,
-      String whereClause,
-      String[] selectionArgs,
-      String[] groupBy,
-      String having,
-      String orderByElementKey,
-      String orderByDirection) {
+  public static void addSQLKeysToBundle(Bundle bundle, String whereClause, BindArgs selectionArgs,
+      String[] groupBy, String having, String orderByElementKey, String orderByDirection) {
     addWhereClauseToBundle(bundle, whereClause);
     addSelectionArgsToBundle(bundle, selectionArgs);
     addGroupByToBundle(bundle, groupBy);
@@ -263,15 +270,13 @@ public class IntentUtil {
 
   /**
    * Add orderByElementKey to bundle keyed to
-   *  {@link IntentKeys#SQL_ORDER_BY_ELEMENT_KEY}.
+   * {@link IntentKeys#SQL_ORDER_BY_ELEMENT_KEY}.
    * If bundle or orderByElementKey is null, does nothing.
    *
-   * @param bundle
-   * @param orderByElementKey
+   * @param bundle            the bundle to put the order by column in
+   * @param orderByElementKey the order by column to put in the bundle
    */
-  public static void addOrderByElementKeyToBundle(
-      Bundle bundle,
-      String orderByElementKey) {
+  public static void addOrderByElementKeyToBundle(Bundle bundle, String orderByElementKey) {
     if (bundle != null && orderByElementKey != null) {
       bundle.putString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY, orderByElementKey);
     }
@@ -279,14 +284,13 @@ public class IntentUtil {
 
   /**
    * Add orderByDirection to bundle keyed to
-   *  {@link IntentKeys#SQL_ORDER_BY_DIRECTION}.
+   * {@link IntentKeys#SQL_ORDER_BY_DIRECTION}.
    * If bundle or orderByDirection is null, does nothing.
-   * @param bundle
-   * @param orderByDirection
+   *
+   * @param bundle           the bundle to put the order by direction in
+   * @param orderByDirection the order by direction
    */
-  public static void addOrderByDirectionToBundle(
-      Bundle bundle,
-      String orderByDirection) {
+  public static void addOrderByDirectionToBundle(Bundle bundle, String orderByDirection) {
     if (bundle != null && orderByDirection != null) {
       bundle.putString(IntentKeys.SQL_ORDER_BY_DIRECTION, orderByDirection);
     }
@@ -295,12 +299,11 @@ public class IntentUtil {
   /**
    * Add whereClause to bundle keyed to {@link IntentKeys#SQL_WHERE}.
    * If bundle or whereClause is null, does nothing.
-   * @param bundle
-   * @param whereClause
+   *
+   * @param bundle      the bundle to put the where clause in
+   * @param whereClause the sql where clause
    */
-  public static void addWhereClauseToBundle(
-      Bundle bundle,
-      String whereClause) {
+  public static void addWhereClauseToBundle(Bundle bundle, String whereClause) {
     if (bundle != null && whereClause != null) {
       bundle.putString(IntentKeys.SQL_WHERE, whereClause);
     }
@@ -310,14 +313,13 @@ public class IntentUtil {
    * Add selectionArgs to bundle keyed to
    * {@link IntentKeys#SQL_SELECTION_ARGS}.
    * If bundle or selectionArgs is null, does nothing.
-   * @param bundle
-   * @param selectionArgs
+   *
+   * @param bundle        the bundle to put the selection args in
+   * @param selectionArgs TODO
    */
-  public static void addSelectionArgsToBundle(
-      Bundle bundle,
-      String[] selectionArgs) {
+  public static void addSelectionArgsToBundle(Bundle bundle, BindArgs selectionArgs) {
     if (bundle != null && selectionArgs != null) {
-      bundle.putStringArray(IntentKeys.SQL_SELECTION_ARGS, selectionArgs);
+      bundle.putString(IntentKeys.SQL_SELECTION_ARGS, selectionArgs.asJSON());
     }
   }
 
@@ -325,8 +327,9 @@ public class IntentUtil {
    * Add having to bundle keyed to
    * {@link IntentKeys#SQL_HAVING}.
    * If bundle or having is null, does nothing.
-   * @param bundle
-   * @param having
+   *
+   * @param bundle the bundle to put the SQL having clause in
+   * @param having the SQL having clause
    */
   public static void addHavingToBundle(Bundle bundle, String having) {
     if (bundle != null && having != null) {
@@ -338,12 +341,11 @@ public class IntentUtil {
    * Add groupBy to bundle keyed to
    * {@link IntentKeys#SQL_GROUP_BY_ARGS}.
    * If bundle or groupBy is null, does nothing.
-   * @param bundle
-   * @param groupBy
+   *
+   * @param bundle  the bundle to put the group by columns in
+   * @param groupBy an array of group by column IDs
    */
-  public static void addGroupByToBundle(
-      Bundle bundle,
-      String[] groupBy) {
+  public static void addGroupByToBundle(Bundle bundle, String[] groupBy) {
     if (bundle != null && groupBy != null) {
       bundle.putStringArray(IntentKeys.SQL_GROUP_BY_ARGS, groupBy);
     }
@@ -352,36 +354,37 @@ public class IntentUtil {
   /**
    * Add appName to the bundle keyed to {@link IntentConsts#INTENT_KEY_APP_NAME}.
    * If bundle or appName is null, does nothing.
-   * @param bundle
-   * @param appName
+   *
+   * @param bundle  a bundle to put the app name in
+   * @param appName an app name to put in the bundle
    */
   public static void addAppNameToBundle(Bundle bundle, String appName) {
     if (bundle != null && appName != null) {
       bundle.putString(IntentConsts.INTENT_KEY_APP_NAME, appName);
     }
   }
-  
+
   /**
    * Add tye name of type to the bundle keyed to
    * {@link Constants.IntentKeys#COLOR_RULE_TYPE}. If bundle or type is null,
    * does nothing.
-   * @param bundle
-   * @param type
+   *
+   * @param bundle a bundle to put a color rule group type into
+   * @param type   the color rule group type to store
    */
-  public static void addColorRuleGroupTypeToBundle(
-      Bundle bundle,
-      ColorRuleGroup.Type type) {
+  public static void addColorRuleGroupTypeToBundle(Bundle bundle, ColorRuleGroup.Type type) {
     if (bundle != null && type != null) {
       bundle.putString(Constants.IntentKeys.COLOR_RULE_TYPE, type.name());
     }
   }
-  
+
   /**
    * Add elementKey to bundle keyed to
    * {@link Constants.IntentKeys#ELEMENT_KEY}. If bundle of elementKey is null,
    * does nothing.
-   * @param bundle
-   * @param elementKey
+   *
+   * @param bundle     a bundle to put the element key into
+   * @param elementKey the element key to put into the bundle
    */
   public static void addElementKeyToBundle(Bundle bundle, String elementKey) {
     if (bundle != null && elementKey != null) {
@@ -392,37 +395,37 @@ public class IntentUtil {
   /**
    * Add tableId to bundle keyed to {@link IntentConsts#INTENT_KEY_TABLE_ID}.
    * If bundle or appName is null, does nothing.
-   * @param bundle
-   * @param tableId
+   *
+   * @param bundle  a bundle to put the table id into
+   * @param tableId the table id to put into the bundle
    */
   public static void addTableIdToBundle(Bundle bundle, String tableId) {
     if (bundle != null && tableId != null) {
       bundle.putString(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
     }
   }
-  
+
   /**
    * Add the name of fragmentType to bundle, keyed to
    * {@link Constants.IntentKeys#TABLE_PREFERENCE_FRAGMENT_TYPE}. If bundle
    * or fragmentType is null, does nothing.
-   * @param bundle
-   * @param fragmentType
+   *
+   * @param bundle       a bundle to put the table preference fragment type into
+   * @param fragmentType a table preference fragment type to put into the bundle
    */
-  public static void addTablePreferenceFragmentTypeToBundle(
-      Bundle bundle,
+  public static void addTablePreferenceFragmentTypeToBundle(Bundle bundle,
       TableLevelPreferencesActivity.FragmentType fragmentType) {
     if (bundle != null && fragmentType != null) {
-      bundle.putString(
-          Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE,
-          fragmentType.name());
+      bundle.putString(Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE, fragmentType.name());
     }
   }
 
   /**
    * Add rowId to bundle keyed to {@link IntentConsts#INTENT_KEY_INSTANCE_ID}.
    * If bundle or rowId is null, does nothing.
-   * @param bundle
-   * @param rowId
+   *
+   * @param bundle a bundle to put the row id into
+   * @param rowId  the row id to put into the bundle
    */
   public static void addRowIdToBundle(Bundle bundle, String rowId) {
     if (bundle != null && rowId != null) {
@@ -433,8 +436,9 @@ public class IntentUtil {
   /**
    * Add fileName to bundle keyed to {@link Constants.IntentKeys#FILE_NAME}.
    * If bundle or fileName is null, does nothing.
-   * @param bundle
-   * @param fileName
+   *
+   * @param bundle   a bundle to put the filename into
+   * @param fileName the filename to add to the bundle
    */
   public static void addFileNameToBundle(Bundle bundle, String fileName) {
     if (bundle != null && fileName != null) {

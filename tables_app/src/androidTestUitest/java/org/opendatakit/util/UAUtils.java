@@ -6,11 +6,11 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.uiautomator.*;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import org.opendatakit.tables.R;
@@ -43,35 +43,28 @@ public class UAUtils {
       mDevice.wait(Until.gone(By.text(initialization)), APP_INIT_TIMEOUT);
 
       //When new table is added, a result dialog is displayed, dismiss it
-      UiObject2 dialog = mDevice.wait(
-          Until.findObject(By.text(getString(R.string.initialization_complete))),
-          OBJ_WAIT_TIMEOUT
-      );
+      UiObject2 dialog = mDevice
+          .wait(Until.findObject(By.text(getString(R.string.initialization_complete))),
+              OBJ_WAIT_TIMEOUT);
       if (dialog != null) {
         mDevice.findObject(By.clazz(Button.class)).click();
       }
 
       //find the preference button
-      UiObject2 preference = mDevice.wait(
-          Until.findObject(By.res(Pattern.compile(
-              "org.opendatakit.tables:id/menu_web_view_activity_table_manager" + "|"
-                  + "org.opendatakit.tables:id/menu_table_manager_preferences"
-          ))),
-          OBJ_WAIT_TIMEOUT
-      );
+      UiObject2 preference = mDevice.wait(Until.findObject(By.res(Pattern.compile(
+          "org.opendatakit.tables:id/menu_web_view_activity_table_manager" + "|"
+              + "org.opendatakit.tables:id/menu_table_manager_preferences"))), OBJ_WAIT_TIMEOUT);
 
       //from the preference's content description see if custom home screen has been enabled
       if (preference.getContentDescription().equals(getString(R.string.preferences))) {
         preference.click();
-        mDevice.wait(Until.findObject(By.text(TABLES_SPECIFIC_SETTINGS)),
-            OBJ_WAIT_TIMEOUT).click();
-        mDevice.wait(Until.findObject(By.text(CUSTOM_HOME)),
-            OBJ_WAIT_TIMEOUT).click();
+        mDevice.wait(Until.findObject(By.text(TABLES_SPECIFIC_SETTINGS)), OBJ_WAIT_TIMEOUT).click();
+        mDevice.wait(Until.findObject(By.text(CUSTOM_HOME)), OBJ_WAIT_TIMEOUT).click();
       }
     } catch (Exception e) {
       return false;
     } finally {
-        mDevice.pressHome();
+      mDevice.pressHome();
     }
 
     return true;
@@ -96,6 +89,16 @@ public class UAUtils {
     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
     context.startActivity(intent);
 
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+      for (int i = 0; i < 100; i++) {
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
     //wait for app to start
     mDevice.wait(Until.hasObject(By.pkg(pkgName).depth(0)), APP_START_TIMEOUT);
   }
@@ -103,7 +106,7 @@ public class UAUtils {
   /**
    * WARNING:
    * This might not work on all versions of Android
-   *
+   * <p>
    * appName is name of app displayed on device, for example "ODK Tables"
    */
   public static void closeApp(UiDevice mDevice, String appName, String pkgName, int method)
@@ -171,8 +174,8 @@ public class UAUtils {
 
   private static Point getSpreadsheetRow(UiDevice mDevice, int row) {
     //Find all views that can potentially be a tabular view
-    UiObject2 contentView =
-        mDevice.wait(Until.findObject(By.res("android:id/content")), OBJ_WAIT_TIMEOUT);
+    UiObject2 contentView = mDevice
+        .wait(Until.findObject(By.res("android:id/content")), OBJ_WAIT_TIMEOUT);
     List<UiObject2> tabularViews = contentView.findObjects(By.clazz(View.class));
 
     Map<UiObject2, Rect> bounds = new HashMap<>();
@@ -203,10 +206,8 @@ public class UAUtils {
 
     int rowHeight = bounds.get(minArea).height();
 
-    return new Point(
-        bounds.get(maxArea).centerX(),
-        rowHeight * row - rowHeight / 2 + bounds.get(maxArea).top
-    );
+    return new Point(bounds.get(maxArea).centerX(),
+        rowHeight * row - rowHeight / 2 + bounds.get(maxArea).top);
   }
 
   private static int getArea(Rect rect) {

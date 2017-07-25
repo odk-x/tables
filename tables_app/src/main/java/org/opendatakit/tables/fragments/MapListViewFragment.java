@@ -15,41 +15,44 @@
  */
 package org.opendatakit.tables.fragments;
 
+import android.app.Activity;
+import android.os.Bundle;
+import android.util.Log;
+import org.opendatakit.activities.IOdkDataActivity;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-
-import android.os.Bundle;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
  * The list view that is displayed in a map.
- * 
+ *
  * @author Chris Gelon
  * @author sudar.sam@gmail.com
- *
  */
 public class MapListViewFragment extends ListViewFragment implements IMapListViewCallbacks {
 
+  /**
+   * Represents an index that can't possibly be in the list
+   */
+  public static final int INVALID_INDEX = -1;
   private static final String TAG = MapListViewFragment.class.getSimpleName();
-
   /**
    * Saves the index of the element that was selected.
    */
   private static final String INTENT_KEY_SELECTED_INDEX = "keySelectedIndex";
-
   /**
    * The index of an item that has been selected by the user.
    */
   protected int mSelectedItemIndex;
-  public static final int INVALID_INDEX = -1;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     // AppName may not be available...
-    if ( savedInstanceState != null ) {
+    if (savedInstanceState != null) {
       this.mSelectedItemIndex = savedInstanceState.containsKey(INTENT_KEY_SELECTED_INDEX) ?
-          savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX) : -1;
+          savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX) :
+          INVALID_INDEX;
     }
   }
 
@@ -63,38 +66,33 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
    * Resets the webview (the list), and sets the visibility to visible.
    */
   void resetView() {
+
+    // do not initiate reload until we have the database set up...
+    Activity activity = getActivity();
+    if (activity instanceof IOdkDataActivity) {
+      if (((IOdkDataActivity) activity).getDatabase() == null) {
+        return;
+      }
+    } else {
+      Log.e(TAG,
+          "Problem: MapListView not being rendered from activity that is an " + "IOdkDataActivity");
+      return;
+    }
+
     WebLogger.getLogger(getAppName()).d(TAG, "[resetView]");
 
-    OdkTablesWebView currentView = (OdkTablesWebView) this.getView().findViewById(R.id.webkit);
-    // Just reload the page.
-    currentView.reloadPage();
-  }
+    if (getView() == null)
+      return; // Can't do anything
 
-  /**
-   *
-   * @return true if the user has selected a row that should be displayed as
-   *         selected
-   */
-  protected boolean itemIsSelected() {
-    return this.mSelectedItemIndex != INVALID_INDEX;
+    OdkTablesWebView currentView = (OdkTablesWebView) getView().findViewById(R.id.webkit);
+    // reload the page.
+    currentView.reloadPage();
   }
 
   @Override
   public void onResume() {
     super.onResume();
     WebLogger.getLogger(getAppName()).d(TAG, "[onResume]");
-  }
-
-  /**
-   * Sets the index of the list view, which will be the row of the data wanting
-   * to be displayed.
-   */
-  @Override
-  public void setIndexOfSelectedItem(final int index) {
-    this.mSelectedItemIndex = index;
-    // TODO: Make map index work with async API
-    //this.mTableDataReference.setSelectedMapIndex(index);
-    this.resetView();
   }
 
   /**
@@ -111,6 +109,18 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
 
   public int getIndexOfSelectedItem() {
     return this.mSelectedItemIndex;
+  }
+
+  /**
+   * Sets the index of the list view, which will be the row of the data wanting
+   * to be displayed.
+   */
+  @Override
+  public void setIndexOfSelectedItem(final int index) {
+    this.mSelectedItemIndex = index;
+    // TODO: Make map index work with async API
+    //this.mTableDataReference.setSelectedMapIndex(index);
+    this.resetView();
   }
 
 }

@@ -1,98 +1,99 @@
 package org.opendatakit.tables.views.webkits;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.Looper;
 import android.util.AttributeSet;
-import org.opendatakit.activities.IOdkDataActivity;
-import org.opendatakit.views.ODKWebView;
-import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.AbsBaseWebActivity;
+import android.view.View;
 import org.opendatakit.tables.activities.IOdkTablesActivity;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.views.ODKWebView;
 
 /**
  * @author mitchellsundt@gmail.com
  */
 public class OdkTablesWebView extends ODKWebView {
-  private static final String t = "OdkTablesWebView";
+  // Used for logging
+  private static final String TAG = OdkTablesWebView.class.getSimpleName();
 
+  /**
+   * IGNORE THE WARNINGS
+   * This has to be a class property, or it will get garbage collected while the javascript is
+   * still trying to use it
+   */
+  @SuppressWarnings("FieldCanBeLocal")
   private OdkTables tables;
 
+  /**
+   * Constructs a new WebView for use with tables
+   *
+   * @param context Used to construct an OdkTables object
+   * @param attrs   unused
+   */
+  /* Some information about the warning we're about to ignore
+   * "For applications built for API levels below 17, WebView#addJavascriptInterface presents a
+   * security hazard as JavaScript on the target web page has the ability to use reflection to
+   * access the injected object's public fields and thus manipulate the host application in
+   * unintended ways."
+   * https://labs.mwrinfosecurity.com/blog/2013/09/24/
+   * webview-addjavascriptinterface-remote-code-execution/
+   */
+  @SuppressLint("AddJavascriptInterface")
   public OdkTablesWebView(Context context, AttributeSet attrs) {
     super(context, attrs);
-
-    AbsBaseWebActivity activity = (AbsBaseWebActivity) context;
-
-    // stomp on the odkTables object...
-    tables = new OdkTables(activity, this, activity.getTableId());
+    //setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+    // stomp on the odkTablesIf object...
+    //noinspection ThisEscapedInObjectConstruction -- We're already in a stable state here
+    tables = new OdkTables(context, this);
     addJavascriptInterface(tables.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.CONTROL);
+        Constants.JavaScriptHandles.ODK_TABLES_IF);
   }
 
-  @Override public boolean hasPageFramework() {
+  @Override
+  public boolean hasPageFramework() {
     return false;
   }
 
-  @Override public void loadPage() {
-    /**
-     * NOTE: Reload the web framework only if it has changed.
-     */
+  /**
+   * IMPORTANT: This function should only be called with the context of the database listeners
+   * OR if called from elsewhere there should be an if statement before invoking that checks
+   * if the database is currently available.
+   * NOTE: Reloads the web framework only if it has changed.
+   */
+  @Override
+  public void loadPage() {
+    log.i(TAG, "loadPage: current loadPageUrl: " + getLoadPageUrl());
+    String baseUrl = ((IOdkTablesActivity) getContext())
+        .getUrlBaseLocation(hasPageFrameworkFinishedLoading() && getLoadPageUrl() != null,
+            getContainerFragmentID());
 
-    if ( ((IOdkDataActivity) getContext()).getDatabase() == null ) {
-      // do not initiate reload until we have the database set up...
-      return;
-    }
-
-    log.i(t, "loadPage: current loadPageUrl: " + getLoadPageUrl());
-    final String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(
-        hasPageFrameworkFinishedLoading() && getLoadPageUrl() != null );
-
-    if ( baseUrl != null ) {
-      resetLoadPageStatus(baseUrl);
-
-      // Ensure that this is run on the UI thread
-      if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
-        post(new Runnable() {
-          public void run() {
-            loadUrl(baseUrl);
-          }
-        });
-      } else {
-        loadUrl(baseUrl);
-      }
-
-    } else if ( hasPageFrameworkFinishedLoading() ) {
-      log.w(t, "loadPage: framework was loaded -- but no URL -- don't load anything!");
+    if (baseUrl != null) {
+      loadPageOnUiThread(baseUrl, getContainerFragmentID(), false);
     } else {
-      log.w(t, "loadPage: framework did not load -- cannot load anything!");
+      if (!hasPageFrameworkFinishedLoading()) {
+        log.w(TAG, "Page framework hasn't finished loading, can't load!");
+      } else if (!hasPageFramework()) {
+        log.w(TAG, "No page framework and baseUrl is null - can't load!");
+      }
     }
 
   }
 
-  @Override public void reloadPage() {
-    log.i(t, "reloadPage: current loadPageUrl: " + getLoadPageUrl());
-    final String baseUrl = ((IOdkTablesActivity) getContext()).getUrlBaseLocation(false);
+  /**
+   * IMPORTANT: This function should only be called with the context of the database listeners
+   * OR if called from elsewhere there should be an if statement before invoking that checks
+   * if the database is currently available.
+   */
+  @Override
+  public void reloadPage() {
 
-    if ( baseUrl != null ) {
-      if ( hasPageFrameworkFinishedLoading() || !baseUrl.equals(getLoadPageUrl()) ) {
-        resetLoadPageStatus(baseUrl);
-        log.i(t, "reloadPage: full reload: " + baseUrl);
+    log.i(TAG, "reloadPage: current loadPageUrl: " + getLoadPageUrl());
+    String baseUrl = ((IOdkTablesActivity) getContext())
+        .getUrlBaseLocation(false, getContainerFragmentID());
 
-        // Ensure that this is run on the UI thread
-        if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
-          post(new Runnable() {
-            public void run() {
-              loadUrl(baseUrl);
-            }
-          });
-        } else {
-          loadUrl(baseUrl);
-        }
-      } else {
-        log.w(t, "reloadPage: framework in process of loading -- ignoring request!");
-      }
+    if (baseUrl != null) {
+      loadPageOnUiThread(baseUrl, getContainerFragmentID(), true);
     } else {
-      log.w(t, "reloadPage: framework did not load -- cannot load anything!");
+      log.w(TAG, "reloadPage: framework did not load -- cannot load anything!");
     }
 
   }

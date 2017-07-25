@@ -3,23 +3,26 @@ package org.opendatakit.util;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.preference.Preference;
-import android.support.test.espresso.*;
+import android.support.test.espresso.DataInteraction;
+import android.support.test.espresso.NoMatchingViewException;
+import android.support.test.espresso.ViewAssertion;
+import android.support.test.espresso.ViewInteraction;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.sugar.Web;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.rule.ActivityTestRule;
-import android.util.Log;
 import android.view.View;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.opendatakit.tables.R;
 
-import static android.support.test.espresso.Espresso.*;
+import static android.support.test.espresso.Espresso.onData;
+import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.intent.Intents.*;
-import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
+import static android.support.test.espresso.intent.Intents.intending;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.isInternal;
 import static android.support.test.espresso.matcher.RootMatchers.withDecorView;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
@@ -30,8 +33,8 @@ public class EspressoUtils {
   /**
    * Returns the String with Id id using an ActivityTestRule
    *
-   * @param rule     ActivityTestRule to get String from
-   * @param id Id of String to retrieve
+   * @param rule ActivityTestRule to get String from
+   * @param id   Id of String to retrieve
    * @return Returns the String
    */
   public static String getString(ActivityTestRule rule, int id, Object... formatArgs) {
@@ -70,7 +73,8 @@ public class EspressoUtils {
         try {
           //force a wait, sometimes JS is too slow
           Thread.sleep(2 * waitTime);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
 
         return wInteraction;
       }
@@ -164,8 +168,7 @@ public class EspressoUtils {
         .check(matches(isDisplayed()));
   }
 
-  public static void openTableManagerFromCustomHome()
-  {
+  public static void openTableManagerFromCustomHome() {
     if (!viewExists(withId(R.id.menu_web_view_activity_table_manager))) {
       throw new IllegalStateException("Not on custom home!");
     }

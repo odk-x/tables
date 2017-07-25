@@ -15,36 +15,34 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.logging.WebLogger;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.application.Tables;
-import org.opendatakit.tables.tasks.ExportRequest;
-import org.opendatakit.tables.tasks.ExportTask;
-import org.opendatakit.tables.utils.TableFileUtils;
-
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.Spinner;
-import android.widget.TextView;
+import android.widget.*;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.fragments.ImportExportDialogFragment;
+import org.opendatakit.tables.tasks.ExportRequest;
+import org.opendatakit.tables.tasks.ExportTask;
+import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.utilities.ODKFileUtils;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is responsible for exporting a table to CSV from the phone.
@@ -64,29 +62,31 @@ import android.widget.TextView;
  * that the user is able to see (the saved == complete rows) and all the
  * metadata for those rows at the time of the export.
  *
- *
  * @author unknown
  * @author sudar.sam@gmail.com
- *
  */
-public class ExportCSVActivity extends AbstractImportExportActivity {
+public class ExportCSVActivity extends AbsBaseActivity {
 
-  /** view IDs (for use in testing) */
-  public static final int TABLESPIN_ID = 1;
-  public static final int FILENAMEVAL_ID = 2;
-  public static final int EXPORTBUTTON_ID = 3;
-
+  // the app name
   private String appName;
-  /* the list of table names */
+  // the list of table names
   private String[] tableNames;
-  /* the list of table Ids */
+  // the list of table Ids
   private String[] tableIds;
-  /* the table name spinner */
+  // the table name spinner
   private Spinner tableSpin;
-  /* the text field for getting the filename */
-  private EditText filenameValField;
+  // the text field where the user enters the qualifier
+  private EditText qualifierTextBox;
 
+  /**
+   * Called when the user navigates to this screen. Sets the app name and sets up the view
+   *
+   * @param savedInstanceState the state from before the app was suspended. Largely unused
+   */
   public void onCreate(Bundle savedInstanceState) {
+    // We have to set the fragment manager here because if we don't, then the ImportTask will try
+    // to display an alert dialog by grabbing the fragment manager
+    ImportExportDialogFragment.fragman = getFragmentManager();
     super.onCreate(savedInstanceState);
     appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (appName == null) {
@@ -94,13 +94,21 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
     }
     setContentView(getView());
   }
-  
+
+  /**
+   * Standard getter for the app name
+   *
+   * @return the app name
+   */
   @Override
   public String getAppName() {
     return appName;
   }
 
   /**
+   * Private helper method to return the view with all the strings set up, onclick handlers set,
+   * etc..
+   *
    * @return the view
    */
   private View getView() {
@@ -112,31 +120,31 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
     v.addView(est);
     // adding the table spinner
     tableSpin = new Spinner(this);
-    tableSpin.setId(TABLESPIN_ID);
+    tableSpin.setId(R.id.TABLESPIN_ID);
     v.addView(tableSpin);
     // Horizontal divider
     View ruler1 = new View(this);
-    ruler1.setBackgroundColor(getResources().getColor(R.color.black));
+    ruler1.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
     v.addView(ruler1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
     // adding the filename field
     TextView fnLabel = new TextView(this);
     fnLabel.setText(getString(R.string.export_file_qualifier));
     v.addView(fnLabel);
-    filenameValField = new EditText(this);
-    filenameValField.setId(FILENAMEVAL_ID);
-    v.addView(filenameValField);
+    qualifierTextBox = new EditText(this);
+    qualifierTextBox.setId(R.id.FILENAMEVAL_ID);
+    v.addView(qualifierTextBox);
     // Horizontal divider
     View ruler3 = new View(this);
-    ruler3.setBackgroundColor(getResources().getColor(R.color.black));
+    ruler3.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
     v.addView(ruler3, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
     // adding the export button
-    Button button = new Button(this);
-    button.setId(EXPORTBUTTON_ID);
+    TextView button = new Button(this);
+    button.setId(R.id.EXPORTBUTTON_ID);
     button.setText(getString(R.string.export_button));
-    button.setOnClickListener(new ButtonListener());
+    button.setOnClickListener(new ExportButtonListener());
     v.addView(button);
     // wrapping in a scroll view
-    ScrollView scroll = new ScrollView(this);
+    ViewGroup scroll = new ScrollView(this);
     scroll.addView(v);
     return scroll;
   }
@@ -145,13 +153,21 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
    * Attempts to export a table.
    */
   private void exportSubmission() {
-    File file = ODKFileUtils.asAppFile(appName, filenameValField.getText().toString().trim());
     String tableId = tableIds[tableSpin.getSelectedItemPosition()];
-    ExportTask task = new ExportTask(this, appName);
-    showDialog(EXPORT_IN_PROGRESS_DIALOG);
-    task.execute(new ExportRequest(appName, tableId, filenameValField.getText().toString().trim()));
+    ImportExportDialogFragment
+        .newInstance(ImportExportDialogFragment.EXPORT_IN_PROGRESS_DIALOG, this);
+    AsyncTask<ExportRequest, Integer, Boolean> task = new ExportTask(appName, this);
+    task.execute(new ExportRequest(appName, tableId, qualifierTextBox.getText().toString().trim()));
   }
 
+  /**
+   * Called when the user selects which table they want to export. Sets qualifierTextBox to the
+   * filename for the table that needs to be exported
+   *
+   * @param requestCode unused because there's only one activity
+   * @param resultCode  whether the user canceled selecting a table or not
+   * @param data        the table that the user selected
+   */
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     if (resultCode == RESULT_CANCELED) {
@@ -160,29 +176,30 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
     Uri fileUri = data.getData();
     File filepath = new File(fileUri.getPath());
     String relativePath = ODKFileUtils.asRelativePath(appName, filepath);
-    filenameValField.setText(relativePath);
+    qualifierTextBox.setText(relativePath);
   }
 
-  private class ButtonListener implements OnClickListener {
-    @Override
-    public void onClick(View v) {
-      exportSubmission();
-    }
-  }
-
+  /**
+   * Called when the database becomes available. Sets the tableIds and tableNames
+   */
   @Override
   public void databaseAvailable() {
     super.databaseAvailable();
-    if ( Tables.getInstance().getDatabase() != null ) {
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    if (dbInterface != null) {
+      PropertiesSingleton props = CommonToolProperties.get(getApplication(), appName);
+      String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
       DbHandle db = null;
       try {
-        List<String> rawTableIds = Collections.emptyList();
-        ArrayList<String> localizedNames = new ArrayList<String>();
-        db = Tables.getInstance().getDatabase().openDatabase(appName);
-        rawTableIds = Tables.getInstance().getDatabase().getAllTableIds(appName, db);
+        ArrayList<String> localizedNames = new ArrayList<>();
+        db = dbInterface.openDatabase(appName);
+        List<String> rawTableIds = dbInterface.getAllTableIds(appName, db);
         for (String tableId : rawTableIds) {
           String localizedDisplayName;
-          localizedDisplayName = TableUtil.get().getLocalizedDisplayName(Tables.getInstance(), appName, db, tableId);
+          localizedDisplayName = TableUtil.get()
+              .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, appName, db,
+                  tableId);
           localizedNames.add(localizedDisplayName);
         }
         tableIds = rawTableIds.toArray(new String[rawTableIds.size()]);
@@ -192,24 +209,36 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
       } finally {
         if (db != null) {
           try {
-            Tables.getInstance().getDatabase().closeDatabase(appName, db);
-            db = null;
+            dbInterface.closeDatabase(appName, db);
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(appName).printStackTrace(e);
           }
         }
       }
-      ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-          android.R.layout.simple_spinner_item, tableNames);
+      ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
+          tableNames);
       adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
       tableSpin.setAdapter(adapter);
       tableSpin.setSelection(0);
     }
   }
 
+  /**
+   * Called when the database goes away.
+   */
   @Override
   public void databaseUnavailable() {
     super.databaseUnavailable();
+  }
+
+  /**
+   * Used in the view, passed to the export button
+   */
+  private class ExportButtonListener implements OnClickListener {
+    @Override
+    public void onClick(View v) {
+      exportSubmission();
+    }
   }
 
 }
