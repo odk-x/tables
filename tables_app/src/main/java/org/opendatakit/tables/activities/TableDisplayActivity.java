@@ -1070,7 +1070,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     detailWithListViewListFragment = new DetailWithListListViewFragment();
     fragmentTransaction.add(R.id.bottom_pane, detailWithListViewListFragment,
         Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
-    fragmentTransaction.commit();
+    if (!isDestroyed()) {
+      fragmentTransaction.commit();
+    }
   }
 
   /**
