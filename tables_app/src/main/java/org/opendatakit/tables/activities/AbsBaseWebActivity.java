@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import org.json.JSONObject;
+import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
@@ -12,6 +13,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.DynamicPropertiesCallback;
 import org.opendatakit.properties.PropertyManager;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.views.webkits.TableDataExecutorProcessor;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -184,7 +186,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
    */
   @Override
   public String getWebViewContentUri() {
-    Uri u = UrlUtils.getWebViewContentUri();
+    Uri u = UrlUtils.getWebViewContentUri(null);
 
     String uriString = u.toString();
 
@@ -235,7 +237,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     actionWaitingForData = action;
 
     try {
-      startActivityForResult(i, Constants.RequestCodes.LAUNCH_DOACTION);
+      startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_DOACTION);
       return "OK";
     } catch (ActivityNotFoundException ex) {
       WebLogger.getLogger(getAppName()).e(TAG, "Unable to launch activity: " + ex);
@@ -249,7 +251,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     WebLogger.getLogger(getAppName()).i(TAG, "onActivityResult");
     ODKWebView view = getWebKitView(null);
 
-    if (requestCode == Constants.RequestCodes.LAUNCH_DOACTION) {
+    if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_DOACTION) {
       try {
         DoActionUtils
             .processActivityResult(this, view, resultCode, intent, dispatchStringWaitingForData,
@@ -335,7 +337,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   @Override
   public UserDbInterface getDatabase() {
-    return getCommonApplication().getDatabase();
+    return Tables.getInstance().getDatabase();
   }
 
   @Override

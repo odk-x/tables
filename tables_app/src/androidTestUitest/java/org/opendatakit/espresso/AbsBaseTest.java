@@ -1,18 +1,20 @@
 package org.opendatakit.espresso;
 
-import android.app.Application;
 import android.app.Activity;
-import org.opendatakit.tables.application.Tables;
-//import android.content.Context;
-import org.junit.Before;
+import android.app.Application;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import org.junit.Before;
+import org.opendatakit.tables.application.Tables;
+
+//import android.content.Context;
 
 public class AbsBaseTest {
   public static Tables c = null;
   private static String TAG = AbsBaseTest.class.getSimpleName();
   @Before public void _setUpC() throws Exception {
-    c = Tables._please_dont_use_getInstance();
+    c = Tables.getInstance();
     if(true) return;
     //try {Thread.sleep(1000);} catch (Throwable ignored) {};
     _setUpC(InstrumentationRegistry.getInstrumentation().getTargetContext());

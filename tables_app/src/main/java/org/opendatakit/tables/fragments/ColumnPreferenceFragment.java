@@ -35,6 +35,7 @@ import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.PreferenceUtil;
 
@@ -163,7 +164,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
     EditTextPreference pref = this
         .findEditTextPreference(Constants.PreferenceKeys.Column.DISPLAY_NAME);
 
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());

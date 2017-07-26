@@ -46,6 +46,7 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.util.HashMap;
@@ -252,7 +253,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     // Grab the color group
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(activity.getAppName());
@@ -396,7 +397,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     return TableUtil.get()
-        .getMapListViewLatitudeElementKey(((BaseActivity) getActivity()).getDatabase(),
+        .getMapListViewLatitudeElementKey(Tables.getInstance().getDatabase(),
             activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
   }
 
@@ -404,7 +405,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
     return TableUtil.get()
-        .getMapListViewLongitudeElementKey(((BaseActivity) getActivity()).getDatabase(),
+        .getMapListViewLongitudeElementKey(Tables.getInstance().getDatabase(),
             activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
   }
 

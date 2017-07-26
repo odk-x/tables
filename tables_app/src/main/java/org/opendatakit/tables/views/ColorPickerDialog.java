@@ -22,7 +22,8 @@ import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ScrollView;
 import org.opendatakit.tables.R;
-import org.opendatakit.views.WScrollView;
+//import org.opendatakit.views.WScrollView;
+import org.opendatakit.tables.views.WScrollView;
 
 /**
  * Based heavily upon:

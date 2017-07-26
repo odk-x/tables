@@ -29,6 +29,7 @@ import android.widget.Toast;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
@@ -41,6 +42,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableNameStruct;
@@ -100,12 +102,12 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     PropertiesSingleton props = CommonToolProperties.get(getActivity().getApplication(), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
 
     List<TableNameStruct> tableNameStructs = new ArrayList<>();
 
-    if (((BaseActivity) getActivity()).getDatabase() != null) {
+    if (Tables.getInstance().getDatabase() != null) {
 
       try {
         db = dbInterface.openDatabase(appName);
@@ -150,7 +152,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       TextView none = (TextView) this.getView().findViewById(android.R.id.empty);
       View listing = this.getView().findViewById(android.R.id.list);
       if (tableNameStructs.isEmpty()) {
-        if (((BaseActivity) getActivity()).getDatabase() == null) {
+        if (Tables.getInstance().getDatabase() == null) {
           none.setText(R.string.database_unavailable);
         } else {
           none.setText(R.string.no_table_data);
@@ -180,7 +182,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
       intent.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
       ComponentName componentName = new ComponentName(baseActivity, TableDisplayActivity.class);
       intent.setComponent(componentName);
-      startActivityForResult(intent, Constants.RequestCodes.DISPLAY_VIEW);
+      startActivityForResult(intent, RequestCodeConsts.RequestCodes.DISPLAY_VIEW);
     }
   }
 
@@ -219,12 +221,12 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
           DbHandle db = null;
           try {
             try {
-              db = ((BaseActivity) getActivity()).getDatabase().openDatabase(appName);
-              ((BaseActivity) getActivity()).getDatabase()
+              db = Tables.getInstance().getDatabase().openDatabase(appName);
+              Tables.getInstance().getDatabase()
                   .deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
             } finally {
               if (db != null) {
-                ((BaseActivity) getActivity()).getDatabase().closeDatabase(appName, db);
+                Tables.getInstance().getDatabase().closeDatabase(appName, db);
               }
             }
             // Now update the list.

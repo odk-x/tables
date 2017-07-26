@@ -24,6 +24,7 @@ import android.widget.Toast;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.aggregate.odktables.rest.ElementDataType;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
 import org.opendatakit.database.data.KeyValueStoreEntry;
 import org.opendatakit.database.service.DbHandle;
@@ -34,6 +35,7 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.provider.FormsProviderUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
 
 import java.util.List;
 import java.util.Map;
@@ -234,7 +236,7 @@ public final class SurveyUtil {
     if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)) {
       activityToAwaitReturn.setActionTableId(tableId);
       activityToAwaitReturn
-          .startActivityForResult(surveyAddIntent, Constants.RequestCodes.ADD_ROW_SURVEY);
+          .startActivityForResult(surveyAddIntent, RequestCodeConsts.RequestCodes.ADD_ROW_SURVEY);
 
     } else {
       Toast.makeText(ctxt, ctxt.getString(R.string.survey_not_installed), Toast.LENGTH_LONG).show();
@@ -301,7 +303,7 @@ public final class SurveyUtil {
     if (DependencyChecker.isPackageInstalled(ctxt, DependencyChecker.surveyAppPkgName)) {
       activityToAwaitReturn.setActionTableId(tableId);
       activityToAwaitReturn
-          .startActivityForResult(surveyEditIntent, Constants.RequestCodes.EDIT_ROW_SURVEY);
+          .startActivityForResult(surveyEditIntent, RequestCodeConsts.RequestCodes.EDIT_ROW_SURVEY);
     } else {
       Toast.makeText(ctxt, ctxt.getString(R.string.survey_not_installed), Toast.LENGTH_LONG).show();
     }
@@ -373,8 +375,8 @@ public final class SurveyUtil {
       String formId;
       DbHandle db = null;
       try {
-        db = act.getDatabase().openDatabase(appName);
-        List<KeyValueStoreEntry> kvsList = act.getDatabase().getTableMetadata(appName, db, tableId,
+        db = Tables.getInstance().getDatabase().openDatabase(appName);
+        List<KeyValueStoreEntry> kvsList = Tables.getInstance().getDatabase().getTableMetadata(appName, db, tableId,
             LocalKeyValueStoreConstants.DefaultSurveyForm.PARTITION,
             LocalKeyValueStoreConstants.DefaultSurveyForm.ASPECT,
             LocalKeyValueStoreConstants.DefaultSurveyForm.KEY_FORM_ID, null).getEntries();
@@ -385,7 +387,7 @@ public final class SurveyUtil {
         }
       } finally {
         if (db != null) {
-          act.getDatabase().closeDatabase(appName, db);
+          Tables.getInstance().getDatabase().closeDatabase(appName, db);
         }
       }
       if (formId == null) {

@@ -29,6 +29,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.data.JoinColumn;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.database.data.ColumnDefinition;
@@ -43,6 +44,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.ISpreadsheetFragmentContainer;
 import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.ViewFragmentType;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
@@ -307,7 +309,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // This tells it to get props from the intent
     extras.putString(Constants.IntentKeys.CONTAINS_PROPS, "");
     intent.putExtras(extras);
-    getActivity().startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
+    getActivity().startActivityForResult(intent, RequestCodeConsts.RequestCodes.LAUNCH_VIEW);
   }
 
   /**
@@ -331,12 +333,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       throws ServicesAvailabilityException, ActionNotAuthorizedException {
     DbHandle db = null;
     try {
-      db = ((BaseActivity) getActivity()).getDatabase().openDatabase(getAppName());
-      ((BaseActivity) getActivity()).getDatabase()
+      db = Tables.getInstance().getDatabase().openDatabase(getAppName());
+      Tables.getInstance().getDatabase()
           .deleteRowWithId(getAppName(), db, getTableId(), getColumnDefinitions(), rowId);
     } finally {
       if (db != null) {
-        ((BaseActivity) getActivity()).getDatabase().closeDatabase(getAppName(), db);
+        Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
       }
     }
   }
@@ -365,7 +367,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   public boolean onContextItemSelected(MenuItem item) {
     getProps().headerMenuOpen = false;
     getProps().dataMenuOpen = false;
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
 
     // TEMP code to try and fix the crash on return-edit
     if (spreadsheetTable == null) {
@@ -482,7 +484,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
             // Do not pass inCollection because that will set groupBy to null in TableDispAct
             extras.putString(Constants.IntentKeys.CONTAINS_PROPS, "");
             intent.putExtras(extras);
-            getActivity().startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
+            getActivity().startActivityForResult(intent, RequestCodeConsts.RequestCodes.LAUNCH_VIEW);
           }
         }
       } catch (ServicesAvailabilityException e) {
@@ -617,7 +619,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     // check a join association with this column; add a join... option if
     // it is applicable.
     ArrayList<JoinColumn> joinColumns;
-    UserDbInterface dbInterface = ((BaseActivity) getActivity()).getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     DbHandle db = null;
     try {
       db = dbInterface.openDatabase(getAppName());

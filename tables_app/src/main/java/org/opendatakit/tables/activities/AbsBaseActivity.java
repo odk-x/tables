@@ -26,6 +26,7 @@ import android.widget.Toast;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.TableHealthInfo;
 import org.opendatakit.database.service.TableHealthStatus;
@@ -117,13 +118,13 @@ public abstract class AbsBaseActivity extends BaseActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    getCommonApplication().establishDoNotFireDatabaseConnectionListener(this);
+    ((CommonApplication) getApplication()).establishDoNotFireDatabaseConnectionListener(this);
   }
 
   @Override
   public void onPostResume() {
     super.onPostResume();
-    getCommonApplication().fireDatabaseConnectionListener();
+    ((CommonApplication) getApplication()).fireDatabaseConnectionListener();
   }
 
   public String getActionTableId() {
@@ -143,7 +144,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
     WebLogger.getLogger(getAppName())
         .i(TAG, "scanAllTables -- searching for conflicts and checkpoints ");
 
-    CommonApplication app = getCommonApplication();
+    CommonApplication app = (CommonApplication) getApplication();
     DbHandle db = null;
 
     if (app.getDatabase() == null) {
@@ -213,7 +214,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
       i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
       i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
       try {
-        this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
+        this.startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_CHECKPOINT_RESOLVER);
       } catch (ActivityNotFoundException e) {
         handleError(e);
       }
@@ -231,7 +232,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
       i.putExtra(IntentConsts.INTENT_KEY_APP_NAME, getAppName());
       i.putExtra(IntentConsts.INTENT_KEY_TABLE_ID, tableId);
       try {
-        this.startActivityForResult(i, Constants.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
+        this.startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_CONFLICT_RESOLVER);
       } catch (ActivityNotFoundException e) {
         handleError(e);
       }

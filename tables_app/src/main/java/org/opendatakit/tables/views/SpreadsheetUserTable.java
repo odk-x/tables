@@ -16,6 +16,8 @@
 package org.opendatakit.tables.views;
 
 import android.app.Activity;
+
+import org.opendatakit.application.CommonApplication;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
@@ -29,6 +31,7 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.activities.ISpreadsheetFragmentContainer;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.AbsTableDisplayFragment;
 
 import java.util.ArrayList;
@@ -75,7 +78,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
     PropertiesSingleton props = CommonToolProperties.get(frag.getCommonApplication(), getAppName());
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
-    UserDbInterface dbInterface = frag.getBaseActivity().getDatabase();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
     ArrayList<String> colOrder;
     DbHandle db = null;
     try {

@@ -40,6 +40,7 @@ import org.opendatakit.database.utilities.CursorUtils;
 import org.opendatakit.provider.TableDefinitionsColumns;
 import org.opendatakit.provider.TablesProviderAPI;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
@@ -238,7 +239,7 @@ public class AndroidShortcuts extends BaseActivity {
    */
   @Override
   public String getAppName() {
-    return getCommonApplication().getToolName();
+    return Tables.getInstance().getVersionedToolName();
   }
 
   /**
