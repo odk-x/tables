@@ -21,6 +21,7 @@ import android.app.FragmentTransaction;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.view.Menu;
@@ -518,8 +519,10 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   @Override
   protected void onDestroy() {
     super.onDestroy();
+    this.destroyed = true;
     WebLogger.getLogger(getAppName()).d(TAG, "[onDestroy]");
   }
+  private boolean destroyed = false;
 
   /**
    * Gets the webkit object out of the fragment if we're in a list, map, detail or detail with
@@ -1070,7 +1073,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     detailWithListViewListFragment = new DetailWithListListViewFragment();
     fragmentTransaction.add(R.id.bottom_pane, detailWithListViewListFragment,
         Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
-    fragmentTransaction.commit();
+    // So android studio seems to think our build target is already greater than 16, but gradle doesn't
+    boolean destroyed = this.destroyed;
+    if (Build.VERSION.SDK_INT >= 17) {
+      destroyed |= isDestroyed();
+    }
+    if (!destroyed) {
+      fragmentTransaction.commit();
+    }
   }
 
   /**

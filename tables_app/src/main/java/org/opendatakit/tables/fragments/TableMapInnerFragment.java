@@ -273,12 +273,12 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     Used for coloring markers.
    */
       ColorRuleGroup mColorGroup = null;
-      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
+      if (colorRuleInfo.colorType != null && colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_TABLE)) {
         mColorGroup = ColorRuleGroup
             .getTableColorRuleGroup(dbInterface, activity.getAppName(), db, activity.getTableId(),
                 adminColumns);
       }
-      if (colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
+      if (colorRuleInfo.colorType != null && colorRuleInfo.colorType.equals(LocalKeyValueStoreConstants.Map.COLOR_TYPE_STATUS)) {
         mColorGroup = ColorRuleGroup
             .getStatusColumnRuleGroup(dbInterface, activity.getAppName(), db, activity.getTableId(),
                 adminColumns);
