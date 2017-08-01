@@ -15,14 +15,6 @@
  */
 package org.opendatakit.tables.preferences;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.tables.R;
-
-import android.app.Activity;
 import android.app.Fragment;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -33,115 +25,104 @@ import android.net.Uri;
 import android.preference.EditTextPreference;
 import android.util.AttributeSet;
 import android.widget.Toast;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.R;
+import org.opendatakit.utilities.ODKFileUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * A class that can be used to launch a file picker and get the selected filename in the textbox
+ */
 public class FileSelectorPreference extends EditTextPreference {
 
-    /** Indicates which preference we are using the selector for. */
-    private int mRequestCode;
-    private Activity mActivity;
-    private Fragment mFragment;
-    private String mAppName;
-    
-    public FileSelectorPreference(Context context, AttributeSet attrs) {
-      super(context, attrs);
-    }
-    
-    /**
-     * Set the fields this preference uses. An activity or fragment can be set
-     * to call startActivityForResult. If both are set, activity takes
-     * precedence.
-     * @param activity
-     * @param requestCode
-     * @param appName
-     */
-    public void setFields(Activity activity, int requestCode, String appName) {
-      this.mActivity = activity;
-      this.helperSetFields(requestCode, appName);
-    }
-    
-    /**
-     * Set the fields this preference uses. An activity or fragment can be set
-     * to call startActivityForResult. If both are set, activity takes
-     * precedence.
-     * @param fragment
-     * @param requestCode
-     * @param appName
-     */
-    public void setFields(Fragment fragment, int requestCode, String appName) {
-      this.mFragment = fragment;
-      this.helperSetFields(requestCode, appName);
-    }
-    
-    private void helperSetFields(int requestCode, String appName) {
-      this.mRequestCode = requestCode;
-      this.mAppName = appName;
-    }
-    
-    /**
-     * A helper method that calls startActivityForResult on either the activity
-     * or fragment, as appropriate.
-     * @param intent
-     */
-    private void helperStartActivityForResult(Intent intent) {
-      if (this.mActivity != null) {
-        this.mActivity.startActivityForResult(intent, this.mRequestCode);
-      } else {
-        this.mFragment.startActivityForResult(intent, this.mRequestCode);
-      }
-    }
+  /**
+   * Indicates which preference we are using the selector for.
+   */
+  private int mRequestCode = 0;
+  private Fragment mFragment = null;
+  private String mAppName = null;
 
-    @Override
-    protected void onClick() {
-      if (hasFilePicker()) {
-        Intent intent = new Intent("org.openintents.action.PICK_FILE");
-        if (getText() != null) {
-          File fullFile = ODKFileUtils.asAppFile(this.mAppName, getText());
-          try {
-            intent.setData(Uri.parse("file://" + fullFile.getCanonicalPath()));
-          } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            Toast.makeText(
-                this.mActivity,
-                this.mActivity.getString(
-                    R.string.file_not_found,
-                    fullFile.getAbsolutePath()),
-                Toast.LENGTH_LONG).show();
-          }
-        }
+  /**
+   * Default constructor
+   *
+   * @param context unused
+   * @param attrs   unused
+   */
+  public FileSelectorPreference(Context context, AttributeSet attrs) {
+    super(context, attrs);
+  }
+
+  /**
+   * Set the fields this preference uses. An activity or fragment can be set
+   * to call startActivityForResult. If both are set, activity takes
+   * precedence.
+   *
+   * @param fragment    a fragment to save off, used for starting activities
+   * @param requestCode the request code to use to start activities, fragment::onActivityResult
+   *                    will get these
+   * @param appName     the app name
+   */
+  public void setFields(Fragment fragment, int requestCode, String appName) {
+    this.mFragment = fragment;
+    this.helperSetFields(requestCode, appName);
+  }
+
+  private void helperSetFields(int requestCode, String appName) {
+    this.mRequestCode = requestCode;
+    this.mAppName = appName;
+  }
+
+  /**
+   * A helper method that calls startActivityForResult on either the activity
+   * or fragment, as appropriate.
+   *
+   * @param intent Used to start the activity
+   */
+  private void helperStartActivityForResult(Intent intent) {
+    this.mFragment.startActivityForResult(intent, this.mRequestCode);
+  }
+
+  @Override
+  protected void onClick() {
+    if (hasFilePicker()) {
+      Intent intent = new Intent("org.openintents.action.PICK_FILE");
+      if (getText() != null) {
+        File fullFile = ODKFileUtils.asAppFile(this.mAppName, getText());
         try {
-          this.helperStartActivityForResult(intent);
-        } catch (ActivityNotFoundException e) {
-          e.printStackTrace();
-          Toast.makeText(
-              this.mActivity,
-              this.mActivity.getString(R.string.file_picker_not_found),
+          intent.setData(Uri.parse("file://" + fullFile.getCanonicalPath()));
+        } catch (IOException e) {
+          WebLogger.getLogger(mAppName).printStackTrace(e);
+          Toast.makeText(mFragment.getActivity(),
+              this.mFragment.getString(R.string.file_not_found, fullFile.getAbsolutePath()),
               Toast.LENGTH_LONG).show();
         }
-      } else {
-        super.onClick();
-        Toast.makeText(
-            this.mActivity,
-            this.mActivity.getString(
-                R.string.file_picker_not_found),
-                Toast.LENGTH_LONG).show();
       }
+      try {
+        this.helperStartActivityForResult(intent);
+      } catch (ActivityNotFoundException e) {
+        WebLogger.getLogger(mAppName).printStackTrace(e);
+        Toast.makeText(mFragment.getActivity(), mFragment.getString(R.string.file_picker_not_found),
+            Toast.LENGTH_LONG).show();
+      }
+    } else {
+      super.onClick();
+      Toast.makeText(mFragment.getActivity(), mFragment.getString(R.string.file_picker_not_found),
+          Toast.LENGTH_LONG).show();
     }
+  }
 
-    /**
-     * @return True if the phone has a file picker installed, false otherwise.
-     */
-    private boolean hasFilePicker() {
-      Activity activity = this.mActivity;
-      if (activity == null) {
-        activity = this.mFragment.getActivity();
-      }
-      PackageManager packageManager = activity.getPackageManager();
-      Intent intent = new Intent("org.openintents.action.PICK_FILE");
-      List<ResolveInfo> list = packageManager.queryIntentActivities(
-          intent,
-          PackageManager.MATCH_DEFAULT_ONLY);
-      return (list.size() > 0);
-    }
-    
+  /**
+   * @return True if the phone has a file picker installed, false otherwise.
+   */
+  private boolean hasFilePicker() {
+    PackageManager packageManager = mFragment.getActivity().getPackageManager();
+    Intent intent = new Intent("org.openintents.action.PICK_FILE");
+    List<ResolveInfo> list = packageManager
+        .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+    return !list.isEmpty();
+  }
+
 }

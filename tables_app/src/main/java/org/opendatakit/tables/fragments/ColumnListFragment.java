@@ -15,55 +15,62 @@
  */
 package org.opendatakit.tables.fragments;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.exception.ServicesAvailabilityException;
+import android.app.ListFragment;
+import android.content.Context;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.logging.WebLogger;
+import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 
-import android.app.Activity;
-import android.app.ListFragment;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Displays the columns in a table.
- * 
- * @author sudar.sam@gmail.com
  *
+ * @author sudar.sam@gmail.com
  */
 public class ColumnListFragment extends ListFragment {
 
   private static final String TAG = ColumnListFragment.class.getSimpleName();
 
-  /** The element keys of the columns. */
+  /**
+   * The element keys of the columns.
+   */
   private List<String> mElementKeys;
 
-  /** The display name of every column in the table. */
+  /**
+   * The display name of every column in the table.
+   */
   private List<String> mDisplayNames;
 
   @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    if (!(activity instanceof AbsTableActivity)) {
-      throw new IllegalStateException("must be attached to "
-          + AbsTableActivity.class.getSimpleName());
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    if (!(context instanceof AbsTableActivity)) {
+      throw new IllegalStateException(
+          "must be attached to " + AbsTableActivity.class.getSimpleName());
     }
   }
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    TableLevelPreferencesActivity tableLevelPreferenceActivity = (TableLevelPreferencesActivity) this
-        .getActivity();
+    IAppAwareActivity tableLevelPreferenceActivity = (IAppAwareActivity) getActivity();
     WebLogger.getLogger(tableLevelPreferenceActivity.getAppName()).d(TAG, "[onActivityCreated]");
     // All we need to do is get the columns to display.
     try {
@@ -72,7 +79,7 @@ public class ColumnListFragment extends ListFragment {
       WebLogger.getLogger(tableLevelPreferenceActivity.getAppName()).printStackTrace(e);
       return;
     }
-    ArrayAdapter<String> adapter = new ArrayAdapter<String>(this.getActivity(),
+    ListAdapter adapter = new ArrayAdapter<>(this.getActivity(),
         android.R.layout.simple_list_item_1, this.mDisplayNames);
     this.setListAdapter(adapter);
   }
@@ -85,46 +92,49 @@ public class ColumnListFragment extends ListFragment {
   }
 
   /**
-   * Retrieve all the element keys for the columns in the table.
-   * 
-   * @return
-   * @throws ServicesAvailabilityException
+   * Sets all the element keys for the columns in the table.
+   *
+   * @throws ServicesAvailabilityException if the database is down
    */
   private void setElementKeysAndDisplayNames() throws ServicesAvailabilityException {
-    
+
     AbsTableActivity activity = retrieveTableActivity();
     String appName = activity.getAppName();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    TableUtil.TableColumns tc = null;
+    PropertiesSingleton props = CommonToolProperties.get(getActivity().getApplication(), appName);
+    String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+    TableUtil.TableColumns tc;
     DbHandle db = null;
     try {
-      db = Tables.getInstance().getDatabase().openDatabase(appName);
-      tc = TableUtil.get().getTableColumns(Tables.getInstance(), appName, db, activity.getTableId());
+      db = dbInterface.openDatabase(appName);
+      tc = TableUtil.get().getTableColumns(userSelectedDefaultLocale, dbInterface, appName, db,
+          activity.getTableId());
 
       ArrayList<String> colOrder;
-      colOrder = TableUtil.get().getColumnOrder(Tables.getInstance(), appName, db, activity.getTableId(), orderedDefns);
+      colOrder = TableUtil.get()
+          .getColumnOrder(dbInterface, appName, db, activity.getTableId(), orderedDefns);
       this.mElementKeys = colOrder;
-      List<String> displayNames = new ArrayList<String>();
+      List<String> displayNames = new ArrayList<>();
       for (String elementKey : mElementKeys) {
         String localizedDisplayName = tc.localizedDisplayNames.get(elementKey);
         displayNames.add(localizedDisplayName);
       }
       this.mDisplayNames = displayNames;
     } finally {
-      if ( db != null ) {
-        Tables.getInstance().getDatabase().closeDatabase(appName, db);
+      if (db != null) {
+        dbInterface.closeDatabase(appName, db);
       }
     }
   }
 
   /**
    * Retrieve the {@link AbsTableActivity} hosting this fragment.
-   * 
-   * @return
+   *
+   * @return the parent activity casted to an AbsTableActivity
    */
   AbsTableActivity retrieveTableActivity() {
-    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
-    return activity;
+    return (AbsTableActivity) getActivity();
   }
 
 }

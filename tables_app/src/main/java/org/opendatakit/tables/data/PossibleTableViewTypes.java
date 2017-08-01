@@ -15,77 +15,85 @@
  */
 package org.opendatakit.tables.data;
 
+import org.opendatakit.data.TableViewType;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
+
 import java.util.HashSet;
 import java.util.Set;
-
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.data.TableViewType;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.database.service.DbHandle;
-
-import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.application.Tables;
 
 /**
  * Contains information about which {@see TableViewType}s are valid for a
  * table based on its configuration. A List view may only be appropriate if a
  * list file has been set, for example.
- * @author sudar.sam@gmail.com
+ * <p>
+ * See {@see TableViewTypeAdapter}, {@see DefaultViewTypePreference}
  *
+ * @author sudar.sam@gmail.com
  */
 public class PossibleTableViewTypes {
-  
+
   private boolean mSpreadsheetIsValid;
   private boolean mListIsValid;
   private String mListFileName;
   private boolean mMapIsValid;
   private String mMapListFileName;
 
-  private TableDisplayActivity.ViewFragmentType mDefaultViewType;
+  private ViewFragmentType mDefaultViewType;
   private String mDetailFileName;
 
-  public PossibleTableViewTypes(String appName, DbHandle db, String tableId, OrderedColumns orderedDefns) throws
-      ServicesAvailabilityException {
-    TableViewType defaultViewType = TableUtil.get().getDefaultViewType(Tables.getInstance(),
-        appName, db, tableId);
-    if ( defaultViewType != null ) {
+  /**
+   * Constructs a new PossibleTableViewTypes object, which determines whether the user is able to
+   * select a particular view type (spreadsheet, map, etc...)
+   *
+   * @param dbInterface  The database interface to use
+   * @param appName      the app name
+   * @param db           a database handle
+   * @param tableId      the id of the table we're editing
+   * @param orderedDefns the columns in the table
+   * @throws ServicesAvailabilityException if the database is down
+   */
+  public PossibleTableViewTypes(UserDbInterface dbInterface, String appName, DbHandle db,
+      String tableId, OrderedColumns orderedDefns) throws ServicesAvailabilityException {
+    TableViewType defaultViewType = TableUtil.get()
+        .getDefaultViewType(dbInterface, appName, db, tableId);
+    if (defaultViewType != null) {
       switch (defaultViewType) {
       case SPREADSHEET:
-        mDefaultViewType = TableDisplayActivity.ViewFragmentType.SPREADSHEET;
+        mDefaultViewType = ViewFragmentType.SPREADSHEET;
         break;
       case MAP:
-        mDefaultViewType = TableDisplayActivity.ViewFragmentType.MAP;
+        mDefaultViewType = ViewFragmentType.MAP;
         break;
       case LIST:
-        mDefaultViewType = TableDisplayActivity.ViewFragmentType.LIST;
+        mDefaultViewType = ViewFragmentType.LIST;
         break;
-      default:
-        mDefaultViewType = TableDisplayActivity.ViewFragmentType.SPREADSHEET;
       }
     } else {
-      mDefaultViewType = TableDisplayActivity.ViewFragmentType.SPREADSHEET;
+      mDefaultViewType = ViewFragmentType.SPREADSHEET;
     }
 
     mSpreadsheetIsValid = true; // always
-    mListFileName = TableUtil.get().getListViewFilename(Tables.getInstance(), appName, db, tableId);
-    mListIsValid = (null != mListFileName);
-    mMapListFileName = TableUtil.get().getMapListViewFilename(Tables.getInstance(), appName, db,
-        tableId);
-    mMapIsValid = (null != mMapListFileName) && orderedDefns.mapViewIsPossible();
+    mListFileName = TableUtil.get().getListViewFilename(dbInterface, appName, db, tableId);
+    mListIsValid = null != mListFileName;
+    mMapListFileName = TableUtil.get().getMapListViewFilename(dbInterface, appName, db, tableId);
+    mMapIsValid = null != mMapListFileName && orderedDefns.mapViewIsPossible();
 
-    mDetailFileName = TableUtil.get().getDetailViewFilename(Tables.getInstance(), appName, db,
-        tableId);
+    mDetailFileName = TableUtil.get().getDetailViewFilename(dbInterface, appName, db, tableId);
   }
-  
+
   /**
    * Get a set with all the {@see TableViewType}s that are valid. If only a
    * spreadsheet and list view are possible, for instance, it will contain
    * {@see TableViewType#SPREADSHEET} and {@see TableViewType#LIST}.
+   *
    * @return a {@link Set} of the possible view types.
    */
   public Set<TableViewType> getAllPossibleViewTypes() {
-    Set<TableViewType> result = new HashSet<TableViewType>();
+    Set<TableViewType> result = new HashSet<>();
     if (this.spreadsheetViewIsPossible()) {
       result.add(TableViewType.SPREADSHEET);
     }
@@ -101,7 +109,7 @@ public class PossibleTableViewTypes {
   /**
    * @return the default view type for this table
    */
-  public TableDisplayActivity.ViewFragmentType getDefaultViewType() {
+  public ViewFragmentType getDefaultViewType() {
     return mDefaultViewType;
   }
 
@@ -127,27 +135,24 @@ public class PossibleTableViewTypes {
   }
 
   /**
-   * 
    * @return true if the table can be viewed as a spreadsheet
    */
   public boolean spreadsheetViewIsPossible() {
     return this.mSpreadsheetIsValid;
   }
-  
+
   /**
-   * 
    * @return true if the table can be displayed as a list
    */
   public boolean listViewIsPossible() {
     return this.mListIsValid;
   }
-  
+
   /**
-   * 
    * @return true if the table can be displayed as a map
    */
   public boolean mapViewIsPossible() {
     return this.mMapIsValid;
   }
-  
+
 }

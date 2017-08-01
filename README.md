@@ -33,7 +33,7 @@ This project depends on ODK's [androidlibrary](https://github.com/opendatakit/an
 
   * Note that this only applies if you are modifying the library projects. If you use the maven dependencies (the default option), the projects will not show up in your directory. 
     
-ODK [Core](https://github.com/opendatakit/core) __MUST__ be installed on your device, whether by installing the APK or by cloning the project and deploying it. ODK [Survey](https://github.com/opendatakit/survey) and ODK [Sync](https://github.com/opendatakit/sync) also integrate well with ODK Tables, but are not required.
+ODK [Services](https://github.com/opendatakit/services) __MUST__ be installed on your device, whether by installing the APK or by cloning the project and deploying it. ODK [Survey](https://github.com/opendatakit/survey) also integrates well with ODK Tables, but is not required.
 
 Now you should be ready to build.
 
@@ -43,7 +43,7 @@ Open the Tables project in Android Studio. Select `Build->Make Project` to build
 
 ## Running
 
-Be sure to install ODK Core onto your device before attempting to run Tables.
+Be sure to install ODK Services onto your device before attempting to run Tables.
 
 ## Running tests
 
@@ -66,8 +66,6 @@ Quick description of the content in the root folder:
 
                         |-- opendatakit
 
-                            |-- tables
+                            |-- tables     -- The most relevant Java code lives here
 
-                                |-- android     -- The most relevant Java code lives here
-                                
             |-- androidTest    -- Source tree for Android implementation tests

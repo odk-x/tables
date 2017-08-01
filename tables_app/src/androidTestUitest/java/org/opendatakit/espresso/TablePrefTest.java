@@ -10,52 +10,53 @@ import android.support.test.espresso.Espresso;
 import android.support.test.espresso.intent.Intents;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
+import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
-import android.test.suitebuilder.annotation.LargeTest;
+import android.util.Log;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.views.SpreadsheetView;
+import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
-import org.opendatakit.util.DisableAnimationsRule;
+import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
 
 import static android.support.test.espresso.Espresso.*;
 import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.assertion.ViewAssertions.*;
-import static android.support.test.espresso.intent.Intents.*;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.intent.Intents.intended;
+import static android.support.test.espresso.intent.Intents.intending;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
-import static android.support.test.espresso.web.assertion.WebViewAssertions.*;
+import static android.support.test.espresso.web.assertion.WebViewAssertions.webMatches;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
-import static android.support.test.espresso.web.webdriver.DriverAtoms.*;
+import static android.support.test.espresso.web.webdriver.DriverAtoms.getText;
+import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 import static org.hamcrest.Matchers.*;
 import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class TablePrefTest {
-  private Boolean initSuccess = null;
-  private UiDevice mDevice;
-
+public class TablePrefTest extends AbsBaseTest {
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
-
+  private Boolean initSuccess = null;
+  private UiDevice mDevice;
   @Rule
   public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
       MainActivity.class) {
@@ -76,6 +77,112 @@ public class TablePrefTest {
       onWebView().forceJavascriptEnabled();
     }
   };
+
+  private static String getListViewFile() {
+    DbHandle db = null;
+    String file = null;
+
+    try {
+      db = c.getDatabase().openDatabase(APP_NAME);
+      file = TableUtil.get().getListViewFilename(c.getDatabase(), APP_NAME, db,
+          T_HOUSE_E_TABLE_ID);
+    } catch (ServicesAvailabilityException e) {
+      e.printStackTrace();
+
+      //if RemoteException is thrown, file is guaranteed to be null
+      assertThat(file, notNullValue(String.class));
+    } finally {
+      if (db != null) {
+        try {
+          c.getDatabase().closeDatabase(APP_NAME, db);
+        } catch (ServicesAvailabilityException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
+    return file;
+  }
+
+  private static void setListViewFile(String filename) {
+    try {
+      TableUtil.get().atomicSetListViewFilename(c.getDatabase(), APP_NAME,
+          T_HOUSE_E_TABLE_ID, filename);
+    } catch (ServicesAvailabilityException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private static String getDetailViewFile() {
+    DbHandle db = null;
+    String file = null;
+
+    try {
+      db = c.getDatabase().openDatabase(APP_NAME);
+      file = TableUtil.get().getDetailViewFilename(c.getDatabase(), APP_NAME, db,
+          T_HOUSE_E_TABLE_ID);
+    } catch (ServicesAvailabilityException e) {
+      e.printStackTrace();
+
+      //if RemoteException is thrown, file is guaranteed to be null
+      assertThat(file, notNullValue(String.class));
+    } finally {
+      if (db != null) {
+        try {
+          c.getDatabase().closeDatabase(APP_NAME, db);
+        } catch (ServicesAvailabilityException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
+    return file;
+  }
+
+  private static void setDetailViewFile(String filename) {
+    try {
+      TableUtil.get().atomicSetDetailViewFilename(c.getDatabase(), APP_NAME,
+          T_HOUSE_E_TABLE_ID, filename);
+    } catch (ServicesAvailabilityException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private static String getMapViewFile() {
+    DbHandle db = null;
+    String file = null;
+
+    try {
+      db = c.getDatabase().openDatabase(APP_NAME);
+      file = TableUtil.get()
+          .getMapListViewFilename(c.getDatabase(), APP_NAME, db,
+              T_HOUSE_E_TABLE_ID);
+    } catch (ServicesAvailabilityException e) {
+      e.printStackTrace();
+
+      //if RemoteException is thrown, file is guaranteed to be null
+      assertThat(file, notNullValue(String.class));
+    } finally {
+      if (db != null) {
+        try {
+          c.getDatabase().closeDatabase(APP_NAME, db);
+        } catch (ServicesAvailabilityException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
+    return file;
+  }
+
+  private static void setMapViewFile(String filename) {
+    try {
+      TableUtil.get().atomicSetMapListViewFilename(c.getDatabase(), APP_NAME,
+          T_HOUSE_E_TABLE_ID, filename);
+    } catch (ServicesAvailabilityException e) {
+      e.printStackTrace();
+    }
+  }
 
   @Before
   public void setup() {
@@ -139,7 +246,7 @@ public class TablePrefTest {
 
   @Test
   public void views_columns() {
-    final int numCol = 19;
+    final int numCol = 21; // was 19 then we added lat/lon?
 
     //go to columns
     onData(withKey(COLUMNS_LIST)).perform(click());
@@ -150,25 +257,22 @@ public class TablePrefTest {
 
   @Test
   public void intent_tableLevelPref() {
-    intended(allOf(
-        hasComponent(TableLevelPreferencesActivity.class.getName()),
+    intended(allOf(hasComponent(TableLevelPreferencesActivity.class.getName()),
         hasExtra("tableId", T_HOUSE_E_TABLE_ID),
-        hasExtra("tablePreferenceFragmentType", "TABLE_PREFERENCE")
-    ));
+        hasExtra("tablePreferenceFragmentType", "TABLE_PREFERENCE")));
   }
 
   @Test
   public void display_tableIdentifier() {
     //Check that display name and table id are shown correctly
-    assertThat(EspressoUtils.getPrefSummary(TABLE_DISPLAY_NAME),
-        is("\"" + T_HOUSE_E_DISPLAY_NAME + "\""));
+    assertThat(EspressoUtils.getPrefSummary(TABLE_DISPLAY_NAME), is(T_HOUSE_E_DISPLAY_NAME));
     assertThat(EspressoUtils.getPrefSummary(TABLE_ID), is(T_HOUSE_E_TABLE_ID));
   }
 
   @Test
   public void display_columnIdentifier() {
-    if (true) return;
-    
+    //if (true) return;
+
     onData(withKey(COLUMNS_LIST)).perform(click());
     onData(is("House id")).perform(click());
 
@@ -208,7 +312,7 @@ public class TablePrefTest {
     pressBack();
 
     Thread.sleep(2000);
-}
+  }
 
   @Test
   public void intents_listView() {
@@ -220,11 +324,8 @@ public class TablePrefTest {
 
     //stub response
     intending(hasAction(OI_PICK_FILE)).respondWith(
-        new Instrumentation.ActivityResult(
-            Activity.RESULT_OK,
-            new Intent().setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + listViewPath)))
-        )
-    );
+        new Instrumentation.ActivityResult(Activity.RESULT_OK, new Intent()
+            .setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + listViewPath)))));
 
     //edit list view path
     onData(withKey(LIST_VIEW_FILE)).perform(click());
@@ -259,21 +360,15 @@ public class TablePrefTest {
 
     //stub response
     intending(hasAction(OI_PICK_FILE)).respondWith(
-        new Instrumentation.ActivityResult(
-            Activity.RESULT_OK,
-            new Intent().setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + detailViewPath)))
-        )
-    );
+        new Instrumentation.ActivityResult(Activity.RESULT_OK, new Intent()
+            .setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + detailViewPath)))));
 
     //edit detail view path
     onData(withKey(DETAIL_VIEW_FILE)).perform(click());
 
     intending(hasAction(OI_PICK_FILE)).respondWith(
-        new Instrumentation.ActivityResult(
-            Activity.RESULT_OK,
-            new Intent().setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + listViewPath)))
-        )
-    );
+        new Instrumentation.ActivityResult(Activity.RESULT_OK, new Intent()
+            .setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + listViewPath)))));
 
     //edit list view path
     onData(withKey(LIST_VIEW_FILE)).perform(click());
@@ -286,16 +381,20 @@ public class TablePrefTest {
     onView(withText("List")).perform(click());
 
     //choose "Tea for All"
-    EspressoUtils.delayedFindElement(
-        Locator.ID, "924e548d-667f-4c49-91c0-de2885c0dda1", WEB_WAIT_TIMEOUT).perform(webClick());
+    EspressoUtils
+        .delayedFindElement(Locator.ID, "924e548d-667f-4c49-91c0-de2885c0dda1", WEB_WAIT_TIMEOUT)
+        .perform(webClick());
 
     try {
       //check url
+      Log.i("intents_detailView", "debug 3");
       onView(withId(R.id.webkit)).check(matches(ODKMatchers.withUrl(endsWith(detailViewPath))));
+      Log.i("intents_detailView", "debug 4");
 
       try {
         Thread.sleep(2000); //need this for older devices
-      } catch (Exception e) {}
+      } catch (Exception e) {
+      }
 
       EspressoUtils.delayedFindElement(Locator.ID, "TITLE", WEB_WAIT_TIMEOUT)
           .check(webMatches(getText(), is("Tea for All")));
@@ -363,129 +462,18 @@ public class TablePrefTest {
     try {
       //stub intent
       intending(hasAction(OI_PICK_FILE)).respondWith(
-          new Instrumentation.ActivityResult(
-              Activity.RESULT_OK,
-              new Intent().setData(Uri.fromFile(new File("/test.html")))
-          )
-      );
+          new Instrumentation.ActivityResult(Activity.RESULT_OK,
+              new Intent().setData(Uri.fromFile(new File("/test.html")))));
 
       onData(withKey(LIST_VIEW_FILE)).perform(click());
 
       //check toast message
-      EspressoUtils.toastMsgMatcher(
-          mActivityRule,
-          is(EspressoUtils.getString(
-              mActivityRule, R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(APP_NAME))
-          )
-      );
+      EspressoUtils.toastMsgMatcher(mActivityRule, is(EspressoUtils
+          .getString(mActivityRule, R.string.file_not_under_app_dir,
+              ODKFileUtils.getAppFolder(APP_NAME))));
     } finally {
       //restore
       setListViewFile(currListFile);
-    }
-  }
-
-  private static String getListViewFile() {
-    DbHandle db = null;
-    String file = null;
-
-    try{
-      db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
-      file = TableUtil.get()
-          .getListViewFilename(Tables.getInstance(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
-
-      //if RemoteException is thrown, file is guaranteed to be null
-      assertThat(file, notNullValue(String.class));
-    } finally {
-      if (db != null) {
-        try {
-          Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
-        } catch (ServicesAvailabilityException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-
-    return file;
-  }
-
-  private static String getDetailViewFile() {
-    DbHandle db = null;
-    String file = null;
-
-    try{
-      db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
-      file = TableUtil.get()
-          .getDetailViewFilename(Tables.getInstance(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
-
-      //if RemoteException is thrown, file is guaranteed to be null
-      assertThat(file, notNullValue(String.class));
-    } finally {
-      if (db != null) {
-        try {
-          Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
-        } catch (ServicesAvailabilityException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-
-    return file;
-  }
-
-  private static String getMapViewFile() {
-    DbHandle db = null;
-    String file = null;
-
-    try{
-      db = Tables.getInstance().getDatabase().openDatabase(APP_NAME);
-      file = TableUtil.get()
-          .getMapListViewFilename(Tables.getInstance(), APP_NAME, db, T_HOUSE_E_TABLE_ID);
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
-
-      //if RemoteException is thrown, file is guaranteed to be null
-      assertThat(file, notNullValue(String.class));
-    } finally {
-      if (db != null) {
-        try {
-          Tables.getInstance().getDatabase().closeDatabase(APP_NAME, db);
-        } catch (ServicesAvailabilityException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-
-    return file;
-  }
-
-  private static void setListViewFile(String filename) {
-    try {
-      TableUtil.get().atomicSetListViewFilename(
-          Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private static void setDetailViewFile(String filename) {
-    try {
-      TableUtil.get().atomicSetDetailViewFilename(
-          Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private static void setMapViewFile(String filename) {
-    try {
-      TableUtil.get().atomicSetMapListViewFilename(
-          Tables.getInstance(), APP_NAME, T_HOUSE_E_TABLE_ID, filename);
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
     }
   }
 }

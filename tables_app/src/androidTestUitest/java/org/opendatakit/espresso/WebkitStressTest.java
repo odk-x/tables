@@ -2,24 +2,24 @@ package org.opendatakit.espresso;
 
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.web.webdriver.Locator;
+import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.webkit.WebView;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.UAUtils;
-import org.opendatakit.util.DisableAnimationsRule;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
@@ -27,17 +27,14 @@ import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 import static org.opendatakit.util.TestConstants.*;
-import static org.opendatakit.util.TestConstants.*;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class WebkitStressTest {
-  private Boolean initSuccess = null;
-  private UiDevice mDevice;
-
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
-
+  private Boolean initSuccess = null;
+  private UiDevice mDevice;
   @Rule
   public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
       MainActivity.class) {
@@ -74,8 +71,8 @@ public class WebkitStressTest {
     boolean run = false;
 
     while (run) {
-      UiObject2 surveyIcon = mDevice.wait(
-          Until.findObject(By.res(TABLES_PKG_NAME, "menu_edit_row")), OBJ_WAIT_TIMEOUT);
+      UiObject2 surveyIcon = mDevice
+          .wait(Until.findObject(By.res(TABLES_PKG_NAME, "menu_edit_row")), OBJ_WAIT_TIMEOUT);
 
       if (surveyIcon == null) {
         //Click "Follow up..."
