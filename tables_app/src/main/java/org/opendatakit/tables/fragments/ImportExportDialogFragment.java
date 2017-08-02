@@ -16,11 +16,13 @@
 package org.opendatakit.tables.fragments;
 
 import android.app.*;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.application.Tables;
 
 /**
  * renamed from AbstractImportExportActivity to be both not abstract and not an activity, and to
@@ -60,6 +62,10 @@ public class ImportExportDialogFragment extends DialogFragment {
    * the key value store setting mapping.
    */
   public static final int CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 7;
+  /**
+   *
+   */
+  public static final int GENERIC_PROGRESS = 8;
   private static final String TAG = ImportExportDialogFragment.class.getSimpleName();
   // private IDs that are put in the bundle of arguments to determine which type of dialog to create
   // can't use an enum because you can't (safely) put an enum in a bundle
@@ -97,6 +103,9 @@ public class ImportExportDialogFragment extends DialogFragment {
    * the caller is expected to dismiss it. If it's an AlertDialog, the user can dismiss it
    */
   public static ImportExportDialogFragment newInstance(int id, AbsBaseActivity act) {
+      return newInstance(id, act, act.getAppName());
+  }
+  public static ImportExportDialogFragment newInstance(int id, Context act, String appName) {
     String message;
     int type = ALERT_DIALOG;
     switch (id) {
@@ -114,6 +123,10 @@ public class ImportExportDialogFragment extends DialogFragment {
       type = PROGRESS_DIALOG;
       message = act.getString(R.string.import_in_progress_generic);
       break;
+    case GENERIC_PROGRESS:
+      type = PROGRESS_DIALOG;
+      message = act.getString(R.string.import_or_export_in_progress);
+      break;
     case CSVIMPORT_FAIL_DIALOG:
       message = act.getString(R.string.import_failure);
       break;
@@ -128,7 +141,7 @@ public class ImportExportDialogFragment extends DialogFragment {
     }
 
     ImportExportDialogFragment frag = new ImportExportDialogFragment();
-    frag.appName = act.getAppName(); // it's private
+    frag.appName = appName; // it's private
     // Stuff we put in args can be accessed from onCreateDialog by
     Bundle args = new Bundle();
     args.putString("message", message);
@@ -141,7 +154,7 @@ public class ImportExportDialogFragment extends DialogFragment {
       WebLogger.getLogger(frag.appName).a(TAG, "Someone forgot to give me a fragment manager. "
           + "Trying to use the one from context, but it will almost certainly crash if android "
           + "reloaded it");
-      frag.show(act.getFragmentManager(), "dialog");
+      frag.show(((Activity) act).getFragmentManager(), "dialog");
     }
     return frag;
   }
@@ -153,25 +166,30 @@ public class ImportExportDialogFragment extends DialogFragment {
    * @param id     the string resource to get
    * @param status the message to set the dialog's text to
    */
-  public void updateProgressDialogStatusString(Activity task, final int id,
+  private static int failure_counter = 0;
+  public static void updateProgressDialogStatusString(final Activity task, final int id,
       final int status, final int total) {
     task.runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        if (getActivity() == null) {
-          // not attached, happens when we get an update while the user is in the middle of
-          // rotating the screen
+        ImportExportDialogFragment f = activeDialogFragment;
+        Dialog d = f.getDialog();
+        if (f.getActivity() == null || d == null) {
+          failure_counter++;
+          if (failure_counter > 10) {
+            WebLogger.getLogger(f.appName).a(TAG, "Undismissable dialog was dismissed somehow!");
+            if (!fragman.isDestroyed()) {
+              failure_counter = 0;
+              newInstance(GENERIC_PROGRESS, task, f.appName);
+              // activeDialogFragment won't be called until we release the UI thread, so we might miss a row, but the calling activity knows to dismiss this anyways
+            }
+          }
           return;
         }
-        Dialog d = activeDialogFragment.getDialog();
-        if (d == null) {
-          WebLogger.getLogger(appName).a(TAG, "Undismissable dialog was dismissed somehow!");
-          return;
-        }
-        if (getArguments().getInt("type") == PROGRESS_DIALOG) {
-          String message = getString(id, status, total);
+        if (f.getArguments().getInt("type") == PROGRESS_DIALOG) {
+          String message = f.getString(id, status, total);
           ((AlertDialog) d).setMessage(message);
-          getArguments().putString("message", message); // in case the screen is rotated and the
+          f.getArguments().putString("message", message); // in case the screen is rotated and the
           // dialog gets recreated, don't reset to the default message
         }
       }
