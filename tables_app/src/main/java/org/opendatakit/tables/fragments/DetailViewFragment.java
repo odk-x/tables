@@ -64,7 +64,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
                       new BindArgs(new String[] {rowId}), 1, 0);
       String access = result.getRowAtIndex(0).getDataByKey("_effective_access");
       if (access != null) {
-        can_edit = access.contains("w") || access.contains("m");
+        can_edit = access.contains("w");
       }
       dbInt.closeDatabase(getAppName(), db);
     } catch (Exception e) {
