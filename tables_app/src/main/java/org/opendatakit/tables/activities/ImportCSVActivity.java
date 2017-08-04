@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.text.InputType;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -96,6 +97,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
     fnLabel.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
     fn.addView(fnLabel);
     filenameValField = new EditText(this);
+    filenameValField.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
     filenameValField.setId(R.id.FILENAMEVAL_ID);
     fn.addView(filenameValField);
     v.addView(fn);
