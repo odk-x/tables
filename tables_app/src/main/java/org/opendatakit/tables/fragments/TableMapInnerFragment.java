@@ -93,6 +93,11 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
    */
   private static final String SAVE_ZOOM = "saveZoom";
 
+  /**
+   * Minimum distance from a marker to the edge of the screen when setting up the initial camera position
+   */
+  private static final int PADDING = 50;
+
   private static final float initCameraValue = -1;
   /**
    * The object that is listening in on events.
@@ -324,7 +329,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       ColumnDefinition longitudeColumn = orderedDefns.find(mLongitudeElementKey);
 
       // Find the locations from entries in the table.
-      LatLng firstLocation = null;
+      LatLngBounds.Builder builder = new LatLngBounds.Builder();
+      boolean includedAtLeastOne = false;
 
       // Go through each row and create a marker at the specified location.
       for (int i = 0; i < table.getNumberOfRows(); i++) {
@@ -341,9 +347,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
         if (location == null) {
           continue;
         }
-        if (firstLocation == null) {
-          firstLocation = location;
-        }
+        includedAtLeastOne = true;
+        builder.include(location);
 
         if (map != null) {
           Marker marker = map.addMarker(new MarkerOptions().position(location).draggable(false)
@@ -357,12 +362,10 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
         }
       }
 
-      if (firstLocation != null && map != null) {
-        // TODO why 12f exactly?
-        //noinspection MagicNumber
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(firstLocation, 12f));
-        map.setOnMarkerClickListener(getOnMarkerClickListener());
-      }
+    if (includedAtLeastOne) {
+      map.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), PADDING));
+    }
+    map.setOnMarkerClickListener(getOnMarkerClickListener());
     }
   }
 

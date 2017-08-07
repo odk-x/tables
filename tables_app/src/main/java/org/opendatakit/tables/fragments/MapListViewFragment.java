@@ -42,8 +42,10 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   private static final String INTENT_KEY_SELECTED_INDEX = "keySelectedIndex";
   /**
    * The index of an item that has been selected by the user.
+   * We must default to invalid index because the initial load of the list view may take place before onCreate is called
+   * I have no idea why
    */
-  protected int mSelectedItemIndex;
+  protected int mSelectedItemIndex = INVALID_INDEX;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
