@@ -47,7 +47,9 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.views.ViewDataQueryParams;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -124,54 +126,6 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
    * the longitude elementKey to use for plotting
    */
   private String mLongitudeElementKey = null;
-  /**
-   * This value is only set after the activity was saved and then reinstated. It
-   * is used to figure out which marker was selected before the activity was
-   * previously destroyed. It will be set to -1 if no index was selected.
-   */
-  private int mCurrentIndex = 0;
-
-  /**
-   * Gets an index from the passed bundle if it exists
-   *
-   * @param bundle the bundle to pull the index from
-   * @return the index that was in the bundle or {@link #INVALID_INDEX}
-   */
-  static int retrieveSavedIndexFromBundle(Bundle bundle) {
-    if (bundle != null && bundle.containsKey(SAVE_KEY_INDEX)) {
-      return bundle.getInt(SAVE_KEY_INDEX);
-    } else {
-      return INVALID_INDEX;
-    }
-  }
-
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    // AppName may not yet be available...
-    this.mCurrentIndex = TableMapInnerFragment.retrieveSavedIndexFromBundle(savedInstanceState);
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    WebLogger.getLogger(activity.getAppName()).d(TAG, "[onSaveInstanceState]");
-    int markerIndexToSave = INVALID_INDEX;
-    if (mCurrentMarker != null) {
-      markerIndexToSave = mMarkerIds.get(mCurrentMarker);
-    }
-    WebLogger.getLogger(activity.getAppName())
-        .d(TAG, "[onSaveInstanceState] saving markder index: " + markerIndexToSave);
-    outState.putInt(SAVE_KEY_INDEX, markerIndexToSave);
-
-    if (map != null) {
-      CameraPosition pos = map.getCameraPosition();
-      outState.putFloat(SAVE_ZOOM, pos.zoom);
-      outState.putDouble(SAVE_TARGET_LAT, pos.target.latitude);
-      outState.putDouble(SAVE_TARGET_LONG, pos.target.longitude);
-    }
-  }
 
   @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -180,13 +134,6 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     WebLogger.getLogger(activity.getAppName()).d(TAG, "[onViewCreated]");
 
     getMapAsync(this);
-
-    if (savedInstanceState != null) {
-      savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
-      this.savedLatitude = savedInstanceState.getDouble(SAVE_TARGET_LAT);
-      this.savedLongitude = savedInstanceState.getDouble(SAVE_TARGET_LONG);
-      this.savedZoom = savedInstanceState.getFloat(SAVE_ZOOM);
-    }
   }
 
   @Override
@@ -195,12 +142,6 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       this.map = map;
 
       clearAndInitializeMap();
-      // TODO: These are floats being compared, so we should probably not be testing straight equality
-      if (savedLatitude != initCameraValue && savedLongitude != initCameraValue
-              && savedZoom != initCameraValue) {
-        this.map.moveCamera(
-                CameraUpdateFactory.newLatLngZoom(new LatLng(savedLatitude, savedLongitude), savedZoom));
-      }
 
       this.map.setMyLocationEnabled(true);
       this.map.setOnMapLongClickListener(getOnMapLongClickListener());
@@ -319,9 +260,13 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       return;
     }
 
-    UserTable table = activity.getUserTable();
-
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
+    ViewDataQueryParams params = activity.getViewQueryParams(Constants.FragmentTags.MAP_INNER_MAP);
+      UserTable table;
+    try {
+        table = Tables.getInstance().getDatabase().simpleQuery(activity.getAppName(), Tables.getInstance().getDatabase().openDatabase(activity.getAppName()), params.tableId, orderedDefns, params.whereClause, params.selectionArgs, params.groupBy, params.having, new String[] { params.orderByElemKey }, new String[] { params.orderByDir }, 10000, 0);
+    } catch (Exception e) { return; }
+
 
     if (table != null && orderedDefns != null) {
       // Try to find the map columns in the store.
@@ -354,11 +299,6 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
           Marker marker = map.addMarker(new MarkerOptions().position(location).draggable(false)
               .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
           mMarkerIds.put(marker, i);
-          if (mCurrentIndex == i) {
-            WebLogger.getLogger(activity.getAppName())
-                .d(TAG, "[setMarkers] selecting marker: " + i);
-            selectMarker(marker);
-          }
         }
       }
 
@@ -410,24 +350,6 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     return TableUtil.get()
         .getMapListViewLongitudeElementKey(Tables.getInstance().getDatabase(),
             activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
-  }
-
-  /**
-   * Parses the location string and creates a LatLng. The format of the string
-   * should be: lat,lng
-   */
-  @SuppressWarnings("unused")
-  private LatLng parseLocationFromString(String location) {
-    String[] split = location.split(",");
-    try {
-      return new LatLng(Double.parseDouble(split[0]), Double.parseDouble(split[1]));
-    } catch (Exception e) {
-      String appName = ((IAppAwareActivity) getActivity()).getAppName();
-      WebLogger.getLogger(appName)
-          .e(TAG, "The following location is not in the proper lat,lng form: " + location);
-      WebLogger.getLogger(appName).printStackTrace(e);
-    }
-    return null;
   }
 
   /**
@@ -503,16 +425,16 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     return new OnMarkerClickListener() {
       @Override
       public boolean onMarkerClick(Marker clickedMarker) {
-        int index = mCurrentMarker == null ? INVALID_INDEX : mMarkerIds.get(mCurrentMarker);
+        int index = clickedMarker == null ? INVALID_INDEX : mMarkerIds.get(clickedMarker);
+        WebLogger.getLogger(null).e(TAG, Integer.toString(index));
         // Make the marker visible if it is either invisible or a
         // new marker.
         // Make the marker invisible if clicking on the already
         // selected marker.
-        if (index != mMarkerIds.get(clickedMarker)) {
+        if (mCurrentMarker == null || index != mMarkerIds.get(mCurrentMarker)) {
           deselectCurrentMarker();
-          int newIndex = mMarkerIds.get(clickedMarker);
           selectMarker(clickedMarker);
-          listener.onSetSelectedItemIndex(newIndex);
+          listener.onSetSelectedItemIndex(index);
         } else {
           deselectCurrentMarker();
         }
