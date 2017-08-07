@@ -37,10 +37,6 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   public static final int INVALID_INDEX = -1;
   private static final String TAG = MapListViewFragment.class.getSimpleName();
   /**
-   * Saves the index of the element that was selected.
-   */
-  private static final String INTENT_KEY_SELECTED_INDEX = "keySelectedIndex";
-  /**
    * The index of an item that has been selected by the user.
    * We must default to invalid index because the initial load of the list view may take place before onCreate is called
    * I have no idea why
@@ -50,18 +46,6 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    // AppName may not be available...
-    if (savedInstanceState != null) {
-      this.mSelectedItemIndex = savedInstanceState.containsKey(INTENT_KEY_SELECTED_INDEX) ?
-          savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX) :
-          INVALID_INDEX;
-    }
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    outState.putInt(INTENT_KEY_SELECTED_INDEX, mSelectedItemIndex);
   }
 
   /**
@@ -89,12 +73,6 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
     OdkTablesWebView currentView = (OdkTablesWebView) getView().findViewById(R.id.webkit);
     // reload the page.
     currentView.reloadPage();
-  }
-
-  @Override
-  public void onResume() {
-    super.onResume();
-    WebLogger.getLogger(getAppName()).d(TAG, "[onResume]");
   }
 
   /**
