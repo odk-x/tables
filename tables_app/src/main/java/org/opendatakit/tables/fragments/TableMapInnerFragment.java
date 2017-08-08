@@ -315,7 +315,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
     if (mLatitudeElementKey == null || mLongitudeElementKey == null) {
       Toast.makeText(getActivity(), getActivity().getString(R.string.lat_long_not_set),
-          Toast.LENGTH_LONG).show();
+              Toast.LENGTH_LONG).show();
       return;
     }
 
@@ -330,7 +330,8 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
       // Find the locations from entries in the table.
       LatLngBounds.Builder builder = new LatLngBounds.Builder();
-      boolean includedAtLeastOne = false;
+      int markers = 0;
+      LatLng onlyLocation = null;
 
       // Go through each row and create a marker at the specified location.
       for (int i = 0; i < table.getNumberOfRows(); i++) {
@@ -338,7 +339,7 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
         String latitudeString = row.getDataByKey(latitudeColumn.getElementKey());
         String longitudeString = row.getDataByKey(longitudeColumn.getElementKey());
         if (latitudeString == null || longitudeString == null || latitudeString.isEmpty()
-            || longitudeString.isEmpty()) {
+                || longitudeString.isEmpty()) {
           continue;
         }
 
@@ -347,25 +348,28 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
         if (location == null) {
           continue;
         }
-        includedAtLeastOne = true;
+        markers++;
         builder.include(location);
+        onlyLocation = location;
 
         if (map != null) {
           Marker marker = map.addMarker(new MarkerOptions().position(location).draggable(false)
-              .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
+                  .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(i))));
           mMarkerIds.put(marker, i);
           if (mCurrentIndex == i) {
             WebLogger.getLogger(activity.getAppName())
-                .d(TAG, "[setMarkers] selecting marker: " + i);
+                    .d(TAG, "[setMarkers] selecting marker: " + i);
             selectMarker(marker);
           }
         }
       }
 
-    if (includedAtLeastOne) {
-      map.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), PADDING));
-    }
-    map.setOnMarkerClickListener(getOnMarkerClickListener());
+      if (markers > 1) {
+        map.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), PADDING));
+      } else if (markers == 1) {
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(onlyLocation, 12f));
+      }
+      map.setOnMarkerClickListener(getOnMarkerClickListener());
     }
   }
 
