@@ -19,6 +19,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -27,8 +28,13 @@ import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.*;
-import org.opendatakit.activities.BaseActivity;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.ColorGuide;
 import org.opendatakit.data.ColorGuideGroup;
@@ -47,7 +53,9 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.views.ViewDataQueryParams;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -319,9 +327,18 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
       return;
     }
 
-    UserTable table = activity.getUserTable();
-
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
+    ViewDataQueryParams params = activity.getViewQueryParams(Constants.FragmentTags.MAP_INNER_MAP);
+    UserTable table;
+    try {
+      table = Tables.getInstance().getDatabase().simpleQuery(activity.getAppName(), Tables.getInstance().getDatabase().openDatabase(activity.getAppName()), params.tableId, orderedDefns, params.whereClause, params.selectionArgs, params.groupBy, params.having, new String[] { params.orderByElemKey }, new String[] { params.orderByDir }, -1, 0);
+    } catch (ServicesAvailabilityException sae) {
+      String appName = ((IAppAwareActivity) getActivity()).getAppName();
+      WebLogger.getLogger(appName).e(TAG, "simpleQuery failed");
+      WebLogger.getLogger(appName).printStackTrace(sae);
+      return;
+    }
+
 
     if (table != null && orderedDefns != null) {
       // Try to find the map columns in the store.
