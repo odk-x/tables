@@ -428,4 +428,5 @@
     <string name="no_permissions">Not authorized</string>
     <string name="change_column_width_error">Unable to change Column Width</string>
     <string name="unable_to_change_default_view_type">Unable to change default view type</string>
+    <string name="import_or_export_in_progress">Task in progress...</string>
 </resources>
