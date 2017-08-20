@@ -5,20 +5,15 @@ import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.Until;
+
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.activities.BaseActivity;
-import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.types.FormType;
-import org.opendatakit.tables.views.SpreadsheetView;
 import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
@@ -26,16 +21,19 @@ import org.opendatakit.util.UAUtils;
 
 import java.net.MalformedURLException;
 
-import static android.support.test.espresso.Espresso.*;
-import static android.support.test.espresso.action.ViewActions.*;
-import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.intent.Intents.*;
-import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
-import static android.support.test.espresso.matcher.ViewMatchers.*;
+import static android.support.test.espresso.Espresso.onData;
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.intent.Intents.intended;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
-import static org.hamcrest.Matchers.*;
-import static org.opendatakit.util.TestConstants.*;
+import static org.opendatakit.util.TestConstants.HOPE_TAB_ID;
+import static org.opendatakit.util.TestConstants.LAUNCH_DEMO_ID;
+import static org.opendatakit.util.TestConstants.TABLE_MGR_WAIT;
+import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
+import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -139,62 +137,5 @@ public class InteropTest extends AbsBaseTest {
         .hasTable(T_HOUSE_E_TABLE_ID, T_HOUSE_E_TABLE_ID, "1ed5404f-c501-4308-ac0f-a080c13ae5c4"));
 
     Thread.sleep(WAIT);
-  }
-
-  @Test
-  public void crossApp_badFormId() throws InterruptedException {
-    //Open table manager
-    onView(withId(R.id.menu_web_view_activity_table_manager)).perform(click());
-
-    //Open "Tea houses editable"
-    onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click()); // Sometimes it fails on
-    // this line because tables didn't start. It's a problem with the test framework, not the app.
-
-    //go to table pref
-    onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
-
-    String currFormId = null;
-    try {
-      currFormId = FormType.constructFormType(
-          (BaseActivity) android.support.test.InstrumentationRegistry.getInstrumentation()
-              .getTargetContext(), //TODO
-          APP_NAME, T_HOUSE_E_TABLE_ID).getFormId();
-
-      //change form id to something invalid
-      onData(withKey(DEFAULT_FORM)).perform(click());
-      onView(withId(R.id.edit_form_id)).perform(click()).perform(clearText())
-          .perform(typeText("invalid_form_id"));
-      onView(withId(android.R.id.button1)).perform(click());
-
-      //attempt to add row
-      android.support.test.espresso.action.ViewActions.pressBack();
-      onView(withId(R.id.top_level_table_menu_add)).perform(click());
-
-      //wait for Survey to start
-      mDevice.wait(Until.hasObject(By.pkg(SURVEY_PKG_NAME).depth(0)), APP_START_TIMEOUT);
-      Thread.sleep(2000);
-      //mDevice.wait(Until.hasObject(By.textContains("Survey")), APP_INIT_TIMEOUT);
-      mDevice.pressBack();
-      Thread.sleep(2000);
-      mDevice.wait(Until.findObject(By.text("Ignore Changes")), APP_INIT_TIMEOUT).click();
-
-      //check that we're back to Tables
-      onView(withClassName(is(SpreadsheetView.class.getName()))).check(matches(isDisplayed()));
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
-    } finally {
-      //restore original formId
-      try {
-        FormType ft = FormType.constructFormType(
-            (BaseActivity) android.support.test.InstrumentationRegistry.getInstrumentation()
-                .getTargetContext(), //TODO
-            APP_NAME, T_HOUSE_E_TABLE_ID);
-        ft.setFormId(currFormId);
-        ft.persist(c.getDatabase(), APP_NAME, c.getDatabase().openDatabase(APP_NAME),
-            T_HOUSE_E_TABLE_ID);
-      } catch (ServicesAvailabilityException e) {
-        e.printStackTrace();
-      }
-    }
   }
 }

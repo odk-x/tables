@@ -107,7 +107,7 @@ allprojects {
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
-    compile 'com.android.support:support-annotations:25.3.1'
+    compile 'com.android.support:support-annotations:25.4.0'
 
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
@@ -141,12 +141,12 @@ dependencies {
 //    compile 'com.google.android.gms:play-services:' + gpsVersion
 
     //for Espresso
-    androidTestUitestCompile 'com.android.support.test:runner:0.5'
-    androidTestUitestCompile 'com.android.support.test:rules:0.5'
-    androidTestUitestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
-    androidTestUitestCompile 'com.android.support.test.espresso:espresso-intents:2.2.2'
-    androidTestUitestCompile 'com.android.support.test.espresso:espresso-web:2.2.2'
-    androidTestUitestCompile 'com.android.support:support-annotations:25.3.1'
+    androidTestUitestCompile 'com.android.support.test:runner:1.0.0'
+    androidTestUitestCompile 'com.android.support.test:rules:1.0.0'
+    androidTestUitestCompile 'com.android.support.test.espresso:espresso-core:3.0.0'
+    androidTestUitestCompile 'com.android.support.test.espresso:espresso-intents:3.0.0'
+    androidTestUitestCompile 'com.android.support.test.espresso:espresso-web:3.0.0'
+    androidTestUitestCompile 'com.android.support:support-annotations:25.4.0'
 
     //for UI Automator
     androidTestUitestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'

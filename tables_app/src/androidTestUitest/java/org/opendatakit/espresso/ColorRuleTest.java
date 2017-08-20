@@ -1,9 +1,5 @@
 package org.opendatakit.espresso;
 
-import android.app.Application;
-import android.app.Activity;
-import org.opendatakit.tables.application.Tables;
-import android.content.Context;
 import android.graphics.Rect;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
@@ -13,6 +9,7 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.view.View;
 import android.widget.ScrollView;
+
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -26,7 +23,6 @@ import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
@@ -37,14 +33,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static android.support.test.espresso.Espresso.*;
+import static android.support.test.espresso.Espresso.onData;
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.Espresso.pressBack;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.longClick;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
-import static android.support.test.espresso.matcher.ViewMatchers.*;
-import static org.hamcrest.Matchers.*;
-import static org.opendatakit.util.TestConstants.*;
+import static android.support.test.espresso.matcher.ViewMatchers.assertThat;
+import static android.support.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.opendatakit.util.TestConstants.APP_NAME;
+import static org.opendatakit.util.TestConstants.COLUMNS_LIST;
+import static org.opendatakit.util.TestConstants.TABLE_COLOR;
+import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
