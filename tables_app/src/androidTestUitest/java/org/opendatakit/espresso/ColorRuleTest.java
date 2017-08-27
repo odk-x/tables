@@ -80,25 +80,16 @@ public class ColorRuleTest extends AbsBaseTest {
     protected void beforeActivityLaunched() {
       super.beforeActivityLaunched();
 
-      System.out.println("!!!!!!!!!!!!!!!!!! " + ActivityCompat.checkSelfPermission(InstrumentationRegistry.getTargetContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE));
-      System.out.println("!!!!!!!!!!!!!!!!!! " + ActivityCompat.checkSelfPermission(InstrumentationRegistry.getTargetContext(), Manifest.permission.READ_EXTERNAL_STORAGE));
-
       if (c == null) {
         try {
           new AbsBaseTest()._setUpC();
         } catch (Exception ignored) {}
       }
 
-      System.out.println("!!!!!!!!!!!!!!!!!! 2 " + ActivityCompat.checkSelfPermission(InstrumentationRegistry.getTargetContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE));
-      System.out.println("!!!!!!!!!!!!!!!!!! 2 " + ActivityCompat.checkSelfPermission(InstrumentationRegistry.getTargetContext(), Manifest.permission.READ_EXTERNAL_STORAGE));
-
       if (initSuccess == null) {
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         initSuccess = UAUtils.turnOnCustomHome(mDevice);
       }
-
-      System.out.println("!!!!!!!!!!!!!!!!!! 3 " + ActivityCompat.checkSelfPermission(InstrumentationRegistry.getTargetContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE));
-      System.out.println("!!!!!!!!!!!!!!!!!! 3 " + ActivityCompat.checkSelfPermission(InstrumentationRegistry.getTargetContext(), Manifest.permission.READ_EXTERNAL_STORAGE));
 
       try {
         db = c.getDatabase().openDatabase(APP_NAME);
@@ -136,9 +127,6 @@ public class ColorRuleTest extends AbsBaseTest {
 
   @Before
   public void setup() {
-    System.out.println("!!!!!!!!!!!!!! setup " + ActivityCompat.checkSelfPermission(InstrumentationRegistry.getTargetContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE));
-    System.out.println("!!!!!!!!!!!!!! setup " + ActivityCompat.checkSelfPermission(InstrumentationRegistry.getTargetContext(), Manifest.permission.READ_EXTERNAL_STORAGE));
-
     UAUtils.assertInitSucess(initSuccess);
     assertThat("Failed to obtain db", db, notNullValue(DbHandle.class));
 
