@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
+import android.Manifest;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -55,6 +56,7 @@ import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.utilities.RuntimePermissionUtils;
 import org.opendatakit.views.ViewDataQueryParams;
 
 import java.util.HashMap;
@@ -68,7 +70,6 @@ import java.util.Map;
  * @author sudar.sam@gmail.com
  */
 public class TableMapInnerFragment extends MapFragment implements OnMapReadyCallback {
-
   private static final String TAG = TableMapInnerFragment.class.getSimpleName();
 
   private static final int INVALID_INDEX = -1;
@@ -210,9 +211,21 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
                 CameraUpdateFactory.newLatLngZoom(new LatLng(savedLatitude, savedLongitude), savedZoom));
       }
 
-      this.map.setMyLocationEnabled(true);
       this.map.setOnMapLongClickListener(getOnMapLongClickListener());
       this.map.setOnMapClickListener(getOnMapClickListener());
+
+      String[] permissions = new String[] {
+              Manifest.permission.ACCESS_FINE_LOCATION,
+              Manifest.permission.ACCESS_COARSE_LOCATION
+      };
+
+      if (RuntimePermissionUtils.checkSelfAnyPermission(getActivity(), permissions)) {
+        this.map.setMyLocationEnabled(true);
+      } else {
+        if (!RuntimePermissionUtils.shouldShowAnyPermissionRationale(getActivity(), permissions))
+        // this is when location permission is permanently denied
+        Toast.makeText(getActivity(), R.string.location_permission_perm_denied, Toast.LENGTH_LONG).show();
+      }
     }
   }
 

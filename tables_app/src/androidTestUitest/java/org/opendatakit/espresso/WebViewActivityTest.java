@@ -1,5 +1,6 @@
 package org.opendatakit.espresso;
 
+import android.Manifest;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.web.model.Atom;
@@ -7,6 +8,7 @@ import android.support.test.espresso.web.model.ElementReference;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.webkit.WebView;
@@ -14,6 +16,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.util.DisableAnimationsRule;
@@ -34,8 +38,10 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 public class WebViewActivityTest {
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
   private Boolean initSuccess = null;
   private UiDevice mDevice;
+
   @Rule
   public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
       MainActivity.class, false, true) {
@@ -56,6 +62,18 @@ public class WebViewActivityTest {
       onWebView().forceJavascriptEnabled();
     }
   };
+
+  // don't annotate used in chain rule
+  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+      Manifest.permission.WRITE_EXTERNAL_STORAGE,
+      Manifest.permission.READ_EXTERNAL_STORAGE,
+      Manifest.permission.ACCESS_FINE_LOCATION
+  );
+
+  @Rule
+  public TestRule chainedRules = RuleChain
+      .outerRule(grantPermissionRule)
+      .around(mActivityRule);
 
   @Before
   public void setup() {

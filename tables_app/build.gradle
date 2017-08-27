@@ -108,7 +108,7 @@ allprojects {
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
     compile 'com.android.support:support-annotations:25.4.0'
-
+    compile 'com.android.support:support-v13:25.4.0'
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         compile project(libraryProjectName)
@@ -153,14 +153,27 @@ dependencies {
     androidTestUitestCompile 'org.hamcrest:hamcrest-integration:1.3'
 }
 
-//These are used to disable animations when running UI tests
+// These are used to disable animations when running UI tests
+// and grant services write external storage permission
 task grantAnimationPermission(type: Exec, dependsOn: 'installUitestDebug') {
     commandLine "adb shell pm grant org.opendatakit.tables android.permission.SET_ANIMATION_SCALE"
             .split(' ')
 }
 
+task grantServicesPermissionRead(type: Exec) {
+    commandLine "adb shell pm grant org.opendatakit.services android.permission.READ_EXTERNAL_STORAGE"
+            .split(' ')
+}
+
+task grantServicesPermissionWrite(type: Exec) {
+    commandLine "adb shell pm grant org.opendatakit.services android.permission.WRITE_EXTERNAL_STORAGE"
+            .split(' ')
+}
+
 tasks.whenTaskAdded { task ->
     if (task.name.startsWith('connected')) {
+        task.dependsOn grantServicesPermissionRead
+        task.dependsOn grantServicesPermissionWrite
         task.dependsOn grantAnimationPermission
     }
 }

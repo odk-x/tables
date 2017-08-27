@@ -1,9 +1,11 @@
 package org.opendatakit.espresso;
 
+import android.Manifest;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -14,6 +16,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
@@ -33,10 +37,12 @@ import static org.opendatakit.util.TestConstants.*;
 public class WebkitStressTest {
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
   private Boolean initSuccess = null;
   private UiDevice mDevice;
-  @Rule
-  public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
+
+  // don't annotate used in chain rule
+  private ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
       MainActivity.class) {
     @Override
     protected void beforeActivityLaunched() {
@@ -56,6 +62,18 @@ public class WebkitStressTest {
     }
   };
 
+  // don't annotate used in chain rule
+  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+      Manifest.permission.WRITE_EXTERNAL_STORAGE,
+      Manifest.permission.READ_EXTERNAL_STORAGE,
+      Manifest.permission.ACCESS_FINE_LOCATION
+  );
+
+  @Rule
+  public TestRule chainedRules = RuleChain
+      .outerRule(grantPermissionRule)
+      .around(mActivityRule);
+
   @Before
   public void setup() {
     UAUtils.assertInitSucess(initSuccess);
@@ -63,12 +81,16 @@ public class WebkitStressTest {
 
   @Test
   public void launchSurvey() {
+    boolean run = false;
+
+    if (!run) {
+      return;
+    }
+
     //Open "Hope"
     EspressoUtils.delayedFindElement(Locator.ID, HOPE_TAB_ID, WEB_WAIT_TIMEOUT).perform(webClick());
     EspressoUtils.delayedFindElement(Locator.ID, LAUNCH_DEMO_ID, WEB_WAIT_TIMEOUT)
         .perform(webClick());
-
-    boolean run = false;
 
     while (run) {
       UiObject2 surveyIcon = mDevice

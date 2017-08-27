@@ -1,9 +1,11 @@
 package org.opendatakit.espresso;
 
+import android.Manifest;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.filters.LargeTest;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 
@@ -11,6 +13,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
@@ -38,13 +42,16 @@ import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class InteropTest extends AbsBaseTest {
-  private static final int WAIT = 1000;
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
+  private static final int WAIT = 1000;
+
   private Boolean initSuccess = null;
   private UiDevice mDevice;
-  @Rule
-  public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
+
+  // don't annotate used in chain rule
+  private IntentsTestRule<MainActivity> mIntentsRule = new IntentsTestRule<MainActivity>(
       MainActivity.class) {
     @Override
     protected void beforeActivityLaunched() {
@@ -63,6 +70,18 @@ public class InteropTest extends AbsBaseTest {
       onWebView().forceJavascriptEnabled();
     }
   };
+
+  // don't annotate used in chain rule
+  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+      Manifest.permission.WRITE_EXTERNAL_STORAGE,
+      Manifest.permission.READ_EXTERNAL_STORAGE,
+      Manifest.permission.ACCESS_FINE_LOCATION
+  );
+
+  @Rule
+  public TestRule chainedRules = RuleChain
+      .outerRule(grantPermissionRule)
+      .around(mIntentsRule);
 
   @Before
   public void setup() {
@@ -131,7 +150,7 @@ public class InteropTest extends AbsBaseTest {
     UAUtils.longPressSpreadsheetRow(mDevice, 3);
 
     //Edit the row
-    onView(withText(EspressoUtils.getString(mActivityRule, R.string.edit_row))).perform(click());
+    onView(withText(EspressoUtils.getString(mIntentsRule, R.string.edit_row))).perform(click());
 
     intended(ODKMatchers
         .hasTable(T_HOUSE_E_TABLE_ID, T_HOUSE_E_TABLE_ID, "1ed5404f-c501-4308-ac0f-a080c13ae5c4"));
