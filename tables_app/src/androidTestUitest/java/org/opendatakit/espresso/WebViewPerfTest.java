@@ -1,5 +1,6 @@
 package org.opendatakit.espresso;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -9,12 +10,15 @@ import android.support.test.espresso.web.webdriver.DriverAtoms;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.util.DisableAnimationsRule;
@@ -35,6 +39,9 @@ import static org.hamcrest.Matchers.containsString;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class WebViewPerfTest {
+  @ClassRule
+  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
   // Run through the app for performance timings
   private static final int numOfTimesToRun = 101;
   private static final int numOfMsToSleep = 10;
@@ -46,12 +53,12 @@ public class WebViewPerfTest {
   private static final TEST_TRUE_FALSE SERVICES_USED = TEST_TRUE_FALSE.TRUE;
   // ALL_IN_ONE_APK_USED Options are true and false
   private static final TEST_TRUE_FALSE ALL_IN_ONE_APK_USED = TEST_TRUE_FALSE.FALSE;
-  @ClassRule
-  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
   private Boolean initSuccess = null;
   private UiDevice mDevice;
-  @Rule
-  public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
+
+  // don't annotate used in chain rule
+  private ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
       MainActivity.class, false, true) {
     @Override
     protected void beforeActivityLaunched() {
@@ -70,6 +77,18 @@ public class WebViewPerfTest {
       onWebView().forceJavascriptEnabled();
     }
   };
+
+  // don't annotate used in chain rule
+  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+      Manifest.permission.WRITE_EXTERNAL_STORAGE,
+      Manifest.permission.READ_EXTERNAL_STORAGE,
+      Manifest.permission.ACCESS_FINE_LOCATION
+  );
+
+  @Rule
+  public TestRule chainedRules = RuleChain
+      .outerRule(grantPermissionRule)
+      .around(mActivityRule);
 
   private static String getOsToUse() {
     return Build.VERSION.RELEASE;
