@@ -481,7 +481,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     // TODO: do we need to track the ifChanged status?
 
     String filename;
-    if (Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
+    if (fragmentID != null && Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
       filename = mCurrentSubFileName;
     } else {
       filename = mCurrentFileName;
@@ -1049,7 +1049,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * @param args       the arguments to give to the fragment
    */
   public void updateFragment(String fragmentID, Bundle args) {
-    if (!fragmentID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
+    if (fragmentID == null || !fragmentID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
       WebLogger.getLogger(getAppName())
           .e(TAG, "[updateFragment] Attempted to update an unsupported fragment id: " + fragmentID);
       return;
@@ -1109,7 +1109,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
     int queryIndex = 0;
 
-    if (Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
+    if (fragmentID != null && Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
       queryIndex = 1;
     }
 
