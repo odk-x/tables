@@ -1,5 +1,6 @@
 package org.opendatakit.espresso;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
@@ -11,6 +12,7 @@ import android.support.test.espresso.intent.Intents;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.filters.LargeTest;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.view.View;
@@ -20,6 +22,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
@@ -90,10 +94,12 @@ import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 public class TablePrefTest extends AbsBaseTest {
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
   private Boolean initSuccess = null;
   private UiDevice mDevice;
-  @Rule
-  public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
+
+  // don't annotate used in chain rule
+  private IntentsTestRule<MainActivity> mIntentsRule = new IntentsTestRule<MainActivity>(
       MainActivity.class) {
     @Override
     protected void beforeActivityLaunched() {
@@ -112,6 +118,18 @@ public class TablePrefTest extends AbsBaseTest {
       onWebView().forceJavascriptEnabled();
     }
   };
+
+  // don't annotate used in chain rule
+  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+      Manifest.permission.WRITE_EXTERNAL_STORAGE,
+      Manifest.permission.READ_EXTERNAL_STORAGE,
+      Manifest.permission.ACCESS_FINE_LOCATION
+  );
+
+  @Rule
+  public TestRule chainedRules = RuleChain
+      .outerRule(grantPermissionRule)
+      .around(mIntentsRule);
 
   private static String getListViewFile() {
     DbHandle db = null;
@@ -505,8 +523,8 @@ public class TablePrefTest extends AbsBaseTest {
       onData(withKey(LIST_VIEW_FILE)).perform(click());
 
       //check toast message
-      EspressoUtils.toastMsgMatcher(mActivityRule, is(EspressoUtils
-          .getString(mActivityRule, R.string.file_not_under_app_dir,
+      EspressoUtils.toastMsgMatcher(mIntentsRule, is(EspressoUtils
+          .getString(mIntentsRule, R.string.file_not_under_app_dir,
               ODKFileUtils.getAppFolder(APP_NAME))));
     } finally {
       //restore
@@ -521,7 +539,7 @@ public class TablePrefTest extends AbsBaseTest {
 
     try {
       currFormId = FormType
-              .constructFormType(mActivityRule.getActivity(), APP_NAME, T_HOUSE_E_TABLE_ID)
+              .constructFormType(mIntentsRule.getActivity(), APP_NAME, T_HOUSE_E_TABLE_ID)
               .getFormId();
 
       assertThat(currFormId, notNullValue(String.class));
@@ -538,8 +556,8 @@ public class TablePrefTest extends AbsBaseTest {
 
       EspressoUtils
               .toastMsgMatcher(
-                      mActivityRule,
-                      is(EspressoUtils.getString(mActivityRule, R.string.invalid_form))
+                  mIntentsRule,
+                      is(EspressoUtils.getString(mIntentsRule, R.string.invalid_form))
               );
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
@@ -547,7 +565,7 @@ public class TablePrefTest extends AbsBaseTest {
       if (currFormId != null) {
         try {
           FormType
-                  .constructFormType(mActivityRule.getActivity(), APP_NAME, T_HOUSE_E_TABLE_ID)
+                  .constructFormType(mIntentsRule.getActivity(), APP_NAME, T_HOUSE_E_TABLE_ID)
                   .setFormId(currFormId);
         } catch (ServicesAvailabilityException e) {
           e.printStackTrace();

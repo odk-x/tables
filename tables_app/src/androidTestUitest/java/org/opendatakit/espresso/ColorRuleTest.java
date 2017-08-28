@@ -1,12 +1,15 @@
 package org.opendatakit.espresso;
 
+import android.Manifest;
 import android.graphics.Rect;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
+import android.support.v13.app.ActivityCompat;
 import android.view.View;
 import android.widget.ScrollView;
 
@@ -15,6 +18,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.data.ColorRuleGroup;
@@ -58,19 +63,23 @@ import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 public class ColorRuleTest extends AbsBaseTest {
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
   private final String tableId = T_HOUSE_E_TABLE_ID;
   private final String elementKeyName = "House id";
   private final String elementKeyId = "House_id";
+
   private Boolean initSuccess = null;
   private UiDevice mDevice;
   private DbHandle db;
   private String[] adminColumns;
-  @Rule
-  public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
+
+  // don't annotate used in chain rule
+  private ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
       MainActivity.class) {
     @Override
     protected void beforeActivityLaunched() {
       super.beforeActivityLaunched();
+
       if (c == null) {
         try {
           new AbsBaseTest()._setUpC();
@@ -103,6 +112,18 @@ public class ColorRuleTest extends AbsBaseTest {
       }
     }
   };
+
+  // don't annotate used in chain rule
+  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+      Manifest.permission.WRITE_EXTERNAL_STORAGE,
+      Manifest.permission.READ_EXTERNAL_STORAGE,
+      Manifest.permission.ACCESS_FINE_LOCATION
+  );
+
+  @Rule
+  public TestRule chainedRules = RuleChain
+      .outerRule(grantPermissionRule)
+      .around(mActivityRule);
 
   @Before
   public void setup() {

@@ -428,4 +428,7 @@
     <string name="no_permissions">Not authorized</string>
     <string name="change_column_width_error">Unable to change Column Width</string>
     <string name="unable_to_change_default_view_type">Unable to change default view type</string>
+
+    <string name="location_permission_rationale">ODK Tables needs access to your device\'s location to display it on Map View</string>
+    <string name="location_permission_perm_denied">My Location feature disabled</string>
 </resources>
