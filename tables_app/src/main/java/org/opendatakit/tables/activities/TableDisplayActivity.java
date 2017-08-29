@@ -487,7 +487,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       filename = mCurrentFileName;
     }
     if (filename != null) {
-      return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
+      return UrlUtils.getAsWebViewUri(getAppName(), filename);
     }
     return null;
   }
