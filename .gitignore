@@ -3,3 +3,6 @@ build
 .idea
 local.properties
 *.iml
+tables_app/google-services.json
+tables_app/fabric.properties
+odkanalytics/

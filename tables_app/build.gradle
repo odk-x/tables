@@ -13,6 +13,7 @@ applicationScripts.each {
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
 
 android {
     // The following are set in the common.gradle file
