@@ -15,19 +15,25 @@
  */
 package org.opendatakit.tables.activities;
 
+import android.Manifest;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
+import android.support.v13.app.ActivityCompat;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.data.utilities.TableUtil;
@@ -47,6 +53,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.views.SpreadsheetProps;
+import org.opendatakit.utilities.RuntimePermissionUtils;
 import org.opendatakit.views.ODKWebView;
 import org.opendatakit.views.ViewDataQueryParams;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
@@ -79,7 +86,7 @@ import java.util.List;
  */
 public class TableDisplayActivity extends AbsBaseWebActivity
     implements TableMapInnerFragmentListener, IOdkTablesActivity, DatabaseConnectionListener,
-    ISpreadsheetFragmentContainer {
+    ISpreadsheetFragmentContainer, ActivityCompat.OnRequestPermissionsResultCallback {
 
   /**
    * Key for saving current view type to the saved instance state
@@ -101,6 +108,10 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * Used for logging
    */
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
+  /**
+   * Request code for requesting location permission
+   */
+  private static final int LOCATION_PERM_REQ_CODE = 0;
   /**
    * Keep references to all queries used to populate all fragments. Use the array index as the
    * viewID.
@@ -254,6 +265,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     readQueryFromIntent(getIntent());
 
     this.setContentView(R.layout.activity_table_display_activity);
+
+    requestLocationPermission();
   }
 
   /**
@@ -266,6 +279,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   @Override
   protected void onRestoreInstanceState(Bundle savedInstanceState) {
     super.onRestoreInstanceState(savedInstanceState);
+
+    WebLogger.getLogger(getAppName()).e(TAG, "onRestore " + savedInstanceState.containsKey(INTENT_KEY_CURRENT_VIEW_TYPE));
 
     if (savedInstanceState != null) {
       mCurrentFragmentType = savedInstanceState.containsKey(INTENT_KEY_CURRENT_VIEW_TYPE) ?
@@ -466,13 +481,13 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     // TODO: do we need to track the ifChanged status?
 
     String filename;
-    if (Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
+    if (fragmentID != null && Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
       filename = mCurrentSubFileName;
     } else {
       filename = mCurrentFileName;
     }
     if (filename != null) {
-      return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
+      return UrlUtils.getAsWebViewUri(getAppName(), filename);
     }
     return null;
   }
@@ -518,8 +533,10 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   @Override
   protected void onDestroy() {
     super.onDestroy();
+    this.destroyed = true;
     WebLogger.getLogger(getAppName()).d(TAG, "[onDestroy]");
   }
+  private boolean destroyed = false;
 
   /**
    * Gets the webkit object out of the fragment if we're in a list, map, detail or detail with
@@ -1032,7 +1049,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * @param args       the arguments to give to the fragment
    */
   public void updateFragment(String fragmentID, Bundle args) {
-    if (!fragmentID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
+    if (fragmentID == null || !fragmentID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
       WebLogger.getLogger(getAppName())
           .e(TAG, "[updateFragment] Attempted to update an unsupported fragment id: " + fragmentID);
       return;
@@ -1070,7 +1087,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     detailWithListViewListFragment = new DetailWithListListViewFragment();
     fragmentTransaction.add(R.id.bottom_pane, detailWithListViewListFragment,
         Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
-    fragmentTransaction.commit();
+    // So android studio seems to think our build target is already greater than 16, but gradle doesn't
+    boolean destroyed = this.destroyed;
+    if (Build.VERSION.SDK_INT >= 17) {
+      destroyed |= isDestroyed();
+    }
+    if (!destroyed) {
+      fragmentTransaction.commit();
+    }
   }
 
   /**
@@ -1085,7 +1109,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
     int queryIndex = 0;
 
-    if (Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
+    if (fragmentID != null && Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
       queryIndex = 1;
     }
 
@@ -1201,4 +1225,32 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     }
   }
 
+  private void requestLocationPermission() {
+    // only check for fine location
+    // but request coarse and fine in case we can only get coarse
+    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+      ActivityCompat.requestPermissions(
+              this,
+              new String[] {
+                      Manifest.permission.ACCESS_FINE_LOCATION,
+                      Manifest.permission.ACCESS_COARSE_LOCATION
+              },
+              LOCATION_PERM_REQ_CODE
+      );
+    }
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+    RuntimePermissionUtils.handleRequestPermissionsResult(
+        requestCode,
+        permissions,
+        grantResults,
+        this,
+        R.string.location_permission_rationale
+    );
+  }
 }

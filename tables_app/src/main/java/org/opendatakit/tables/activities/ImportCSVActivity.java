@@ -18,13 +18,19 @@ package org.opendatakit.tables.activities;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.text.InputType;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
@@ -91,6 +97,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
     fnLabel.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.black));
     fn.addView(fnLabel);
     filenameValField = new EditText(this);
+    filenameValField.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
     filenameValField.setId(R.id.FILENAMEVAL_ID);
     fn.addView(filenameValField);
     v.addView(fn);
@@ -135,37 +142,40 @@ public class ImportCSVActivity extends AbsBaseActivity {
 
     ImportRequest request = null;
     String assetsCsvRelativePath = ODKFileUtils
-        .asRelativePath(appName, new File(ODKFileUtils.getAssetsCsvFolder(appName)));
+            .asRelativePath(appName, new File(ODKFileUtils.getAssetsCsvFolder(appName)));
     if (filenamePath.startsWith(assetsCsvRelativePath)) {
       String remainingPath = filenamePath.substring(assetsCsvRelativePath.length() + 1);
       String[] terms = remainingPath.split("\\.");
-      String tableId = null;
-      String fileQualifier = null;
-      if (terms.length == 2 && "csv".equals(terms[1]) || terms.length == 3 && (
-          "properties".equals(terms[1]) || "definition".equals(terms[1])) && "csv"
-          .equals(terms[2])) {
-        tableId = terms[0];
-        fileQualifier = null;
-      } else if (terms.length == 3 && "csv".equals(terms[2]) || terms.length == 4 && (
-          "properties".equals(terms[2]) || "definition".equals(terms[2])) && "csv"
-          .equals(terms[3])) {
-        tableId = terms[0];
-        fileQualifier = terms[1];
-      }
-      if (tableId != null && fileQualifier != null) {
+      if (terms.length == 2 && terms[1].equals("csv")) {
+        String tableId = terms[0];
+        String fileQualifier = null;
+        request = new ImportRequest(tableId, fileQualifier);
+      } else if (terms.length == 3 && (terms[1].equals("properties") || terms[1]
+              .equals("definition")) && terms[2].equals("csv")) {
+        String tableId = terms[0];
+        String fileQualifier = null;
+        request = new ImportRequest(tableId, fileQualifier);
+      } else if (terms.length == 3 && terms[2].equals("csv")) {
+        String tableId = terms[0];
+        String fileQualifier = terms[1];
+        request = new ImportRequest(tableId, fileQualifier);
+      } else if (terms.length == 4 && (terms[2].equals("properties") || terms[2]
+              .equals("definition")) && terms[3].equals("csv")) {
+        String tableId = terms[0];
+        String fileQualifier = terms[1];
         request = new ImportRequest(tableId, fileQualifier);
       }
     }
 
     if (request == null) {
       Toast.makeText(this, "Invalid csv filename: " + filenameValField.getText(), Toast.LENGTH_LONG)
-          .show();
+              .show();
       return;
     }
 
     ImportExportDialogFragment
-        .newInstance(ImportExportDialogFragment.IMPORT_IN_PROGRESS_DIALOG, this);
-    AsyncTask<ImportRequest, Integer, Boolean> task = new ImportTask(appName, this);
+            .newInstance(ImportExportDialogFragment.IMPORT_IN_PROGRESS_DIALOG, this);
+    ImportTask task = new ImportTask(appName, this);
     task.execute(request);
   }
 

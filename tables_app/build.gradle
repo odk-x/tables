@@ -13,6 +13,7 @@ applicationScripts.each {
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
 
 android {
     // The following are set in the common.gradle file
@@ -107,8 +108,12 @@ allprojects {
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
-    compile 'com.android.support:support-annotations:25.3.1'
-
+    compile 'com.android.support:support-annotations:25.4.0'
+    compile 'com.android.support:support-v13:25.4.0'
+    compile 'com.google.firebase:firebase-core:10.0.1'
+    compile ('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') {
+        transitive =true;
+    }
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         compile project(libraryProjectName)
@@ -141,26 +146,39 @@ dependencies {
 //    compile 'com.google.android.gms:play-services:' + gpsVersion
 
     //for Espresso
-    androidTestUitestCompile 'com.android.support.test:runner:0.5'
-    androidTestUitestCompile 'com.android.support.test:rules:0.5'
-    androidTestUitestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
-    androidTestUitestCompile 'com.android.support.test.espresso:espresso-intents:2.2.2'
-    androidTestUitestCompile 'com.android.support.test.espresso:espresso-web:2.2.2'
-    androidTestUitestCompile 'com.android.support:support-annotations:25.3.1'
+    androidTestUitestCompile 'com.android.support.test:runner:1.0.0'
+    androidTestUitestCompile 'com.android.support.test:rules:1.0.0'
+    androidTestUitestCompile 'com.android.support.test.espresso:espresso-core:3.0.0'
+    androidTestUitestCompile 'com.android.support.test.espresso:espresso-intents:3.0.0'
+    androidTestUitestCompile 'com.android.support.test.espresso:espresso-web:3.0.0'
+    androidTestUitestCompile 'com.android.support:support-annotations:25.4.0'
 
     //for UI Automator
     androidTestUitestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
     androidTestUitestCompile 'org.hamcrest:hamcrest-integration:1.3'
 }
 
-//These are used to disable animations when running UI tests
+// These are used to disable animations when running UI tests
+// and grant services write external storage permission
 task grantAnimationPermission(type: Exec, dependsOn: 'installUitestDebug') {
     commandLine "adb shell pm grant org.opendatakit.tables android.permission.SET_ANIMATION_SCALE"
             .split(' ')
 }
 
+task grantServicesPermissionRead(type: Exec) {
+    commandLine "adb shell pm grant org.opendatakit.services android.permission.READ_EXTERNAL_STORAGE"
+            .split(' ')
+}
+
+task grantServicesPermissionWrite(type: Exec) {
+    commandLine "adb shell pm grant org.opendatakit.services android.permission.WRITE_EXTERNAL_STORAGE"
+            .split(' ')
+}
+
 tasks.whenTaskAdded { task ->
     if (task.name.startsWith('connected')) {
+        task.dependsOn grantServicesPermissionRead
+        task.dependsOn grantServicesPermissionWrite
         task.dependsOn grantAnimationPermission
     }
 }

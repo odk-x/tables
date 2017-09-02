@@ -125,10 +125,10 @@ public class MainActivity extends AbsBaseWebActivity
         }
 
         if (webFileStrs.length > 1) {
-          return UrlUtils.getAsWebViewUri(this, getAppName(),
+          return UrlUtils.getAsWebViewUri(getAppName(),
               filename.concat(QUERY_START_PARAM).concat(webFileStrs[1]));
         } else {
-          return UrlUtils.getAsWebViewUri(this, getAppName(), filename);
+          return UrlUtils.getAsWebViewUri(getAppName(), filename);
         }
       }
     }

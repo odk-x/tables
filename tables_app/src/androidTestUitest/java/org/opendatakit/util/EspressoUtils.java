@@ -53,18 +53,27 @@ public class EspressoUtils {
     return rule.getActivity().getResources().getString(id);
   }
 
+  public static Web.WebInteraction<Void> delayedFindElement(Locator locator,
+                                                            String value,
+                                                            int timeout) {
+    return delayedFindElement(null, locator, value, timeout);
+  }
+
   /**
    * THIS IS A TEMPORARY SOLUTION
    * TODO: implement an idling webView
    */
-  public static Web.WebInteraction<Void> delayedFindElement(Locator locator, String value,
-      int timeout) {
+  public static Web.WebInteraction<Void> delayedFindElement(Matcher<View> webViewMatcher,
+                                                            Locator locator,
+                                                            String value,
+                                                            int timeout) {
     final int waitTime = 200;
     Web.WebInteraction<Void> wInteraction = null;
 
     for (int i = 0; i < (timeout / waitTime) + 1; i++) {
       try {
-        wInteraction = onWebView().withElement(findElement(locator, value));
+        wInteraction = (webViewMatcher == null ? onWebView() : onWebView(webViewMatcher))
+                .withElement(findElement(locator, value));
       } catch (Exception e) {
         //Ignored
       }

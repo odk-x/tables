@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.utils;
 
+import org.opendatakit.views.OdkData;
+
 import android.graphics.Color;
 
 /**
@@ -95,17 +97,17 @@ public final class Constants {
     /**
      * Intent key to store filenames
      */
-    public static final String FILE_NAME = "filename";
+    public static final String FILE_NAME = OdkData.IntentKeys.FILE_NAME;
     // should be instanceID?    public static final String ROW_ID = "rowId";
     /**
      * The name of the graph view that should be displayed.
      */
-    public static final String ELEMENT_KEY = "elementKey";
+    public static final String ELEMENT_KEY = OdkData.IntentKeys.ELEMENT_KEY;
     /**
      * Intent key for storing a color rule type (column, table, status column) in a bundle
      * Only used in IntentUtil
      */
-    public static final String COLOR_RULE_TYPE = "colorRuleType";
+    public static final String COLOR_RULE_TYPE = OdkData.IntentKeys.COLOR_RULE_TYPE;
     /**
      * The TableLevelPreferencesActivity.FragmentType that should be
      * displayed when launching a TableLevelPreferencesActivity.
@@ -116,7 +118,7 @@ public final class Constants {
      * complex query than permissible by the simple query object. Must conform
      * to the expectations of simpleQuery() AIDL.
      */
-    public static final String SQL_WHERE = "sqlWhereClause";
+    public static final String SQL_WHERE = OdkData.IntentKeys.SQL_WHERE;
 
     /**
      * Used when launching a TableDisplayActivity to a SpreadsheetView when you want to pass
@@ -130,24 +132,24 @@ public final class Constants {
      * This allows for integer, numeric, boolean and string values to be
      * passed through to the SQLite layer.
      */
-    public static final String SQL_SELECTION_ARGS = "sqlSelectionArgs";
+    public static final String SQL_SELECTION_ARGS = OdkData.IntentKeys.SQL_SELECTION_ARGS;
     /**
      * An array of strings giving the group by columns. What was formerly
      * 'overview' mode is a non-null groupBy list.
      */
-    public static final String SQL_GROUP_BY_ARGS = "sqlGroupByArgs";
+    public static final String SQL_GROUP_BY_ARGS = OdkData.IntentKeys.SQL_GROUP_BY_ARGS;
     /**
      * The having clause, if present
      */
-    public static final String SQL_HAVING = "sqlHavingClause";
+    public static final String SQL_HAVING = OdkData.IntentKeys.SQL_HAVING;
     /**
      * The order by column. NOTE: restricted to a single column
      */
-    public static final String SQL_ORDER_BY_ELEMENT_KEY = "sqlOrderByElementKey";
+    public static final String SQL_ORDER_BY_ELEMENT_KEY = OdkData.IntentKeys.SQL_ORDER_BY_ELEMENT_KEY;
     /**
      * The order by direction (ASC or DESC)
      */
-    public static final String SQL_ORDER_BY_DIRECTION = "sqlOrderByDirection";
+    public static final String SQL_ORDER_BY_DIRECTION = OdkData.IntentKeys.SQL_ORDER_BY_DIRECTION;
 
     private IntentKeys() {
     }

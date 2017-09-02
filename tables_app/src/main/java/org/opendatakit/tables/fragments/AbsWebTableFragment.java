@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.IOdkTablesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
@@ -76,6 +77,8 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implem
 
     if (getView() != null) {
       setWebKitVisibility();
+      WebLogger.getLogger(((IOdkTablesActivity) getActivity()).getAppName())
+          .d(TAG, "reloadPage " + getWebKit().getContainerFragmentID());
       getWebKit().reloadPage();
     }
   }

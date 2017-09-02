@@ -19,9 +19,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
-import org.opendatakit.activities.BaseActivity;
+import org.opendatakit.activities.BaseLauncherActivity;
 import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.dependencies.DependencyChecker;
 import org.opendatakit.provider.TablesProviderAPI;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -33,7 +32,7 @@ import java.util.List;
  * This is the activity that gets called when another app tries to launch tables. It gets the app
  * name and then opens the table manager
  */
-public class Launcher extends BaseActivity {
+public class Launcher extends BaseLauncherActivity {
 
   /**
    * Used for logging
@@ -59,9 +58,7 @@ public class Launcher extends BaseActivity {
    * @param savedInstanceState the bundle packed by onSaveInstanceState
    */
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-
+  public void onCreateWithPermission(Bundle savedInstanceState) {
     Intent intent = this.getIntent();
     Bundle extras = intent.getExtras();
 
@@ -91,11 +88,6 @@ public class Launcher extends BaseActivity {
     // ensuring directories exist
     ODKFileUtils.verifyExternalStorageAvailability();
     ODKFileUtils.assertDirectoryStructure(this.mAppName);
-
-    boolean dependable = DependencyChecker.checkDependencies(this);
-    if (!dependable) { // dependencies missing
-      return;
-    }
 
     // Launch the TableManager.
 

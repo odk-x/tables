@@ -1,5 +1,6 @@
 package org.opendatakit.espresso;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.filters.LargeTest;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.widget.Button;
@@ -18,6 +20,8 @@ import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
@@ -44,14 +48,17 @@ import static org.opendatakit.util.TestConstants.*;
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class CsvTest {
-  private static final String VALID_QUALIFIER = "TEST_VALID";
-  private static final String INVALID_QUALIFIER = "TEST_INVALID/";
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
+  private static final String VALID_QUALIFIER = "TEST_VALID";
+  private static final String INVALID_QUALIFIER = "TEST_INVALID/";
+
   private Boolean initSuccess = null;
   private UiDevice mDevice;
-  @Rule
-  public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
+
+  // don't annotate used in chain rule
+  private IntentsTestRule<MainActivity> mIntentsRule = new IntentsTestRule<MainActivity>(
       MainActivity.class) {
     @Override
     protected void beforeActivityLaunched() {
@@ -63,6 +70,18 @@ public class CsvTest {
       }
     }
   };
+
+  // don't annotate used in chain rule
+  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+      Manifest.permission.WRITE_EXTERNAL_STORAGE,
+      Manifest.permission.READ_EXTERNAL_STORAGE,
+      Manifest.permission.ACCESS_FINE_LOCATION
+  );
+
+  @Rule
+  public TestRule chainedRules = RuleChain
+      .outerRule(grantPermissionRule)
+      .around(mIntentsRule);
 
   private static int getTableCount() {
     return new File(ODKFileUtils.getTablesFolder(TableFileUtils.getDefaultAppName()))
@@ -163,7 +182,7 @@ public class CsvTest {
 
     try {
       //Check that error message is shown
-      onView(withText(EspressoUtils.getString(mActivityRule, R.string.export_failure)))
+      onView(withText(EspressoUtils.getString(mIntentsRule, R.string.export_failure)))
           .check(matches(isCompletelyDisplayed()));
 
       //Check that csv was not exported
@@ -196,8 +215,8 @@ public class CsvTest {
     onView(withText(R.string.import_choose_csv_file)).perform(click());
 
     //check toast
-    EspressoUtils.toastMsgMatcher(mActivityRule, is(EspressoUtils
-        .getString(mActivityRule, R.string.file_not_under_app_dir,
+    EspressoUtils.toastMsgMatcher(mIntentsRule, is(EspressoUtils
+        .getString(mIntentsRule, R.string.file_not_under_app_dir,
             ODKFileUtils.getAppFolder(APP_NAME))));
   }
 }

@@ -16,7 +16,16 @@
 package org.opendatakit.tables.fragments;
 
 import android.app.Fragment;
+import android.view.View;
 
+import org.opendatakit.activities.IOdkCommonActivity;
+import org.opendatakit.database.data.BaseTable;
+import org.opendatakit.database.queries.BindArgs;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.logging.WebLogger;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.application.Tables;
 /**
  * {@link Fragment} for displaying a detail view.
  *
@@ -29,4 +38,43 @@ public class DetailViewFragment extends AbsWebTableFragment {
    */
   @SuppressWarnings("unused")
   private static final String TAG = DetailViewFragment.class.getSimpleName();
+  public void databaseAvailable() {
+    super.databaseAvailable();
+    View view = getView();
+    if (view != null) {
+      view.post(new Runnable() {
+        @Override
+        public void run() {
+          checkAccess();
+        }
+      });
+    }
+  }
+  private void checkAccess() {
+    String tableId = ((IOdkCommonActivity) getActivity()).getTableId();
+    String rowId = ((IOdkCommonActivity) getActivity()).getInstanceId();
+    UserDbInterface dbInt = Tables.getInstance().getDatabase();
+    boolean can_edit = true;
+    try {
+      DbHandle db = dbInt.openDatabase(getAppName());
+
+      BaseTable result = dbInt
+              // we know it's safe to dump the table id in there because we got it from the TDA
+              .arbitrarySqlQuery(getAppName(), db,tableId, "SELECT * FROM "+tableId+" WHERE _id = ?",
+                      new BindArgs(new String[] {rowId}), 1, 0);
+      String access = result.getRowAtIndex(0).getDataByKey("_effective_access");
+      if (access != null) {
+        can_edit = access.contains("w");
+      }
+      dbInt.closeDatabase(getAppName(), db);
+    } catch (Exception e) {
+      WebLogger.getLogger(getAppName()).printStackTrace(e);
+    }
+    if (!can_edit) {
+      View edit_button = getActivity().findViewById(R.id.menu_edit_row);
+      if (edit_button != null) {
+        edit_button.setVisibility(View.GONE);
+      }
+    }
+  }
 }
