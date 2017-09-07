@@ -86,7 +86,7 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
     if (getView() == null)
       return; // Can't do anything
 
-    OdkTablesWebView currentView = (OdkTablesWebView) getView().findViewById(R.id.webkit);
+    OdkTablesWebView currentView = getWebKit();
     // reload the page.
     currentView.reloadPage();
   }
@@ -95,6 +95,15 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   public void onResume() {
     super.onResume();
     WebLogger.getLogger(getAppName()).d(TAG, "[onResume]");
+  }
+
+  @Override
+  public void onPause() {
+    OdkTablesWebView view = getWebKit();
+    if ( view != null ) {
+      view.onPause();
+    }
+    super.onPause();
   }
 
   /**

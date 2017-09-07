@@ -46,6 +46,15 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implem
   }
 
   @Override
+  public void onPause() {
+    OdkTablesWebView view = getWebKit();
+    if ( view != null ) {
+      view.onPause();
+    }
+    super.onPause();
+  }
+
+  @Override
   public OdkTablesWebView getWebKit() {
     if (getView() == null) {
       return null;
