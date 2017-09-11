@@ -94,16 +94,19 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
   @Override
   public void onResume() {
     super.onResume();
-    WebLogger.getLogger(getAppName()).d(TAG, "[onResume]");
+    OdkTablesWebView view = getWebKit();
+    if ( view != null ) {
+      view.onResume();
+    }
   }
 
   @Override
   public void onPause() {
+    super.onPause();
     OdkTablesWebView view = getWebKit();
     if ( view != null ) {
       view.onPause();
     }
-    super.onPause();
   }
 
   /**

@@ -48,12 +48,21 @@ public class WebFragment extends AbsTablesFragment implements IWebFragment {
   }
 
   @Override
+  public void onResume() {
+    super.onResume();
+    OdkTablesWebView view = getWebKit();
+    if ( view != null ) {
+      view.onResume();
+    }
+  }
+
+  @Override
   public void onPause() {
+    super.onPause();
     OdkTablesWebView view = getWebKit();
     if ( view != null ) {
       view.onPause();
     }
-    super.onPause();
   }
 
   @Override
