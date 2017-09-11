@@ -45,6 +45,23 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implem
     return inflater.inflate(R.layout.web_view_container, container, false);
   }
 
+  public void onResume() {
+    super.onResume();
+    OdkTablesWebView view = getWebKit();
+    if ( view != null ) {
+      view.onResume();
+    }
+  }
+
+  @Override
+  public void onPause() {
+    super.onPause();
+    OdkTablesWebView view = getWebKit();
+    if ( view != null ) {
+      view.onPause();
+    }
+  }
+
   @Override
   public OdkTablesWebView getWebKit() {
     if (getView() == null) {
