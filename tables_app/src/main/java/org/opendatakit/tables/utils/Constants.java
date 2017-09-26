@@ -114,6 +114,14 @@ public final class Constants {
      */
     public static final String TABLE_PREFERENCE_FRAGMENT_TYPE = "tablePreferenceFragmentType";
     /**
+     * Key to an arbitrary SQL command.
+     */
+    public static final String SQL_COMMAND = OdkData.IntentKeys.SQL_COMMAND;
+    /**
+     * Metadata revision for arbitrary queries
+     */
+    public static final String META_DATA_REV = OdkData.IntentKeys.META_DATA_REV;
+    /**
      * Key to the where clause if this list view is to be opened with a more
      * complex query than permissible by the simple query object. Must conform
      * to the expectations of simpleQuery() AIDL.
@@ -150,9 +158,18 @@ public final class Constants {
      * The order by direction (ASC or DESC)
      */
     public static final String SQL_ORDER_BY_DIRECTION = OdkData.IntentKeys.SQL_ORDER_BY_DIRECTION;
+    /**
+     * The type of query stored in this intent
+     */
+    public static final String QUERY_TYPE = "QueryType";
 
     private IntentKeys() {
     }
+  }
+
+  public static final class QueryTypes {
+    public static final String SIMPLE_QUERY = "SimpleQuery";
+    public static final String ARBITRARY_QUERY = "ArbitraryQuery";
   }
 
   /**

@@ -43,11 +43,11 @@ public class SQLQueryStruct {
   /**
    * The column id of the column to sort the results by
    */
-  public String orderByElementKey;
+  public String[] orderByElementKey;
   /**
    * the direction to sort by, ASC for ascending, DESC for descending
    */
-  public String orderByDirection;
+  public String[] orderByDirection;
 
   /**
    * A simple constructor that stores its properties
@@ -60,7 +60,7 @@ public class SQLQueryStruct {
    * @param orderByDirection  the direction to sort by, ASC for ascending, DESC for descending
    */
   public SQLQueryStruct(String whereClause, BindArgs selectionArgs, String[] groupBy, String having,
-      String orderByElementKey, String orderByDirection) {
+      String[] orderByElementKey, String[] orderByDirection) {
     this.whereClause = whereClause;
     this.selectionArgs = selectionArgs;
     this.groupBy = groupBy;

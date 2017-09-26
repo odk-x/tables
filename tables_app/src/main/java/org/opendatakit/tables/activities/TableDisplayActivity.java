@@ -38,6 +38,10 @@ import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.queries.ArbitraryQuery;
+import org.opendatakit.database.queries.BindArgs;
+import org.opendatakit.database.queries.ResumableQuery;
+import org.opendatakit.database.queries.SingleRowQuery;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -55,7 +59,6 @@ import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.views.SpreadsheetProps;
 import org.opendatakit.utilities.RuntimePermissionUtils;
 import org.opendatakit.views.ODKWebView;
-import org.opendatakit.views.ViewDataQueryParams;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.lang.reflect.Array;
@@ -116,7 +119,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * Keep references to all queries used to populate all fragments. Use the array index as the
    * viewID.
    */
-  ViewDataQueryParams[] mQueries;
+  ResumableQuery[] mQueries;
   /**
    * The activity destroys and creates a new SpreadsheetFragment every time it gets created, an
    * activity returns or the database becomes available, so we can't store props in the
@@ -239,10 +242,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           savedInstanceState.getString(Constants.IntentKeys.FILE_NAME) :
           null;
 
+
       Parcelable[] parcArr = savedInstanceState.containsKey(INTENT_KEY_QUERIES) ?
           savedInstanceState.getParcelableArray(INTENT_KEY_QUERIES) :
           null;
-      mQueries = castParcelableArray(ViewDataQueryParams.class, parcArr);
+      mQueries = castParcelableArray(ResumableQuery.class, parcArr);
     }
 
     if (mOriginalFragmentType == null) {
@@ -305,7 +309,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       Parcelable[] parcArr = savedInstanceState.containsKey(INTENT_KEY_QUERIES) ?
           savedInstanceState.getParcelableArray(INTENT_KEY_QUERIES) :
           null;
-      mQueries = castParcelableArray(ViewDataQueryParams.class, parcArr);
+      mQueries = castParcelableArray(ResumableQuery.class, parcArr);
     }
   }
 
@@ -316,16 +320,34 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    */
   private void readQueryFromIntent(Intent in) {
     if (mQueries == null) {
-      mQueries = new ViewDataQueryParams[2]; // We currently can have a maximum of two fragments
+      mQueries = new ResumableQuery[2]; // We currently can have a maximum of two fragments
     }
-    String tableId = IntentUtil.retrieveTableIdFromBundle(in.getExtras());
-    String rowId = IntentUtil.retrieveRowIdFromBundle(in.getExtras());
-    SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(in.getExtras());
 
-    ViewDataQueryParams queryParams = new ViewDataQueryParams(tableId, rowId,
-        sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs, sqlQueryStruct.groupBy,
-        sqlQueryStruct.having, sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
-    mQueries[0] = queryParams;
+    Bundle args = in.getExtras();
+    String queryType = IntentUtil.retrieveQueryTypeFromBundle(args);
+    ResumableQuery viewDataQuery;
+    if (queryType == null || queryType.equals(Constants.QueryTypes.SIMPLE_QUERY)) {
+      // Assume an empty query type is a simple query
+
+      String tableId = IntentUtil.retrieveTableIdFromBundle(args);
+      String rowId = IntentUtil.retrieveRowIdFromBundle(args);
+      mCurrentSubFileName = IntentUtil.retrieveFileNameFromBundle(args);
+      SQLQueryStruct query = IntentUtil.getSQLQueryStructFromBundle(args);
+      viewDataQuery = new SingleRowQuery(tableId, rowId, query.selectionArgs, query.whereClause,
+          query.groupBy, query.having, query.orderByElementKey, query.orderByDirection,
+          null, null);
+    } else if (queryType.equals(Constants.QueryTypes.ARBITRARY_QUERY)) {
+
+      String tableId = IntentUtil.retrieveTableIdFromBundle(args);
+      String sqlCommand = IntentUtil.retrieveSqlCommandFromBundle(args);
+      BindArgs selectionArgs = IntentUtil.retrieveSelectionArgsFromBundle(args);
+      viewDataQuery = new ArbitraryQuery(tableId, selectionArgs, sqlCommand, null, null, null);
+    } else {
+      // Unknown query type
+      return;
+    }
+
+    mQueries[0] = viewDataQuery;
   }
 
   /**
@@ -438,20 +460,19 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         } else {
           sqlQueryStruct.groupBy = props.getGroupBy();
         }
-        sqlQueryStruct.orderByElementKey = props.getSort();
-        sqlQueryStruct.orderByDirection = props.getSortOrder();
+
+        sqlQueryStruct.orderByElementKey = (props.getSort() == null ? null :
+                new String[] { props.getSort()});
+        sqlQueryStruct.orderByDirection = (props.getSortOrder() == null ? null :
+                new String[] { props.getSortOrder()});
 
         String[] emptyArray = {};
         mUserTable = getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
                 sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
                 sqlQueryStruct.groupBy == null ? emptyArray : sqlQueryStruct.groupBy,
-                sqlQueryStruct.having, sqlQueryStruct.orderByElementKey == null ?
-                    emptyArray :
-                    new String[] { sqlQueryStruct.orderByElementKey },
-                sqlQueryStruct.orderByDirection == null ?
-                    emptyArray :
-                    new String[] { sqlQueryStruct.orderByDirection }, null, null);
+                sqlQueryStruct.having, sqlQueryStruct.orderByElementKey,
+                sqlQueryStruct.orderByDirection, null, null);
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
       } finally {
@@ -1062,15 +1083,28 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       return;
     }
 
-    String tableId = IntentUtil.retrieveTableIdFromBundle(args);
-    String rowId = IntentUtil.retrieveRowIdFromBundle(args);
-    mCurrentSubFileName = IntentUtil.retrieveFileNameFromBundle(args);
-    SQLQueryStruct query = IntentUtil.getSQLQueryStructFromBundle(args);
+    String queryType = IntentUtil.retrieveQueryTypeFromBundle(args);
+    ResumableQuery viewDataQuery;
+    if (queryType == null || queryType.equals(Constants.QueryTypes.SIMPLE_QUERY)) {
+      // TODO: Make null query type invalid. For now assume simple/single row query
+      String tableId = IntentUtil.retrieveTableIdFromBundle(args);
+      String rowId = IntentUtil.retrieveRowIdFromBundle(args);
+      mCurrentSubFileName = IntentUtil.retrieveFileNameFromBundle(args);
+      SQLQueryStruct query = IntentUtil.getSQLQueryStructFromBundle(args);
+      viewDataQuery = new SingleRowQuery(tableId, rowId, query.selectionArgs, query.whereClause,
+              query.groupBy, query.having, query.orderByElementKey, query.orderByDirection,
+              null, null);
+    } else if (queryType.equals(Constants.QueryTypes.ARBITRARY_QUERY)) {
+      String tableId = IntentUtil.retrieveTableIdFromBundle(args);
+      String sqlCommand = IntentUtil.retrieveSqlCommandFromBundle(args);
+      BindArgs selectionArgs = IntentUtil.retrieveSelectionArgsFromBundle(args);
+      viewDataQuery = new ArbitraryQuery(tableId, selectionArgs, sqlCommand, null, null, null);
+    } else {
+      // Unknown query type
+      return;
+    }
 
-    ViewDataQueryParams queryParams = new ViewDataQueryParams(tableId, rowId, query.whereClause,
-        query.selectionArgs, query.groupBy, query.having, query.orderByElementKey,
-        query.orderByElementKey);
-    mQueries[1] = queryParams;
+    mQueries[1] = viewDataQuery;
 
     FragmentManager fragmentManager = this.getFragmentManager();
     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -1105,7 +1139,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * @throws IllegalArgumentException if the database is down
    */
   @Override
-  public ViewDataQueryParams getViewQueryParams(String fragmentID) throws IllegalArgumentException {
+  public ResumableQuery getViewQuery(String fragmentID) throws IllegalArgumentException {
 
     int queryIndex = 0;
 
