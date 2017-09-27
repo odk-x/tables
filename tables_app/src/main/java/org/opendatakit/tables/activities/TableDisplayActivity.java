@@ -341,7 +341,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String sqlCommand = IntentUtil.retrieveSqlCommandFromBundle(args);
       BindArgs selectionArgs = IntentUtil.retrieveSelectionArgsFromBundle(args);
-      viewDataQuery = new ArbitraryQuery(tableId, selectionArgs, sqlCommand, null, null, null);
+      viewDataQuery = new ArbitraryQuery(tableId, selectionArgs, sqlCommand, null, null);
     } else {
       // Unknown query type
       return;
@@ -1098,7 +1098,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String sqlCommand = IntentUtil.retrieveSqlCommandFromBundle(args);
       BindArgs selectionArgs = IntentUtil.retrieveSelectionArgsFromBundle(args);
-      viewDataQuery = new ArbitraryQuery(tableId, selectionArgs, sqlCommand, null, null, null);
+      viewDataQuery = new ArbitraryQuery(tableId, selectionArgs, sqlCommand, null, null);
     } else {
       // Unknown query type
       return;
