@@ -1097,6 +1097,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     } else if (queryType.equals(Constants.QueryTypes.ARBITRARY_QUERY)) {
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String sqlCommand = IntentUtil.retrieveSqlCommandFromBundle(args);
+      mCurrentSubFileName = IntentUtil.retrieveFileNameFromBundle(args);
       BindArgs selectionArgs = IntentUtil.retrieveSelectionArgsFromBundle(args);
       viewDataQuery = new ArbitraryQuery(tableId, selectionArgs, sqlCommand, null, null);
     } else {

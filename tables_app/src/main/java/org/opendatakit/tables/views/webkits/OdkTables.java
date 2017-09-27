@@ -105,7 +105,6 @@ class OdkTables {
     BindArgs bindArgs = new BindArgs(sqlSelectionArgsJSON);
     final Bundle bundle = new Bundle();
 
-    IntentUtil.addQueryTypeToBundle(bundle, Constants.QueryTypes.SIMPLE_QUERY);
     IntentUtil.addSQLKeysToBundle(bundle, sqlWhereClause, bindArgs, sqlGroupBy, sqlHaving,
         sqlOrderByElementKey, sqlOrderByDirection);
     IntentUtil.addTableIdToBundle(bundle, tableId);
@@ -162,9 +161,7 @@ class OdkTables {
     BindArgs bindArgs = new BindArgs(sqlSelectionArgsJSON);
     final Bundle bundle = new Bundle();
 
-    IntentUtil.addQueryTypeToBundle(bundle, Constants.QueryTypes.ARBITRARY_QUERY);
-    IntentUtil.addSqlCommandToBundle(bundle, sqlCommand);
-    IntentUtil.addSelectionArgsToBundle(bundle, bindArgs);
+    IntentUtil.addArbitraryQueryToBundle(bundle, sqlCommand, bindArgs);
     IntentUtil.addTableIdToBundle(bundle, tableId);
     IntentUtil.addFragmentViewTypeToBundle(bundle, viewType);
     IntentUtil.addFileNameToBundle(bundle, relativePath);

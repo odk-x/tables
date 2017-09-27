@@ -316,6 +316,7 @@ public final class IntentUtil {
    */
   public static void addSQLKeysToBundle(Bundle bundle, String whereClause, BindArgs selectionArgs,
       String[] groupBy, String having, String[] orderByElementKey, String[] orderByDirection) {
+    addQueryTypeToBundle(bundle, Constants.QueryTypes.SIMPLE_QUERY);
     addWhereClauseToBundle(bundle, whereClause);
     addSelectionArgsToBundle(bundle, selectionArgs);
     addGroupByToBundle(bundle, groupBy);
@@ -326,6 +327,7 @@ public final class IntentUtil {
 
   public static void addArbitraryQueryToBundle(Bundle bundle, String sqlCommand,
                                                BindArgs selectionArgs) {
+    addQueryTypeToBundle(bundle, Constants.QueryTypes.ARBITRARY_QUERY);
     addSqlCommandToBundle(bundle, sqlCommand);
     addSelectionArgsToBundle(bundle, selectionArgs);
   }
