@@ -47,6 +47,7 @@ import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.views.ODKWebView;
+import org.opendatakit.views.OdkData;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.io.File;
@@ -192,7 +193,7 @@ public class MainActivity extends AbsBaseWebActivity
 
     outState.putString(CURRENT_FRAGMENT, activeScreenType.name());
     if (webFileToDisplay != null) {
-      outState.putString(Constants.IntentKeys.FILE_NAME,
+      outState.putString(OdkData.IntentKeys.FILE_NAME,
           ODKFileUtils.asRelativePath(mAppName, webFileToDisplay));
     }
   }

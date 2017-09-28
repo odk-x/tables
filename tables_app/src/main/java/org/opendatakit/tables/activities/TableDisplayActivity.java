@@ -60,6 +60,7 @@ import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.views.SpreadsheetProps;
 import org.opendatakit.utilities.RuntimePermissionUtils;
 import org.opendatakit.views.ODKWebView;
+import org.opendatakit.views.OdkData;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.lang.reflect.Array;
@@ -239,8 +240,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           ViewFragmentType
               .valueOf(savedInstanceState.getString(Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE)) :
           null;
-      mOriginalFileName = savedInstanceState.containsKey(Constants.IntentKeys.FILE_NAME) ?
-          savedInstanceState.getString(Constants.IntentKeys.FILE_NAME) :
+      mOriginalFileName = savedInstanceState.containsKey(OdkData.IntentKeys.FILE_NAME) ?
+          savedInstanceState.getString(OdkData.IntentKeys.FILE_NAME) :
           null;
 
 
@@ -262,8 +263,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     }
     if (mOriginalFileName == null) {
       // get the information from the Intent
-      mOriginalFileName = getIntent().hasExtra(Constants.IntentKeys.FILE_NAME) ?
-          getIntent().getStringExtra(Constants.IntentKeys.FILE_NAME) :
+      mOriginalFileName = getIntent().hasExtra(OdkData.IntentKeys.FILE_NAME) ?
+          getIntent().getStringExtra(OdkData.IntentKeys.FILE_NAME) :
           null;
     }
 
@@ -303,8 +304,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           ViewFragmentType
               .valueOf(savedInstanceState.getString(Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE)) :
           null;
-      mOriginalFileName = savedInstanceState.containsKey(Constants.IntentKeys.FILE_NAME) ?
-          savedInstanceState.getString(Constants.IntentKeys.FILE_NAME) :
+      mOriginalFileName = savedInstanceState.containsKey(OdkData.IntentKeys.FILE_NAME) ?
+          savedInstanceState.getString(OdkData.IntentKeys.FILE_NAME) :
           null;
 
       Parcelable[] parcArr = savedInstanceState.containsKey(INTENT_KEY_QUERIES) ?
@@ -327,7 +328,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     Bundle args = in.getExtras();
     String queryType = IntentUtil.retrieveQueryTypeFromBundle(args);
     ResumableQuery viewDataQuery;
-    if (queryType.equals(Constants.QueryTypes.SIMPLE_QUERY)) {
+    if (queryType.equals(OdkData.QueryTypes.SIMPLE_QUERY)) {
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String rowId = IntentUtil.retrieveRowIdFromBundle(args);
       mCurrentSubFileName = IntentUtil.retrieveFileNameFromBundle(args);
@@ -337,7 +338,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           QueryUtil.convertStringToArray(query.orderByElementKey),
           QueryUtil.convertStringToArray(query.orderByDirection),
           null, null);
-    } else if (queryType.equals(Constants.QueryTypes.ARBITRARY_QUERY)) {
+    } else if (queryType.equals(OdkData.QueryTypes.ARBITRARY_QUERY)) {
 
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String sqlCommand = IntentUtil.retrieveSqlCommandFromBundle(args);
@@ -374,7 +375,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           .putString(Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE, mOriginalFragmentType.name());
     }
     if (mOriginalFileName != null) {
-      outState.putString(Constants.IntentKeys.FILE_NAME, mOriginalFileName);
+      outState.putString(OdkData.IntentKeys.FILE_NAME, mOriginalFileName);
     }
 
     if (mQueries != null) {
@@ -1086,7 +1087,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
     String queryType = IntentUtil.retrieveQueryTypeFromBundle(args);
     ResumableQuery viewDataQuery;
-    if (queryType.equals(Constants.QueryTypes.SIMPLE_QUERY)) {
+    if (queryType.equals(OdkData.QueryTypes.SIMPLE_QUERY)) {
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String rowId = IntentUtil.retrieveRowIdFromBundle(args);
       mCurrentSubFileName = IntentUtil.retrieveFileNameFromBundle(args);
@@ -1096,7 +1097,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           QueryUtil.convertStringToArray(query.orderByElementKey),
           QueryUtil.convertStringToArray(query.orderByDirection),
           null, null);
-    } else if (queryType.equals(Constants.QueryTypes.ARBITRARY_QUERY)) {
+    } else if (queryType.equals(OdkData.QueryTypes.ARBITRARY_QUERY)) {
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String sqlCommand = IntentUtil.retrieveSqlCommandFromBundle(args);
       mCurrentSubFileName = IntentUtil.retrieveFileNameFromBundle(args);
