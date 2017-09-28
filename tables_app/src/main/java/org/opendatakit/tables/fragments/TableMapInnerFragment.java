@@ -46,6 +46,10 @@ import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.database.data.Row;
 import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.queries.ArbitraryQuery;
+import org.opendatakit.database.queries.ResumableQuery;
+import org.opendatakit.database.queries.SimpleQuery;
+import org.opendatakit.database.queries.SingleRowQuery;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -57,7 +61,6 @@ import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.utilities.RuntimePermissionUtils;
-import org.opendatakit.views.ViewDataQueryParams;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -341,17 +344,33 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
     }
 
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
-    ViewDataQueryParams params = activity.getViewQueryParams(Constants.FragmentTags.MAP_INNER_MAP);
+    ResumableQuery resumableQuery = activity.getViewQuery(Constants.FragmentTags.MAP_INNER_MAP);
+
     UserTable table;
     try {
-      table = Tables.getInstance().getDatabase().simpleQuery(activity.getAppName(), Tables.getInstance().getDatabase().openDatabase(activity.getAppName()), params.tableId, orderedDefns, params.whereClause, params.selectionArgs, params.groupBy, params.having, new String[] { params.orderByElemKey }, new String[] { params.orderByDir }, -1, 0);
+      if (resumableQuery instanceof ArbitraryQuery) {
+        ArbitraryQuery query = (ArbitraryQuery) resumableQuery;
+        table = Tables.getInstance().getDatabase().arbitrarySqlQuery(activity.getAppName(),
+            Tables.getInstance().getDatabase().openDatabase(activity.getAppName()),
+            query.getTableId(), orderedDefns, query.getSqlCommand(), query.getSqlBindArgs(), -1, 0);
+      } else if (resumableQuery instanceof SimpleQuery || resumableQuery instanceof SingleRowQuery) {
+        SimpleQuery query = (SimpleQuery) resumableQuery;
+        table = Tables.getInstance().getDatabase().simpleQuery(activity.getAppName(),
+            Tables.getInstance().getDatabase().openDatabase(activity.getAppName()),
+            query.getTableId(), orderedDefns, query.getWhereClause(), query.getSqlBindArgs(),
+            query.getGroupByArgs(), query.getHavingClause(), query.getOrderByColNames(),
+            query.getOrderByDirections(), -1, 0);
+      } else {
+        String appName = ((IAppAwareActivity) getActivity()).getAppName();
+        WebLogger.getLogger(appName).e(TAG, "invalid query type");
+        return;
+      }
     } catch (ServicesAvailabilityException sae) {
       String appName = ((IAppAwareActivity) getActivity()).getAppName();
       WebLogger.getLogger(appName).e(TAG, "simpleQuery failed");
       WebLogger.getLogger(appName).printStackTrace(sae);
       return;
     }
-
 
     if (table != null && orderedDefns != null) {
       // Try to find the map columns in the store.

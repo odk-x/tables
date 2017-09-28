@@ -23,6 +23,7 @@ import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.data.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.views.ODKWebView;
 
 import java.lang.ref.WeakReference;
@@ -103,8 +104,64 @@ class OdkTables {
     }
     BindArgs bindArgs = new BindArgs(sqlSelectionArgsJSON);
     final Bundle bundle = new Bundle();
+
     IntentUtil.addSQLKeysToBundle(bundle, sqlWhereClause, bindArgs, sqlGroupBy, sqlHaving,
         sqlOrderByElementKey, sqlOrderByDirection);
+    IntentUtil.addTableIdToBundle(bundle, tableId);
+    IntentUtil.addFragmentViewTypeToBundle(bundle, viewType);
+    IntentUtil.addFileNameToBundle(bundle, relativePath);
+
+    if (mActivity instanceof TableDisplayActivity) {
+      final TableDisplayActivity activity = (TableDisplayActivity) mActivity;
+      // Run on ui thread to try and prevent a race condition with the two webkits
+      activity.runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          activity.updateFragment(Constants.FragmentTags.DETAIL_WITH_LIST_LIST, bundle);
+        }
+      });
+    } else {
+      throw new IllegalArgumentException(
+          "Cannot update an activity without an updateFragment " + "method");
+    }
+  }
+
+  /**
+   * Set the list view contents for a detail with list view with an arbitrary query
+   *
+   * @param tableId              the table id
+   * @param relativePath         the path relative to the app folder
+   * @param sqlCommand           arbitrary sql command to execute
+   * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
+   *                             numeric, boolean and string types.
+   */
+  void helperSetSubListView(String tableId, String relativePath, String sqlCommand,
+      String sqlSelectionArgsJSON) {
+    helperUpdateView(tableId, sqlCommand, sqlSelectionArgsJSON,
+        ViewFragmentType.SUB_LIST, relativePath);
+  }
+
+
+  /**
+   * Send a bundle to update a view without opening a new activity, using an abtirary query.
+   *
+   * @param tableId              the table id
+   * @param sqlCommand           the arbitrary sql query to run
+   * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
+   * @param viewType             Must be ViewFragmentType.SUB_LIST right now
+   * @param relativePath         the path relative to the app folder
+   * @throws IllegalArgumentException if viewType is not a sub view
+   */
+  private void helperUpdateView(String tableId, String sqlCommand, String sqlSelectionArgsJSON,
+      ViewFragmentType viewType, String relativePath) {
+    if (viewType != ViewFragmentType.SUB_LIST) {
+      throw new IllegalArgumentException("Cannot use this method to update a view that doesn't "
+          + "support updates. Currently only DetailWithListView's Sub List supports this action");
+    }
+    BindArgs bindArgs = new BindArgs(sqlSelectionArgsJSON);
+    final Bundle bundle = new Bundle();
+
+    IntentUtil.addArbitraryQueryToBundle(bundle, sqlCommand, bindArgs);
     IntentUtil.addTableIdToBundle(bundle, tableId);
     IntentUtil.addFragmentViewTypeToBundle(bundle, viewType);
     IntentUtil.addFileNameToBundle(bundle, relativePath);
