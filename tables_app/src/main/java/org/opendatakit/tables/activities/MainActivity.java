@@ -31,6 +31,7 @@ import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.database.queries.ResumableQuery;
 import org.opendatakit.database.queries.SimpleQuery;
 import org.opendatakit.database.queries.SingleRowQuery;
+import org.opendatakit.database.utilities.QueryUtil;
 import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
@@ -482,7 +483,6 @@ public class MainActivity extends AbsBaseWebActivity
   @Override
   public ResumableQuery getViewQuery(String viewID) {
     // Ignore viewID, there is only one fragment
-
     Bundle bundle = this.getIntentExtras();
 
     String tableId = IntentUtil.retrieveTableIdFromBundle(bundle);
@@ -493,9 +493,12 @@ public class MainActivity extends AbsBaseWebActivity
 
     SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(bundle);
 
+
     return new SingleRowQuery(tableId, rowId, sqlQueryStruct.selectionArgs,
-            sqlQueryStruct.whereClause, sqlQueryStruct.groupBy, sqlQueryStruct.having,
-            sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection, null, null);
+        sqlQueryStruct.whereClause, sqlQueryStruct.groupBy, sqlQueryStruct.having,
+        QueryUtil.convertStringToArray(sqlQueryStruct.orderByElementKey),
+        QueryUtil.convertStringToArray(sqlQueryStruct.orderByDirection),
+        null, null);
   }
 
   private enum ScreenType {

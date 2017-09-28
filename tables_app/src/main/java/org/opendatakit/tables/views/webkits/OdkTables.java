@@ -75,7 +75,7 @@ class OdkTables {
    */
   void helperSetSubListView(String tableId, String relativePath, String sqlWhereClause,
       String sqlSelectionArgsJSON, String[] sqlGroupBy, String sqlHaving,
-      String[] sqlOrderByElementKey, String[] sqlOrderByDirection) {
+      String sqlOrderByElementKey, String sqlOrderByDirection) {
     helperUpdateView(tableId, sqlWhereClause, sqlSelectionArgsJSON, sqlGroupBy, sqlHaving,
         sqlOrderByElementKey, sqlOrderByDirection, ViewFragmentType.SUB_LIST, relativePath);
   }
@@ -96,8 +96,8 @@ class OdkTables {
    * @throws IllegalArgumentException if viewType is not a sub view
    */
   private void helperUpdateView(String tableId, String sqlWhereClause, String sqlSelectionArgsJSON,
-      String[] sqlGroupBy, String sqlHaving, String[] sqlOrderByElementKey,
-      String[] sqlOrderByDirection, ViewFragmentType viewType, String relativePath) {
+      String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey,
+      String sqlOrderByDirection, ViewFragmentType viewType, String relativePath) {
     if (viewType != ViewFragmentType.SUB_LIST) {
       throw new IllegalArgumentException("Cannot use this method to update a view that doesn't "
           + "support updates. Currently only DetailWithListView's Sub List supports this action");

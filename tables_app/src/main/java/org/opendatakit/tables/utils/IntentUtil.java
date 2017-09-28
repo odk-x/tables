@@ -94,23 +94,16 @@ public final class IntentUtil {
           bundle.getString(IntentKeys.SQL_HAVING) :
           null;
     }
-    String[] sqlOrderByElementKey = bundle.containsKey(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) ?
-        new String[] {bundle.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY)} :
+    String sqlOrderByElementKey = bundle.containsKey(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) ?
+        bundle.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) :
         null;
-    String[] sqlOrderByDirection;
-    if (sqlOrderByElementKey == null) {
-      sqlOrderByDirection = null;
-    } else {
-      sqlOrderByDirection = new String[sqlOrderByElementKey.length];
-      for (int i = 0; i < sqlOrderByElementKey.length; i++) {
-        String orderByKey = sqlOrderByElementKey[i];
-        if (orderByKey != null && !orderByKey.isEmpty()) {
-          sqlOrderByDirection[i] = bundle.containsKey(IntentKeys.SQL_ORDER_BY_DIRECTION) ?
-                  bundle.getString(IntentKeys.SQL_ORDER_BY_DIRECTION) : null;
-        }
-        if (sqlOrderByDirection[i] == null || sqlOrderByDirection[i].isEmpty()) {
-          sqlOrderByDirection[i] = "ASC";
-        }
+    String sqlOrderByDirection = null;
+    if (sqlOrderByElementKey != null && !sqlOrderByElementKey.isEmpty()) {
+      sqlOrderByDirection = bundle.containsKey(IntentKeys.SQL_ORDER_BY_DIRECTION) ?
+          bundle.getString(IntentKeys.SQL_ORDER_BY_DIRECTION) :
+          null;
+      if (sqlOrderByDirection == null || sqlOrderByDirection.isEmpty()) {
+        sqlOrderByDirection = "ASC";
       }
     }
     return new SQLQueryStruct(sqlWhereClause, sqlBindArgs, sqlGroupBy, sqlHaving,
@@ -315,7 +308,7 @@ public final class IntentUtil {
    * @param orderByDirection  the direction to sort by, ASC for ascending, DESC for descending
    */
   public static void addSQLKeysToBundle(Bundle bundle, String whereClause, BindArgs selectionArgs,
-      String[] groupBy, String having, String[] orderByElementKey, String[] orderByDirection) {
+      String[] groupBy, String having, String orderByElementKey, String orderByDirection) {
     addQueryTypeToBundle(bundle, Constants.QueryTypes.SIMPLE_QUERY);
     addWhereClauseToBundle(bundle, whereClause);
     addSelectionArgsToBundle(bundle, selectionArgs);
@@ -340,9 +333,9 @@ public final class IntentUtil {
    * @param bundle            the bundle to put the order by column in
    * @param orderByElementKey the order by column to put in the bundle
    */
-  public static void addOrderByElementKeyToBundle(Bundle bundle, String[] orderByElementKey) {
+  public static void addOrderByElementKeyToBundle(Bundle bundle, String orderByElementKey) {
     if (bundle != null && orderByElementKey != null) {
-      bundle.putStringArray(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY, orderByElementKey);
+      bundle.putString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY, orderByElementKey);
     }
   }
 
@@ -354,9 +347,9 @@ public final class IntentUtil {
    * @param bundle           the bundle to put the order by direction in
    * @param orderByDirection the order by direction
    */
-  public static void addOrderByDirectionToBundle(Bundle bundle, String[] orderByDirection) {
+  public static void addOrderByDirectionToBundle(Bundle bundle, String orderByDirection) {
     if (bundle != null && orderByDirection != null) {
-      bundle.putStringArray(IntentKeys.SQL_ORDER_BY_DIRECTION, orderByDirection);
+      bundle.putString(IntentKeys.SQL_ORDER_BY_DIRECTION, orderByDirection);
     }
   }
 

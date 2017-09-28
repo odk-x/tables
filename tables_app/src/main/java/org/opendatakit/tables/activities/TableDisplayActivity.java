@@ -44,6 +44,7 @@ import org.opendatakit.database.queries.ResumableQuery;
 import org.opendatakit.database.queries.SingleRowQuery;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.database.utilities.QueryUtil;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
@@ -326,15 +327,15 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     Bundle args = in.getExtras();
     String queryType = IntentUtil.retrieveQueryTypeFromBundle(args);
     ResumableQuery viewDataQuery;
-    if (queryType == null || queryType.equals(Constants.QueryTypes.SIMPLE_QUERY)) {
-      // Assume an empty query type is a simple query
-
+    if (queryType.equals(Constants.QueryTypes.SIMPLE_QUERY)) {
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String rowId = IntentUtil.retrieveRowIdFromBundle(args);
       mCurrentSubFileName = IntentUtil.retrieveFileNameFromBundle(args);
       SQLQueryStruct query = IntentUtil.getSQLQueryStructFromBundle(args);
       viewDataQuery = new SingleRowQuery(tableId, rowId, query.selectionArgs, query.whereClause,
-          query.groupBy, query.having, query.orderByElementKey, query.orderByDirection,
+          query.groupBy, query.having,
+          QueryUtil.convertStringToArray(query.orderByElementKey),
+          QueryUtil.convertStringToArray(query.orderByDirection),
           null, null);
     } else if (queryType.equals(Constants.QueryTypes.ARBITRARY_QUERY)) {
 
@@ -448,6 +449,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * @return the UserTable pulled from tables
    */
   public UserTable getUserTable() {
+    String[] emptyArray = {};
     if (mUserTable == null) {
       DbHandle db = null;
       try {
@@ -461,18 +463,17 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           sqlQueryStruct.groupBy = props.getGroupBy();
         }
 
-        sqlQueryStruct.orderByElementKey = (props.getSort() == null ? null :
-                new String[] { props.getSort()});
-        sqlQueryStruct.orderByDirection = (props.getSortOrder() == null ? null :
-                new String[] { props.getSortOrder()});
+        sqlQueryStruct.orderByElementKey = props.getSort();
+        sqlQueryStruct.orderByDirection = props.getSortOrder();
 
-        String[] emptyArray = {};
         mUserTable = getDatabase()
             .simpleQuery(this.getAppName(), db, this.getTableId(), getColumnDefinitions(),
                 sqlQueryStruct.whereClause, sqlQueryStruct.selectionArgs,
                 sqlQueryStruct.groupBy == null ? emptyArray : sqlQueryStruct.groupBy,
-                sqlQueryStruct.having, sqlQueryStruct.orderByElementKey,
-                sqlQueryStruct.orderByDirection, null, null);
+                sqlQueryStruct.having,
+                QueryUtil.convertStringToArray(sqlQueryStruct.orderByElementKey),
+                QueryUtil.convertStringToArray(sqlQueryStruct.orderByDirection),
+                null, null);
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
       } finally {
@@ -1069,7 +1070,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * @param fragmentID The id of the fragment to search the fragment manager for
    * @param args       the arguments to give to the fragment
    */
-  public void updateFragment(String fragmentID, Bundle args) {
+  public void updateFragment(String fragmentID, Bundle args) throws IllegalArgumentException {
     if (fragmentID == null || !fragmentID.equals(Constants.FragmentTags.DETAIL_WITH_LIST_LIST)) {
       WebLogger.getLogger(getAppName())
           .e(TAG, "[updateFragment] Attempted to update an unsupported fragment id: " + fragmentID);
@@ -1085,15 +1086,16 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
     String queryType = IntentUtil.retrieveQueryTypeFromBundle(args);
     ResumableQuery viewDataQuery;
-    if (queryType == null || queryType.equals(Constants.QueryTypes.SIMPLE_QUERY)) {
-      // TODO: Make null query type invalid. For now assume simple/single row query
+    if (queryType.equals(Constants.QueryTypes.SIMPLE_QUERY)) {
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String rowId = IntentUtil.retrieveRowIdFromBundle(args);
       mCurrentSubFileName = IntentUtil.retrieveFileNameFromBundle(args);
       SQLQueryStruct query = IntentUtil.getSQLQueryStructFromBundle(args);
       viewDataQuery = new SingleRowQuery(tableId, rowId, query.selectionArgs, query.whereClause,
-              query.groupBy, query.having, query.orderByElementKey, query.orderByDirection,
-              null, null);
+          query.groupBy, query.having,
+          QueryUtil.convertStringToArray(query.orderByElementKey),
+          QueryUtil.convertStringToArray(query.orderByDirection),
+          null, null);
     } else if (queryType.equals(Constants.QueryTypes.ARBITRARY_QUERY)) {
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String sqlCommand = IntentUtil.retrieveSqlCommandFromBundle(args);
@@ -1101,8 +1103,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       BindArgs selectionArgs = IntentUtil.retrieveSelectionArgsFromBundle(args);
       viewDataQuery = new ArbitraryQuery(tableId, selectionArgs, sqlCommand, null, null);
     } else {
-      // Unknown query type
-      return;
+      throw new IllegalArgumentException("Unrecognized query type");
     }
 
     mQueries[1] = viewDataQuery;

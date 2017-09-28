@@ -161,7 +161,7 @@ public final class Constants {
     /**
      * The type of query stored in this intent
      */
-    public static final String QUERY_TYPE = "QueryType";
+    public static final String QUERY_TYPE = "queryType";
 
     private IntentKeys() {
     }
