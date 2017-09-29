@@ -328,6 +328,21 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     Bundle args = in.getExtras();
     String queryType = IntentUtil.retrieveQueryTypeFromBundle(args);
     ResumableQuery viewDataQuery;
+
+    if (queryType == null) {
+      // We are assuming this is a Simple Query if query type is unspecified. Here we are just
+      // confirming that the user hasn't provided arguments not present in a Simple Query before we
+      // "cast" it.
+
+      // This checks for sqlCommand, a required argument for Arbitrary Query, but not present in
+      // Simple Query.
+      if(IntentUtil.retrieveSqlCommandFromBundle(args) != null) {
+        throw new IllegalArgumentException("Must specify query type for non-Simple Queries");
+      }
+
+      queryType = OdkData.QueryTypes.SIMPLE_QUERY;
+    }
+
     if (queryType.equals(OdkData.QueryTypes.SIMPLE_QUERY)) {
       String tableId = IntentUtil.retrieveTableIdFromBundle(args);
       String rowId = IntentUtil.retrieveRowIdFromBundle(args);
@@ -345,8 +360,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       BindArgs selectionArgs = IntentUtil.retrieveSelectionArgsFromBundle(args);
       viewDataQuery = new ArbitraryQuery(tableId, selectionArgs, sqlCommand, null, null);
     } else {
-      // Unknown query type
-      return;
+      throw new IllegalArgumentException("Unknown Query Type");
     }
 
     mQueries[0] = viewDataQuery;
