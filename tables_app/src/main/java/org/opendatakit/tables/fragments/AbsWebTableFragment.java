@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.IOdkTablesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
@@ -42,6 +43,23 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implem
     WebLogger.getLogger(getAppName()).d(TAG, "[onCreateView]");
 
     return inflater.inflate(R.layout.web_view_container, container, false);
+  }
+
+  public void onResume() {
+    super.onResume();
+    OdkTablesWebView view = getWebKit();
+    if ( view != null ) {
+      view.onResume();
+    }
+  }
+
+  @Override
+  public void onPause() {
+    super.onPause();
+    OdkTablesWebView view = getWebKit();
+    if ( view != null ) {
+      view.onPause();
+    }
   }
 
   @Override
@@ -76,6 +94,8 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment implem
 
     if (getView() != null) {
       setWebKitVisibility();
+      WebLogger.getLogger(((IOdkTablesActivity) getActivity()).getAppName())
+          .d(TAG, "reloadPage " + getWebKit().getContainerFragmentID());
       getWebKit().reloadPage();
     }
   }

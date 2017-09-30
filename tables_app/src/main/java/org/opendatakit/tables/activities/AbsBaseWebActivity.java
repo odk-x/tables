@@ -48,12 +48,31 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   private static final String SESSION_VARIABLES = "sessionVariables";
 
   private static final String QUEUED_ACTIONS = "queuedActions";
-  private static final String RESPONSE_JSON = "responseJSON";
-  private LinkedList<String> queueResponseJSON = new LinkedList<>();
-  private String dispatchStringWaitingForData = null;
-  private String actionWaitingForData = null;
-  private Bundle sessionVariables = new Bundle();
-  private LinkedList<String> queuedActions = new LinkedList<>();
+  private static final String RESPONSE_JSON_MAIN = "responseJSON_main";
+  private static final String RESPONSE_JSON_SUBLIST = "responseJSON_sublist";
+
+  /**
+   * With the advent of the split screen detail-with-sublist view, we need to
+   * guard access to the data and result queues and session variable data structures.
+   *
+   * The queued data response lists need to be separated into response streams for each webkit
+   * that is active. We currently can have either one or two (detail-with-sublist) active.
+   *
+   * The dispatchString, action, and queuedActions (action results) are guarded only
+   * to ensure that they are updated concurrently and consistently. Results are expected
+   * to be read from the primary webkit (e.g., the detail webkit).
+   *
+   * The session variables bundle is a complex data structure and is guarded to ensure the two
+   * webkits don't attempt to manipulate it at the same time (it is unclear if the webkit threads
+   * will be the same thread or different).  Session variables are shared across the webkits.
+   */
+  private final Object guardCachedContent = new Object();
+  private LinkedList<String> guardedQueueResponseJSON_main = new LinkedList<>();
+  private LinkedList<String> guardedQueueResponseJSON_sublist = new LinkedList<>();
+  private String guardedDispatchStringWaitingForData = null;
+  private String guardedActionWaitingForData = null;
+  private LinkedList<String> guardedQueuedActions = new LinkedList<>();
+  private Bundle guardedSessionVariables = new Bundle();
   /**
    * Member variables that do not need to be preserved across orientation
    * changes, etc.
@@ -69,10 +88,10 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   /**
    * Gets the active webkit view
    *
-   * @param viewID The id for the webkit in the view heirarchy, if there are multiple
+   * @param fragmentID The id for the webkit in the view heirarchy, if there are multiple
    * @return the webkit if it was found, or else null
    */
-  public abstract ODKWebView getWebKitView(String viewID);
+  public abstract ODKWebView getWebKitView(String fragmentID);
 
   /**
    * We need to save whether we were waiting for data (a json string), our session variables, our
@@ -84,24 +103,31 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
 
-    if (dispatchStringWaitingForData != null) {
-      outState.putString(DISPATCH_STRING_WAITING_FOR_DATA, dispatchStringWaitingForData);
-    }
-    if (actionWaitingForData != null) {
-      outState.putString(ACTION_WAITING_FOR_DATA, actionWaitingForData);
-    }
+    synchronized (guardCachedContent) {
+      if (guardedDispatchStringWaitingForData != null) {
+        outState.putString(DISPATCH_STRING_WAITING_FOR_DATA, guardedDispatchStringWaitingForData);
+      }
+      if (guardedActionWaitingForData != null) {
+        outState.putString(ACTION_WAITING_FOR_DATA, guardedActionWaitingForData);
+      }
 
-    outState.putBundle(SESSION_VARIABLES, sessionVariables);
+      outState.putBundle(SESSION_VARIABLES, guardedSessionVariables);
 
-    if (!queuedActions.isEmpty()) {
-      String[] actionOutcomesArray = new String[queuedActions.size()];
-      queuedActions.toArray(actionOutcomesArray);
-      outState.putStringArray(QUEUED_ACTIONS, actionOutcomesArray);
-    }
+      if (!guardedQueuedActions.isEmpty()) {
+        String[] actionOutcomesArray = new String[guardedQueuedActions.size()];
+        guardedQueuedActions.toArray(actionOutcomesArray);
+        outState.putStringArray(QUEUED_ACTIONS, actionOutcomesArray);
+      }
 
-    if (!queueResponseJSON.isEmpty()) {
-      String[] qra = queueResponseJSON.toArray(new String[queueResponseJSON.size()]);
-      outState.putStringArray(RESPONSE_JSON, qra);
+      if (!guardedQueueResponseJSON_main.isEmpty()) {
+        String[] qra = guardedQueueResponseJSON_main.toArray(new String[guardedQueueResponseJSON_main.size()]);
+        outState.putStringArray(RESPONSE_JSON_MAIN, qra);
+      }
+
+      if (!guardedQueueResponseJSON_sublist.isEmpty()) {
+        String[] qra = guardedQueueResponseJSON_sublist.toArray(new String[guardedQueueResponseJSON_sublist.size()]);
+        outState.putStringArray(RESPONSE_JSON_SUBLIST, qra);
+      }
     }
   }
 
@@ -117,34 +143,44 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
     mPropertyManager = new PropertyManager(this);
 
-    if (savedInstanceState != null) {
-      // if we are restoring, assume that initialization has already occurred.
+    synchronized(guardCachedContent) {
+      if (savedInstanceState != null) {
+        // if we are restoring, assume that initialization has already occurred.
 
-      dispatchStringWaitingForData = savedInstanceState
-          .containsKey(DISPATCH_STRING_WAITING_FOR_DATA) ?
-          savedInstanceState.getString(DISPATCH_STRING_WAITING_FOR_DATA) :
-          null;
-      actionWaitingForData = savedInstanceState.containsKey(ACTION_WAITING_FOR_DATA) ?
-          savedInstanceState.getString(ACTION_WAITING_FOR_DATA) :
-          null;
+        guardedDispatchStringWaitingForData = savedInstanceState.containsKey
+            (DISPATCH_STRING_WAITING_FOR_DATA) ?
+            savedInstanceState.getString(DISPATCH_STRING_WAITING_FOR_DATA) :
+            null;
+        guardedActionWaitingForData = savedInstanceState.containsKey(ACTION_WAITING_FOR_DATA) ?
+            savedInstanceState.getString(ACTION_WAITING_FOR_DATA) :
+            null;
 
-      if (savedInstanceState.containsKey(SESSION_VARIABLES)) {
-        sessionVariables = savedInstanceState.getBundle(SESSION_VARIABLES);
-      }
-
-      if (savedInstanceState.containsKey(QUEUED_ACTIONS)) {
-        String[] actionOutcomesArray = savedInstanceState.getStringArray(QUEUED_ACTIONS);
-        queuedActions.clear();
-        if (actionOutcomesArray != null) {
-          queuedActions.addAll(Arrays.asList(actionOutcomesArray));
+        if (savedInstanceState.containsKey(SESSION_VARIABLES)) {
+          guardedSessionVariables = savedInstanceState.getBundle(SESSION_VARIABLES);
         }
-      }
 
-      if (savedInstanceState.containsKey(RESPONSE_JSON)) {
-        String[] pendingResponseJSON = savedInstanceState.getStringArray(RESPONSE_JSON);
-        queueResponseJSON.clear();
-        if (pendingResponseJSON != null) {
-          queueResponseJSON.addAll(Arrays.asList(pendingResponseJSON));
+        if (savedInstanceState.containsKey(QUEUED_ACTIONS)) {
+          String[] actionOutcomesArray = savedInstanceState.getStringArray(QUEUED_ACTIONS);
+          guardedQueuedActions.clear();
+          if (actionOutcomesArray != null) {
+            guardedQueuedActions.addAll(Arrays.asList(actionOutcomesArray));
+          }
+        }
+
+        if (savedInstanceState.containsKey(RESPONSE_JSON_MAIN)) {
+          String[] pendingResponseJSON = savedInstanceState.getStringArray(RESPONSE_JSON_MAIN);
+          guardedQueueResponseJSON_main.clear();
+          if (pendingResponseJSON != null) {
+            guardedQueueResponseJSON_main.addAll(Arrays.asList(pendingResponseJSON));
+          }
+        }
+
+        if (savedInstanceState.containsKey(RESPONSE_JSON_SUBLIST)) {
+          String[] pendingResponseJSON = savedInstanceState.getStringArray(RESPONSE_JSON_SUBLIST);
+          guardedQueueResponseJSON_sublist.clear();
+          if (pendingResponseJSON != null) {
+            guardedQueueResponseJSON_sublist.addAll(Arrays.asList(pendingResponseJSON));
+          }
         }
       }
     }
@@ -186,7 +222,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
    */
   @Override
   public String getWebViewContentUri() {
-    Uri u = UrlUtils.getWebViewContentUri(null);
+    Uri u = UrlUtils.getWebViewContentUri();
 
     String uriString = u.toString();
 
@@ -200,12 +236,16 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   @Override
   public void setSessionVariable(String elementPath, String jsonValue) {
-    sessionVariables.putString(elementPath, jsonValue);
+    synchronized (guardCachedContent) {
+      guardedSessionVariables.putString(elementPath, jsonValue);
+    }
   }
 
   @Override
   public String getSessionVariable(String elementPath) {
-    return sessionVariables.getString(elementPath);
+    synchronized (guardCachedContent) {
+      return guardedSessionVariables.getString(elementPath);
+    }
   }
 
   /**
@@ -233,8 +273,10 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
       return "JSONException";
     }
 
-    dispatchStringWaitingForData = dispatchStructAsJSONstring;
-    actionWaitingForData = action;
+    synchronized (guardCachedContent) {
+      guardedDispatchStringWaitingForData = dispatchStructAsJSONstring;
+      guardedActionWaitingForData = action;
+    }
 
     try {
       startActivityForResult(i, RequestCodeConsts.RequestCodes.LAUNCH_DOACTION);
@@ -252,32 +294,48 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
     ODKWebView view = getWebKitView(null);
 
     if (requestCode == RequestCodeConsts.RequestCodes.LAUNCH_DOACTION) {
-      try {
-        DoActionUtils
-            .processActivityResult(this, view, resultCode, intent, dispatchStringWaitingForData,
-                actionWaitingForData);
-      } finally {
-        dispatchStringWaitingForData = null;
-        actionWaitingForData = null;
+      String dispatchString;
+      String action;
+      synchronized (guardCachedContent) {
+        // save persisted values into a local variable
+        dispatchString = guardedDispatchStringWaitingForData;
+        action = guardedActionWaitingForData;
+
+        // clear the persisted values
+        guardedDispatchStringWaitingForData = null;
+        guardedActionWaitingForData = null;
       }
+      // DoActionUtils may invoke queueActionOutcome (gaining the lock
+      // and adding the response to the queued actions) and, if it does,
+      // it will then also signal the view that there are responses available.
+      DoActionUtils
+          .processActivityResult(this, view, resultCode, intent,
+              dispatchString,
+              action);
     }
     super.onActivityResult(requestCode, resultCode, intent);
   }
 
   public boolean isWaitingForBinaryData() {
-    return actionWaitingForData != null;
+    synchronized (guardCachedContent) {
+      return guardedActionWaitingForData != null;
+    }
   }
 
   @Override
   public void queueActionOutcome(String outcome) {
-    queuedActions.addLast(outcome);
+    synchronized (guardCachedContent) {
+      guardedQueuedActions.addLast(outcome);
+    }
   }
 
   @Override
   public void queueUrlChange(String hash) {
     try {
       String jsonEncoded = ODKFileUtils.mapper.writeValueAsString(hash);
-      queuedActions.addLast(jsonEncoded);
+      synchronized (guardCachedContent) {
+        guardedQueuedActions.addLast(jsonEncoded);
+      }
     } catch (Exception e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
@@ -285,27 +343,38 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
 
   @Override
   public String viewFirstQueuedAction() {
-    return queuedActions.isEmpty() ? null : queuedActions.getFirst();
-  }
-
-  @Override
-  public void removeFirstQueuedAction() {
-    if (!queuedActions.isEmpty()) {
-      queuedActions.removeFirst();
+    synchronized (guardCachedContent) {
+      return guardedQueuedActions.isEmpty() ? null : guardedQueuedActions.getFirst();
     }
   }
 
   @Override
-  public void signalResponseAvailable(String responseJSON, String viewID) {
+  public void removeFirstQueuedAction() {
+    synchronized (guardCachedContent) {
+      if (!guardedQueuedActions.isEmpty()) {
+        guardedQueuedActions.removeFirst();
+      }
+    }
+  }
+
+  @Override
+  public void signalResponseAvailable(String responseJSON, String fragmentID) {
     if (responseJSON == null) {
       WebLogger.getLogger(getAppName()).e(TAG, "signalResponseAvailable -- got null responseJSON!");
     } else {
       WebLogger.getLogger(getAppName()).e(TAG,
           "signalResponseAvailable -- got " + responseJSON.length() + " long responseJSON!");
     }
+
     if (responseJSON != null) {
-      this.queueResponseJSON.push(responseJSON);
-      final ODKWebView webView = getWebKitView(viewID);
+      synchronized (guardCachedContent) {
+        if (fragmentID != null && Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
+          this.guardedQueueResponseJSON_sublist.push(responseJSON);
+        } else {
+          this.guardedQueueResponseJSON_main.push(responseJSON);
+        }
+      }
+      final ODKWebView webView = getWebKitView(fragmentID);
       if (webView != null) {
         runOnUiThread(new Runnable() {
           @Override
@@ -318,11 +387,20 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   }
 
   @Override
-  public String getResponseJSON() {
-    if (queueResponseJSON.isEmpty()) {
-      return null;
+  public String getResponseJSON(String fragmentID) {
+    synchronized (guardCachedContent) {
+      if (fragmentID != null && Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
+        if (guardedQueueResponseJSON_sublist.isEmpty()) {
+          return null;
+        }
+        return guardedQueueResponseJSON_sublist.removeFirst();
+      } else {
+        if (guardedQueueResponseJSON_main.isEmpty()) {
+          return null;
+        }
+        return guardedQueueResponseJSON_main.removeFirst();
+      }
     }
-    return queueResponseJSON.removeFirst();
   }
 
   @Override

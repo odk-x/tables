@@ -121,18 +121,18 @@ public class TableDataExecutorProcessor extends ExecutorProcessor {
 
       // Need to get column color rules working
       Object ekm = metadata.get("elementKeyMap");
-      if (ekm instanceof Map) {
-        //noinspection rawtypes <-- so we don't have to cast to Map<String, Object> which is unsafe
-        Map elementKeyMap = (Map) ekm;
-        for (Object elementKey : elementKeyMap.keySet()) {
-          if (elementKey instanceof String) { // always true
-            ArrayList<RowColorObject> colColorGuide = new ArrayList<>();
-            constructRowColorObjects(dbInterface, db, userTable, adminCols, colColorGuide,
-                ColorRuleType.COLUMN, (String) elementKey);
-            if (!colColorGuide.isEmpty()) {
-              colColors.put((String) elementKey, colColorGuide);
-            }
-          }
+      if (ekm == null || !(ekm instanceof Map)) {
+        throw new IllegalStateException("this should be a Map<String,Integer>");
+      }
+      // from the calling code path, the Map is always a Map<String,Integer>.
+      @SuppressWarnings("unchecked")
+      Map<String, Integer> elementKeyMap = (Map<String, Integer>) ekm;
+      for (String elementKey : elementKeyMap.keySet()) {
+        ArrayList<RowColorObject> colColorGuide = new ArrayList<>();
+        constructRowColorObjects(dbInterface, db, userTable, adminCols, colColorGuide,
+            ColorRuleType.COLUMN, elementKey);
+        if (!colColorGuide.isEmpty()) {
+          colColors.put(elementKey, colColorGuide);
         }
       }
 

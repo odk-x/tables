@@ -20,6 +20,7 @@ import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.tables.fragments.*;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.views.OdkData;
 
 /**
  * Displays preferences for a table to the user. This includes all preferences
@@ -389,11 +390,11 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
   String retrieveElementKeyFromBundleOrActivity(Bundle savedInstanceState) {
     String result = null;
     if (savedInstanceState != null && savedInstanceState
-        .containsKey(Constants.IntentKeys.ELEMENT_KEY)) {
-      result = savedInstanceState.getString(Constants.IntentKeys.ELEMENT_KEY);
+        .containsKey(OdkData.IntentKeys.ELEMENT_KEY)) {
+      result = savedInstanceState.getString(OdkData.IntentKeys.ELEMENT_KEY);
     }
     if (result == null) {
-      result = this.getIntent().getStringExtra(Constants.IntentKeys.ELEMENT_KEY);
+      result = this.getIntent().getStringExtra(OdkData.IntentKeys.ELEMENT_KEY);
     }
     return result;
   }

@@ -17,6 +17,12 @@ package org.opendatakit.tables.application;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.tables.R;
 
+import com.google.firebase.analytics.FirebaseAnalytics ;
+
+import android.content.Context;
+import com.crashlytics.android.Crashlytics;
+import io.fabric.sdk.android.Fabric;
+
 import java.lang.ref.WeakReference;
 
 /**
@@ -29,7 +35,10 @@ public class Tables extends CommonApplication {
    */
   @SuppressWarnings("unused")
   private static final String TAG = Tables.class.getSimpleName();
+
   private static WeakReference<Tables> ref = null;
+
+  private FirebaseAnalytics analytics;
 
   public static Tables getInstance() {
     if (ref == null)
@@ -53,11 +62,6 @@ public class Tables extends CommonApplication {
     return R.raw.systemzip;
   }
 
-  @Override
-  public int getWebKitResourceId() {
-    return -1; // R.id.webkit;
-  }
-
   public String getVersionedToolName() {
     String versionDetail = this.getVersionDetail();
     return getString(R.string.app_name) + versionDetail;
@@ -67,5 +71,8 @@ public class Tables extends CommonApplication {
   public void onCreate() {
     ref = new WeakReference<>(this);
     super.onCreate();
+
+    Fabric.with(this, new Crashlytics());
+    analytics = FirebaseAnalytics.getInstance(this);
   }
 }

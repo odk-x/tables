@@ -1,23 +1,25 @@
 package org.opendatakit.espresso;
 
-import android.app.Application;
-import android.app.Activity;
-import org.opendatakit.tables.application.Tables;
-import android.content.Context;
+import android.Manifest;
 import android.graphics.Rect;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
+import android.support.v13.app.ActivityCompat;
 import android.view.View;
 import android.widget.ScrollView;
+
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.data.ColorRuleGroup;
@@ -26,7 +28,6 @@ import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
@@ -37,33 +38,48 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static android.support.test.espresso.Espresso.*;
+import static android.support.test.espresso.Espresso.onData;
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.Espresso.pressBack;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.longClick;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
-import static android.support.test.espresso.matcher.ViewMatchers.*;
-import static org.hamcrest.Matchers.*;
-import static org.opendatakit.util.TestConstants.*;
+import static android.support.test.espresso.matcher.ViewMatchers.assertThat;
+import static android.support.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.opendatakit.util.TestConstants.APP_NAME;
+import static org.opendatakit.util.TestConstants.COLUMNS_LIST;
+import static org.opendatakit.util.TestConstants.TABLE_COLOR;
+import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class ColorRuleTest extends AbsBaseTest {
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
   private final String tableId = T_HOUSE_E_TABLE_ID;
   private final String elementKeyName = "House id";
   private final String elementKeyId = "House_id";
+
   private Boolean initSuccess = null;
   private UiDevice mDevice;
   private DbHandle db;
   private String[] adminColumns;
-  @Rule
-  public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
+
+  // don't annotate used in chain rule
+  private ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
       MainActivity.class) {
     @Override
     protected void beforeActivityLaunched() {
       super.beforeActivityLaunched();
+
       if (c == null) {
         try {
           new AbsBaseTest()._setUpC();
@@ -96,6 +112,18 @@ public class ColorRuleTest extends AbsBaseTest {
       }
     }
   };
+
+  // don't annotate used in chain rule
+  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+      Manifest.permission.WRITE_EXTERNAL_STORAGE,
+      Manifest.permission.READ_EXTERNAL_STORAGE,
+      Manifest.permission.ACCESS_FINE_LOCATION
+  );
+
+  @Rule
+  public TestRule chainedRules = RuleChain
+      .outerRule(grantPermissionRule)
+      .around(mActivityRule);
 
   @Before
   public void setup() {

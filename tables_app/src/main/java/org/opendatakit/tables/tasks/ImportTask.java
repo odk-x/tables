@@ -80,11 +80,6 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
     }
   }
 
-  @Override
-  public void updateProgressDetail(int progressDetailString) {
-    // TODO
-  }
-
   /**
    * called when the import is complete, records the result in probleImportingKVSEntries
    *
@@ -101,7 +96,7 @@ public class ImportTask extends AsyncTask<ImportRequest, Integer, Boolean>
    *
    * @param row the row we're currently importing
    */
-  //@Override
+  @Override
   public void updateProgressDetail(int row, int total) {
     ImportExportDialogFragment.activeDialogFragment
         .updateProgressDialogStatusString(context, R.string.import_in_progress_row, row, total);

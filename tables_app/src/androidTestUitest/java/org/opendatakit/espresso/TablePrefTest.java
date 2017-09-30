@@ -1,5 +1,6 @@
 package org.opendatakit.espresso;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
@@ -11,13 +12,18 @@ import android.support.test.espresso.intent.Intents;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.filters.LargeTest;
+import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
-import android.util.Log;
+import android.view.View;
+
+import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
@@ -25,7 +31,7 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.application.Tables;
+import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.views.SpreadsheetView;
 import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
@@ -35,30 +41,65 @@ import org.opendatakit.utilities.ODKFileUtils;
 
 import java.io.File;
 
-import static android.support.test.espresso.Espresso.*;
+import static android.support.test.espresso.Espresso.onData;
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.Espresso.pressBack;
+import static android.support.test.espresso.action.ViewActions.clearText;
 import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.action.ViewActions.typeText;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.intended;
 import static android.support.test.espresso.intent.Intents.intending;
-import static android.support.test.espresso.intent.matcher.IntentMatchers.*;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.hasAction;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.hasComponent;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.hasExtra;
 import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
-import static android.support.test.espresso.matcher.ViewMatchers.*;
+import static android.support.test.espresso.matcher.ViewMatchers.assertThat;
+import static android.support.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.isDescendantOfA;
+import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.isEnabled;
+import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static android.support.test.espresso.web.assertion.WebViewAssertions.webMatches;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.getText;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
-import static org.hamcrest.Matchers.*;
-import static org.opendatakit.util.TestConstants.*;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.anything;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.opendatakit.util.TestConstants.APP_NAME;
+import static org.opendatakit.util.TestConstants.COLUMNS_LIST;
+import static org.opendatakit.util.TestConstants.COL_DISPLAY_NAME;
+import static org.opendatakit.util.TestConstants.COL_KEY;
+import static org.opendatakit.util.TestConstants.DEFAULT_FORM;
+import static org.opendatakit.util.TestConstants.DEFAULT_VIEW_TYPE;
+import static org.opendatakit.util.TestConstants.DETAIL_VIEW_FILE;
+import static org.opendatakit.util.TestConstants.LIST_VIEW_FILE;
+import static org.opendatakit.util.TestConstants.MAP_LIST_VIEW_FILE;
+import static org.opendatakit.util.TestConstants.OI_PICK_FILE;
+import static org.opendatakit.util.TestConstants.TABLE_DISPLAY_NAME;
+import static org.opendatakit.util.TestConstants.TABLE_ID;
+import static org.opendatakit.util.TestConstants.T_HOUSE_E_DISPLAY_NAME;
+import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
+import static org.opendatakit.util.TestConstants.T_HOUSE_TABLE_ID;
+import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class TablePrefTest extends AbsBaseTest {
   @ClassRule
   public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
   private Boolean initSuccess = null;
   private UiDevice mDevice;
-  @Rule
-  public IntentsTestRule<MainActivity> mActivityRule = new IntentsTestRule<MainActivity>(
+
+  // don't annotate used in chain rule
+  private IntentsTestRule<MainActivity> mIntentsRule = new IntentsTestRule<MainActivity>(
       MainActivity.class) {
     @Override
     protected void beforeActivityLaunched() {
@@ -77,6 +118,18 @@ public class TablePrefTest extends AbsBaseTest {
       onWebView().forceJavascriptEnabled();
     }
   };
+
+  // don't annotate used in chain rule
+  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+      Manifest.permission.WRITE_EXTERNAL_STORAGE,
+      Manifest.permission.READ_EXTERNAL_STORAGE,
+      Manifest.permission.ACCESS_FINE_LOCATION
+  );
+
+  @Rule
+  public TestRule chainedRules = RuleChain
+      .outerRule(grantPermissionRule)
+      .around(mIntentsRule);
 
   private static String getListViewFile() {
     DbHandle db = null;
@@ -386,18 +439,16 @@ public class TablePrefTest extends AbsBaseTest {
         .perform(webClick());
 
     try {
+      Matcher<View> topWebViewMatcher =
+              allOf(withId(R.id.webkit), isDescendantOfA(withId(R.id.top_pane)));
+
       //check url
-      Log.i("intents_detailView", "debug 3");
-      onView(withId(R.id.webkit)).check(matches(ODKMatchers.withUrl(endsWith(detailViewPath))));
-      Log.i("intents_detailView", "debug 4");
+      onView(topWebViewMatcher)
+              .check(matches(ODKMatchers.withUrl(endsWith(detailViewPath))));
 
-      try {
-        Thread.sleep(2000); //need this for older devices
-      } catch (Exception e) {
-      }
-
-      EspressoUtils.delayedFindElement(Locator.ID, "TITLE", WEB_WAIT_TIMEOUT)
-          .check(webMatches(getText(), is("Tea for All")));
+      EspressoUtils
+              .delayedFindElement(topWebViewMatcher, Locator.ID, "TITLE", WEB_WAIT_TIMEOUT)
+              .check(webMatches(getText(), is("Tea for All")));
     } finally {
       setDetailViewFile(currDetailFile);
       setListViewFile(currListFile);
@@ -437,11 +488,15 @@ public class TablePrefTest extends AbsBaseTest {
 
     try {
       //enable both views
-      setListViewFile("testing");
-      setMapViewFile("testing");
+      setListViewFile("config/tables/Tea_houses/html/Tea_houses_list.html");
+      setMapViewFile("config/tables/Tea_houses/html/Tea_houses_list.html");
 
-      //quit preferences
+      //quit to table manager
       pressBack();
+      pressBack();
+
+      // reopen Tea Houses Editable
+      onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
 
       //Check buttons
       onView(withId(R.id.top_level_table_menu_select_view)).perform(click());
@@ -468,12 +523,54 @@ public class TablePrefTest extends AbsBaseTest {
       onData(withKey(LIST_VIEW_FILE)).perform(click());
 
       //check toast message
-      EspressoUtils.toastMsgMatcher(mActivityRule, is(EspressoUtils
-          .getString(mActivityRule, R.string.file_not_under_app_dir,
+      EspressoUtils.toastMsgMatcher(mIntentsRule, is(EspressoUtils
+          .getString(mIntentsRule, R.string.file_not_under_app_dir,
               ODKFileUtils.getAppFolder(APP_NAME))));
     } finally {
       //restore
       setListViewFile(currListFile);
+    }
+  }
+
+  @Test
+  public void display_badFormId() {
+    // backup
+    String currFormId = null;
+
+    try {
+      currFormId = FormType
+              .constructFormType(mIntentsRule.getActivity(), APP_NAME, T_HOUSE_E_TABLE_ID)
+              .getFormId();
+
+      assertThat(currFormId, notNullValue(String.class));
+
+      //change form id to something invalid
+      onData(withKey(DEFAULT_FORM))
+              .perform(click());
+      onView(withId(R.id.edit_form_id))
+              .perform(click())
+              .perform(clearText())
+              .perform(typeText("invalid_form_id"));
+      onView(withId(android.R.id.button1))
+              .perform(click());
+
+      EspressoUtils
+              .toastMsgMatcher(
+                  mIntentsRule,
+                      is(EspressoUtils.getString(mIntentsRule, R.string.invalid_form))
+              );
+    } catch (ServicesAvailabilityException e) {
+      e.printStackTrace();
+    } finally {
+      if (currFormId != null) {
+        try {
+          FormType
+                  .constructFormType(mIntentsRule.getActivity(), APP_NAME, T_HOUSE_E_TABLE_ID)
+                  .setFormId(currFormId);
+        } catch (ServicesAvailabilityException e) {
+          e.printStackTrace();
+        }
+      }
     }
   }
 }
