@@ -62,11 +62,6 @@ public class Tables extends CommonApplication {
     return R.raw.systemzip;
   }
 
-  @Override
-  public int getWebKitResourceId() {
-    return -1; // R.id.webkit;
-  }
-
   public String getVersionedToolName() {
     String versionDetail = this.getVersionDetail();
     return getString(R.string.app_name) + versionDetail;

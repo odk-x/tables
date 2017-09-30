@@ -70,37 +70,37 @@ public final class IntentUtil {
    * @return the sql query struct pulled from the bundle
    */
   public static SQLQueryStruct getSQLQueryStructFromBundle(Bundle bundle) {
-    String sqlWhereClause = bundle.containsKey(IntentKeys.SQL_WHERE) ?
-        bundle.getString(IntentKeys.SQL_WHERE) :
+    String sqlWhereClause = bundle.containsKey(OdkData.IntentKeys.SQL_WHERE) ?
+        bundle.getString(OdkData.IntentKeys.SQL_WHERE) :
         null;
 
     BindArgs sqlBindArgs;
     {
       String sqlSelectionArgsString = null;
       if (sqlWhereClause != null && !sqlWhereClause.isEmpty()) {
-        sqlSelectionArgsString = bundle.containsKey(IntentKeys.SQL_SELECTION_ARGS) ?
-            bundle.getString(IntentKeys.SQL_SELECTION_ARGS) :
+        sqlSelectionArgsString = bundle.containsKey(OdkData.IntentKeys.SQL_SELECTION_ARGS) ?
+            bundle.getString(OdkData.IntentKeys.SQL_SELECTION_ARGS) :
             null;
       }
       sqlBindArgs = new BindArgs(sqlSelectionArgsString);
     }
 
-    String[] sqlGroupBy = bundle.containsKey(IntentKeys.SQL_GROUP_BY_ARGS) ?
-        bundle.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS) :
+    String[] sqlGroupBy = bundle.containsKey(OdkData.IntentKeys.SQL_GROUP_BY_ARGS) ?
+        bundle.getStringArray(OdkData.IntentKeys.SQL_GROUP_BY_ARGS) :
         null;
     String sqlHaving = null;
     if (sqlGroupBy != null && sqlGroupBy.length != 0) {
-      sqlHaving = bundle.containsKey(IntentKeys.SQL_HAVING) ?
-          bundle.getString(IntentKeys.SQL_HAVING) :
+      sqlHaving = bundle.containsKey(OdkData.IntentKeys.SQL_HAVING) ?
+          bundle.getString(OdkData.IntentKeys.SQL_HAVING) :
           null;
     }
-    String sqlOrderByElementKey = bundle.containsKey(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) ?
-        bundle.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) :
+    String sqlOrderByElementKey = bundle.containsKey(OdkData.IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) ?
+        bundle.getString(OdkData.IntentKeys.SQL_ORDER_BY_ELEMENT_KEY) :
         null;
     String sqlOrderByDirection = null;
     if (sqlOrderByElementKey != null && !sqlOrderByElementKey.isEmpty()) {
-      sqlOrderByDirection = bundle.containsKey(IntentKeys.SQL_ORDER_BY_DIRECTION) ?
-          bundle.getString(IntentKeys.SQL_ORDER_BY_DIRECTION) :
+      sqlOrderByDirection = bundle.containsKey(OdkData.IntentKeys.SQL_ORDER_BY_DIRECTION) ?
+          bundle.getString(OdkData.IntentKeys.SQL_ORDER_BY_DIRECTION) :
           null;
       if (sqlOrderByDirection == null || sqlOrderByDirection.isEmpty()) {
         sqlOrderByDirection = "ASC";
@@ -126,7 +126,7 @@ public final class IntentUtil {
   /**
    * Return the file name from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
-   * {@link Constants.IntentKeys#FILE_NAME}.
+   * {@link OdkData.IntentKeys#FILE_NAME}.
    *
    * @param bundle the bundle to try and pull the filename from
    * @return the file name, null if it does not exist or if bundle is null
@@ -135,13 +135,43 @@ public final class IntentUtil {
     if (bundle == null) {
       return null;
     }
-    return bundle.getString(IntentKeys.FILE_NAME);
+    return bundle.getString(OdkData.IntentKeys.FILE_NAME);
+  }
+
+  /**
+   * Return the query type from the bundle. Convenience method for calling
+   * {@link Bundle#getString(String)} with
+   * {@link OdkData.IntentKeys#QUERY_TYPE}.
+   *
+   * @param bundle the bundle to try and pull the filename from
+   * @return the query type, null if it does not exist or if bundle is null
+   */
+  public static String retrieveQueryTypeFromBundle(Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    return bundle.getString(OdkData.IntentKeys.QUERY_TYPE);
+  }
+
+  /**
+   * Return the sql command from the bundle. Convenience method for calling
+   * {@link Bundle#getString(String)} with
+   * {@link OdkData.IntentKeys#SQL_COMMAND}.
+   *
+   * @param bundle the bundle to try and pull the filename from
+   * @return the sql command, null if it does not exist or if bundle is null
+   */
+  public static String retrieveSqlCommandFromBundle(Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    return bundle.getString(OdkData.IntentKeys.SQL_COMMAND);
   }
 
   /**
    * Return the {@link ColorRuleGroup.Type} from the bundle. Convenience method
    * for calling {@link Bundle#get(String)} with
-   * {@link Constants.IntentKeys#COLOR_RULE_TYPE} and parsing the resultant
+   * {@link OdkData.IntentKeys#COLOR_RULE_TYPE} and parsing the resultant
    * value.
    *
    * @param bundle a bundle to try and pull a color rule group type from
@@ -151,7 +181,7 @@ public final class IntentUtil {
     if (bundle == null) {
       return null;
     }
-    String typeStr = bundle.getString(Constants.IntentKeys.COLOR_RULE_TYPE);
+    String typeStr = bundle.getString(OdkData.IntentKeys.COLOR_RULE_TYPE);
     if (typeStr == null) {
       return null;
     } else {
@@ -205,7 +235,7 @@ public final class IntentUtil {
   /**
    * Return the element key from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
-   * {@link Constants.IntentKeys#ELEMENT_KEY}.
+   * {@link OdkData.IntentKeys#ELEMENT_KEY}.
    *
    * @param bundle the bundle to get the element key from
    * @return the element key, null if it does not exist or if the bundle is
@@ -215,7 +245,7 @@ public final class IntentUtil {
     if (bundle == null) {
       return null;
     }
-    return bundle.getString(IntentKeys.ELEMENT_KEY);
+    return bundle.getString(OdkData.IntentKeys.ELEMENT_KEY);
   }
 
   /**
@@ -231,6 +261,25 @@ public final class IntentUtil {
       return null;
     }
     return bundle.getString(IntentConsts.INTENT_KEY_INSTANCE_ID);
+  }
+
+  /**
+   * Return the selection args from the bundle. Convenience method for calling
+   * {@link Bundle#getString(String)} with
+   * {@link OdkData.IntentKeys#SQL_SELECTION_ARGS}.
+   *
+   * @param bundle the bundle to get a row id from
+   * @return the selection args, null if it does not exist or if bundle is null
+   */
+  public static BindArgs retrieveSelectionArgsFromBundle(Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    String sqlSelectionArgsString = null;
+    sqlSelectionArgsString = bundle.containsKey(OdkData.IntentKeys.SQL_SELECTION_ARGS) ?
+            bundle.getString(OdkData.IntentKeys.SQL_SELECTION_ARGS) : null;
+    BindArgs sqlBindArgs = new BindArgs(sqlSelectionArgsString);
+    return sqlBindArgs;
   }
 
   /**
@@ -260,6 +309,7 @@ public final class IntentUtil {
    */
   public static void addSQLKeysToBundle(Bundle bundle, String whereClause, BindArgs selectionArgs,
       String[] groupBy, String having, String orderByElementKey, String orderByDirection) {
+    addQueryTypeToBundle(bundle, OdkData.QueryTypes.SIMPLE_QUERY);
     addWhereClauseToBundle(bundle, whereClause);
     addSelectionArgsToBundle(bundle, selectionArgs);
     addGroupByToBundle(bundle, groupBy);
@@ -268,9 +318,16 @@ public final class IntentUtil {
     addOrderByDirectionToBundle(bundle, orderByDirection);
   }
 
+  public static void addArbitraryQueryToBundle(Bundle bundle, String sqlCommand,
+                                               BindArgs selectionArgs) {
+    addQueryTypeToBundle(bundle, OdkData.QueryTypes.ARBITRARY_QUERY);
+    addSqlCommandToBundle(bundle, sqlCommand);
+    addSelectionArgsToBundle(bundle, selectionArgs);
+  }
+
   /**
    * Add orderByElementKey to bundle keyed to
-   * {@link IntentKeys#SQL_ORDER_BY_ELEMENT_KEY}.
+   * {@link OdkData.IntentKeys#SQL_ORDER_BY_ELEMENT_KEY}.
    * If bundle or orderByElementKey is null, does nothing.
    *
    * @param bundle            the bundle to put the order by column in
@@ -278,13 +335,13 @@ public final class IntentUtil {
    */
   public static void addOrderByElementKeyToBundle(Bundle bundle, String orderByElementKey) {
     if (bundle != null && orderByElementKey != null) {
-      bundle.putString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY, orderByElementKey);
+      bundle.putString(OdkData.IntentKeys.SQL_ORDER_BY_ELEMENT_KEY, orderByElementKey);
     }
   }
 
   /**
    * Add orderByDirection to bundle keyed to
-   * {@link IntentKeys#SQL_ORDER_BY_DIRECTION}.
+   * {@link OdkData.IntentKeys#SQL_ORDER_BY_DIRECTION}.
    * If bundle or orderByDirection is null, does nothing.
    *
    * @param bundle           the bundle to put the order by direction in
@@ -292,12 +349,12 @@ public final class IntentUtil {
    */
   public static void addOrderByDirectionToBundle(Bundle bundle, String orderByDirection) {
     if (bundle != null && orderByDirection != null) {
-      bundle.putString(IntentKeys.SQL_ORDER_BY_DIRECTION, orderByDirection);
+      bundle.putString(OdkData.IntentKeys.SQL_ORDER_BY_DIRECTION, orderByDirection);
     }
   }
 
   /**
-   * Add whereClause to bundle keyed to {@link IntentKeys#SQL_WHERE}.
+   * Add whereClause to bundle keyed to {@link OdkData.IntentKeys#SQL_WHERE}.
    * If bundle or whereClause is null, does nothing.
    *
    * @param bundle      the bundle to put the where clause in
@@ -305,13 +362,26 @@ public final class IntentUtil {
    */
   public static void addWhereClauseToBundle(Bundle bundle, String whereClause) {
     if (bundle != null && whereClause != null) {
-      bundle.putString(IntentKeys.SQL_WHERE, whereClause);
+      bundle.putString(OdkData.IntentKeys.SQL_WHERE, whereClause);
+    }
+  }
+
+  /**
+   * Add SQL command to bundle keyed to {@link OdkData.IntentKeys#SQL_COMMAND}.
+   * If bundle, where clause, and sql command are null, does nothing.
+   *
+   * @param bundle      the bundle to put the where clause in
+   * @param sqlCommand the sql command
+   */
+  public static void addSqlCommandToBundle(Bundle bundle, String sqlCommand) {
+    if (bundle != null && sqlCommand != null) {
+      bundle.putString(OdkData.IntentKeys.SQL_COMMAND, sqlCommand);
     }
   }
 
   /**
    * Add selectionArgs to bundle keyed to
-   * {@link IntentKeys#SQL_SELECTION_ARGS}.
+   * {@link OdkData.IntentKeys#SQL_SELECTION_ARGS}.
    * If bundle or selectionArgs is null, does nothing.
    *
    * @param bundle        the bundle to put the selection args in
@@ -319,13 +389,13 @@ public final class IntentUtil {
    */
   public static void addSelectionArgsToBundle(Bundle bundle, BindArgs selectionArgs) {
     if (bundle != null && selectionArgs != null) {
-      bundle.putString(IntentKeys.SQL_SELECTION_ARGS, selectionArgs.asJSON());
+      bundle.putString(OdkData.IntentKeys.SQL_SELECTION_ARGS, selectionArgs.asJSON());
     }
   }
 
   /**
    * Add having to bundle keyed to
-   * {@link IntentKeys#SQL_HAVING}.
+   * {@link OdkData.IntentKeys#SQL_HAVING}.
    * If bundle or having is null, does nothing.
    *
    * @param bundle the bundle to put the SQL having clause in
@@ -333,13 +403,13 @@ public final class IntentUtil {
    */
   public static void addHavingToBundle(Bundle bundle, String having) {
     if (bundle != null && having != null) {
-      bundle.putString(IntentKeys.SQL_HAVING, having);
+      bundle.putString(OdkData.IntentKeys.SQL_HAVING, having);
     }
   }
 
   /**
    * Add groupBy to bundle keyed to
-   * {@link IntentKeys#SQL_GROUP_BY_ARGS}.
+   * {@link OdkData.IntentKeys#SQL_GROUP_BY_ARGS}.
    * If bundle or groupBy is null, does nothing.
    *
    * @param bundle  the bundle to put the group by columns in
@@ -347,7 +417,7 @@ public final class IntentUtil {
    */
   public static void addGroupByToBundle(Bundle bundle, String[] groupBy) {
     if (bundle != null && groupBy != null) {
-      bundle.putStringArray(IntentKeys.SQL_GROUP_BY_ARGS, groupBy);
+      bundle.putStringArray(OdkData.IntentKeys.SQL_GROUP_BY_ARGS, groupBy);
     }
   }
 
@@ -366,7 +436,7 @@ public final class IntentUtil {
 
   /**
    * Add tye name of type to the bundle keyed to
-   * {@link Constants.IntentKeys#COLOR_RULE_TYPE}. If bundle or type is null,
+   * {@link OdkData.IntentKeys#COLOR_RULE_TYPE}. If bundle or type is null,
    * does nothing.
    *
    * @param bundle a bundle to put a color rule group type into
@@ -374,13 +444,13 @@ public final class IntentUtil {
    */
   public static void addColorRuleGroupTypeToBundle(Bundle bundle, ColorRuleGroup.Type type) {
     if (bundle != null && type != null) {
-      bundle.putString(Constants.IntentKeys.COLOR_RULE_TYPE, type.name());
+      bundle.putString(OdkData.IntentKeys.COLOR_RULE_TYPE, type.name());
     }
   }
 
   /**
    * Add elementKey to bundle keyed to
-   * {@link Constants.IntentKeys#ELEMENT_KEY}. If bundle of elementKey is null,
+   * {@link OdkData.IntentKeys#ELEMENT_KEY}. If bundle of elementKey is null,
    * does nothing.
    *
    * @param bundle     a bundle to put the element key into
@@ -388,7 +458,7 @@ public final class IntentUtil {
    */
   public static void addElementKeyToBundle(Bundle bundle, String elementKey) {
     if (bundle != null && elementKey != null) {
-      bundle.putString(Constants.IntentKeys.ELEMENT_KEY, elementKey);
+      bundle.putString(OdkData.IntentKeys.ELEMENT_KEY, elementKey);
     }
   }
 
@@ -434,7 +504,7 @@ public final class IntentUtil {
   }
 
   /**
-   * Add fileName to bundle keyed to {@link Constants.IntentKeys#FILE_NAME}.
+   * Add fileName to bundle keyed to {@link OdkData.IntentKeys#FILE_NAME}.
    * If bundle or fileName is null, does nothing.
    *
    * @param bundle   a bundle to put the filename into
@@ -442,8 +512,22 @@ public final class IntentUtil {
    */
   public static void addFileNameToBundle(Bundle bundle, String fileName) {
     if (bundle != null && fileName != null) {
-      bundle.putString(Constants.IntentKeys.FILE_NAME, fileName);
+      bundle.putString(OdkData.IntentKeys.FILE_NAME, fileName);
     }
   }
+
+  /**
+   * Specify the query type in the bundle keyed to {@link OdkData.IntentKeys#QUERY_TYPE}.
+   * If bundle or query type is null, does nothing.
+   *
+   * @param bundle   a bundle to put the filename into
+   * @param queryType the query type to add to the bundle
+   */
+  public static void addQueryTypeToBundle(Bundle bundle, String queryType) {
+    if (bundle != null && queryType != null) {
+      bundle.putString(OdkData.IntentKeys.QUERY_TYPE, queryType);
+    }
+  }
+
 
 }

@@ -28,6 +28,10 @@ import android.widget.Toast;
 import org.opendatakit.activities.IInitResumeActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
+import org.opendatakit.database.queries.ResumableQuery;
+import org.opendatakit.database.queries.SimpleQuery;
+import org.opendatakit.database.queries.SingleRowQuery;
+import org.opendatakit.database.utilities.QueryUtil;
 import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
@@ -43,7 +47,7 @@ import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.utilities.ODKFileUtils;
 import org.opendatakit.views.ODKWebView;
-import org.opendatakit.views.ViewDataQueryParams;
+import org.opendatakit.views.OdkData;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.io.File;
@@ -189,7 +193,7 @@ public class MainActivity extends AbsBaseWebActivity
 
     outState.putString(CURRENT_FRAGMENT, activeScreenType.name());
     if (webFileToDisplay != null) {
-      outState.putString(Constants.IntentKeys.FILE_NAME,
+      outState.putString(OdkData.IntentKeys.FILE_NAME,
           ODKFileUtils.asRelativePath(mAppName, webFileToDisplay));
     }
   }
@@ -478,9 +482,8 @@ public class MainActivity extends AbsBaseWebActivity
   }
 
   @Override
-  public ViewDataQueryParams getViewQueryParams(String viewID) {
+  public ResumableQuery getViewQuery(String viewID) {
     // Ignore viewID, there is only one fragment
-
     Bundle bundle = this.getIntentExtras();
 
     String tableId = IntentUtil.retrieveTableIdFromBundle(bundle);
@@ -491,9 +494,12 @@ public class MainActivity extends AbsBaseWebActivity
 
     SQLQueryStruct sqlQueryStruct = IntentUtil.getSQLQueryStructFromBundle(bundle);
 
-    return new ViewDataQueryParams(tableId, rowId, sqlQueryStruct.whereClause,
-        sqlQueryStruct.selectionArgs, sqlQueryStruct.groupBy, sqlQueryStruct.having,
-        sqlQueryStruct.orderByElementKey, sqlQueryStruct.orderByDirection);
+
+    return new SingleRowQuery(tableId, rowId, sqlQueryStruct.selectionArgs,
+        sqlQueryStruct.whereClause, sqlQueryStruct.groupBy, sqlQueryStruct.having,
+        QueryUtil.convertStringToArray(sqlQueryStruct.orderByElementKey),
+        QueryUtil.convertStringToArray(sqlQueryStruct.orderByDirection),
+        null, null);
   }
 
   private enum ScreenType {

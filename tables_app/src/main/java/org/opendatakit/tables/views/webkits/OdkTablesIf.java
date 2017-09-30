@@ -66,4 +66,26 @@ class OdkTablesIf {
             null, null);
     return true;
   }
+
+  /**
+   * Set list view portion of a DetailWithList view, restricted by given query.
+   *
+   * @param tableId              the tableId of the table to open
+   * @param sqlCommand           the sql command to execute
+   * @param sqlSelectionArgsJSON -- JSON.stringify of an Object[] array that can contain integer,
+   *                             numeric, boolean and string types, one for each "?" in whereClause.
+   *                             If null will not restrict the results.
+   * @param relativePath         the name of the file specifying the list view, relative to the app
+   *                             folder.
+   * @return true if the open succeeded
+   */
+  @android.webkit.JavascriptInterface
+  public boolean setSubListViewArbitraryQuery(String tableId, String sqlCommand,
+      String sqlSelectionArgsJSON, String relativePath) {
+    if (isInactive())
+      return false;
+    weakControl.get()
+        .helperSetSubListView(tableId, relativePath, sqlCommand, sqlSelectionArgsJSON);
+    return true;
+  }
 }
