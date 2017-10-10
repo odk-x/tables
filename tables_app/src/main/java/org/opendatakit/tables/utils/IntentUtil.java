@@ -264,6 +264,21 @@ public final class IntentUtil {
   }
 
   /**
+   * Return the default row id from the bundle. Convenience method for calling
+   * {@link Bundle#getString(String)} with
+   * {@link IntentConsts#INTENT_KEY_DEFAULT_ROW_ID}.
+   *
+   * @param bundle the bundle to get a row id from
+   * @return the row id, null if it does not exist or if bundle is null
+   */
+  public static String retrieveDefaultRowIdFromBundle(Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    return bundle.getString(IntentConsts.INTENT_KEY_DEFAULT_ROW_ID);
+  }
+
+  /**
    * Return the selection args from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
    * {@link OdkData.IntentKeys#SQL_SELECTION_ARGS}.

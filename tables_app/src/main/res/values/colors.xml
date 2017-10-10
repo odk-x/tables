@@ -10,5 +10,25 @@
     <color name="footer_index">#CDC0B0</color>
     <color name="footer_data">#FAF0E6</color>
     <color name="cell_selected">#A0A0A0</color>
+    <color name="dark_blue">#536379</color>
+
+    <color name="progress_wheel_bar">#2E9121</color>
+    <color name="progress_wheel_rim">#332E9121</color>
+    <color name="progress_wheel_text">#2E9121</color>
+
+    <color name="spinner_bar_color_green">#2E9121</color>
+    <color name="spinner_bar_color_yellow">#C7A900</color>
+    <color name="spinner_bar_color_red">#FF0000</color>
+    <color name="spinner_bar_color_black">#000000</color>
+
+    <color name="spinner_rim_color_green">#332E9121</color>
+    <color name="spinner_rim_color_yellow">#C7A900</color>
+    <color name="spinner_rim_color_red">#33FF0000</color>
+    <color name="spinner_rim_color_black">#33000000</color>
+
+    <color name="spinner_text_color_green">#2E9121</color>
+    <color name="spinner_text_color_yellow">#C7A900</color>
+    <color name="spinner_text_color_red">#FF0000</color>
+    <color name="spinner_text_color_black">#000000</color>
 
 </resources>

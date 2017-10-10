@@ -155,4 +155,12 @@ public class PossibleTableViewTypes {
     return this.mMapIsValid;
   }
 
+  /**
+   * @return true if the table can be displayed as a map with navigation
+   */
+  public boolean navigateViewIsPossible() {
+    // This is identical to mapViewIsPossible, since any map view could also be used for navigation
+    return this.mMapIsValid;
+  }
+
 }

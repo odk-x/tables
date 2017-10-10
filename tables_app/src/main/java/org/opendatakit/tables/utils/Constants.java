@@ -139,6 +139,13 @@ public final class Constants {
     public static final String DETAIL_WITH_LIST_LIST = "tagDetailWithListListFragment";
 
     /**
+     * ViewFragmentType.NAVIGATE has two inner fragments.
+     * The inner fragments are controlled with these fragment tags.
+     * Tag for the detail with navigate fragment in the fragment manager
+     */
+    public static final String NAVIGATE = "tagNavigateFragment";
+
+    /**
      * Preference screens have their own tags...
      */
     public static final String COLUMN_LIST = "tagColumnList";
