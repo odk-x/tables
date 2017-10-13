@@ -135,6 +135,7 @@ public class GeoProvider implements SensorEventListener, LocationListener {
    *            minimum delay (millis) between notifications for the change
    *            listener
    */
+  @SuppressWarnings("MissingPermission")
   public GeoProvider(Activity activity, int smoothing,
       double minDiffForEvent, int throttleTime) {
     mActivity = activity;
@@ -182,6 +183,7 @@ public class GeoProvider implements SensorEventListener, LocationListener {
   /**
    * Call this method to start bearing updates.
    */
+  @SuppressWarnings("MissingPermission")
   public boolean start() {
     boolean deviceHasSensors = true;
 
