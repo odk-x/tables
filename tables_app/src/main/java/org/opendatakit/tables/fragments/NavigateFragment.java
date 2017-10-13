@@ -93,32 +93,52 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
           savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX) :
           INVALID_INDEX;
     }
+  }
 
-    mGeoProvider = new GeoProvider(getActivity());
+  public static NavigateFragment newInstance(String rowId) {
+    NavigateFragment f = new NavigateFragment();
+
+    if (rowId != null && !rowId.isEmpty()) {
+      Bundle args = new Bundle();
+      args.putString(ROW_ID_KEY, rowId);
+      f.setArguments(args);
+    }
+    return f;
+  }
+
+  @Override
+  public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+
+    mGeoProvider = new GeoProvider(activity );
     mGeoProvider.setDirectionEventListener(this);
     mGeoProvider.setLocationEventListener(this);
 
-    mSignalQualitySpinner = (ProgressWheel) getActivity().findViewById(R.id.signalQualitySpinner);
-    mCompass = (CompassView) getActivity().findViewById(R.id.compass);
+    mSignalQualitySpinner = (ProgressWheel) activity .findViewById(R.id.signalQualitySpinner);
+    mCompass = (CompassView) activity .findViewById(R.id.compass);
     mDestinationLocation = (CompassView) getActivity().findViewById(R.id.destination);
 
-    mBearingTextView = (TextView) getActivity().findViewById(R.id.bearingTextView);
-    mHeadingTextView = (TextView) getActivity().findViewById(R.id.headingTextView);
-    mDistanceTextView = (TextView) getActivity().findViewById(R.id.distanceTextView);
-    Button arriveButton = (Button) getActivity().findViewById(R.id.navigate_arrive_button);
+    mBearingTextView = (TextView) activity .findViewById(R.id.bearingTextView);
+    mHeadingTextView = (TextView) activity .findViewById(R.id.headingTextView);
+    mDistanceTextView = (TextView) activity .findViewById(R.id.distanceTextView);
+    mDistanceTextView.setText(getActivity().getString(R.string.distance,
+        "-"));
+
+    Button arriveButton = (Button) activity .findViewById(R.id.navigate_arrive_button);
     arriveButton.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
         arrive(v);
       }
     });
-    Button cancelButton = (Button) getActivity().findViewById(R.id.navigate_cancel_button);
+    Button cancelButton = (Button) activity .findViewById(R.id.navigate_cancel_button);
     cancelButton.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
         cancel(v);
       }
     });
 
-    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     mTable = activity.getUserTable();
     OrderedColumns orderedDefns = activity.getColumnDefinitions();
 
@@ -142,22 +162,6 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
       String rowId = args.getString(ROW_ID_KEY);
       setIndexOfSelectedItem(mTable.getRowNumFromId(rowId));
     }
-  }
-
-  public static NavigateFragment newInstance(String rowId) {
-    NavigateFragment f = new NavigateFragment();
-
-    if (rowId != null && !rowId.isEmpty()) {
-      Bundle args = new Bundle();
-      args.putString(ROW_ID_KEY, rowId);
-      f.setArguments(args);
-    }
-    return f;
-  }
-
-  @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
 
     if (mGeoProvider.isGpsProviderOn() == false
         && mGeoProvider.isNetworkOn() == false) {
@@ -168,9 +172,6 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
     } else {
       setSpinnerColor(SignalState.POOR_SIGNAL);
     }
-
-    mDistanceTextView.setText(getActivity().getString(R.string.distance,
-        "-"));
   }
 
   @Override
