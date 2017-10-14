@@ -27,6 +27,9 @@
                 <item
                         android:id="@+id/top_level_table_menu_view_map_view"
                         android:title="@string/map"/>
+                <item
+                        android:id="@+id/top_level_table_menu_view_navigate_view"
+                        android:title="@string/navigate"/>
             </group>
         </menu>
     </item>

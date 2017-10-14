@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="nav_text_size">16sp</dimen>
+    <dimen name="nav_text_size_small">12sp</dimen>
+
+    <dimen name="compass_width">140dp</dimen>
+    <dimen name="compass_height">140dp</dimen>
+
+    <dimen name="large_signal_quality_progress_wheel_width">110dp</dimen>
+    <dimen name="large_signal_quality_progress_wheel_height">110dp</dimen>
+    <dimen name="large_signal_quality_progress_wheel_bar_length">60dp</dimen>
+    <dimen name="large_signal_quality_progress_wheel_bar_width">5dp</dimen>
+    <dimen name="large_signal_quality_progress_wheel_text_size">22dp</dimen>
+
+    <dimen name="small_signal_quality_progress_wheel_width">55dp</dimen>
+    <dimen name="small_signal_quality_progress_wheel_height">55dp</dimen>
+    <dimen name="small_signal_quality_progress_wheel_bar_length">30dp</dimen>
+    <dimen name="small_signal_quality_progress_wheel_bar_width">3dp</dimen>
+    <dimen name="small_signal_quality_progress_wheel_text_size">12sp</dimen>
+
+    <dimen name="progress_wheel_rim_width">1dp</dimen>
+</resources>

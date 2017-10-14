@@ -7,5 +7,5 @@ package org.opendatakit.tables.data;
  */
 @SuppressWarnings("JavaDoc")
 public enum ViewFragmentType {
-  SPREADSHEET, LIST, MAP, DETAIL, DETAIL_WITH_LIST, SUB_LIST
+  SPREADSHEET, LIST, MAP, DETAIL, DETAIL_WITH_LIST, SUB_LIST, NAVIGATE
 }
