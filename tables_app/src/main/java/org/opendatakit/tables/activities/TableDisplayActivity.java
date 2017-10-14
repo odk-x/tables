@@ -746,16 +746,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       setCurrentFragmentType(ViewFragmentType.MAP, filename, null);
       return true;
     case R.id.top_level_table_menu_view_navigate_view:
-      // TODO: We currently don't actually need any file name for Navigate view. Can I just leave it
-      // an arbitrary value? Null?
-      if (mOriginalFragmentType != null && mOriginalFragmentType == ViewFragmentType.NAVIGATE) {
-        filename = mOriginalFileName;
-      }
-      if (filename == null) {
-        filename = mPossibleTableViewTypes != null ?
-            mPossibleTableViewTypes.getDefaultMapListViewFileName() :
-            null;
-      }
       setCurrentFragmentType(ViewFragmentType.NAVIGATE, filename, null);
       return true;
     case R.id.top_level_table_menu_add:
@@ -1307,6 +1297,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         navigateFragment.setIndexOfSelectedItem(i);
       }
       break;
+    default:
+      throw new IllegalStateException(TAG + ": Attempted to onSetSelectedItemIndex from unsupported"
+          + " fragment type: " + mCurrentFragmentType);
     }
   }
 
