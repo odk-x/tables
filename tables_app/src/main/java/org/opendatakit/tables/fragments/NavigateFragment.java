@@ -7,9 +7,11 @@ import android.location.Location;
 import android.location.LocationProvider;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.*;
 import com.todddavies.components.progressbar.ProgressWheel;
+import org.opendatakit.activities.IOdkDataActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
@@ -82,12 +84,10 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   private ColumnDefinition mLatitudeColumn;
   private ColumnDefinition mLongitudeColumn;
 
-  private boolean arrived = false;
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    // AppName may not be available...
+
     if (savedInstanceState != null) {
       this.mSelectedItemIndex = savedInstanceState.containsKey(INTENT_KEY_SELECTED_INDEX) ?
           savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX) :
@@ -361,6 +361,19 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
    * Resets the view (the list), and sets the visibility to visible.
    */
   void resetView() {
+
+    // do not initiate reload until we have the database set up...
+    Activity activity = getActivity();
+    if (activity instanceof IOdkDataActivity) {
+      if (((IOdkDataActivity) activity).getDatabase() == null) {
+        return;
+      }
+    } else {
+      Log.e(TAG,
+          "Problem: NavigateView not being rendered from activity that is an " +
+              "IOdkDataActivity");
+      return;
+    }
 
     if (mSelectedItemIndex == INVALID_INDEX) {
       mGeoProvider.clearDestinationLocation();
