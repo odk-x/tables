@@ -1112,7 +1112,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           // remove the old fragment
           WebLogger.getLogger(getAppName())
               .d(TAG, "[showNavigateFragment] removing old navigate fragment");
-          fragmentTransaction.remove(mapListViewFragment);
+          fragmentTransaction.remove(navigateFragment);
         }
         navigateFragment = NavigateFragment.newInstance(mDefaultRowId);
         fragmentTransaction
