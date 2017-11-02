@@ -78,6 +78,7 @@
     <string name="error_while_changing_index_column">Error while changing index column</string>
     <string name="list">List</string>
     <string name="map">Map</string>
+    <string name="navigate">Navigate</string>
     <string name="preferred_view_type">Preferred View Type</string>
     <string name="sms_shortcut_name">Shortcut Name</string>
     <string name="sms_shortcut_input">Shortcut Input</string>
@@ -431,4 +432,14 @@
 
     <string name="location_permission_rationale">ODK Tables needs access to your device\'s location to display it on Map View</string>
     <string name="location_permission_perm_denied">My Location feature disabled</string>
+    <string name="location_unavailable">Location is unavailable</string>
+
+    <string name="acc_value">0 m</string>
+    <string name="distance">Distance: %1$s</string>
+    <string name="meters">Meters</string>
+    <string name="meter_shorthand">m</string>
+    <string name="bearing">Bearing: %1$s° %2$s</string>
+    <string name="heading">Heading: %1$s° %2$s</string>
+    <string name="navigate_arrive_button">Arrive</string>
+    <string name="navigate_cancel_button">Cancel</string>
 </resources>

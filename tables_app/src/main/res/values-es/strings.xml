@@ -78,6 +78,7 @@
     <string name="error_while_changing_index_column">Error al cambiar columno de fijar.</string>
     <string name="list">Lista</string>
     <string name="map">Mapa</string>
+    <string name="navigate">Navegar</string>
     <string name="preferred_view_type">Tipo de vista preferido</string>
     <string name="sms_shortcut_name">Nombre de atajo</string>
     <string name="sms_shortcut_input">Atajo</string>

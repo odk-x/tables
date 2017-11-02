@@ -27,4 +27,13 @@
 
     </FrameLayout>
 
+    <FrameLayout
+            android:id="@+id/activity_table_display_activity_navigate_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <include layout="@layout/navigate_fragment"/>
+
+    </FrameLayout>
+
 </LinearLayout>
