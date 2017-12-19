@@ -48,6 +48,11 @@ public class Launcher extends BaseLauncherActivity {
     return mAppName;
   }
 
+  @Override
+  protected void setAppSpecificPerms() {
+    return;
+  }
+
   /**
    * Restores saved state if possible. Then it looks at the table name that it was launched for
    * in the intent, and verifies that it matches the URI that tables was launched with. If they
