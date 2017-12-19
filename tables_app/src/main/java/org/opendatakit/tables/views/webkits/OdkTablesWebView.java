@@ -65,7 +65,7 @@ public class OdkTablesWebView extends ODKWebView {
               getContainerFragmentID());
 
       if (baseUrl != null) {
-         loadPageOnUiThread(baseUrl, getContainerFragmentID(), false);
+         loadPageOnUiThread(baseUrl, getContainerFragmentID(), LoadType.FULL_LOAD);
       } else {
          if (!pageFrameworkLoaded) {
             log.w(TAG, "Page framework hasn't finished loading, can't load!");
@@ -88,7 +88,7 @@ public class OdkTablesWebView extends ODKWebView {
           .getUrlBaseLocation(false, getContainerFragmentID());
 
       if (baseUrl != null) {
-         loadPageOnUiThread(baseUrl, getContainerFragmentID(), true);
+         loadPageOnUiThread(baseUrl, getContainerFragmentID(), LoadType.RELOAD);
       } else {
          log.w(TAG, "reloadPage: framework did not load -- cannot load anything!");
       }
