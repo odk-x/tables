@@ -165,28 +165,55 @@ dependencies {
     androidTestUitestCompile 'org.hamcrest:hamcrest-integration:1.3'
 }
 
+
 // These are used to disable animations when running UI tests
 // and grant services write external storage permission
-task grantAnimationPermission(type: Exec, dependsOn: ['installSnapshotUitestDebug',
-                                                      'installDemoUitestDebug','installMasterUitestDebug']) {
+task grantTablesAnimationPermission(type: Exec) {
     commandLine "adb shell pm grant org.opendatakit.tables android.permission.SET_ANIMATION_SCALE"
             .split(' ')
 }
 
-task grantServicesPermissionRead(type: Exec) {
+task grantServicesExternalStoragePermission(type: Exec) {
     commandLine "adb shell pm grant org.opendatakit.services android.permission.READ_EXTERNAL_STORAGE"
             .split(' ')
-}
-
-task grantServicesPermissionWrite(type: Exec) {
     commandLine "adb shell pm grant org.opendatakit.services android.permission.WRITE_EXTERNAL_STORAGE"
             .split(' ')
 }
 
+task grantPermissionForODKApp () {
+    doLast {
+        grantServicesExternalStoragePermission.execute()
+        grantTablesAnimationPermission.execute()
+    }
+}
+
+task setupUitestsForDemo (dependsOn: 'installDemoUitestDebug') << {
+    doLast {
+        grantPermissionForODKApp.execute()
+    }
+}
+
+task setupUitestsForMaster (dependsOn: 'installMasterUitestDebug') {
+    doLast {
+        grantPermissionForODKApp.execute()
+    }
+}
+
+task setupUitestsForSnaphot (dependsOn: 'installSnapshotUitestDebug') {
+    doLast {
+        grantPermissionForODKApp.execute()
+    }
+}
+
+
 tasks.whenTaskAdded { task ->
-    if (task.name.startsWith('connected')) {
-        task.dependsOn grantServicesPermissionRead
-        task.dependsOn grantServicesPermissionWrite
-        task.dependsOn grantAnimationPermission
+    if (task.name.startsWith('connected') && task.name.endsWith('DebugAndroidTest')) {
+        if(task.name.contentEquals("connectedDemoUitestDebugAndroidTest")) {
+            task.dependsOn setupUitestsForDemo
+        } else if (task.name.contentEquals("connectedMasterUitestDebugAndroidTest")) {
+            task.dependsOn setupUitestsForMaster
+        } else if (task.name.contentEquals("connectedSnapshotUitestDebugAndroidTest")) {
+            task.dependsOn setupUitestsForSnaphot
+        }
     }
 }
