@@ -173,21 +173,25 @@ task grantTablesAnimationPermission(type: Exec) {
             .split(' ')
 }
 
-task grantServicesExternalStoragePermission(type: Exec) {
-    commandLine "adb shell pm grant org.opendatakit.services android.permission.READ_EXTERNAL_STORAGE"
-            .split(' ')
+task grantServicesReadExternalStoragePermission(type: Exec) {
     commandLine "adb shell pm grant org.opendatakit.services android.permission.WRITE_EXTERNAL_STORAGE"
+            .split(' ')
+}
+
+task grantServicesWriteExternalStoragePermission(type: Exec) {
+    commandLine "adb shell pm grant org.opendatakit.services android.permission.READ_EXTERNAL_STORAGE"
             .split(' ')
 }
 
 task grantPermissionForODKApp () {
     doLast {
-        grantServicesExternalStoragePermission.execute()
+        grantServicesReadExternalStoragePermission.execute()
+        grantServicesWriteExternalStoragePermission.execute()
         grantTablesAnimationPermission.execute()
     }
 }
 
-task setupUitestsForDemo (dependsOn: 'installDemoUitestDebug') << {
+task setupUitestsForDemo (dependsOn: 'installDemoUitestDebug') {
     doLast {
         grantPermissionForODKApp.execute()
     }
