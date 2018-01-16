@@ -281,7 +281,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
     public void onClick(View v) {
       Intent intent = new Intent("org.openintents.action.PICK_FILE");
       intent.setData(Uri.parse("file://" + ODKFileUtils.getAssetsCsvFolder(appName)));
-      intent.putExtra("org.openintents.extra.TITLE", title);
+      intent.putExtra("org.openintents.extra.TITLE_KEY", title);
       try {
         startActivityForResult(intent, 1);
       } catch (ActivityNotFoundException e) {
