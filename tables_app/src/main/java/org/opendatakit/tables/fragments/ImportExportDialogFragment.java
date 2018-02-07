@@ -15,7 +15,12 @@
  */
 package org.opendatakit.tables.fragments;
 
-import android.app.*;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
+import android.app.FragmentManager;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import org.opendatakit.logging.WebLogger;
