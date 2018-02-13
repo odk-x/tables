@@ -32,7 +32,11 @@ import org.opendatakit.database.data.Row;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.provider.DataTableColumns;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * A view that draws a single table. A single table is essentially a grid of of

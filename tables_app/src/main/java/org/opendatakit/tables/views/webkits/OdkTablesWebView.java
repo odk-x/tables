@@ -3,7 +3,6 @@ package org.opendatakit.tables.views.webkits;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.View;
 import org.opendatakit.tables.activities.IOdkTablesActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.views.ODKWebView;

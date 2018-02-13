@@ -30,7 +30,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
@@ -281,7 +280,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
     public void onClick(View v) {
       Intent intent = new Intent("org.openintents.action.PICK_FILE");
       intent.setData(Uri.parse("file://" + ODKFileUtils.getAssetsCsvFolder(appName)));
-      intent.putExtra("org.openintents.extra.TITLE", title);
+      intent.putExtra("org.openintents.extra.TITLE_KEY", title);
       try {
         startActivityForResult(intent, 1);
       } catch (ActivityNotFoundException e) {

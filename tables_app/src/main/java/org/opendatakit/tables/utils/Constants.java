@@ -15,8 +15,6 @@
  */
 package org.opendatakit.tables.utils;
 
-import org.opendatakit.views.OdkData;
-
 import android.graphics.Color;
 
 /**

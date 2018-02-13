@@ -16,8 +16,6 @@
 package org.opendatakit.tables.views;
 
 import android.app.Activity;
-
-import org.opendatakit.application.CommonApplication;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;

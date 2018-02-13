@@ -20,7 +20,6 @@ import android.os.Bundle;
 import android.util.Log;
 import org.opendatakit.activities.IOdkDataActivity;
 import org.opendatakit.logging.WebLogger;
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.views.webkits.OdkTablesWebView;
 
 /**
