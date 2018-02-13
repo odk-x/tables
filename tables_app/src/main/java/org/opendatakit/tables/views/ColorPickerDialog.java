@@ -15,15 +15,19 @@ package org.opendatakit.tables.views;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.*;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.Shader;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ScrollView;
 import org.opendatakit.tables.R;
+
 //import org.opendatakit.views.WScrollView;
-import org.opendatakit.tables.views.WScrollView;
 
 /**
  * Based heavily upon:

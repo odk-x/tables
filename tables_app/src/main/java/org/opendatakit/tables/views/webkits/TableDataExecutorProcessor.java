@@ -31,7 +31,11 @@ import org.opendatakit.tables.activities.IOdkTablesActivity;
 import org.opendatakit.views.ExecutorContext;
 import org.opendatakit.views.ExecutorProcessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author mitchellsundt@gmail.com

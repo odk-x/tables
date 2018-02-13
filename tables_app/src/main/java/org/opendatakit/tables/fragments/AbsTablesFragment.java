@@ -19,12 +19,14 @@ import android.app.Activity;
 import android.app.Application;
 import android.app.Fragment;
 import android.content.Context;
+import android.os.Bundle;
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.utilities.AppNameUtil;
 
 /**
  * Base class that all fragments should extend.
@@ -43,15 +45,23 @@ public abstract class AbsTablesFragment extends Fragment
 
   public void onAttach(Context context) {
     super.onAttach(context);
-    if (!(context instanceof AbsBaseActivity)) {
+    Activity activity = getActivity();
+    if (!(activity instanceof AbsBaseActivity)) {
       throw new IllegalStateException(
           AbsTablesFragment.class.getSimpleName() + " must be attached to an " + AbsBaseActivity.class
               .getSimpleName());
     }
-    mAppName = ((IAppAwareActivity) context).getAppName();
+    mAppName = AppNameUtil.getAppNameFromActivity(activity);
   }
 
-  @Override
+  @Override public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    if (mAppName == null) {
+      mAppName = AppNameUtil.getAppNameFromActivity(getActivity());
+    }
+  }
+
+    @Override
   public void onResume() {
     super.onResume();
     getCommonApplication().possiblyFireDatabaseCallback(getActivity(), this);
@@ -63,14 +73,6 @@ public abstract class AbsTablesFragment extends Fragment
       return (CommonApplication) app;
     }
     throw new IllegalStateException("Bad app");
-  }
-
-  public BaseActivity getBaseActivity() {
-    Activity act = getActivity();
-    if (act instanceof BaseActivity) {
-      return (BaseActivity) act;
-    }
-    throw new IllegalStateException("Bad activity");
   }
 
   /**
