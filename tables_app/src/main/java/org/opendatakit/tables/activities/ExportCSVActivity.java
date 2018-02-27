@@ -30,6 +30,8 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
@@ -159,6 +161,14 @@ public class ExportCSVActivity extends AbsBaseActivity {
    * Attempts to export a table.
    */
   private void exportSubmission() {
+    if (tableSpin.getSelectedItemPosition() == Spinner.INVALID_POSITION) {
+      Toast
+          .makeText(this, R.string.export_no_table, Toast.LENGTH_LONG)
+          .show();
+
+      return;
+    }
+
     String tableId = tableIds[tableSpin.getSelectedItemPosition()];
     ImportExportDialogFragment
         .newInstance(ImportExportDialogFragment.EXPORT_IN_PROGRESS_DIALOG, this);
