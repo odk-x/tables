@@ -24,7 +24,6 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Toast;
-import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;

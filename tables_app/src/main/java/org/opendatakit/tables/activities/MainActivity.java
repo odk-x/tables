@@ -15,8 +15,12 @@
  */
 package org.opendatakit.tables.activities;
 
-import android.app.*;
+import android.app.ActionBar;
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.app.FragmentManager.BackStackEntry;
+import android.app.FragmentTransaction;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -29,7 +33,6 @@ import org.opendatakit.activities.IInitResumeActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.database.queries.ResumableQuery;
-import org.opendatakit.database.queries.SimpleQuery;
 import org.opendatakit.database.queries.SingleRowQuery;
 import org.opendatakit.database.utilities.QueryUtil;
 import org.opendatakit.fragment.AboutMenuFragment;
@@ -42,7 +45,6 @@ import org.opendatakit.tables.fragments.IWebFragment;
 import org.opendatakit.tables.fragments.InitializationFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.fragments.WebFragment;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.utilities.ODKFileUtils;

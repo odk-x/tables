@@ -2,7 +2,11 @@ package org.opendatakit.tables.providers;
 
 import android.app.Activity;
 import android.content.Context;
-import android.hardware.*;
+import android.hardware.GeomagneticField;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;

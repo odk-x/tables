@@ -23,7 +23,6 @@ import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.data.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.views.ODKWebView;
 
 import java.lang.ref.WeakReference;
