@@ -23,7 +23,9 @@ import android.app.FragmentManager.BackStackEntry;
 import android.app.FragmentTransaction;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -45,6 +47,7 @@ import org.opendatakit.tables.fragments.IWebFragment;
 import org.opendatakit.tables.fragments.InitializationFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.fragments.WebFragment;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -77,6 +80,8 @@ public class MainActivity extends AbsBaseWebActivity
    * active fragment.
    */
   private ScreenType lastMenuType = null;
+  private SharedPreferences mPreferences;
+
 
   private static String[] checkForQueryParameter(File webFile) {
     String webFileToDisplayPath = webFile.getPath();
@@ -171,6 +176,10 @@ public class MainActivity extends AbsBaseWebActivity
           savedInstanceState.getString(CURRENT_FRAGMENT) :
           activeScreenType.name());
     }
+
+    mPreferences = getPreferences(Context.MODE_PRIVATE);
+
+
   }
 
   @Override
@@ -282,7 +291,8 @@ public class MainActivity extends AbsBaseWebActivity
    *
    * @param newScreenType what screen type to use
    */
-  public void swapScreens(ScreenType newScreenType) {
+  public void swapScreens(ScreenType newScreenType)
+  {
     WebLogger.getLogger(getAppName()).i(TAG,
         "swapScreens: Transitioning from " + (activeScreenType == null ?
             "-none-" :
@@ -290,11 +300,31 @@ public class MainActivity extends AbsBaseWebActivity
     FragmentManager mgr = this.getFragmentManager();
     FragmentTransaction trans = null;
     Fragment newFragment;
+    boolean isDirty = false;
+
     switch (newScreenType) {
     case TABLE_MANAGER_SCREEN:
       newFragment = mgr.findFragmentByTag(newScreenType.name());
-      if (newFragment == null) {
+
+      if (newFragment == null)
+      {
         newFragment = new TableManagerFragment();
+
+        Bundle bundle = new Bundle();
+        int defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getValue();
+        int sortingOrder = mPreferences.getInt(Constants.PERF_SORT_BY_ORDER, defaultValue );
+        bundle.putSerializable(Constants.PERF_SORT_BY_ORDER,  Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder)  );
+
+        newFragment.setArguments(bundle);
+
+
+      }
+      else
+      {
+        int defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getValue();
+        int sortingOrder = mPreferences.getInt(Constants.PERF_SORT_BY_ORDER, defaultValue );
+        newFragment.getArguments().putSerializable(Constants.PERF_SORT_BY_ORDER,  Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder)  );
+        newFragment.onResume();
       }
       break;
     case WEBVIEW_SCREEN:
@@ -318,6 +348,7 @@ public class MainActivity extends AbsBaseWebActivity
     default:
       throw new IllegalStateException("Unexpected default case");
     }
+
 
     boolean matchingBackStackEntry = false;
     for (int i = 0; i < mgr.getBackStackEntryCount(); ++i) {
@@ -370,8 +401,23 @@ public class MainActivity extends AbsBaseWebActivity
     MenuInflater menuInflater = this.getMenuInflater();
     if (activeScreenType == ScreenType.WEBVIEW_SCREEN) {
       menuInflater.inflate(R.menu.web_view_activity, menu);
-    } else if (activeScreenType == ScreenType.TABLE_MANAGER_SCREEN) {
+    }
+    else if (activeScreenType == ScreenType.TABLE_MANAGER_SCREEN)
+    {
       menuInflater.inflate(R.menu.table_manager, menu);
+      int defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getValue();
+      int sortingOrder = mPreferences.getInt(Constants.PERF_SORT_BY_ORDER, defaultValue );
+
+      if( Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder) ==   Constants.TABLE_SORT_ORDER.SORT_ASC )
+      {
+        menu.findItem(R.id.menu_sort_name_asc).setChecked(true);
+      }
+      else
+      {
+        menu.findItem(R.id.menu_sort_name_desc).setChecked(true);
+      }
+
+
     }
     lastMenuType = activeScreenType;
 
@@ -392,8 +438,10 @@ public class MainActivity extends AbsBaseWebActivity
     if (lastMenuType != activeScreenType) {
       changeOptionsMenu(menu);
     }
+
     return super.onPrepareOptionsMenu(menu);
   }
+
 
   /**
    * Called when the user clicks on an option in the main menu, including the import/export
@@ -447,6 +495,26 @@ public class MainActivity extends AbsBaseWebActivity
         Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
       }
       return true;
+
+      case R.id.menu_sort_name_asc:
+
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putInt( Constants.PERF_SORT_BY_ORDER , Constants.TABLE_SORT_ORDER.SORT_ASC.getValue() );
+        editor.apply();
+
+
+        swapScreens(activeScreenType);
+        return true;
+
+      case R.id.menu_sort_name_desc:
+
+        SharedPreferences.Editor editorD = mPreferences.edit();
+        editorD.putInt( Constants.PERF_SORT_BY_ORDER , Constants.TABLE_SORT_ORDER.SORT_DESC.getValue() );
+        editorD.apply();
+
+        swapScreens(activeScreenType);
+        return true;
+
     default:
       return super.onOptionsItemSelected(item);
     }

@@ -48,10 +48,13 @@ import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ActivityUtil;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableNameStruct;
 import org.opendatakit.tables.views.components.TableNameStructAdapter;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -62,9 +65,13 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
 
   private static final String TAG = TableManagerFragment.class.getSimpleName();
 
+  private Constants.TABLE_SORT_ORDER fragSortOrder = null;
+
+
   private static final int ID = R.layout.fragment_table_list;
 
   private TableNameStructAdapter mTpAdapter = null;
+
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -73,7 +80,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
-      Bundle savedInstanceState) {
+                           Bundle savedInstanceState) {
     WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName()).d(TAG, "[onCreateView]");
     return inflater.inflate(ID, container, false);
   }
@@ -91,10 +98,18 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     this.registerForContextMenu(this.getListView());
   }
 
+
+
   /**
    * Refresh the list of tables that is being displayed by the fragment.
    */
-  protected void updateTableIdList() {
+  protected void updateTableIdList()
+  {
+    if(this.getArguments() != null)
+    {
+      fragSortOrder = (Constants.TABLE_SORT_ORDER)this.getArguments().getSerializable(Constants.PERF_SORT_BY_ORDER);
+    }
+
     AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
     if (baseActivity == null) {
       return;
@@ -119,15 +134,15 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
 
         for (String tableId : tableIds) {
           String localizedDisplayName = TableUtil.get()
-              .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, appName, db,
-                  tableId);
+                  .getLocalizedDisplayName(userSelectedDefaultLocale, dbInterface, appName, db,
+                          tableId);
 
           TableNameStruct tableNameStruct = new TableNameStruct(tableId, localizedDisplayName);
 
           tableNameStructs.add(tableNameStruct);
         }
         WebLogger.getLogger(baseActivity.getAppName())
-            .e(TAG, "got tableId list of size: " + tableNameStructs.size());
+                .e(TAG, "got tableId list of size: " + tableNameStructs.size());
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(baseActivity.getAppName()).e(TAG, "error while fetching tableId list");
         WebLogger.getLogger(baseActivity.getAppName()).printStackTrace(e);
@@ -141,6 +156,20 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
           }
         }
       }
+    }
+
+
+    if(fragSortOrder != null)
+    {
+      Collections.sort(tableNameStructs, new Comparator<TableNameStruct>() {
+        @Override
+        public int compare(TableNameStruct o1, TableNameStruct o2)
+        {
+            return o1.getLocalizedDisplayName().compareTo(o2.getLocalizedDisplayName());
+        }
+      });
+      if(fragSortOrder == Constants.TABLE_SORT_ORDER.SORT_DESC)
+        Collections.reverse(tableNameStructs);
     }
 
     if (mTpAdapter == null) {
@@ -199,7 +228,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
   @Override
   public boolean onContextItemSelected(MenuItem item) {
     AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo) item
-        .getMenuInfo();
+            .getMenuInfo();
     TableNameStruct selectedStruct = this.mTpAdapter.getItem(menuInfo.position);
     if (selectedStruct == null) {
       return super.onContextItemSelected(item);
@@ -211,53 +240,53 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     String localizedDisplayName = selectedStruct.getLocalizedDisplayName();
 
     switch (item.getItemId()) {
-    case R.id.table_manager_delete_table:
-      AlertDialog confirmDeleteAlert;
-      // Prompt an alert box
-      AlertDialog.Builder alert = new AlertDialog.Builder(this.getActivity());
-      alert.setTitle(getString(R.string.confirm_remove_table))
-          .setMessage(getString(R.string.are_you_sure_remove_table, localizedDisplayName));
-      // OK Action => delete the table
-      alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int whichButton) {
-          // treat delete as a local removal -- not a server side deletion
-          DbHandle db = null;
-          try {
+      case R.id.table_manager_delete_table:
+        AlertDialog confirmDeleteAlert;
+        // Prompt an alert box
+        AlertDialog.Builder alert = new AlertDialog.Builder(this.getActivity());
+        alert.setTitle(getString(R.string.confirm_remove_table))
+                .setMessage(getString(R.string.are_you_sure_remove_table, localizedDisplayName));
+        // OK Action => delete the table
+        alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int whichButton) {
+            // treat delete as a local removal -- not a server side deletion
+            DbHandle db = null;
             try {
-              db = Tables.getInstance().getDatabase().openDatabase(appName);
-              Tables.getInstance().getDatabase()
-                  .deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
-            } finally {
-              if (db != null) {
-                Tables.getInstance().getDatabase().closeDatabase(appName, db);
+              try {
+                db = Tables.getInstance().getDatabase().openDatabase(appName);
+                Tables.getInstance().getDatabase()
+                        .deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
+              } finally {
+                if (db != null) {
+                  Tables.getInstance().getDatabase().closeDatabase(appName, db);
+                }
               }
+              // Now update the list.
+              updateTableIdList();
+            } catch (ServicesAvailabilityException e) {
+              WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName())
+                      .printStackTrace(e);
+              Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
             }
-            // Now update the list.
-            updateTableIdList();
-          } catch (ServicesAvailabilityException e) {
-            WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName())
-                .printStackTrace(e);
-            Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
           }
-        }
-      });
+        });
 
-      // Cancel Action
-      alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int whichButton) {
-          // Canceled.
-        }
-      });
-      // show the dialog
-      confirmDeleteAlert = alert.create();
-      confirmDeleteAlert.show();
-      return true;
-    case R.id.table_manager_edit_table_properties:
-      ActivityUtil.launchTableLevelPreferencesActivity(baseActivity, baseActivity.getAppName(),
-          tableIdOfSelectedItem, TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
-      return true;
-    default:
-      break;
+        // Cancel Action
+        alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int whichButton) {
+            // Canceled.
+          }
+        });
+        // show the dialog
+        confirmDeleteAlert = alert.create();
+        confirmDeleteAlert.show();
+        return true;
+      case R.id.table_manager_edit_table_properties:
+        ActivityUtil.launchTableLevelPreferencesActivity(baseActivity, baseActivity.getAppName(),
+                tableIdOfSelectedItem, TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
+        return true;
+      default:
+        break;
     }
     return super.onContextItemSelected(item);
   }
@@ -271,5 +300,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
   public void databaseUnavailable() {
     this.updateTableIdList();
   }
+
+
 
 }
