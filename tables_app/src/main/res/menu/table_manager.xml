@@ -21,6 +21,18 @@
             android:icon="@drawable/ic_settings_black_24dp"
             android:title="@string/preferences"
             android:showAsAction="never"/>
+
+    <item android:title="@string/sort_order_title" >
+        <menu>
+            <group android:checkableBehavior="single">
+                <item android:title="@string/sort_order_name_asc"
+                    android:id="@+id/menu_sort_name_asc"/>
+                <item android:title="@string/sort_order_name_desc"
+                    android:id="@+id/menu_sort_name_desc"/>
+            </group>
+        </menu>
+    </item>
+
     <item
             android:id="@+id/menu_table_about"
             android:icon="@drawable/ic_info_outline_black_24dp"

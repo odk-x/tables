@@ -48,6 +48,7 @@ import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ActivityUtil;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableNameStruct;
 import org.opendatakit.tables.views.components.TableNameStructAdapter;
 
@@ -63,8 +64,8 @@ import java.util.List;
 public class TableManagerFragment extends ListFragment implements DatabaseConnectionListener {
 
   private static final String TAG = TableManagerFragment.class.getSimpleName();
-  private static final String TABLE_SORT_BY_ORDER = "org.opendatakit.tables.fragment.sortbyorder";
 
+  private Constants.TABLE_SORT_ORDER fragSortOrder = null;
 
 
   private static final int ID = R.layout.fragment_table_list;
@@ -102,7 +103,13 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
   /**
    * Refresh the list of tables that is being displayed by the fragment.
    */
-  protected void updateTableIdList() {
+  protected void updateTableIdList()
+  {
+    if(this.getArguments() != null)
+    {
+      fragSortOrder = (Constants.TABLE_SORT_ORDER)this.getArguments().getSerializable(Constants.PERF_SORT_BY_ORDER);
+    }
+
     AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
     if (baseActivity == null) {
       return;
@@ -152,12 +159,18 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     }
 
 
-    Collections.sort( tableNameStructs , new Comparator<TableNameStruct>(){
-      @Override
-      public int compare(TableNameStruct o1, TableNameStruct o2) {
-        return o1.getLocalizedDisplayName().compareTo( o2.getLocalizedDisplayName() );
-      }
-    });
+    if(fragSortOrder != null)
+    {
+      Collections.sort(tableNameStructs, new Comparator<TableNameStruct>() {
+        @Override
+        public int compare(TableNameStruct o1, TableNameStruct o2)
+        {
+            return o1.getLocalizedDisplayName().compareTo(o2.getLocalizedDisplayName());
+        }
+      });
+      if(fragSortOrder == Constants.TABLE_SORT_ORDER.SORT_DESC)
+        Collections.reverse(tableNameStructs);
+    }
 
     if (mTpAdapter == null) {
       this.mTpAdapter = new TableNameStructAdapter(baseActivity, tableNameStructs);
@@ -287,5 +300,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
   public void databaseUnavailable() {
     this.updateTableIdList();
   }
+
+
 
 }
