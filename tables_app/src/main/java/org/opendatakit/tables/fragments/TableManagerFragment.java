@@ -106,6 +106,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     }
 
     String appName = baseActivity.getAppName();
+    
     PropertiesSingleton props = CommonToolProperties.get(getActivity().getApplication(), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 

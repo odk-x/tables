@@ -335,8 +335,7 @@ public final class Constants {
      */
     private JavaScriptHandles() {
     }
-
-    }
+  }
     public static final String PERF_SORT_BY_ORDER = "org.opendatakit.tables.fragment.sortbyorder";
 
     public enum TABLE_SORT_ORDER
