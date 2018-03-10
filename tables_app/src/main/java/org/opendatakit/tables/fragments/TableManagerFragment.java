@@ -48,10 +48,13 @@ import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.utils.ActivityUtil;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableNameStruct;
 import org.opendatakit.tables.views.components.TableNameStructAdapter;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -65,6 +68,8 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
   private static final int ID = R.layout.fragment_table_list;
 
   private TableNameStructAdapter mTpAdapter = null;
+
+  private Constants.TABLE_SORT_ORDER fragSortOrder = null;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -101,7 +106,6 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     }
 
     String appName = baseActivity.getAppName();
-
     PropertiesSingleton props = CommonToolProperties.get(getActivity().getApplication(), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
@@ -109,6 +113,9 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     DbHandle db = null;
 
     List<TableNameStruct> tableNameStructs = new ArrayList<>();
+
+    if(this.getArguments() != null)
+      fragSortOrder = (Constants.TABLE_SORT_ORDER)this.getArguments().getSerializable(Constants.PERF_SORT_BY_ORDER);
 
     if (Tables.getInstance().getDatabase() != null) {
 
@@ -141,6 +148,18 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
           }
         }
       }
+    }
+    if(fragSortOrder != null)
+    {
+      Collections.sort(tableNameStructs, new Comparator<TableNameStruct>() {
+        @Override
+        public int compare(TableNameStruct o1, TableNameStruct o2)
+        {
+          return o1.getLocalizedDisplayName().compareTo(o2.getLocalizedDisplayName());
+        }
+      });
+      if(fragSortOrder == Constants.TABLE_SORT_ORDER.SORT_DESC)
+        Collections.reverse(tableNameStructs);
     }
 
     if (mTpAdapter == null) {
