@@ -39,12 +39,14 @@ import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.IWebFragment;
 import org.opendatakit.tables.fragments.InitializationFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.fragments.WebFragment;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -77,6 +79,7 @@ public class MainActivity extends AbsBaseWebActivity
    * active fragment.
    */
   private ScreenType lastMenuType = null;
+  private PropertiesSingleton mPropSingleton;
 
   private static String[] checkForQueryParameter(File webFile) {
     String webFileToDisplayPath = webFile.getPath();
@@ -171,6 +174,7 @@ public class MainActivity extends AbsBaseWebActivity
           savedInstanceState.getString(CURRENT_FRAGMENT) :
           activeScreenType.name());
     }
+    mPropSingleton = CommonToolProperties.get( this ,mAppName);
   }
 
   @Override
@@ -295,6 +299,23 @@ public class MainActivity extends AbsBaseWebActivity
       newFragment = mgr.findFragmentByTag(newScreenType.name());
       if (newFragment == null) {
         newFragment = new TableManagerFragment();
+        Bundle bundle = new Bundle();
+        int defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getValue();
+        int sortingOrder = defaultValue;
+        if(mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER ) != null)
+          sortingOrder = mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER );
+
+        bundle.putSerializable(Constants.PERF_SORT_BY_ORDER,  Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder)  );
+        newFragment.setArguments(bundle);
+      }
+      else {
+        int defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getValue();
+        int sortingOrder = defaultValue;
+        if(mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER ) != null )
+          sortingOrder = mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER );
+
+        newFragment.getArguments().putSerializable(Constants.PERF_SORT_BY_ORDER,  Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder)  );
+        newFragment.onResume();
       }
       break;
     case WEBVIEW_SCREEN:
@@ -372,6 +393,14 @@ public class MainActivity extends AbsBaseWebActivity
       menuInflater.inflate(R.menu.web_view_activity, menu);
     } else if (activeScreenType == ScreenType.TABLE_MANAGER_SCREEN) {
       menuInflater.inflate(R.menu.table_manager, menu);
+      int defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getValue();
+      int sortingOrder = defaultValue;
+      if(mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER ) != null)
+        sortingOrder = mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER );
+      if( Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder) ==   Constants.TABLE_SORT_ORDER.SORT_ASC )
+        menu.findItem(R.id.menu_sort_name_asc).setChecked(true);
+      else
+        menu.findItem(R.id.menu_sort_name_desc).setChecked(true);
     }
     lastMenuType = activeScreenType;
 
@@ -447,7 +476,17 @@ public class MainActivity extends AbsBaseWebActivity
         Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
       }
       return true;
-    default:
+      case R.id.menu_sort_name_asc:
+        mPropSingleton.setProperties( Collections.singletonMap(
+                Constants.PERF_SORT_BY_ORDER  , Integer.toString(Constants.TABLE_SORT_ORDER.SORT_ASC.getValue() )));
+        swapScreens(activeScreenType);
+       return true;
+      case R.id.menu_sort_name_desc:
+        mPropSingleton.setProperties( Collections.singletonMap(
+                Constants.PERF_SORT_BY_ORDER  , Integer.toString(Constants.TABLE_SORT_ORDER.SORT_DESC.getValue() )));
+        swapScreens(activeScreenType);
+       return true;
+      default:
       return super.onOptionsItemSelected(item);
     }
   }
