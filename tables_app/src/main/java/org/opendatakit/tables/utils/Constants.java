@@ -336,17 +336,15 @@ public final class Constants {
     private JavaScriptHandles() {
     }
   }
-    public static final String PERF_SORT_BY_ORDER = "org.opendatakit.tables.fragment.sortbyorder";
 
     public enum TABLE_SORT_ORDER
     {
-      SORT_ASC(0), SORT_DESC(1);
-      private final int value;
-      TABLE_SORT_ORDER(int value) { this.value = value; }
-      public int getValue() { return value; }
-      public static TABLE_SORT_ORDER getCorrespondingEnum(int table_sort_order)
+      SORT_ASC, SORT_DESC;
+
+      public String getCorrespondingName() { return this.name(); }
+      public static TABLE_SORT_ORDER getCorrespondingEnum(String table_sort_order)
       {
-        if(table_sort_order ==  0)
+        if( table_sort_order.equalsIgnoreCase( SORT_ASC.name() ) )
           return SORT_ASC;
         else
           return SORT_DESC;

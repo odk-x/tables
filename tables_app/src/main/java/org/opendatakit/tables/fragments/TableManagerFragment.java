@@ -116,7 +116,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     List<TableNameStruct> tableNameStructs = new ArrayList<>();
 
     if(this.getArguments() != null)
-      fragSortOrder = (Constants.TABLE_SORT_ORDER)this.getArguments().getSerializable(Constants.PERF_SORT_BY_ORDER);
+      fragSortOrder = (Constants.TABLE_SORT_ORDER)this.getArguments().getSerializable(CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER);
 
     if (Tables.getInstance().getDatabase() != null) {
 
