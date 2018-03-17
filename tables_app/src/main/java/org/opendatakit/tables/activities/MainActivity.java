@@ -300,21 +300,23 @@ public class MainActivity extends AbsBaseWebActivity
       if (newFragment == null) {
         newFragment = new TableManagerFragment();
         Bundle bundle = new Bundle();
-        int defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getValue();
-        int sortingOrder = defaultValue;
-        if(mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER ) != null)
-          sortingOrder = mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER );
+        String defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getCorrespondingName();
+        String sortingOrder = defaultValue;
+        if(mPropSingleton.getProperty(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER ) != null
+                || (!mPropSingleton.getProperty(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER ).equals("")) )
+          sortingOrder = mPropSingleton.getProperty(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER );
 
-        bundle.putSerializable(Constants.PERF_SORT_BY_ORDER,  Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder)  );
+        bundle.putSerializable(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER,  Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder)  );
         newFragment.setArguments(bundle);
       }
       else {
-        int defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getValue();
-        int sortingOrder = defaultValue;
-        if(mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER ) != null )
-          sortingOrder = mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER );
+        String defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getCorrespondingName();
+        String sortingOrder = defaultValue;
+        if(mPropSingleton.getProperty(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER ) != null
+                || (!mPropSingleton.getProperty(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER ).equals("")) )
+          sortingOrder = mPropSingleton.getProperty(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER );
 
-        newFragment.getArguments().putSerializable(Constants.PERF_SORT_BY_ORDER,  Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder)  );
+        newFragment.getArguments().putSerializable(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER,  Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder)  );
         newFragment.onResume();
       }
       break;
@@ -393,10 +395,11 @@ public class MainActivity extends AbsBaseWebActivity
       menuInflater.inflate(R.menu.web_view_activity, menu);
     } else if (activeScreenType == ScreenType.TABLE_MANAGER_SCREEN) {
       menuInflater.inflate(R.menu.table_manager, menu);
-      int defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getValue();
-      int sortingOrder = defaultValue;
-      if(mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER ) != null)
-        sortingOrder = mPropSingleton.getIntegerProperty(Constants.PERF_SORT_BY_ORDER );
+      String defaultValue = Constants.TABLE_SORT_ORDER.SORT_ASC.getCorrespondingName();
+      String sortingOrder = defaultValue;
+      if(mPropSingleton.getProperty(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER ) != null
+              || (!mPropSingleton.getProperty(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER ).equals("")) )
+        sortingOrder = mPropSingleton.getProperty(CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER );
       if( Constants.TABLE_SORT_ORDER.getCorrespondingEnum(sortingOrder) ==   Constants.TABLE_SORT_ORDER.SORT_ASC )
         menu.findItem(R.id.menu_sort_name_asc).setChecked(true);
       else
@@ -478,12 +481,12 @@ public class MainActivity extends AbsBaseWebActivity
       return true;
       case R.id.menu_sort_name_asc:
         mPropSingleton.setProperties( Collections.singletonMap(
-                Constants.PERF_SORT_BY_ORDER  , Integer.toString(Constants.TABLE_SORT_ORDER.SORT_ASC.getValue() )));
+                CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER  , Constants.TABLE_SORT_ORDER.SORT_ASC.getCorrespondingName() ));
         swapScreens(activeScreenType);
        return true;
       case R.id.menu_sort_name_desc:
         mPropSingleton.setProperties( Collections.singletonMap(
-                Constants.PERF_SORT_BY_ORDER  , Integer.toString(Constants.TABLE_SORT_ORDER.SORT_DESC.getValue() )));
+                CommonToolProperties.KEY_PERF_TABLES_SORT_BY_ORDER  , Constants.TABLE_SORT_ORDER.SORT_DESC.getCorrespondingName() ));
         swapScreens(activeScreenType);
        return true;
       default:
