@@ -41,7 +41,7 @@ public class DetailWithListListViewFragment extends AbsWebTableFragment {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreateView] parent view was null");
       return null;
     }
-    ODKWebView webView = (ODKWebView) newView.findViewById(R.id.webkit);
+    ODKWebView webView = newView.findViewById(R.id.webkit);
     if (webView == null) {
       WebLogger.getLogger(getAppName()).e(TAG, "[onCreateView] web view was null");
       return newView;

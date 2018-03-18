@@ -136,12 +136,12 @@ public class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
       description += " " + mColorRules.get(position).getOperator().getSymbol() + " " + mColorRules
           .get(position).getVal();
     }
-    TextView label = (TextView) row.findViewById(R.id.row_label);
+    TextView label = row.findViewById(R.id.row_label);
     label.setText(description);
     final int backgroundColor = mColorRules.get(position).getBackground();
     final int textColor = mColorRules.get(position).getForeground();
     // Will demo the color rule.
-    TextView exampleView = (TextView) row.findViewById(R.id.row_ext);
+    TextView exampleView = row.findViewById(R.id.row_ext);
     exampleView.setText(mContext.getString(R.string.status_column));
     exampleView.setTextColor(textColor);
     exampleView.setBackgroundColor(backgroundColor);

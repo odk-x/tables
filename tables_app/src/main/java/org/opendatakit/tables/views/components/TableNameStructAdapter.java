@@ -62,7 +62,7 @@ public class TableNameStructAdapter extends ArrayAdapter<TableNameStruct> {
           .inflate(R.layout.row_item_with_preference, parent, false);
     }
     final RelativeLayout view = (RelativeLayout) convertView;
-    TextView textView = (TextView) view.findViewById(R.id.row_item_text);
+    TextView textView = view.findViewById(R.id.row_item_text);
 
     TableNameStruct nameStruct = getItem(position);
     if (nameStruct == null) { // should never happen
@@ -72,7 +72,7 @@ public class TableNameStructAdapter extends ArrayAdapter<TableNameStruct> {
     }
 
     textView.setText(nameStruct.getLocalizedDisplayName());
-    ImageView imageView = (ImageView) view.findViewById(R.id.row_item_icon);
+    ImageView imageView = view.findViewById(R.id.row_item_icon);
     imageView.setOnClickListener(new View.OnClickListener() {
 
       @Override

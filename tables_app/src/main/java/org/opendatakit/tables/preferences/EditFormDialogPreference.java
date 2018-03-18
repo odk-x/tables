@@ -96,7 +96,7 @@ public class EditFormDialogPreference extends DialogPreference {
         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     LinearLayout view = (LinearLayout) inflater
         .inflate(R.layout.edit_default_form_preference, null);
-    mFormId = (EditText) view.findViewById(R.id.edit_form_id);
+    mFormId = view.findViewById(R.id.edit_form_id);
 
     try {
       this.mFormType = retrieveFormType();
