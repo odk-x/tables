@@ -152,7 +152,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     }
     // and set visibility of the no data vs. list
     if (this.getView() != null) {
-      TextView none = (TextView) this.getView().findViewById(android.R.id.empty);
+      TextView none = this.getView().findViewById(android.R.id.empty);
       View listing = this.getView().findViewById(android.R.id.list);
       if (tableNameStructs.isEmpty()) {
         if (Tables.getInstance().getDatabase() == null) {

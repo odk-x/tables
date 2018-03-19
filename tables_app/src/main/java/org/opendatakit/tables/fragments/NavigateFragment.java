@@ -118,23 +118,23 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
     mGeoProvider.setDirectionEventListener(this);
     mGeoProvider.setLocationEventListener(this);
 
-    mSignalQualitySpinner = (ProgressWheel) activity .findViewById(R.id.signalQualitySpinner);
-    mCompass = (CompassView) activity .findViewById(R.id.compass);
-    mDestinationLocation = (CompassView) getActivity().findViewById(R.id.destination);
+    mSignalQualitySpinner = activity .findViewById(R.id.signalQualitySpinner);
+    mCompass = activity .findViewById(R.id.compass);
+    mDestinationLocation = getActivity().findViewById(R.id.destination);
 
-    mBearingTextView = (TextView) activity .findViewById(R.id.bearingTextView);
-    mHeadingTextView = (TextView) activity .findViewById(R.id.headingTextView);
-    mDistanceTextView = (TextView) activity .findViewById(R.id.distanceTextView);
+    mBearingTextView = activity .findViewById(R.id.bearingTextView);
+    mHeadingTextView = activity .findViewById(R.id.headingTextView);
+    mDistanceTextView = activity .findViewById(R.id.distanceTextView);
     mDistanceTextView.setText(getActivity().getString(R.string.distance,
         "-"));
 
-    Button arriveButton = (Button) activity .findViewById(R.id.navigate_arrive_button);
+    Button arriveButton = activity .findViewById(R.id.navigate_arrive_button);
     arriveButton.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
         arrive(v);
       }
     });
-    Button cancelButton = (Button) activity .findViewById(R.id.navigate_cancel_button);
+    Button cancelButton = activity .findViewById(R.id.navigate_cancel_button);
     cancelButton.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
         cancel(v);

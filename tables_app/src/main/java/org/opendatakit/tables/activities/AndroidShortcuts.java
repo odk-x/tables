@@ -152,7 +152,7 @@ public class AndroidShortcuts extends BaseActivity {
         } else {
           row = convertView;
         }
-        TextView vw = (TextView) row.findViewById(R.id.shortcut_title);
+        TextView vw = row.findViewById(R.id.shortcut_title);
         Choice item = getItem(position);
         if (item == null) {
           TextView res = new TextView(AndroidShortcuts.this);
@@ -164,7 +164,7 @@ public class AndroidShortcuts extends BaseActivity {
         vw.setTextSize(18);
         vw.setText(item.name);
 
-        ImageView iv = (ImageView) row.findViewById(R.id.shortcut_icon);
+        ImageView iv = row.findViewById(R.id.shortcut_icon);
         iv.setImageBitmap(item.icon);
 
         return row;
