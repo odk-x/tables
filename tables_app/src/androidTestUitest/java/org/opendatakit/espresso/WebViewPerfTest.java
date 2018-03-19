@@ -26,7 +26,9 @@ import org.opendatakit.util.UAUtils;
 
 import static android.support.test.espresso.web.assertion.WebViewAssertions.webMatches;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
-import static android.support.test.espresso.web.webdriver.DriverAtoms.*;
+import static android.support.test.espresso.web.webdriver.DriverAtoms.findElement;
+import static android.support.test.espresso.web.webdriver.DriverAtoms.getText;
+import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 import static junit.framework.Assert.fail;
 import static org.hamcrest.Matchers.containsString;
 

@@ -9,10 +9,8 @@ import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.support.v13.app.ActivityCompat;
 import android.view.View;
 import android.widget.ScrollView;
-
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.ClassRule;

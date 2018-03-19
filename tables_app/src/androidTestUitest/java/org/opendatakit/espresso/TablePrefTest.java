@@ -16,7 +16,6 @@ import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.view.View;
-
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.ClassRule;

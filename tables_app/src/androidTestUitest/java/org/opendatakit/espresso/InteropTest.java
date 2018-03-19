@@ -8,7 +8,6 @@ import android.support.test.filters.LargeTest;
 import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
-
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;

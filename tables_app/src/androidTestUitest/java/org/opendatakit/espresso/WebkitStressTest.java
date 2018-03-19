@@ -30,7 +30,12 @@ import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
-import static org.opendatakit.util.TestConstants.*;
+import static org.opendatakit.util.TestConstants.APP_INIT_TIMEOUT;
+import static org.opendatakit.util.TestConstants.HOPE_TAB_ID;
+import static org.opendatakit.util.TestConstants.LAUNCH_DEMO_ID;
+import static org.opendatakit.util.TestConstants.OBJ_WAIT_TIMEOUT;
+import static org.opendatakit.util.TestConstants.TABLES_PKG_NAME;
+import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
