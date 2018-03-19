@@ -15,8 +15,8 @@ import android.support.test.uiautomator.UiDevice;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
-import org.junit.Before;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,15 +35,26 @@ import org.opendatakit.utilities.ODKFileUtils;
 import java.io.File;
 import java.io.FilenameFilter;
 
-import static android.support.test.espresso.Espresso.*;
-import static android.support.test.espresso.action.ViewActions.*;
-import static android.support.test.espresso.assertion.ViewAssertions.*;
+import static android.support.test.espresso.Espresso.onData;
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.action.ViewActions.typeText;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.intending;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasAction;
 import static android.support.test.espresso.matcher.RootMatchers.isPlatformPopup;
-import static android.support.test.espresso.matcher.ViewMatchers.*;
-import static org.hamcrest.Matchers.*;
-import static org.opendatakit.util.TestConstants.*;
+import static android.support.test.espresso.matcher.ViewMatchers.assertThat;
+import static android.support.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.opendatakit.util.TestConstants.APP_NAME;
+import static org.opendatakit.util.TestConstants.OI_PICK_FILE;
+import static org.opendatakit.util.TestConstants.T_HOUSE_DISPLAY_NAME;
+import static org.opendatakit.util.TestConstants.T_HOUSE_TABLE_ID;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest

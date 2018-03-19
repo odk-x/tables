@@ -10,7 +10,12 @@ import android.os.Build;
 import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.matcher.ViewMatchers;
-import android.support.test.uiautomator.*;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.BySelector;
+import android.support.test.uiautomator.Direction;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.Until;
 import android.view.View;
 import android.widget.Button;
 import org.opendatakit.tables.R;
@@ -23,7 +28,12 @@ import java.util.regex.Pattern;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.opendatakit.util.TestConstants.*;
+import static org.opendatakit.util.TestConstants.APP_INIT_TIMEOUT;
+import static org.opendatakit.util.TestConstants.APP_START_TIMEOUT;
+import static org.opendatakit.util.TestConstants.CUSTOM_HOME;
+import static org.opendatakit.util.TestConstants.OBJ_WAIT_TIMEOUT;
+import static org.opendatakit.util.TestConstants.TABLES_PKG_NAME;
+import static org.opendatakit.util.TestConstants.TABLES_SPECIFIC_SETTINGS;
 
 public class UAUtils {
   public static boolean turnOnCustomHome(UiDevice mDevice) {
