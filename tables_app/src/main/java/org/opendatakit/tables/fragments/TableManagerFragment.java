@@ -105,7 +105,6 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     }
 
     String appName = baseActivity.getAppName();
-    
     PropertiesSingleton props = CommonToolProperties.get(getActivity().getApplication(), appName);
     String userSelectedDefaultLocale = props.getUserSelectedDefaultLocale();
 
@@ -147,8 +146,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
         }
       }
     }
-    if(fragSortOrder != null)
-    {
+    if(fragSortOrder != null) {
       Collections.sort(tableNameStructs, new Comparator<TableNameStruct>() {
         @Override
         public int compare(TableNameStruct o1, TableNameStruct o2)
@@ -159,7 +157,6 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
             return o1.getLocalizedDisplayName().compareTo(o2.getLocalizedDisplayName());
         }
       });
-
     }
 
     if (mTpAdapter == null) {
