@@ -337,4 +337,10 @@ public final class Constants {
     }
   }
 
+  /**
+   * Enum for storing SORT ORDER for Table's table list.
+   */
+  public enum TABLE_SORT_ORDER {
+      SORT_ASC, SORT_DESC
+  }
 }

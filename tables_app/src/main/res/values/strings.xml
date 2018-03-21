@@ -443,4 +443,7 @@
     <string name="heading">Heading: %1$s° %2$s</string>
     <string name="navigate_arrive_button">Arrive</string>
     <string name="navigate_cancel_button">Cancel</string>
+    <string name="sort_order_name_asc">Name (Alphabetical)</string>
+    <string name="sort_order_name_desc">Name (Reverse Alphabetical)</string>
+    <string name="sort_order_title">Sort By</string>
 </resources>

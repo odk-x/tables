@@ -39,12 +39,14 @@ import org.opendatakit.fragment.AboutMenuFragment;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
+import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.IWebFragment;
 import org.opendatakit.tables.fragments.InitializationFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.fragments.WebFragment;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -63,6 +65,11 @@ import java.util.Collections;
 public class MainActivity extends AbsBaseWebActivity
     implements DatabaseConnectionListener, IInitResumeActivity {
 
+  public interface UXNotifyListener
+  {
+    public void notifyUIChanges();
+  }
+
   // Used for logging
   private static final String TAG = MainActivity.class.getSimpleName();
   private static final String CURRENT_FRAGMENT = "currentFragment";
@@ -77,6 +84,7 @@ public class MainActivity extends AbsBaseWebActivity
    * active fragment.
    */
   private ScreenType lastMenuType = null;
+  private PropertiesSingleton mPropSingleton;
 
   private static String[] checkForQueryParameter(File webFile) {
     String webFileToDisplayPath = webFile.getPath();
@@ -171,6 +179,7 @@ public class MainActivity extends AbsBaseWebActivity
           savedInstanceState.getString(CURRENT_FRAGMENT) :
           activeScreenType.name());
     }
+    mPropSingleton = CommonToolProperties.get( this ,mAppName);
   }
 
   @Override
@@ -293,8 +302,16 @@ public class MainActivity extends AbsBaseWebActivity
     switch (newScreenType) {
     case TABLE_MANAGER_SCREEN:
       newFragment = mgr.findFragmentByTag(newScreenType.name());
+      String sortingOrder = mPropSingleton.getProperty(CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER);
       if (newFragment == null) {
         newFragment = new TableManagerFragment();
+        Bundle bundle = new Bundle();
+        bundle.putString(CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER, sortingOrder  );
+        newFragment.setArguments(bundle);
+      }
+      else {
+        newFragment.getArguments().putString(CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER, sortingOrder  );
+        ((TableManagerFragment) newFragment).notifyUIChanges();
       }
       break;
     case WEBVIEW_SCREEN:
@@ -372,6 +389,11 @@ public class MainActivity extends AbsBaseWebActivity
       menuInflater.inflate(R.menu.web_view_activity, menu);
     } else if (activeScreenType == ScreenType.TABLE_MANAGER_SCREEN) {
       menuInflater.inflate(R.menu.table_manager, menu);
+      String sortingOrder = mPropSingleton.getProperty(CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER);
+      if( sortingOrder != null && sortingOrder.equalsIgnoreCase( Constants.TABLE_SORT_ORDER.SORT_DESC.name() ) )
+        menu.findItem(R.id.menu_sort_name_desc).setChecked(true);
+      else
+        menu.findItem(R.id.menu_sort_name_asc).setChecked(true);
     }
     lastMenuType = activeScreenType;
 
@@ -446,6 +468,16 @@ public class MainActivity extends AbsBaseWebActivity
         WebLogger.getLogger(appName).printStackTrace(e);
         Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
       }
+      return true;
+    case R.id.menu_sort_name_asc:
+      mPropSingleton.setProperties( Collections.singletonMap(
+                CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER, Constants.TABLE_SORT_ORDER.SORT_ASC.name() ));
+      swapScreens(activeScreenType);
+      return true;
+    case R.id.menu_sort_name_desc:
+      mPropSingleton.setProperties( Collections.singletonMap(
+                CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER, Constants.TABLE_SORT_ORDER.SORT_DESC.name() ));
+      swapScreens(activeScreenType);
       return true;
     default:
       return super.onOptionsItemSelected(item);
