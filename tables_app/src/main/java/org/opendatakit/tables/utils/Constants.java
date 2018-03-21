@@ -340,15 +340,6 @@ public final class Constants {
     public enum TABLE_SORT_ORDER
     {
       SORT_ASC, SORT_DESC;
-
-      public String getCorrespondingName() { return this.name(); }
-      public static TABLE_SORT_ORDER getCorrespondingEnum(String table_sort_order)
-      {
-        if( table_sort_order.equalsIgnoreCase( SORT_ASC.name() ) )
-          return SORT_ASC;
-        else
-          return SORT_DESC;
-      }
     }
 
 }
