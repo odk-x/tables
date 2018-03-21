@@ -390,10 +390,10 @@ public class MainActivity extends AbsBaseWebActivity
     } else if (activeScreenType == ScreenType.TABLE_MANAGER_SCREEN) {
       menuInflater.inflate(R.menu.table_manager, menu);
       String sortingOrder = mPropSingleton.getProperty(CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER);
-      if( sortingOrder.equalsIgnoreCase( Constants.TABLE_SORT_ORDER.SORT_ASC.name() ) )
-        menu.findItem(R.id.menu_sort_name_asc).setChecked(true);
-      else
+      if( sortingOrder != null && sortingOrder.equalsIgnoreCase( Constants.TABLE_SORT_ORDER.SORT_DESC.name() ) )
         menu.findItem(R.id.menu_sort_name_desc).setChecked(true);
+      else
+        menu.findItem(R.id.menu_sort_name_asc).setChecked(true);
     }
     lastMenuType = activeScreenType;
 
