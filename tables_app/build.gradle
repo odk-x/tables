@@ -148,19 +148,19 @@ dependencies {
                 classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
-    compile 'com.google.android.gms:play-services-maps:11.8.0'
+    implementation 'com.google.android.gms:play-services-maps:11.8.0'
 
     //for Espresso
-    androidTestUitestCompile 'com.android.support.test:runner:1.0.1'
-    androidTestUitestCompile 'com.android.support.test:rules:1.0.1'
-    androidTestUitestCompile 'com.android.support.test.espresso:espresso-core:3.0.1'
-    androidTestUitestCompile 'com.android.support.test.espresso:espresso-intents:3.0.1'
-    androidTestUitestCompile 'com.android.support.test.espresso:espresso-web:3.0.1'
-    androidTestUitestCompile 'com.android.support:support-annotations:27.1.0'
+    androidTestUitestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestUitestImplementation 'com.android.support.test:rules:1.0.1'
+    androidTestUitestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+    androidTestUitestImplementation 'com.android.support.test.espresso:espresso-intents:3.0.1'
+    androidTestUitestImplementation 'com.android.support.test.espresso:espresso-web:3.0.1'
+    androidTestUitestImplementation 'com.android.support:support-annotations:27.1.0'
 
     //for UI Automator
-    androidTestUitestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.3'
-    androidTestUitestCompile 'org.hamcrest:hamcrest-integration:1.3'
+    androidTestUitestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.3'
+    androidTestUitestImplementation 'org.hamcrest:hamcrest-integration:1.3'
 }
 
 task grantPermissionForODKApp () {
