@@ -117,8 +117,6 @@ public class InitializationFragment extends AbsTablesFragment
 
       if (initState == InitializationState.START) {
          WebLogger.getLogger(appName).i(TAG, "onResume -- calling initializeAppName");
-         msgManager.createProgressDialog(mainDialogTitle, getString(R.string.please_wait),
-             getFragmentManager());
          getCommonApplication()
              .initializeAppName(((IAppAwareActivity) getActivity()).getAppName(), this);
          initState = InitializationState.IN_PROGRESS;
@@ -203,9 +201,9 @@ public class InitializationFragment extends AbsTablesFragment
    @Override public void initializationProgressUpdate(String displayString) {
       WebLogger.getLogger(appName)
           .d(TAG, "in public void initializationProgressUpdate(String displayString) {");
-      if (msgManager != null && msgManager.displayingProgressDialog()
+      if (msgManager != null
           && initState == InitializationState.IN_PROGRESS) {
-         msgManager.updateProgressDialogMessage(displayString, getFragmentManager());
+         updateProgressDialog(displayString);
       }
    }
 
@@ -234,10 +232,19 @@ public class InitializationFragment extends AbsTablesFragment
     */
    @Override public void databaseUnavailable() {
       WebLogger.getLogger(appName).d(TAG, "in public void databaseUnavailable() {");
-      if (msgManager != null && msgManager.displayingProgressDialog()) {
-         msgManager.updateProgressDialogMessage(getString(R.string.database_unavailable),
-             getFragmentManager());
+      if (msgManager != null) {
+         updateProgressDialog(getString(R.string.database_unavailable));
       }
    }
 
+   private void updateProgressDialog(String displayString) {
+      if (!msgManager.displayingProgressDialog()) {
+         msgManager.createProgressDialog(mainDialogTitle, getString(R.string.please_wait),
+             getFragmentManager());
+      } else {
+         if (msgManager.hasDialogBeenCreated()) {
+            msgManager.updateProgressDialogMessage(displayString, getFragmentManager());
+         }
+      }
+   }
 }
