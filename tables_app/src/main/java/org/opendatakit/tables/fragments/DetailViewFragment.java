@@ -61,7 +61,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
               // we know it's safe to dump the table id in there because we got it from the TDA
               .arbitrarySqlQuery(getAppName(), db,tableId, "SELECT * FROM "+tableId+" WHERE _id = ?",
                       new BindArgs(new String[] {rowId}), 1, 0);
-      String access = result.getRowAtIndex(0).getDataByKey("_effective_access");
+      String access = result.getRowAtIndex(0).getRawStringByKey("_effective_access");
       if (access != null) {
         can_edit = access.contains("w");
       }

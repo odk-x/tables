@@ -19,10 +19,7 @@ import android.app.Activity;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.ColumnUtil;
 import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
-import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.data.*;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -164,7 +161,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
    * @param index the index of the row
    * @return the requested row or null
    */
-  public Row getRowAtIndex(int index) {
+  public TypedRow getRowAtIndex(int index) {
     UserTable table = fragment.getUserTable();
     if (table == null) {
       return null;
@@ -220,7 +217,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
     getTableId();
     cell.displayText = userTable
         .getDisplayTextOfData(cellInfo.rowId, cd.getType(), cellInfo.elementKey);
-    cell.value = cell.row.getDataByKey(cellInfo.elementKey);
+    cell.value = cell.row.getStringValueByKey(cellInfo.elementKey);
     return cell;
   }
 
@@ -279,7 +276,7 @@ public class SpreadsheetUserTable implements ISpreadsheetFragmentContainer {
     /**
      * The row of the cell
      */
-    public Row row; // the row
+    public TypedRow row; // the row
     /**
      * The column of the cell
      */

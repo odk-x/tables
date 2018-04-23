@@ -22,6 +22,7 @@ import android.widget.Toast;
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.provider.DataTableColumns;
@@ -58,7 +59,7 @@ public final class ActivityUtil {
    * @param row      the exact row to edit
    * @throws ServicesAvailabilityException if the database is down
    */
-  public static void editRow(AbsBaseActivity activity, String appName, String tableId, Row row)
+  public static void editRow(AbsBaseActivity activity, String appName, String tableId, TypedRow row)
       throws ServicesAvailabilityException {
     FormType formType = FormType.constructFormType(activity, appName, tableId);
 
@@ -71,10 +72,10 @@ public final class ActivityUtil {
     SurveyFormParameters params = formType.getSurveyFormParameters();
 
     Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(appName, tableId, params,
-        row.getDataByKey(DataTableColumns.ID));
+        row.getStringValueByKey(DataTableColumns.ID));
     if (intent != null) {
       SurveyUtil
-          .launchSurveyToEditRow(activity, tableId, intent, row.getDataByKey(DataTableColumns.ID));
+          .launchSurveyToEditRow(activity, tableId, intent, row.getStringValueByKey(DataTableColumns.ID));
     }
   }
 

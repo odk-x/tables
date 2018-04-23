@@ -16,10 +16,7 @@ import com.todddavies.components.progressbar.ProgressWheel;
 import org.opendatakit.activities.IOdkDataActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
-import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.data.*;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -388,9 +385,9 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
       mDestinationLocation.setVisibility(View.VISIBLE);
     }
 
-    Row selectedRow = mTable.getRowAtIndex(mSelectedItemIndex);
-    String lat = selectedRow.getDataByKey(mLatitudeColumn.getElementKey());
-    String lon = selectedRow.getDataByKey(mLongitudeColumn.getElementKey());
+    TypedRow selectedRow = mTable.getRowAtIndex(mSelectedItemIndex);
+    String lat = selectedRow.getStringValueByKey(mLatitudeColumn.getElementKey());
+    String lon = selectedRow.getStringValueByKey(mLongitudeColumn.getElementKey());
 
     Location destination = new Location(TAG);
     destination.setLatitude(Double.parseDouble(lat));
