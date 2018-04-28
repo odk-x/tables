@@ -29,6 +29,7 @@ import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.TypedRow;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.provider.DataTableColumns;
 
@@ -628,7 +629,7 @@ final class TabularView extends View {
     // drawing the cells
     int y = topTopmost;
     for (int theRowIndex = topmost; theRowIndex < bottommost + 1; theRowIndex++) {
-      Row theRow = null;
+      TypedRow theRow = null;
 
       // we only need to fetch this once for a given row...
       ColorGuide rowGuide = null;
@@ -648,7 +649,7 @@ final class TabularView extends View {
         }
         //rowGuide = mRowColorRuleGroup.getColorGuide(this.mTable.getColumnDefinitions(), theRow);
         rowGuide = mRowColorGuideGroup
-            .getColorGuideForRowId(theRow.getDataByKey(DataTableColumns.ID));
+            .getColorGuideForRowId(theRow.getStringValueByKey(DataTableColumns.ID));
       }
 
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
@@ -683,7 +684,7 @@ final class TabularView extends View {
           }
           //ColorGuide columnGuide = mColumnColorRules.get(this.mElementKeys.get(j)).getColorGuide(this.mTable.getColumnDefinitions(), theRow);
           ColorGuide columnGuide = mColumnColorGuideGroup.get(this.mElementKeys.get(j))
-              .getColorGuideForRowId(theRow.getDataByKey(DataTableColumns.ID));
+              .getColorGuideForRowId(theRow.getStringValueByKey(DataTableColumns.ID));
           // Override the role rule if a column rule matched.
           if (columnGuide != null) {
             foregroundColor = columnGuide.getForeground();

@@ -40,10 +40,7 @@ import org.opendatakit.data.ColorGuideGroup;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.LocalKeyValueStoreConstants;
-import org.opendatakit.database.data.ColumnDefinition;
-import org.opendatakit.database.data.OrderedColumns;
-import org.opendatakit.database.data.Row;
-import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.data.*;
 import org.opendatakit.database.queries.ArbitraryQuery;
 import org.opendatakit.database.queries.ResumableQuery;
 import org.opendatakit.database.queries.SimpleQuery;
@@ -382,9 +379,9 @@ public class TableMapInnerFragment extends MapFragment implements OnMapReadyCall
 
       // Go through each row and create a marker at the specified location.
       for (int i = 0; i < table.getNumberOfRows(); i++) {
-        Row row = table.getRowAtIndex(i);
-        String latitudeString = row.getDataByKey(latitudeColumn.getElementKey());
-        String longitudeString = row.getDataByKey(longitudeColumn.getElementKey());
+        TypedRow row = table.getRowAtIndex(i);
+        String latitudeString = row.getStringValueByKey(latitudeColumn.getElementKey());
+        String longitudeString = row.getStringValueByKey(longitudeColumn.getElementKey());
         if (latitudeString == null || longitudeString == null || latitudeString.isEmpty()
                 || longitudeString.isEmpty()) {
           continue;
