@@ -765,7 +765,7 @@ final class TabularView extends View {
       bgPaint.setColor(this.defaultBackgroundColor);
     }
     canvas.drawRect(x, y, x + columnWidth, y + rowHeight, bgPaint);
-    canvas.save(Canvas.ALL_SAVE_FLAG);
+    canvas.save();
     canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y, x + columnWidth - 2 * HORIZONTAL_CELL_PADDING,
         y + rowHeight);
     textPaint.setColor(foregroundColor);
