@@ -94,7 +94,7 @@ public class ExportCSVActivity extends AbsBaseActivity {
   public void onCreate(Bundle savedInstanceState) {
     // We have to set the fragment manager here because if we don't, then the ImportTask will try
     // to display an alert dialog by grabbing the fragment manager
-    ImportExportDialogFragment.fragman = getFragmentManager();
+    ImportExportDialogFragment.fragman = getSupportFragmentManager();
     super.onCreate(savedInstanceState);
     appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (appName == null) {

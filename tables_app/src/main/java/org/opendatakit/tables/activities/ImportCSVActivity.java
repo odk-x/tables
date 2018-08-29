@@ -63,7 +63,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
    *                           this classes parents
    */
   public void onCreate(Bundle savedInstanceState) {
-    ImportExportDialogFragment.fragman = getFragmentManager();
+    ImportExportDialogFragment.fragman = getSupportFragmentManager();
     super.onCreate(savedInstanceState);
     appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
     if (appName == null) {

@@ -15,8 +15,8 @@
  */
 package org.opendatakit.tables.activities;
 
-import android.app.Fragment;
-import android.app.FragmentManager;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -283,7 +283,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
     if (getAppName() != null) {
       resolveAnyConflicts();
     }
-    FragmentManager mgr = this.getFragmentManager();
+    FragmentManager mgr = this.getSupportFragmentManager();
     int idxLast = mgr.getBackStackEntryCount() - 1;
     if (idxLast >= 0) {
       FragmentManager.BackStackEntry entry = mgr.getBackStackEntryAt(idxLast);
@@ -300,7 +300,7 @@ public abstract class AbsBaseActivity extends BaseActivity {
    */
   @Override
   public void databaseUnavailable() {
-    FragmentManager mgr = this.getFragmentManager();
+    FragmentManager mgr = this.getSupportFragmentManager();
     int idxLast = mgr.getBackStackEntryCount() - 1;
     if (idxLast >= 0) {
       FragmentManager.BackStackEntry entry = mgr.getBackStackEntryAt(idxLast);

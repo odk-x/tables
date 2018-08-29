@@ -16,9 +16,9 @@
 package org.opendatakit.tables.fragments;
 
 import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
+import android.support.v7.preference.EditTextPreference;
+import android.support.v7.preference.ListPreference;
+import android.support.v7.preference.Preference;
 import android.widget.Toast;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.data.ColorRuleGroup;

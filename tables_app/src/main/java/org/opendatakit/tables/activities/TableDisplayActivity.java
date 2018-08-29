@@ -16,9 +16,9 @@
 package org.opendatakit.tables.activities;
 
 import android.Manifest;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -549,14 +549,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
     switch (mCurrentFragmentType) {
     case MAP:
-      MapListViewFragment mlvFragment = (MapListViewFragment) this.getFragmentManager()
+      MapListViewFragment mlvFragment = (MapListViewFragment) this.getSupportFragmentManager()
           .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
       if (mlvFragment != null && mlvFragment.isVisible()) {
         return mlvFragment.getIndexOfSelectedItem();
       }
       break;
     case NAVIGATE:
-      NavigateFragment navFragment = (NavigateFragment) this.getFragmentManager()
+      NavigateFragment navFragment = (NavigateFragment) this.getSupportFragmentManager()
           .findFragmentByTag(Constants.FragmentTags.NAVIGATE);
       if (navFragment != null && navFragment.isVisible()) {
         return navFragment.getIndexOfSelectedItem();
@@ -609,7 +609,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   @Override
   public ODKWebView getWebKitView(String viewID) {
 
-    FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentManager fragmentManager = this.getSupportFragmentManager();
     switch (mCurrentFragmentType) {
     case SPREADSHEET:
     case NAVIGATE:
@@ -954,7 +954,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   private void showCurrentDisplayFragment(boolean createNew) {
     possiblySupplyDefaults();
     updateChildViewVisibility(mCurrentFragmentType);
-    FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentManager fragmentManager = this.getSupportFragmentManager();
     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
     // First acquire all the possible fragments.
     Fragment spreadsheetFragment = fragmentManager
@@ -1190,7 +1190,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
     mQueries[1] = viewDataQuery;
 
-    FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentManager fragmentManager = this.getSupportFragmentManager();
     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
     Fragment detailWithListViewListFragment = fragmentManager
@@ -1280,7 +1280,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    */
   @Override
   public void onSetSelectedItemIndex(int i) {
-    FragmentManager fragmentManager = getFragmentManager();
+    FragmentManager fragmentManager = getSupportFragmentManager();
 
     switch (mCurrentFragmentType) {
     case MAP:
@@ -1313,7 +1313,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    * Invoked by TableMapInnerFragment when an item has stopped being selected
    */
   public void setNoItemSelected() {
-    FragmentManager fragmentManager = getFragmentManager();
+    FragmentManager fragmentManager = getSupportFragmentManager();
 
     switch (mCurrentFragmentType) {
     case MAP:
@@ -1352,7 +1352,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   private void removeAllFragments() {
-    FragmentManager fragmentManager = this.getFragmentManager();
+    FragmentManager fragmentManager = this.getSupportFragmentManager();
     FragmentTransaction fragmentTransaction = null;
     // First acquire all the possible fragments.
     Fragment spreadsheetFragment = fragmentManager

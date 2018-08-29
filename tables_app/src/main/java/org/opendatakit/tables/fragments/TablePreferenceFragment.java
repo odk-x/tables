@@ -18,11 +18,11 @@ package org.opendatakit.tables.fragments;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.Preference.OnPreferenceClickListener;
+import android.support.v7.preference.EditTextPreference;
+import android.support.v7.preference.ListPreference;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.Preference.OnPreferenceChangeListener;
+import android.support.v7.preference.Preference.OnPreferenceClickListener;
 import android.view.ContextMenu;
 import android.widget.Toast;
 import org.opendatakit.activities.IAppAwareActivity;
@@ -78,8 +78,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    * @param savedInstanceState the bundle that we saved when being destroyed/paused
    */
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+  public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
     // AppName may not be available...
     // Let's load preferences from the resource.
     this.addPreferencesFromResource(R.xml.table_preference);

@@ -17,8 +17,8 @@ package org.opendatakit.tables.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.Preference;
+import android.support.v7.preference.EditTextPreference;
+import android.support.v7.preference.Preference;
 import android.widget.Toast;
 import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.activities.BaseActivity;
@@ -107,7 +107,7 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
    * @param savedInstanceState a bundle that contains our saved element key
    */
   @Override
-  public void onCreate(Bundle savedInstanceState) {
+  public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
     super.onCreate(savedInstanceState);
     if (savedInstanceState != null && savedInstanceState.containsKey(COL_ELEM_KEY)) {
       mElementKey = savedInstanceState.getString(COL_ELEM_KEY);

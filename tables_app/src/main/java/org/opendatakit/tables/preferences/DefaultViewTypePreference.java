@@ -17,7 +17,7 @@ package org.opendatakit.tables.preferences;
 
 import android.app.AlertDialog.Builder;
 import android.content.Context;
-import android.preference.ListPreference;
+import android.support.v7.preference.ListPreference;
 import android.util.AttributeSet;
 import android.widget.ListAdapter;
 import android.widget.Toast;

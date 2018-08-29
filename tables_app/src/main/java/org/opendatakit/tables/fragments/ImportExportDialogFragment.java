@@ -18,8 +18,8 @@ package org.opendatakit.tables.fragments;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.DialogFragment;
-import android.app.FragmentManager;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -146,7 +146,7 @@ public class ImportExportDialogFragment extends DialogFragment {
       WebLogger.getLogger(frag.appName).a(TAG, "Someone forgot to give me a fragment manager. "
           + "Trying to use the one from context, but it will almost certainly crash if android "
           + "reloaded it");
-      frag.show(act.getFragmentManager(), "dialog");
+      frag.show(act.getSupportFragmentManager(), "dialog");
     }
     return frag;
   }
