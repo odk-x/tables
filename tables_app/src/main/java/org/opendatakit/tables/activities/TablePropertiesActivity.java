@@ -22,12 +22,10 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import org.opendatakit.activities.IAppAwareActivity;
-import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.listener.DatabaseConnectionListener;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.fragments.TablePropertiesFragment;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import java.util.List;
 
@@ -65,29 +63,6 @@ public class TablePropertiesActivity extends AbsTableActivity
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
-    if (appName == null) {
-      appName = TableFileUtils.getDefaultAppName();
-    }
-    tableId = getIntent().getStringExtra(IntentConsts.INTENT_KEY_TABLE_ID);
-    if (tableId == null) {
-      throw new RuntimeException("Null tableId");
-    }
-
-    tpFragment = null;
-
-  }
-  @Override
-  protected void onResume() {
-    super.onResume();
-    Tables.getInstance().establishDoNotFireDatabaseConnectionListener(this);
-  }
-
-  @Override
-  public void onPostResume() {
-    super.onPostResume();
-    Tables.getInstance().fireDatabaseConnectionListener();
-
     FragmentManager mgr = this.getSupportFragmentManager();
 
     // try to find fragment if it exists already
@@ -104,11 +79,20 @@ public class TablePropertiesActivity extends AbsTableActivity
     mgr.beginTransaction()
         .setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out)
         .show(tpFragment).commit();
+
   }
 
   @Override
-  public String getAppName() {
-    return appName;
+  protected void onResume() {
+    super.onResume();
+
+    Tables.getInstance().establishDoNotFireDatabaseConnectionListener(this);
+  }
+
+  @Override
+  public void onPostResume() {
+    super.onPostResume();
+    Tables.getInstance().fireDatabaseConnectionListener();
   }
 
 
