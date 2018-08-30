@@ -63,8 +63,7 @@ public class DefaultViewTypePreference extends ListPreference {
    */
   public DefaultViewTypePreference(Context context, AttributeSet attrs) {
     super(context, attrs);
-    // TODO: ????
-     mContext = ((ContextThemeWrapper) context).getBaseContext();
+    mContext = ((ContextThemeWrapper) context).getBaseContext();
     if (mContext instanceof IAppAwareActivity) {
       mAppName = ((IAppAwareActivity) mContext).getAppName();
     } else {

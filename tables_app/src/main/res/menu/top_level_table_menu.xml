@@ -1,55 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <!-- Add a row -->
     <item
-            android:id="@+id/top_level_table_menu_add"
-            android:icon="@drawable/ic_add_black_24dp"
-            android:title="@string/add_row"
-            android:showAsAction="always"/>
+        android:id="@+id/top_level_table_menu_add"
+        android:icon="@drawable/ic_add_black_24dp"
+        android:title="@string/add_row"
+        app:showAsAction="always" />
 
     <!-- Select a view -->
     <item
-            android:id="@+id/top_level_table_menu_select_view"
-            android:icon="@drawable/ic_view_headline_black_24dp"
-            android:title="@string/select_view"
-            android:showAsAction="always">
+        android:id="@+id/top_level_table_menu_select_view"
+        android:icon="@drawable/ic_view_headline_black_24dp"
+        android:title="@string/select_view"
+        app:showAsAction="always">
 
         <!-- View submenu -->
         <menu>
             <group android:checkableBehavior="single">
                 <item
-                        android:id="@+id/top_level_table_menu_view_spreadsheet_view"
-                        android:title="@string/spreadsheet"/>
+                    android:id="@+id/top_level_table_menu_view_spreadsheet_view"
+                    android:title="@string/spreadsheet" />
                 <item
-                        android:id="@+id/top_level_table_menu_view_list_view"
-                        android:title="@string/list"/>
+                    android:id="@+id/top_level_table_menu_view_list_view"
+                    android:title="@string/list" />
                 <item
-                        android:id="@+id/top_level_table_menu_view_map_view"
-                        android:title="@string/map"/>
+                    android:id="@+id/top_level_table_menu_view_map_view"
+                    android:title="@string/map" />
                 <item
-                        android:id="@+id/top_level_table_menu_view_navigate_view"
-                        android:title="@string/navigate"/>
+                    android:id="@+id/top_level_table_menu_view_navigate_view"
+                    android:title="@string/navigate" />
             </group>
         </menu>
     </item>
 
     <item
-            android:id="@+id/top_level_table_menu_table_properties"
-            android:icon="@drawable/ic_settings_black_24dp"
-            android:title="@string/preferences"
-            android:showAsAction="always"/>
+        android:id="@+id/top_level_table_menu_table_properties"
+        android:icon="@drawable/ic_settings_black_24dp"
+        android:title="@string/preferences"
+        app:showAsAction="always" />
 
     <item
-            android:id="@+id/menu_table_manager_sync"
-            android:icon="@drawable/ic_cached_black_24dp"
-            android:title="@string/sync"
-            android:showAsAction="ifRoom"/>
+        android:id="@+id/menu_table_manager_sync"
+        android:icon="@drawable/ic_cached_black_24dp"
+        android:title="@string/sync"
+        app:showAsAction="ifRoom" />
     <item
-            android:id="@+id/menu_table_manager_preferences"
-            android:icon="@drawable/ic_settings_black_24dp"
-            android:title="@string/preferences"
-            android:showAsAction="never"/>
+        android:id="@+id/menu_table_manager_preferences"
+        android:icon="@drawable/ic_settings_black_24dp"
+        android:title="@string/preferences"
+        app:showAsAction="never" />
 
 
 </menu>

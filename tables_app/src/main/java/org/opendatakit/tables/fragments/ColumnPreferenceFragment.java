@@ -108,7 +108,6 @@ public class ColumnPreferenceFragment extends AbsTableLevelPreferenceFragment {
    */
   @Override
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-    super.onCreate(savedInstanceState);
     if (savedInstanceState != null && savedInstanceState.containsKey(COL_ELEM_KEY)) {
       mElementKey = savedInstanceState.getString(COL_ELEM_KEY);
     }

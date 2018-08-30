@@ -1,28 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-            android:id="@+id/menu_web_view_activity_table_manager"
-            android:icon="@drawable/ic_sort_black_24dp"
-            android:showAsAction="always"
-            android:title="@string/table_manager_title"/>
+        android:id="@+id/menu_web_view_activity_table_manager"
+        android:icon="@drawable/ic_sort_black_24dp"
+        android:title="@string/table_manager_title"
+        app:showAsAction="always" />
 
     <item
-            android:id="@+id/menu_table_manager_sync"
-            android:icon="@drawable/ic_cached_black_24dp"
-            android:title="@string/sync"
-            android:showAsAction="ifRoom"/>
+        android:id="@+id/menu_table_manager_sync"
+        android:icon="@drawable/ic_cached_black_24dp"
+        android:title="@string/sync"
+        app:showAsAction="ifRoom" />
     <item
-            android:id="@+id/menu_table_manager_preferences"
-            android:icon="@drawable/ic_settings_black_24dp"
-            android:title="@string/preferences"
-            android:showAsAction="ifRoom"/>
+        android:id="@+id/menu_table_manager_preferences"
+        android:icon="@drawable/ic_settings_black_24dp"
+        android:title="@string/preferences"
+        app:showAsAction="ifRoom" />
 
 
     <item
-            android:id="@+id/menu_table_about"
-            android:icon="@drawable/ic_info_outline_black_24dp"
-            android:title="@string/about"
-            android:showAsAction="never"/>
+        android:id="@+id/menu_table_about"
+        android:icon="@drawable/ic_info_outline_black_24dp"
+        android:title="@string/about"
+        app:showAsAction="never" />
 
 </menu>
