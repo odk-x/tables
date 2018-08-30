@@ -123,8 +123,8 @@ public class TablePropertiesManager extends BasePreferenceActivity
       WebLogger.getLogger(appName).printStackTrace(e);
       Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       // TODO this is deprecated
-      PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
-      setPreferenceScreen(root);
+//      PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
+//      setPreferenceScreen(root);
       return;
     } finally {
       if (db != null) {
@@ -144,12 +144,12 @@ public class TablePropertiesManager extends BasePreferenceActivity
   private void init() {
 
     // TODO this is deprecated
-    PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
+//    PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
 
     // general category
 
     PreferenceCategory genCat = new PreferenceCategory(this);
-    root.addPreference(genCat);
+//    root.addPreference(genCat);
     genCat.setTitle(getString(R.string.general_settings));
 
     UserDbInterface dbInterface = Tables.getInstance().getDatabase();
@@ -163,7 +163,7 @@ public class TablePropertiesManager extends BasePreferenceActivity
       WebLogger.getLogger(appName).printStackTrace(e);
       Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       // TODO this is deprecated
-      setPreferenceScreen(root);
+//      setPreferenceScreen(root);
       return;
     } finally {
       if (db != null) {
@@ -188,22 +188,22 @@ public class TablePropertiesManager extends BasePreferenceActivity
 
     {
       PreferenceCategory displayCat = new PreferenceCategory(this);
-      root.addPreference(displayCat);
+//      root.addPreference(displayCat);
       displayCat.setTitle(getString(R.string.display_settings));
       addViewPreferences(displayCat);
     }
     PreferenceCategory displayListViewCat = new PreferenceCategory(this);
-    root.addPreference(displayListViewCat);
+//    root.addPreference(displayListViewCat);
     displayListViewCat.setTitle(getString(R.string.display_list_view_settings));
     addListViewPreferences(displayListViewCat);
 
     PreferenceCategory displayMapViewCat = new PreferenceCategory(this);
-    root.addPreference(displayMapViewCat);
+//    root.addPreference(displayMapViewCat);
     displayMapViewCat.setTitle(getString(R.string.display_map_view_settings));
     //addMapViewPreferences();
 
     // TODO this is deprecated
-    setPreferenceScreen(root);
+//    setPreferenceScreen(root);
   }
 
   private void addViewPreferences(PreferenceCategory prefCat) {

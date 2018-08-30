@@ -39,23 +39,23 @@
         <!-- </ListPreference> -->
 
         <!-- Default form -->
-        <org.opendatakit.tables.preferences.EditFormDialogPreference
-                android:key="table_pref_default_form"
-                android:persistent="false"
-                android:title="@string/default_form"
-                android:dialogTitle="@string/default_form"/>
+        <!--<org.opendatakit.tables.preferences.EditFormDialogPreference-->
+                <!--android:key="table_pref_default_form"-->
+                <!--android:persistent="false"-->
+                <!--android:title="@string/default_form"-->
+                <!--android:dialogTitle="@string/default_form"/>-->
 
         <!-- Edit table color rules -->
-        <Preference
-                android:key="table_pref_table_color_rules"
-                android:persistent="false"
-                android:title="@string/edit_table_color_rules"/>
+        <!--<Preference-->
+                <!--android:key="table_pref_table_color_rules"-->
+                <!--android:persistent="false"-->
+                <!--android:title="@string/edit_table_color_rules"/>-->
 
         <!-- Edit status column color rules -->
-        <Preference
-                android:key="table_pref_status_column_color_rules"
-                android:persistent="false"
-                android:title="@string/show_status_column_color_rules"/>
+        <!--<Preference-->
+                <!--android:key="table_pref_status_column_color_rules"-->
+                <!--android:persistent="false"-->
+                <!--android:title="@string/show_status_column_color_rules"/>-->
 
         <!-- Individual columns -->
 

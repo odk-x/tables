@@ -77,6 +77,10 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
   private int mRulePosition;
   private ColorRuleGroup.Type mColorRuleGroupType;
 
+  @Override
+  public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+  }
+
   /**
    * @param colorRuleGroupType added to the arguments for the new EditColorRuleFragment
    * @param elementKey         the elementKey the rule is for, if this is in a group of type

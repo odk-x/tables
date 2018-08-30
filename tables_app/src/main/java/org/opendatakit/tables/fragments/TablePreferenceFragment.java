@@ -81,7 +81,8 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
   public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
     // AppName may not be available...
     // Let's load preferences from the resource.
-    this.addPreferencesFromResource(R.xml.table_preference);
+    setPreferencesFromResource(R.xml.table_preference, rootKey);
+//    this.addPreferencesFromResource(R.xml.table_preference);
   }
 
   /**
@@ -308,13 +309,13 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
       this.initializeTableIdPreference();
       this.initializeDefaultForm();
       this.initializeDefaultViewType();
-      this.initializeTableColorRules();
-      this.initializeStatusColorRules();
-      this.initializeMapColorRule(db);
-      this.initializeDetailFile(db);
-      this.initializeListFile(db);
-      this.initializeMapListFile(db);
-      this.initializeColumns();
+//      this.initializeTableColorRules();
+//      this.initializeStatusColorRules();
+//      this.initializeMapColorRule(db);
+//      this.initializeDetailFile(db);
+//      this.initializeListFile(db);
+//      this.initializeMapListFile(db);
+//      this.initializeColumns();
     } finally {
       if (db != null) {
         Tables.getInstance().getDatabase().closeDatabase(getAppName(), db);
@@ -390,18 +391,18 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    * Sets the onClick listener for the Table Color Rules menu
    */
   private void initializeTableColorRules() {
-    Preference tableColorPref = this
-        .findPreference(Constants.PreferenceKeys.Table.TABLE_COLOR_RULES);
-    tableColorPref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        // pop in the list of columns.
-        TableLevelPreferencesActivity activity = (TableLevelPreferencesActivity) getActivity();
-        activity.showColorRuleListFragment(null, ColorRuleGroup.Type.TABLE);
-        return false;
-      }
-    });
+//    Preference tableColorPref = this
+//        .findPreference(Constants.PreferenceKeys.Table.TABLE_COLOR_RULES);
+//    tableColorPref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+//
+//      @Override
+//      public boolean onPreferenceClick(Preference preference) {
+//        // pop in the list of columns.
+//        TableLevelPreferencesActivity activity = (TableLevelPreferencesActivity) getActivity();
+//        activity.showColorRuleListFragment(null, ColorRuleGroup.Type.TABLE);
+//        return false;
+//      }
+//    });
   }
 
   /**

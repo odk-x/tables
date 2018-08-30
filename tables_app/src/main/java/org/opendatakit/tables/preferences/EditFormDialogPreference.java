@@ -18,6 +18,7 @@ package org.opendatakit.tables.preferences;
 import android.content.Context;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -62,13 +63,14 @@ public class EditFormDialogPreference extends DialogPreference {
    */
   public EditFormDialogPreference(Context context, AttributeSet attrs) {
     super(context, attrs);
-    this.mContext = context;
-    Object activity = getContext();
-    if (!(activity instanceof AbsTableActivity)) {
+    this.mContext = ((ContextThemeWrapper) context).getBaseContext();
+    //Object activity = getContext();
+    if (!(mContext instanceof AbsTableActivity)) {
       throw new IllegalArgumentException(
-          "EditFormDialogPreference must be associated with an AbsTableActivity");
+          "EditFormDialogPreference must be associated with an AbsTableActivity, got " + mContext
+              .getClass().getName());
     }
-    mActivity = (AbsTableActivity) activity;
+    mActivity = (AbsTableActivity) mContext;
   }
 
   /**
