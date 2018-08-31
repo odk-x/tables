@@ -17,8 +17,9 @@ package org.opendatakit.tables.preferences;
 
 import android.app.AlertDialog.Builder;
 import android.content.Context;
-import android.preference.ListPreference;
+import android.support.v7.preference.ListPreference;
 import android.util.AttributeSet;
+import android.view.ContextThemeWrapper;
 import android.widget.ListAdapter;
 import android.widget.Toast;
 import org.opendatakit.activities.IAppAwareActivity;
@@ -62,9 +63,9 @@ public class DefaultViewTypePreference extends ListPreference {
    */
   public DefaultViewTypePreference(Context context, AttributeSet attrs) {
     super(context, attrs);
-    mContext = context;
-    if (context instanceof IAppAwareActivity) {
-      mAppName = ((IAppAwareActivity) context).getAppName();
+    mContext = ((ContextThemeWrapper) context).getBaseContext();
+    if (mContext instanceof IAppAwareActivity) {
+      mAppName = ((IAppAwareActivity) mContext).getAppName();
     } else {
       throw new IllegalArgumentException("Must be in an activity that knows the app name");
     }
@@ -110,29 +111,5 @@ public class DefaultViewTypePreference extends ListPreference {
       }
       this.setValueIndex(index);
     }
-  }
-
-  @Override
-  protected void onPrepareDialogBuilder(Builder builder) {
-    // We want to enable/disable the correct list.
-    if (mPossibleViewTypes == null) {
-      // The user rotated the screen and TablePreferenceFragment.initializeDefaultViewType hasn't
-      // been called yet to call setFields
-      if (mContext instanceof AbsTableActivity) {
-        AbsTableActivity act = (AbsTableActivity) mContext;
-        try {
-          setFields(act.getTableId(), act.getColumnDefinitions());
-        } catch (ServicesAvailabilityException e) {
-          WebLogger.getLogger(act.getAppName()).e(TAG, "Could not access database");
-          WebLogger.getLogger(act.getAppName()).printStackTrace(e);
-          Toast.makeText(act, R.string.database_unavailable, Toast.LENGTH_LONG).show();
-        }
-      }
-    }
-    ListAdapter adapter = new TableViewTypeAdapter(mContext, mAppName,
-        android.R.layout.select_dialog_singlechoice, getEntries(), getEntryValues(),
-        mPossibleViewTypes);
-    builder.setAdapter(adapter, this);
-    super.onPrepareDialogBuilder(builder);
   }
 }

@@ -26,7 +26,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
-import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -67,7 +67,7 @@ import java.util.Map;
  * @author Chris Gelon (cgelon)
  * @author sudar.sam@gmail.com
  */
-public class TableMapInnerFragment extends MapFragment implements OnMapReadyCallback {
+public class TableMapInnerFragment extends SupportMapFragment implements OnMapReadyCallback {
   private static final String TAG = TableMapInnerFragment.class.getSimpleName();
 
   private static final int INVALID_INDEX = -1;

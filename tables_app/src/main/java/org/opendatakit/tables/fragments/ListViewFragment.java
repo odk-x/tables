@@ -15,7 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 
 /**
  * {@link Fragment} for displaying a List view.

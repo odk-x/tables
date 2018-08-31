@@ -16,7 +16,7 @@
 package org.opendatakit.tables.fragments;
 
 import android.app.AlertDialog;
-import android.app.ListFragment;
+import android.support.v4.app.ListFragment;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;

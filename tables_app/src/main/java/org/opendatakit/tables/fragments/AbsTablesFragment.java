@@ -17,7 +17,7 @@ package org.opendatakit.tables.fragments;
 
 import android.app.Activity;
 import android.app.Application;
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
 import org.opendatakit.activities.BaseActivity;

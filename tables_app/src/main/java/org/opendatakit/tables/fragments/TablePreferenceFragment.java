@@ -18,13 +18,15 @@ package org.opendatakit.tables.fragments;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.Preference.OnPreferenceClickListener;
+import android.support.v7.preference.EditTextPreference;
+import android.support.v7.preference.ListPreference;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.Preference.OnPreferenceChangeListener;
+import android.support.v7.preference.Preference.OnPreferenceClickListener;
 import android.view.ContextMenu;
 import android.widget.Toast;
+
+import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.data.ColorRuleGroup;
@@ -39,10 +41,12 @@ import org.opendatakit.logging.WebLogger;
 import org.opendatakit.properties.CommonToolProperties;
 import org.opendatakit.properties.PropertiesSingleton;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.preferences.DefaultViewTypePreference;
 import org.opendatakit.tables.preferences.FileSelectorPreference;
+import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.PreferenceUtil;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -78,11 +82,11 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    * @param savedInstanceState the bundle that we saved when being destroyed/paused
    */
   @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+  public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
     // AppName may not be available...
     // Let's load preferences from the resource.
-    this.addPreferencesFromResource(R.xml.table_preference);
+    setPreferencesFromResource(R.xml.table_preference, rootKey);
+//    this.addPreferencesFromResource(R.xml.table_preference);
   }
 
   /**
@@ -381,10 +385,71 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
   }
 
   /**
-   * Does nothing, this is handled in
-   * {@link org.opendatakit.tables.preferences.EditFormDialogPreference}
+   * Sets EditTextPreference for Survey form
    */
   private void initializeDefaultForm() {
+    EditTextPreference editFormPref = (EditTextPreference) this
+        .findPreference(Constants.PreferenceKeys.Table.DEFAULT_FORM);
+    final AbsTableActivity mActivity = ((AbsTableActivity) getActivity());
+
+    try {
+      String text = FormType.constructFormType((BaseActivity) getContext(), mActivity.getAppName(),
+          mActivity.getTableId()).getFormId();
+      editFormPref.setText(text);
+    } catch (ServicesAvailabilityException e) {
+      WebLogger.getLogger(mActivity.getAppName()).printStackTrace(e);
+      Toast.makeText(getContext(), getContext().getString(R.string.unable_to_retrieve_form_type),
+          Toast.LENGTH_LONG).show();
+    }
+
+    editFormPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        String formId = (String) newValue;
+        if (formId.isEmpty()) {
+          Toast.makeText(getContext(), mActivity.getString(R.string.invalid_form), Toast.LENGTH_LONG).show();
+          return false;
+        }
+
+        String formDir = ODKFileUtils
+            .getFormFolder(mActivity.getAppName(), mActivity.getTableId(), formId);
+        File f = new File(formDir);
+        File formDefJson = new File(f, ODKFileUtils.FORMDEF_JSON_FILENAME);
+        if (!f.exists() || !f.isDirectory() || !formDefJson.exists() || !formDefJson.isFile()) {
+          Toast.makeText(getContext(), mActivity.getString(R.string.invalid_form), Toast.LENGTH_LONG).show();
+          return false;
+        }
+
+        UserDbInterface dbInt = Tables.getInstance().getDatabase();
+        DbHandle db = null;
+        try {
+          FormType formType = FormType.constructFormType((BaseActivity) getContext(),
+              mActivity.getAppName(), mActivity.getTableId());
+          formType.setFormId(formId);
+          AbsTableActivity tableActivity = (AbsTableActivity) getContext();
+
+          db = dbInt.openDatabase(tableActivity.getAppName());
+          formType.persist(dbInt, tableActivity.getAppName(), db, tableActivity.getTableId());
+        } catch (ServicesAvailabilityException e) {
+          WebLogger.getLogger(mActivity.getAppName()).printStackTrace(e);
+          Toast.makeText(getContext(), getContext().getString(R.string.unable_to_save_db_changes),
+              Toast.LENGTH_LONG).show();
+        } finally {
+          if (db != null) {
+            try {
+              dbInt.closeDatabase(mActivity.getAppName(), db);
+            } catch (ServicesAvailabilityException e) {
+              Toast.makeText(mActivity, R.string.unable_to_save_db_changes, Toast.LENGTH_LONG)
+                  .show();
+              WebLogger.getLogger(mActivity.getAppName()).e(TAG, "Failed to save default form");
+              WebLogger.getLogger(mActivity.getAppName()).printStackTrace(e);
+            }
+          }
+        }
+
+        return true;
+      }
+    });
   }
 
   /**

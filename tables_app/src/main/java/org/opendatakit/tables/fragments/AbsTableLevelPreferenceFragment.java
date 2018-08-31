@@ -16,9 +16,9 @@
 package org.opendatakit.tables.fragments;
 
 import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.ListPreference;
-import android.preference.PreferenceFragment;
+import android.support.v7.preference.EditTextPreference;
+import android.support.v7.preference.ListPreference;
+import android.support.v7.preference.PreferenceFragmentCompat ;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.tables.activities.AbsTableActivity;
@@ -32,7 +32,7 @@ import org.opendatakit.tables.activities.AbsTableActivity;
  *
  * @author sudar.sam@gmail.com
  */
-public abstract class AbsTableLevelPreferenceFragment extends PreferenceFragment {
+public abstract class AbsTableLevelPreferenceFragment extends PreferenceFragmentCompat {
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {

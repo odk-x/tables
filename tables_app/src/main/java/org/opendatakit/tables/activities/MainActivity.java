@@ -17,10 +17,10 @@ package org.opendatakit.tables.activities;
 
 import android.app.ActionBar;
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentManager.BackStackEntry;
-import android.app.FragmentTransaction;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentManager.BackStackEntry;
+import android.support.v4.app.FragmentTransaction;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -103,7 +103,7 @@ public class MainActivity extends AbsBaseWebActivity
     // Don't use viewID as there is only one webkit to return
 
     if (activeScreenType == ScreenType.WEBVIEW_SCREEN) {
-      FragmentManager mgr = this.getFragmentManager();
+      FragmentManager mgr = this.getSupportFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
       if (newFragment != null) {
         return ((IWebFragment) newFragment).getWebKit();
@@ -125,7 +125,7 @@ public class MainActivity extends AbsBaseWebActivity
   public String getUrlBaseLocation(boolean ifChanged, String fragmentID) {
     // TODO: do we need to track the ifChanged status?
     if (activeScreenType == ScreenType.WEBVIEW_SCREEN) {
-      FragmentManager mgr = this.getFragmentManager();
+      FragmentManager mgr = this.getSupportFragmentManager();
       Fragment newFragment = mgr.findFragmentByTag(activeScreenType.name());
       if (newFragment != null && webFileToDisplay != null) {
         // Split off query parameter if it exists
@@ -260,7 +260,7 @@ public class MainActivity extends AbsBaseWebActivity
   }
 
   private void popBackStack() {
-    FragmentManager mgr = getFragmentManager();
+    FragmentManager mgr = getSupportFragmentManager();
     int idxLast = mgr.getBackStackEntryCount() - 2;
     if (idxLast < 0) {
       Intent result = new Intent();
@@ -296,7 +296,7 @@ public class MainActivity extends AbsBaseWebActivity
         "swapScreens: Transitioning from " + (activeScreenType == null ?
             "-none-" :
             activeScreenType.name()) + " to " + newScreenType.name());
-    FragmentManager mgr = this.getFragmentManager();
+    FragmentManager mgr = this.getSupportFragmentManager();
     FragmentTransaction trans = null;
     Fragment newFragment;
     switch (newScreenType) {

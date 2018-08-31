@@ -6,10 +6,10 @@ package org.opendatakit.tables.views;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 
-public class CompassView extends ImageView {
+public class CompassView extends AppCompatImageView {
   private float deg = 0;
 
   public CompassView(Context context, AttributeSet attrs) {

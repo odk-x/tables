@@ -39,7 +39,7 @@
         <!-- </ListPreference> -->
 
         <!-- Default form -->
-        <org.opendatakit.tables.preferences.EditFormDialogPreference
+        <EditTextPreference
                 android:key="table_pref_default_form"
                 android:persistent="false"
                 android:title="@string/default_form"

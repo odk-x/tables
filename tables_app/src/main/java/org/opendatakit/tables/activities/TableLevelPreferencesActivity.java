@@ -14,7 +14,7 @@
 
 package org.opendatakit.tables.activities;
 
-import android.app.FragmentTransaction;
+import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.tables.fragments.ColorRuleListFragment;
@@ -130,7 +130,8 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     if (tablePreferenceFragment == null) {
       tablePreferenceFragment = createTablePreferenceFragment();
 
-      getFragmentManager().beginTransaction().replace(android.R.id.content, tablePreferenceFragment,
+      getSupportFragmentManager().beginTransaction().replace(android.R.id.content,
+          tablePreferenceFragment,
           Constants.FragmentTags.TABLE_PREFERENCE).commit();
     }
   }
@@ -145,7 +146,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     if (columnManagerFragment == null) {
       columnManagerFragment = TableLevelPreferencesActivity.createColumnListFragment();
     }
-    getFragmentManager().beginTransaction()
+    getSupportFragmentManager().beginTransaction()
         .replace(android.R.id.content, columnManagerFragment, Constants.FragmentTags.COLUMN_LIST)
         .addToBackStack(null).commit();
   }
@@ -187,7 +188,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
       fragment = EditColorRuleFragment
           .newInstanceForExistingRule(colorRuleGroupType, elementKey, rulePosition);
     }
-    getFragmentManager().beginTransaction()
+    getSupportFragmentManager().beginTransaction()
         .replace(android.R.id.content, fragment, Constants.FragmentTags.EDIT_COLOR_RULE)
         .addToBackStack(null).commit();
   }
@@ -218,7 +219,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
       statusColorRuleListFragment = TableLevelPreferencesActivity
           .createStatusColorRuleListFragment(colorRuleGroupType);
     }
-    FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+    FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
     fragmentTransaction.replace(android.R.id.content, statusColorRuleListFragment,
         Constants.FragmentTags.STATUS_COLOR_RULE_LIST);
     if (addToBackStack) {
@@ -255,7 +256,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
       colorRuleListFragment = TableLevelPreferencesActivity
           .createColorRuleListFragment(colorRuleGroupType);
     }
-    FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+    FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
     fragmentTransaction.replace(android.R.id.content, colorRuleListFragment,
         Constants.FragmentTags.COLOR_RULE_LIST);
     if (addToBackStack) {
@@ -288,7 +289,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
     if (columnPreferenceFragment == null) {
       columnPreferenceFragment = new ColumnPreferenceFragment();
     }
-    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
     transaction.replace(android.R.id.content, columnPreferenceFragment,
         Constants.FragmentTags.COLUMN_PREFERENCE);
     if (addToBackStack) {
@@ -315,7 +316,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * @return the preference fragment from the fragment manager if it exists, else null
    */
   TablePreferenceFragment findTablePreferenceFragment() {
-    return (TablePreferenceFragment) getFragmentManager()
+    return (TablePreferenceFragment) getSupportFragmentManager()
         .findFragmentByTag(Constants.FragmentTags.TABLE_PREFERENCE);
   }
 
@@ -326,7 +327,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * @return the active ColumnListFragment if it exists or null
    */
   ColumnListFragment findColumnListFragment() {
-    return (ColumnListFragment) getFragmentManager()
+    return (ColumnListFragment) getSupportFragmentManager()
         .findFragmentByTag(Constants.FragmentTags.COLUMN_LIST);
   }
 
@@ -337,7 +338,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * @return the active column preferences fragment if it exists, or null
    */
   ColumnPreferenceFragment findColumnPreferenceFragment() {
-    return (ColumnPreferenceFragment) getFragmentManager()
+    return (ColumnPreferenceFragment) getSupportFragmentManager()
         .findFragmentByTag(Constants.FragmentTags.COLUMN_PREFERENCE);
   }
 
@@ -348,7 +349,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * @return the active color rule list fragment if it exists, or null
    */
   StatusColorRuleListFragment findStatusColorRuleListFragment() {
-    return (StatusColorRuleListFragment) getFragmentManager()
+    return (StatusColorRuleListFragment) getSupportFragmentManager()
         .findFragmentByTag(Constants.FragmentTags.STATUS_COLOR_RULE_LIST);
   }
 
@@ -359,7 +360,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
    * @return the active ColorRuleListFragment if it exists, or null
    */
   ColorRuleListFragment findColorRuleListFragment() {
-    return (ColorRuleListFragment) getFragmentManager()
+    return (ColorRuleListFragment) getSupportFragmentManager()
         .findFragmentByTag(Constants.FragmentTags.COLOR_RULE_LIST);
   }
 
