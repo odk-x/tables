@@ -419,6 +419,13 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
           return false;
         }
 
+        if (!ODKFileUtils.VALID_FOLDER_PATTERN.matcher(formId).matches()) {
+          Toast
+              .makeText(requireContext(), getString(R.string.invalid_form_name), Toast.LENGTH_LONG)
+              .show();
+          return false;
+        }
+
         String formDir = ODKFileUtils
             .getFormFolder(mActivity.getAppName(), mActivity.getTableId(), formId);
         File f = new File(formDir);

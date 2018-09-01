@@ -426,6 +426,7 @@
     <string name="set_index_column_fail">Unable to set Index Column</string>
 
     <string name="invalid_form">That form id doesn\'t exist</string>
+    <string name="invalid_form_name">The form id should begin with a letter and contain only letters, digits or underscores.</string>
     <string name="invalid_integer">The number you entered was invalid</string>
     <string name="no_permissions">Not authorized</string>
     <string name="change_column_width_error">Unable to change Column Width</string>
