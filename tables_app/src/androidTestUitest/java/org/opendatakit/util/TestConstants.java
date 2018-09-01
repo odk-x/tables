@@ -21,20 +21,6 @@ public class TestConstants {
   public static final String LAUNCH_DEMO_ID = "launch-button";
   public static final String GEO_TAB_ID = "geotaggerTab";
   public static final String HOPE_TAB_ID = "hopeTab";
-  //Preference keys
-  public static final String DEFAULT_VIEW_TYPE = "table_pref_default_view_type";
-  public static final String STATUS_COL_COLOR = "table_pref_status_column_color_rules";
-  public static final String LIST_VIEW_FILE = "table_pref_list_file";
-  public static final String DETAIL_VIEW_FILE = "table_pref_detail_file";
-  public static final String MAP_LIST_VIEW_FILE = "table_pref_map_list_file";
-  public static final String COLUMNS_LIST = "table_pref_columns";
-  public static final String TABLE_COLOR = "table_pref_table_color_rules";
-  public static final String TABLE_COLOR_TEXT = "pref_color_rule_text_color";
-  public static final String TABLE_DISPLAY_NAME = "table_pref_display_name";
-  public static final String TABLE_ID = "table_pref_table_id";
-  public static final String COL_DISPLAY_NAME = "column_pref_display_name";
-  public static final String COL_KEY = "column_pref_element_key";
-  public static final String DEFAULT_FORM = "table_pref_default_form";
   //Misc.
   public static final String OI_PICK_FILE = "org.openintents.action.PICK_FILE";
   public static final String APP_NAME = "default";

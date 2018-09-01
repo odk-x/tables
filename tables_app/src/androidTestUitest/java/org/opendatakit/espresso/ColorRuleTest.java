@@ -11,6 +11,7 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.view.View;
 import android.widget.ScrollView;
+
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -42,7 +43,6 @@ import static android.support.test.espresso.Espresso.pressBack;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.longClick;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
 import static android.support.test.espresso.matcher.ViewMatchers.assertThat;
 import static android.support.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
@@ -52,8 +52,6 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.opendatakit.util.TestConstants.APP_NAME;
-import static org.opendatakit.util.TestConstants.COLUMNS_LIST;
-import static org.opendatakit.util.TestConstants.TABLE_COLOR;
 import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 
 @RunWith(AndroidJUnit4.class)
@@ -138,8 +136,10 @@ public class ColorRuleTest extends AbsBaseTest {
   }
 
   @Test
-  public void colorRule_addTableRule() {
-    onData(withKey(TABLE_COLOR)).perform(click());
+  public void colorRule_addTableRule() throws ServicesAvailabilityException {
+    EspressoUtils
+        .onRecyclerViewText(R.string.edit_table_color_rules)
+        .perform(click());
 
     List<ColorRule> currentRules = null;
     try {
@@ -154,24 +154,20 @@ public class ColorRuleTest extends AbsBaseTest {
       newRules.add(addColorRule(false, true, true));
 
       CRGCheck(newRules, ColorRuleGroup.Type.TABLE);
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
     } finally {
       if (currentRules != null) {
-        try {
-          ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
-          crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(c.getDatabase());
-        } catch (ServicesAvailabilityException e) {
-          e.printStackTrace();
-        }
+        ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
+        crg.replaceColorRuleList(currentRules);
+        crg.saveRuleList(c.getDatabase());
       }
     }
   }
 
   @Test
-  public void colorRule_deleteTableRule() {
-    onData(withKey(TABLE_COLOR)).perform(click());
+  public void colorRule_deleteTableRule() throws ServicesAvailabilityException {
+    EspressoUtils
+        .onRecyclerViewText(R.string.edit_table_color_rules)
+        .perform(click());
 
     List<ColorRule> currentRules = null;
     try {
@@ -192,26 +188,26 @@ public class ColorRuleTest extends AbsBaseTest {
       onView(withId(R.id.menu_color_rule_list_revert)).perform(click());
       onView(withId(android.R.id.button1)).perform(click());
       CRGCheck(new ArrayList<ColorRule>(), ColorRuleGroup.Type.TABLE);
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
     } finally {
       if (currentRules != null) {
-        try {
-          ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
-          crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(c.getDatabase());
-        } catch (ServicesAvailabilityException e) {
-          e.printStackTrace();
-        }
+        ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
+        crg.replaceColorRuleList(currentRules);
+        crg.saveRuleList(c.getDatabase());
       }
     }
   }
 
   @Test
-  public void colorRule_addColumnRule() {
-    onData(withKey(COLUMNS_LIST)).perform(click());
+  public void colorRule_addColumnRule() throws ServicesAvailabilityException {
+    EspressoUtils
+        .onRecyclerViewText(R.string.columns)
+        .perform(click());
+
     onData(is(elementKeyName)).perform(click());
-    onData(withKey("column_pref_color_rules")).perform(click());
+
+    EspressoUtils
+        .onRecyclerViewText(R.string.edit_color_rules)
+        .perform(click());
 
     List<ColorRule> currentRules = null;
     try {
@@ -224,26 +220,26 @@ public class ColorRuleTest extends AbsBaseTest {
       newRules.add(addColorRule(true, true, true));
 
       CRGCheck(newRules, ColorRuleGroup.Type.COLUMN);
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
     } finally {
       if (currentRules != null) {
-        try {
-          ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
-          crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(c.getDatabase());
-        } catch (ServicesAvailabilityException e) {
-          e.printStackTrace();
-        }
+        ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
+        crg.replaceColorRuleList(currentRules);
+        crg.saveRuleList(c.getDatabase());
       }
     }
   }
 
   @Test
-  public void colorRule_deleteColumnRule() {
-    onData(withKey(COLUMNS_LIST)).perform(click());
+  public void colorRule_deleteColumnRule() throws ServicesAvailabilityException {
+    EspressoUtils
+        .onRecyclerViewText(R.string.columns)
+        .perform(click());
+
     onData(is(elementKeyName)).perform(click());
-    onData(withKey("column_pref_color_rules")).perform(click());
+
+    EspressoUtils
+        .onRecyclerViewText(R.string.edit_color_rules)
+        .perform(click());
 
     List<ColorRule> currentRules = null;
     try {
@@ -264,17 +260,11 @@ public class ColorRuleTest extends AbsBaseTest {
       onView(withId(R.id.menu_color_rule_list_revert)).perform(click());
       onView(withId(android.R.id.button1)).perform(click());
       CRGCheck(new ArrayList<ColorRule>(), ColorRuleGroup.Type.COLUMN);
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
     } finally {
       if (currentRules != null) {
-        try {
-          ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
-          crg.replaceColorRuleList(currentRules);
-          crg.saveRuleList(c.getDatabase());
-        } catch (ServicesAvailabilityException e) {
-          e.printStackTrace();
-        }
+        ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
+        crg.replaceColorRuleList(currentRules);
+        crg.saveRuleList(c.getDatabase());
       }
     }
   }
@@ -361,30 +351,34 @@ public class ColorRuleTest extends AbsBaseTest {
 
     //this option doesn't exist for column color rules
     if (!isColumn) {
-      final String elementKey = "pref_color_rule_element_key";
-
-      onData(withKey(elementKey)).perform(click());
+      EspressoUtils
+          .onRecyclerViewText(R.string.element_key)
+          .perform(click());
       onData(is(elementKeyName)).perform(click());
     }
 
-    final String comparisonKey = "pref_color_rule_comp_type";
-    onData(withKey(comparisonKey)).perform(click());
-    EspressoUtils.getFirstItem().perform(click());
-    rule.setOperator(
-        ColorRule.RuleType.getEnumFromString(EspressoUtils.getPrefSummary(comparisonKey)));
+    EspressoUtils.onRecyclerViewText(R.string.comparison_type).perform(click());
+    onData(is(ColorRule.RuleType.EQUAL.getSymbol())).perform(click());
+    rule.setOperator(ColorRule.RuleType.EQUAL);
 
     if (setTextColor) {
-      onData(withKey("pref_color_rule_text_color")).perform(click());
+      EspressoUtils
+          .onRecyclerViewText(R.string.text_color)
+          .perform(click());
       rule.setForeground(pickColor());
     }
 
     if (setBgColor) {
-      onData(withKey("pref_color_rule_background_color")).perform(click());
+      EspressoUtils
+          .onRecyclerViewText(R.string.background_color)
+          .perform(click());
       rule.setBackground(pickColor());
     }
 
     //save & exit
-    onData(withKey("pref_color_rule_save")).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.save)
+        .perform(click());
     pressBack();
 
     return rule;

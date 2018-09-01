@@ -1,7 +1,12 @@
 package org.opendatakit.util;
 
 import android.content.Intent;
+import android.support.annotation.StringRes;
+import android.support.test.espresso.Espresso;
+import android.support.test.espresso.contrib.RecyclerViewActions;
 import android.support.test.espresso.matcher.BoundedMatcher;
+import android.support.test.espresso.matcher.ViewMatchers;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.ListView;
@@ -101,5 +106,20 @@ public class ODKMatchers {
     } else {
       return allOf(partial, hasData(scheme + host + path + "#instanceId=" + instanceId));
     }
+  }
+
+  public static Matcher<View> withPref(@StringRes int titleId, String summary) {
+    Espresso
+        .onView(ViewMatchers.isAssignableFrom(RecyclerView.class))
+        .perform(RecyclerViewActions.scrollTo(allOf(
+            ViewMatchers.hasDescendant(ViewMatchers.withText(summary)),
+            ViewMatchers.hasDescendant(ViewMatchers.withText(titleId))
+        )));
+
+    return allOf(
+        ViewMatchers.withParent(ViewMatchers.withChild(ViewMatchers.withText(titleId))),
+        ViewMatchers.withId(android.R.id.summary),
+        ViewMatchers.withText(summary)
+    );
   }
 }
