@@ -2,34 +2,34 @@ package org.opendatakit.util;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.preference.Preference;
-import android.support.test.espresso.DataInteraction;
+import android.support.annotation.StringRes;
 import android.support.test.espresso.NoMatchingViewException;
 import android.support.test.espresso.ViewAssertion;
 import android.support.test.espresso.ViewInteraction;
+import android.support.test.espresso.contrib.RecyclerViewActions;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import android.support.test.espresso.web.sugar.Web;
 import android.support.test.espresso.web.webdriver.Locator;
 import android.support.test.rule.ActivityTestRule;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import org.hamcrest.Description;
+
 import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 import org.opendatakit.tables.R;
 
-import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.intent.Intents.intending;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.isInternal;
 import static android.support.test.espresso.matcher.RootMatchers.withDecorView;
+import static android.support.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static android.support.test.espresso.matcher.ViewMatchers.isAssignableFrom;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.findElement;
-import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
@@ -107,15 +107,6 @@ public class EspressoUtils {
         .respondWith(new Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null));
   }
 
-  public static ViewAssertion dummyViewAssertion() {
-    return new ViewAssertion() {
-      @Override
-      public void check(View view, NoMatchingViewException noView) {
-        //Do nothing
-      }
-    };
-  }
-
   public static boolean viewExists(Matcher<View> view) {
     final boolean[] exists = new boolean[1];
 
@@ -127,36 +118,6 @@ public class EspressoUtils {
     });
 
     return exists[0];
-  }
-
-  public static DataInteraction getFirstItem() {
-    return onData(anything()).atPosition(0);
-  }
-
-  public static String getPrefSummary(final String key) {
-    final String[] summary = new String[1];
-    final Matcher<String> keyMatcher = is(key);
-
-    onData(new TypeSafeMatcher<Preference>() {
-      @Override
-      protected boolean matchesSafely(Preference item) {
-        boolean match = keyMatcher.matches(item.getKey());
-
-        if (match) {
-          summary[0] = item.getSummary().toString();
-        }
-
-        return match;
-      }
-
-      @Override
-      public void describeTo(Description description) {
-        description.appendText(" preference with key matching: ");
-        keyMatcher.describeTo(description);
-      }
-    }).check(dummyViewAssertion());
-
-    return summary[0];
   }
 
   public static int getColor(Matcher<View> matcher, final int x, final int y) {
@@ -198,5 +159,12 @@ public class EspressoUtils {
         // ignore
       }
     } while (viewExists(withId(R.id.menu_web_view_activity_table_manager)) && (++count < limit));
+  }
+
+  public static ViewInteraction onRecyclerViewText(@StringRes int textId) {
+    onView(isAssignableFrom(RecyclerView.class))
+        .perform(RecyclerViewActions.scrollTo(hasDescendant(withText(textId))));
+
+    return onView(withText(textId));
   }
 }

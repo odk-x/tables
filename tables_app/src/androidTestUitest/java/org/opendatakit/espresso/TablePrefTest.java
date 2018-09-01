@@ -15,7 +15,9 @@ import android.support.test.filters.LargeTest;
 import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
+import android.support.v7.widget.AppCompatEditText;
 import android.view.View;
+
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -24,6 +26,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.service.DbHandle;
 import org.opendatakit.exception.ServicesAvailabilityException;
@@ -52,13 +55,12 @@ import static android.support.test.espresso.intent.Intents.intending;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasAction;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static android.support.test.espresso.intent.matcher.IntentMatchers.hasExtra;
-import static android.support.test.espresso.matcher.PreferenceMatchers.withKey;
 import static android.support.test.espresso.matcher.ViewMatchers.assertThat;
+import static android.support.test.espresso.matcher.ViewMatchers.isAssignableFrom;
 import static android.support.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isEnabled;
-import static android.support.test.espresso.matcher.ViewMatchers.withClassName;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static android.support.test.espresso.web.assertion.WebViewAssertions.webMatches;
@@ -71,18 +73,9 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.opendatakit.tables.utils.Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE;
 import static org.opendatakit.util.TestConstants.APP_NAME;
-import static org.opendatakit.util.TestConstants.COLUMNS_LIST;
-import static org.opendatakit.util.TestConstants.COL_DISPLAY_NAME;
-import static org.opendatakit.util.TestConstants.COL_KEY;
-import static org.opendatakit.util.TestConstants.DEFAULT_FORM;
-import static org.opendatakit.util.TestConstants.DEFAULT_VIEW_TYPE;
-import static org.opendatakit.util.TestConstants.DETAIL_VIEW_FILE;
-import static org.opendatakit.util.TestConstants.LIST_VIEW_FILE;
-import static org.opendatakit.util.TestConstants.MAP_LIST_VIEW_FILE;
 import static org.opendatakit.util.TestConstants.OI_PICK_FILE;
-import static org.opendatakit.util.TestConstants.TABLE_DISPLAY_NAME;
-import static org.opendatakit.util.TestConstants.TABLE_ID;
 import static org.opendatakit.util.TestConstants.T_HOUSE_E_DISPLAY_NAME;
 import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 import static org.opendatakit.util.TestConstants.T_HOUSE_TABLE_ID;
@@ -252,15 +245,21 @@ public class TablePrefTest extends AbsBaseTest {
   @Test
   public void intents_launchOIFileManager() {
     //Check intent on "List View File"
-    onData(withKey(LIST_VIEW_FILE)).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.list_view_file)
+        .perform(click());
     intended(hasAction(OI_PICK_FILE), Intents.times(1));
 
     //Check intent on "Detail View File"
-    onData(withKey(DETAIL_VIEW_FILE)).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.detail_view_file)
+        .perform(click());
     intended(hasAction(OI_PICK_FILE), Intents.times(2));
 
     //Check intent on "Map List View File"
-    onData(withKey(MAP_LIST_VIEW_FILE)).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.map_list_view_file)
+        .perform(click());
     intended(hasAction(OI_PICK_FILE), Intents.times(3));
   }
 
@@ -275,10 +274,12 @@ public class TablePrefTest extends AbsBaseTest {
 
     //go to view type pref
     onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
-    onData(withKey(DEFAULT_VIEW_TYPE)).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.change_default_view_type)
+        .perform(click());
 
     //choose Spreadsheet
-    onView(withText("Spreadsheet")).perform(click());
+    onView(withText(R.string.spreadsheet)).perform(click());
 
     //go to table manager
     Espresso.pressBack();
@@ -287,12 +288,14 @@ public class TablePrefTest extends AbsBaseTest {
     //Check new default view type
     onData(ODKMatchers.withTable(T_HOUSE_TABLE_ID)).perform(click());
     try {
-      onView(withClassName(is(SpreadsheetView.class.getName()))).check(matches(isDisplayed()));
+      onView(isAssignableFrom(SpreadsheetView.class)).check(matches(isDisplayed()));
     } finally {
       //restore default view type
       onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
-      onData(withKey(DEFAULT_VIEW_TYPE)).perform(click());
-      onView(withText("List")).perform(click());
+      EspressoUtils
+          .onRecyclerViewText(R.string.change_default_view_type)
+          .perform(click());
+      onView(withText(R.string.list)).perform(click());
     }
   }
 
@@ -301,7 +304,9 @@ public class TablePrefTest extends AbsBaseTest {
     final int numCol = 21; // was 19 then we added lat/lon?
 
     //go to columns
-    onData(withKey(COLUMNS_LIST)).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.columns)
+        .perform(click());
 
     //Check num of column
     onView(withId(android.R.id.list)).check(matches(ODKMatchers.withSize(numCol)));
@@ -310,26 +315,32 @@ public class TablePrefTest extends AbsBaseTest {
   @Test
   public void intent_tableLevelPref() {
     intended(allOf(hasComponent(TableLevelPreferencesActivity.class.getName()),
-        hasExtra("tableId", T_HOUSE_E_TABLE_ID),
-        hasExtra("tablePreferenceFragmentType", "TABLE_PREFERENCE")));
+        hasExtra(IntentConsts.INTENT_KEY_TABLE_ID, T_HOUSE_E_TABLE_ID),
+        hasExtra(TABLE_PREFERENCE_FRAGMENT_TYPE, TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE.name())));
   }
 
   @Test
   public void display_tableIdentifier() {
     //Check that display name and table id are shown correctly
-    assertThat(EspressoUtils.getPrefSummary(TABLE_DISPLAY_NAME), is(T_HOUSE_E_DISPLAY_NAME));
-    assertThat(EspressoUtils.getPrefSummary(TABLE_ID), is(T_HOUSE_E_TABLE_ID));
+    onView(ODKMatchers.withPref(R.string.display_name, T_HOUSE_E_DISPLAY_NAME))
+        .check(matches(isCompletelyDisplayed()));
+
+    onView(ODKMatchers.withPref(R.string.table_id, T_HOUSE_E_TABLE_ID))
+        .check(matches(isCompletelyDisplayed()));
   }
 
   @Test
   public void display_columnIdentifier() {
-    //if (true) return;
-
-    onData(withKey(COLUMNS_LIST)).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.columns)
+        .perform(click());
     onData(is("House id")).perform(click());
 
-    assertThat(EspressoUtils.getPrefSummary(COL_DISPLAY_NAME), is("House id"));
-    assertThat(EspressoUtils.getPrefSummary(COL_KEY), is("House_id"));
+    onView(ODKMatchers.withPref(R.string.display_name, "House id"))
+        .check(matches(isCompletelyDisplayed()));
+
+    onView(ODKMatchers.withPref(R.string.element_key, "House_id"))
+        .check(matches(isCompletelyDisplayed()));
   }
 
   @Test
@@ -345,7 +356,9 @@ public class TablePrefTest extends AbsBaseTest {
       Thread.sleep(2000);
     }
 
-    onData(withKey(COLUMNS_LIST)).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.columns)
+        .perform(click());
     try {
       //see if this crashes Tables
       mDevice.setOrientationRight();
@@ -380,7 +393,9 @@ public class TablePrefTest extends AbsBaseTest {
             .setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + listViewPath)))));
 
     //edit list view path
-    onData(withKey(LIST_VIEW_FILE)).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.list_view_file)
+        .perform(click());
 
     //go to list view
     //minor problem, webkit is reloaded but new url not loaded after exiting pref
@@ -388,7 +403,7 @@ public class TablePrefTest extends AbsBaseTest {
     pressBack();
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
     onView(withId(R.id.top_level_table_menu_select_view)).perform(click());
-    onView(withText("List")).perform(click());
+    onView(withText(R.string.list)).perform(click());
 
     try {
       //check that the correct url is loaded
@@ -416,21 +431,25 @@ public class TablePrefTest extends AbsBaseTest {
             .setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + detailViewPath)))));
 
     //edit detail view path
-    onData(withKey(DETAIL_VIEW_FILE)).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.detail_view_file)
+        .perform(click());
 
     intending(hasAction(OI_PICK_FILE)).respondWith(
         new Instrumentation.ActivityResult(Activity.RESULT_OK, new Intent()
             .setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + listViewPath)))));
 
     //edit list view path
-    onData(withKey(LIST_VIEW_FILE)).perform(click());
+    EspressoUtils
+        .onRecyclerViewText(R.string.list_view_file)
+        .perform(click());
 
     //go to list view
     pressBack();
     pressBack();
     onData(ODKMatchers.withTable(T_HOUSE_E_TABLE_ID)).perform(click());
     onView(withId(R.id.top_level_table_menu_select_view)).perform(click());
-    onView(withText("List")).perform(click());
+    onView(withText(R.string.list)).perform(click());
 
     //choose "Tea for All"
     EspressoUtils
@@ -519,7 +538,9 @@ public class TablePrefTest extends AbsBaseTest {
           new Instrumentation.ActivityResult(Activity.RESULT_OK,
               new Intent().setData(Uri.fromFile(new File("/test.html")))));
 
-      onData(withKey(LIST_VIEW_FILE)).perform(click());
+      EspressoUtils
+          .onRecyclerViewText(R.string.list_view_file)
+          .perform(click());
 
       //check toast message
       EspressoUtils.toastMsgMatcher(mIntentsRule, is(EspressoUtils
@@ -532,7 +553,7 @@ public class TablePrefTest extends AbsBaseTest {
   }
 
   @Test
-  public void display_badFormId() {
+  public void display_badFormId() throws ServicesAvailabilityException {
     // backup
     String currFormId = null;
 
@@ -544,9 +565,10 @@ public class TablePrefTest extends AbsBaseTest {
       assertThat(currFormId, notNullValue(String.class));
 
       //change form id to something invalid
-      onData(withKey(DEFAULT_FORM))
-              .perform(click());
-      onView(withId(R.id.edit_form_id))
+      EspressoUtils
+          .onRecyclerViewText(R.string.default_form)
+          .perform(click());
+      onView(isAssignableFrom(AppCompatEditText.class))
               .perform(click())
               .perform(clearText())
               .perform(typeText("invalid_form_id"));
@@ -558,17 +580,11 @@ public class TablePrefTest extends AbsBaseTest {
                   mIntentsRule,
                       is(EspressoUtils.getString(mIntentsRule, R.string.invalid_form))
               );
-    } catch (ServicesAvailabilityException e) {
-      e.printStackTrace();
     } finally {
       if (currFormId != null) {
-        try {
-          FormType
-                  .constructFormType(mIntentsRule.getActivity(), APP_NAME, T_HOUSE_E_TABLE_ID)
-                  .setFormId(currFormId);
-        } catch (ServicesAvailabilityException e) {
-          e.printStackTrace();
-        }
+        FormType
+            .constructFormType(mIntentsRule.getActivity(), APP_NAME, T_HOUSE_E_TABLE_ID)
+            .setFormId(currFormId);
       }
     }
   }
