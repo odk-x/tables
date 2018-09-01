@@ -367,6 +367,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
   private void initializeDefaultViewType() throws ServicesAvailabilityException {
     // We have to set the current default view and disable the entries that
     // don't apply to this table.
+    final AbsTableActivity mActivity = ((AbsTableActivity) getActivity());
     DefaultViewTypePreference viewPref = (DefaultViewTypePreference) this
         .findListPreference(Constants.PreferenceKeys.Table.DEFAULT_VIEW_TYPE);
     viewPref.setFields(getTableId(), getColumnDefinitions());
@@ -374,12 +375,19 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
 
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
-        WebLogger.getLogger(getAppName())
+        WebLogger.getLogger(mActivity.getAppName())
             .e(TAG, "[onPreferenceChange] for default view preference. Pref is: " + newValue);
         String selectedValue = newValue.toString();
-        PreferenceUtil.setDefaultViewType(getActivity(), getAppName(), getTableId(),
-            TableViewType.valueOf(selectedValue));
-        return true;
+        DefaultViewTypePreference pref = ((DefaultViewTypePreference) preference);
+        if (pref.isValidSelection(selectedValue)) {
+          PreferenceUtil.setDefaultViewType(mActivity, mActivity.getAppName(), getTableId(),
+              TableViewType.valueOf(selectedValue));
+          return true;
+        } else {
+          Toast.makeText(mActivity, mActivity.getString(R.string.invalid_default_view_type),
+              Toast.LENGTH_LONG).show();
+          return false;
+        }
       }
     });
   }

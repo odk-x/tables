@@ -15,13 +15,10 @@
  */
 package org.opendatakit.tables.preferences;
 
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.support.v7.preference.ListPreference;
 import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
-import android.widget.ListAdapter;
-import android.widget.Toast;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.TableViewType;
 import org.opendatakit.data.utilities.TableUtil;
@@ -31,10 +28,8 @@ import org.opendatakit.database.service.UserDbInterface;
 import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.data.PossibleTableViewTypes;
-import org.opendatakit.tables.views.components.TableViewTypeAdapter;
 
 import java.util.Arrays;
 
@@ -110,6 +105,19 @@ public class DefaultViewTypePreference extends ListPreference {
         index = 0;
       }
       this.setValueIndex(index);
+    }
+  }
+
+  public boolean isValidSelection(String newValue) {
+    if (newValue.equals(TableViewType.SPREADSHEET.name())) {
+      return mPossibleViewTypes.spreadsheetViewIsPossible();
+    } else if (newValue.equals(TableViewType.LIST.name())) {
+      return mPossibleViewTypes.listViewIsPossible();
+    } else if (newValue.equals(TableViewType.MAP.name())) {
+      return mPossibleViewTypes.mapViewIsPossible();
+    } else {
+      WebLogger.getLogger(mAppName).e(TAG, "unrecognized entryValue: " + newValue);
+      return false;
     }
   }
 }
