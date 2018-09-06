@@ -174,3 +174,5 @@ task grantPermissionForODKApp () {
         grantTablesAnimationPermission.execute()
     }
 }
+
+apply plugin: 'com.google.gms.google-services'
