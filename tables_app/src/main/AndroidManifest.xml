@@ -84,8 +84,8 @@
         <activity android:name=".activities.ExportCSVActivity"/>
         <activity
                 android:name=".activities.AndroidShortcuts"
-                android:label="@string/shortcut_name">
-            <!--android:theme="@android:style/Theme.Translucent.NoTitleBar" > -->
+                android:label="@string/shortcut_name"
+                android:theme="@style/Theme.AppCompat.Light.Dialog" >
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
