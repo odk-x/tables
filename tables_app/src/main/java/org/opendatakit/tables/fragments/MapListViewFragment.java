@@ -87,6 +87,8 @@ public class MapListViewFragment extends ListViewFragment implements IMapListVie
 
     OdkTablesWebView currentView = getWebKit();
     // reload the page.
+    // the webkit doesn't like to reload, convince it
+    currentView.setForceLoadDuringReload();
     currentView.reloadPage();
   }
 
