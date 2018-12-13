@@ -408,12 +408,12 @@
   <string name="set_sort_direction_fail">No se puede ordenar la Clasificación</string>
   <string name="set_index_column_fail">No se puede fijarla columna</string>
   <string name="invalid_form">El identificador de este formulario no existe</string>
-  <string name="invalid_form_name">The form id should begin with a letter and contain only letters, digits or underscores.</string>
+  <string name="invalid_form_name">El Id de formulario debe comenzar con una letra y contener sólo letras, dígitos o guiones bajos.</string>
   <string name="invalid_integer">El número ingresado no es válido</string>
   <string name="no_permissions">No autorizado</string>
   <string name="change_column_width_error">No se puede cambiar el ancho de la columna</string>
   <string name="unable_to_change_default_view_type">No se puede cambiar el tipo de vista por defecto</string>
-  <string name="invalid_default_view_type">Invalid default view type</string>
+  <string name="invalid_default_view_type">Tipo de vista predeterminado no válido</string>
   <string name="location_permission_rationale">ODK Tables necesita acceso a la ubicación de su dispositivo para mostrarlo en Map View</string>
   <string name="location_permission_perm_denied">Mi ubicación deshabilitada</string>
   <string name="location_unavailable">Ubicación no está disponible</string>
