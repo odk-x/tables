@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
-    <string name="app_name">ODK Tables</string>
+    <string name="app_name">ODK-X Tables</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="set">Set</string>
@@ -107,7 +107,7 @@
     <string name="yellow">Yellow</string>
     <string name="title_form_id">Form Id</string>
     <string name="title_root_element">Root Element</string>
-    <string name="configuring_tables">Configuring ODK Tables</string>
+    <string name="configuring_tables">Configuring ODK-X Tables</string>
     <string name="processing_file">processing file&#8230;</string>
     <string name="expansion_unzipping_begins">Unzipping resources. Scanning zip directory.</string>
     <string name="expansion_unzipping_without_detail">Unzipping resources. Extracting %1$s (%2$d of %3$d)</string>
@@ -327,7 +327,7 @@
     <string name="use_generated_form">Use Generated Form</string>
 
     <!-- ODKSubmit things -->
-    <string name="send_using_submit">Send Using ODK Submit</string>
+    <string name="send_using_submit">Send Using ODK-X Submit</string>
     <string name="cannot_register_app_with_submit">Cannot register app with submit!</string>
     <string name="cannot_register_data_with_submit">Cannot register data with submit!</string>
 
@@ -347,9 +347,9 @@
     <string name="radio_button_message_delete_server_deleted">Delete and lose local changes.</string>
     <string name="conflict_delete_local_confirmation_warning">Delete the row and lose your local changes?</string>
     <string name="conflict_delete_on_server_confirmation_warning">Delete row on server?</string>
-    <string name="shortcut_name">ODK Tables App</string>
+    <string name="shortcut_name">ODK-X Tables App</string>
     <string name="use_collect_form">Use ODK Collect form</string>
-    <string name="use_survey_form">Use ODK Survey form</string>
+    <string name="use_survey_form">Use ODK-X Survey form</string>
 
     <string name="use_index_html">Use custom home screen</string>
     <string name="no_index">No assets/index.html</string>
@@ -391,21 +391,21 @@
     <string name="initializing">Initializing &#8230;</string>
 
     <string name="configuring_app">Configuring %1$s</string>
-    <string name="sync_not_found">ODK Services is not installed</string>
+    <string name="sync_not_found">ODK-X Services is not installed</string>
 
     <string name="no_table_data">No Data Tables</string>
     <string name="database_unavailable">Database Unavailable</string>
 
     <string name="file_not_under_app_dir">File is not located under %1$s directory</string>
     <string name="no_form_id_specified">Form Id must be specified</string>
-    <string name="survey_not_installed">ODK Survey is not installed</string>
+    <string name="survey_not_installed">ODK-X Survey is not installed</string>
     <string name="collect_not_installed">ODK Collect is not installed</string>
 
     <string name="unable_to_save_db_changes">Unable to save database changes</string>
     <string name="unable_to_retrieve_form_type">Unable to retrieve form type</string>
 
     <!-- TODO should probably be "select app" or similar -->
-    <string name="select_odk_shortcut">Select ODK Shortcut</string>
+    <string name="select_odk_shortcut">Select ODK-X Shortcut</string>
 
     <string name="row_actions">Row actions</string>
     <string name="column_actions">Column actions</string>
@@ -433,7 +433,7 @@
     <string name="unable_to_change_default_view_type">Unable to change default view type</string>
     <string name="invalid_default_view_type">Invalid default view type</string>
 
-    <string name="location_permission_rationale">ODK Tables needs access to your device\'s location to display it on Map View</string>
+    <string name="location_permission_rationale">ODK-X Tables needs access to your device\'s location to display it on Map View</string>
     <string name="location_permission_perm_denied">My Location feature disabled</string>
     <string name="location_unavailable">Location is unavailable</string>
 
