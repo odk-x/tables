@@ -1,20 +1,20 @@
 package org.opendatakit.espresso;
 
 import android.Manifest;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.intent.rule.IntentsTestRule;
-import android.support.test.espresso.web.webdriver.Locator;
-import android.support.test.filters.LargeTest;
-import android.support.test.rule.GrantPermissionRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.UiDevice;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.espresso.intent.rule.IntentsTestRule;
+import androidx.test.espresso.web.webdriver.Locator;
+import androidx.test.filters.LargeTest;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.uiautomator.UiDevice;
+
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
-import org.junit.runner.RunWith;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.util.DisableAnimationsRule;
@@ -24,21 +24,20 @@ import org.opendatakit.util.UAUtils;
 
 import java.net.MalformedURLException;
 
-import static android.support.test.espresso.Espresso.onData;
-import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.intent.Intents.intended;
-import static android.support.test.espresso.matcher.ViewMatchers.withId;
-import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static android.support.test.espresso.web.sugar.Web.onWebView;
-import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
+import static androidx.test.espresso.Espresso.onData;
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.intent.Intents.intended;
+import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static androidx.test.espresso.web.sugar.Web.onWebView;
+import static androidx.test.espresso.web.webdriver.DriverAtoms.webClick;
 import static org.opendatakit.util.TestConstants.HOPE_TAB_ID;
 import static org.opendatakit.util.TestConstants.LAUNCH_DEMO_ID;
 import static org.opendatakit.util.TestConstants.TABLE_MGR_WAIT;
 import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
-@RunWith(AndroidJUnit4.class)
 @LargeTest
 public class InteropTest extends AbsBaseTest {
   @ClassRule

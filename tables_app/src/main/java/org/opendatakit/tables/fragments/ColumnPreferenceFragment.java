@@ -17,8 +17,8 @@ package org.opendatakit.tables.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v7.preference.EditTextPreference;
-import android.support.v7.preference.Preference;
+import androidx.preference.EditTextPreference;
+import androidx.preference.Preference;
 import android.widget.Toast;
 import org.apache.commons.lang3.StringUtils;
 import org.opendatakit.activities.BaseActivity;

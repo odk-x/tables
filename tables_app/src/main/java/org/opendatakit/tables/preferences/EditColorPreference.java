@@ -16,7 +16,7 @@
 package org.opendatakit.tables.preferences;
 
 import android.content.Context;
-import android.support.v7.preference.Preference;
+import androidx.preference.Preference;
 import android.util.AttributeSet;
 import org.opendatakit.tables.views.ColorPickerDialog;
 import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;

@@ -15,14 +15,14 @@
  */
 package org.opendatakit.tables.preferences;
 
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.support.v7.preference.EditTextPreference;
+import androidx.preference.EditTextPreference;
 import android.util.AttributeSet;
 import android.widget.Toast;
 import org.opendatakit.logging.WebLogger;
