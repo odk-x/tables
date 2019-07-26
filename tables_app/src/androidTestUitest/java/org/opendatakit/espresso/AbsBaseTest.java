@@ -2,8 +2,10 @@ package org.opendatakit.espresso;
 
 import android.app.Activity;
 import android.app.Application;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+
 import org.junit.Before;
 import org.opendatakit.tables.application.Tables;
 

@@ -16,7 +16,7 @@
 package org.opendatakit.tables.fragments;
 
 import android.app.Activity;
-import android.support.v4.app.ListFragment;
+import androidx.fragment.app.ListFragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;

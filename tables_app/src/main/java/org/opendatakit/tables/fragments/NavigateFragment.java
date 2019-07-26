@@ -1,12 +1,12 @@
 package org.opendatakit.tables.fragments;
 
 import android.app.Activity;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationProvider;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
