@@ -3,9 +3,9 @@ package org.opendatakit.espresso;
 import android.Manifest;
 import android.webkit.WebView;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.espresso.web.webdriver.Locator;
 import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.rule.GrantPermissionRule;
 import androidx.test.uiautomator.By;

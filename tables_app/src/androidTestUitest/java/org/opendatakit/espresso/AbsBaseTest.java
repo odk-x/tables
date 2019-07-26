@@ -4,7 +4,8 @@ import android.app.Activity;
 import android.app.Application;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.opendatakit.tables.application.Tables;
@@ -18,15 +19,9 @@ public class AbsBaseTest {
     c = Tables.getInstance();
     if(true) return;
     //try {Thread.sleep(1000);} catch (Throwable ignored) {};
-    _setUpC(InstrumentationRegistry.getInstrumentation().getTargetContext());
-    if (c == null) {
-      _setUpC(InstrumentationRegistry.getTargetContext());
-    }
+    _setUpC(ApplicationProvider.getApplicationContext());
     if (c == null) {
       _setUpC(InstrumentationRegistry.getInstrumentation().getContext());
-    }
-    if (c == null) {
-      _setUpC(InstrumentationRegistry.getContext());
     }
     if (c == null)
       throw new java.lang.IllegalStateException();
