@@ -97,7 +97,7 @@ public class UAUtils {
     mDevice.wait(Until.hasObject(By.pkg(getLauncherPackageName()).depth(0)), APP_START_TIMEOUT);
 
     //start app
-    Context context = ApplicationProvider.getApplicationContext();
+    Context context = InstrumentationRegistry.getInstrumentation().getContext();
     final Intent intent = context.getPackageManager().getLaunchIntentForPackage(pkgName);
     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
     context.startActivity(intent);
@@ -180,7 +180,7 @@ public class UAUtils {
     intent.addCategory(Intent.CATEGORY_HOME);
 
     // Use PackageManager to get the launcher package name
-    PackageManager pm = ApplicationProvider.getApplicationContext().getPackageManager();
+    PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
     ResolveInfo resolveInfo = pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
     return resolveInfo.activityInfo.packageName;
   }

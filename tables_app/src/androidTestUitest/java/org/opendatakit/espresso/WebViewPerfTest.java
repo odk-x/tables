@@ -40,8 +40,8 @@ import static org.hamcrest.Matchers.containsString;
  */
 @LargeTest
 public class WebViewPerfTest {
-  @ClassRule
-  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+//  @ClassRule
+//  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   // Run through the app for performance timings
   private static final int numOfTimesToRun = 101;

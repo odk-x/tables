@@ -101,6 +101,10 @@ android {
         sourceCompatibility javaVersion
         targetCompatibility javaVersion
     }
+
+    testOptions{
+        animationsDisabled = true
+    }
 }
 
 configurations.all {
@@ -171,7 +175,6 @@ dependencies {
 task grantPermissionForODKApp {
     dependsOn grantServicesReadExternalStoragePermission
     dependsOn grantServicesWriteExternalStoragePermission
-    dependsOn grantTablesAnimationPermission
 }
 
 apply plugin: 'com.google.gms.google-services'
