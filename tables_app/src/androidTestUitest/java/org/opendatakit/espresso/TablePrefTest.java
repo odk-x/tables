@@ -82,8 +82,8 @@ import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
 @LargeTest
 public class TablePrefTest extends AbsBaseTest {
-  @ClassRule
-  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+//  @ClassRule
+//  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;

@@ -40,8 +40,8 @@ import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
 @LargeTest
 public class WebkitStressTest {
-  @ClassRule
-  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+  //@ClassRule
+  //public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;

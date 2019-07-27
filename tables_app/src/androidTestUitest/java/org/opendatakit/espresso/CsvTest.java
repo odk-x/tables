@@ -59,8 +59,8 @@ import static org.opendatakit.util.TestConstants.T_HOUSE_TABLE_ID;
 
 @LargeTest
 public class CsvTest {
-  @ClassRule
-  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+ // @ClassRule
+ // public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private static final String VALID_QUALIFIER = "TEST_VALID";
   private static final String INVALID_QUALIFIER = "TEST_INVALID/";

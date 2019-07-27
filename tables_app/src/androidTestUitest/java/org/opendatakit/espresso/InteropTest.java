@@ -40,8 +40,8 @@ import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
 @LargeTest
 public class InteropTest extends AbsBaseTest {
-  @ClassRule
-  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+//  @ClassRule
+//  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private static final int WAIT = 1000;
 

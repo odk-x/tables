@@ -55,8 +55,8 @@ import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 
 @LargeTest
 public class ColorRuleTest extends AbsBaseTest {
-  @ClassRule
-  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+ // @ClassRule
+//  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private final String tableId = T_HOUSE_E_TABLE_ID;
   private final String elementKeyName = "House id";

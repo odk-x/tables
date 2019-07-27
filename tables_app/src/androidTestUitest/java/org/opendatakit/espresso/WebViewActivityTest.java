@@ -35,8 +35,8 @@ import static androidx.test.espresso.web.webdriver.DriverAtoms.webClick;
  */
 @LargeTest
 public class WebViewActivityTest {
-  @ClassRule
-  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+//  @ClassRule
+//  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;
