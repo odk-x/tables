@@ -2,7 +2,10 @@ package org.opendatakit.util;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.view.View;
+
 import androidx.annotation.StringRes;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.NoMatchingViewException;
 import androidx.test.espresso.ViewAssertion;
 import androidx.test.espresso.ViewInteraction;
@@ -11,8 +14,6 @@ import androidx.test.espresso.intent.rule.IntentsTestRule;
 import androidx.test.espresso.web.sugar.Web;
 import androidx.test.espresso.web.webdriver.Locator;
 import androidx.test.rule.ActivityTestRule;
-import androidx.recyclerview.widget.RecyclerView;
-import android.view.View;
 
 import org.hamcrest.Matcher;
 import org.opendatakit.tables.R;

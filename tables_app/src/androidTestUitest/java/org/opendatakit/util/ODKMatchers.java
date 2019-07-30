@@ -1,15 +1,17 @@
 package org.opendatakit.util;
 
 import android.content.Intent;
+import android.view.View;
+import android.webkit.WebView;
+import android.widget.ListView;
+
 import androidx.annotation.StringRes;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.Espresso;
 import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.matcher.BoundedMatcher;
 import androidx.test.espresso.matcher.ViewMatchers;
-import android.view.View;
-import android.webkit.WebView;
-import android.widget.ListView;
+
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;

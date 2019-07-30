@@ -18,7 +18,6 @@ import androidx.test.uiautomator.UiDevice;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -26,7 +25,6 @@ import org.junit.rules.TestRule;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
@@ -59,8 +57,6 @@ import static org.opendatakit.util.TestConstants.T_HOUSE_TABLE_ID;
 
 @LargeTest
 public class CsvTest {
- // @ClassRule
- // public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private static final String VALID_QUALIFIER = "TEST_VALID";
   private static final String INVALID_QUALIFIER = "TEST_INVALID/";
