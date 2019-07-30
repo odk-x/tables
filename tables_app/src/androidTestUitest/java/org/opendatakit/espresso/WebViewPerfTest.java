@@ -15,13 +15,11 @@ import androidx.test.rule.GrantPermissionRule;
 import androidx.test.uiautomator.UiDevice;
 
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.UAUtils;
 
 import static androidx.test.espresso.web.assertion.WebViewAssertions.webMatches;
@@ -40,8 +38,6 @@ import static org.hamcrest.Matchers.containsString;
  */
 @LargeTest
 public class WebViewPerfTest {
-//  @ClassRule
-//  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   // Run through the app for performance timings
   private static final int numOfTimesToRun = 101;

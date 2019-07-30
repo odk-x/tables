@@ -14,14 +14,12 @@ import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.UAUtils;
 
@@ -40,8 +38,6 @@ import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
 @LargeTest
 public class WebkitStressTest {
-  //@ClassRule
-  //public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;

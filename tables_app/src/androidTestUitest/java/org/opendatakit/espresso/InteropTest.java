@@ -10,14 +10,12 @@ import androidx.test.rule.GrantPermissionRule;
 import androidx.test.uiautomator.UiDevice;
 
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
@@ -40,8 +38,6 @@ import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
 @LargeTest
 public class InteropTest extends AbsBaseTest {
-//  @ClassRule
-//  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private static final int WAIT = 1000;
 

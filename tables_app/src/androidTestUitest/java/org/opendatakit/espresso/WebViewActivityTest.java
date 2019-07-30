@@ -14,13 +14,11 @@ import androidx.test.rule.GrantPermissionRule;
 import androidx.test.uiautomator.UiDevice;
 
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.UAUtils;
 
 import static androidx.test.espresso.web.sugar.Web.onWebView;
@@ -35,8 +33,6 @@ import static androidx.test.espresso.web.webdriver.DriverAtoms.webClick;
  */
 @LargeTest
 public class WebViewActivityTest {
-//  @ClassRule
-//  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;

@@ -14,7 +14,6 @@ import androidx.test.uiautomator.UiDevice;
 
 import org.hamcrest.Matcher;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -27,7 +26,6 @@ import org.opendatakit.exception.ServicesAvailabilityException;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
@@ -55,9 +53,6 @@ import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 
 @LargeTest
 public class ColorRuleTest extends AbsBaseTest {
- // @ClassRule
-//  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
-
   private final String tableId = T_HOUSE_E_TABLE_ID;
   private final String elementKeyName = "House id";
   private final String elementKeyId = "House_id";

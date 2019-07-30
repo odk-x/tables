@@ -20,7 +20,6 @@ import androidx.test.uiautomator.UiDevice;
 
 import org.hamcrest.Matcher;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -34,7 +33,6 @@ import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.views.SpreadsheetView;
-import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
@@ -82,8 +80,6 @@ import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
 @LargeTest
 public class TablePrefTest extends AbsBaseTest {
-//  @ClassRule
-//  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;
