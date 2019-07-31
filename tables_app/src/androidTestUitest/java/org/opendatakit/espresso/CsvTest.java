@@ -108,7 +108,7 @@ public class CsvTest {
   public void setup() {
     UAUtils.assertInitSucess(initSuccess);
     EspressoUtils.openTableManagerFromCustomHome();
-    onView(withId(R.id.menu_table_manager_export)).perform(click());
+
   }
 
   @After
@@ -130,6 +130,7 @@ public class CsvTest {
 
   @Test
   public void exportCsv_tableList() {
+    onView(withId(R.id.menu_table_manager_export)).perform(click());
     //open table chooser
     onView(withClassName(endsWith("Spinner"))).perform(click());
 
@@ -140,6 +141,7 @@ public class CsvTest {
 
   @Test
   public void exportCsv_validQualifier() {
+    onView(withId(R.id.menu_table_manager_export)).perform(click());
     //open table chooser
     onView(withClassName(is(Spinner.class.getName()))).perform(click());
 
@@ -174,6 +176,8 @@ public class CsvTest {
   @Test
   public void exportCsv_invalidQualifier() {
     int fileCount = getOutputDirFileCount();
+
+    onView(withId(R.id.menu_table_manager_export)).perform(click());
 
     //open table chooser
     onView(withClassName(is(Spinner.class.getName()))).perform(click());
@@ -216,8 +220,6 @@ public class CsvTest {
             new Intent().setData(Uri.fromFile(new File("/file")))));
 
     //go to csv import
-    Espresso.pressBack();
-    Espresso.pressBack();
     onView(withId(R.id.menu_table_manager_import)).perform(click());
     onView(withText(R.string.import_choose_csv_file)).perform(click());
 
