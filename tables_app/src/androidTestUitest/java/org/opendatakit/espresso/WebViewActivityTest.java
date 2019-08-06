@@ -1,31 +1,29 @@
 package org.opendatakit.espresso;
 
 import android.Manifest;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.espresso.Espresso;
-import android.support.test.espresso.web.model.Atom;
-import android.support.test.espresso.web.model.ElementReference;
-import android.support.test.espresso.web.webdriver.Locator;
-import android.support.test.filters.LargeTest;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.rule.GrantPermissionRule;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.UiDevice;
 import android.webkit.WebView;
+
+import androidx.test.espresso.Espresso;
+import androidx.test.espresso.web.model.Atom;
+import androidx.test.espresso.web.model.ElementReference;
+import androidx.test.espresso.web.webdriver.Locator;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.uiautomator.UiDevice;
+
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
-import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.util.DisableAnimationsRule;
 import org.opendatakit.util.UAUtils;
 
-import static android.support.test.espresso.web.sugar.Web.onWebView;
-import static android.support.test.espresso.web.webdriver.DriverAtoms.findElement;
-import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
+import static androidx.test.espresso.web.sugar.Web.onWebView;
+import static androidx.test.espresso.web.webdriver.DriverAtoms.findElement;
+import static androidx.test.espresso.web.webdriver.DriverAtoms.webClick;
 
 /**
  * Basic sample that shows the usage of Espresso web showcasing API.
@@ -34,10 +32,7 @@ import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
  * a form with an input tag and buttons to submit the form.
  */
 @LargeTest
-@RunWith(AndroidJUnit4.class)
 public class WebViewActivityTest {
-  @ClassRule
-  public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;

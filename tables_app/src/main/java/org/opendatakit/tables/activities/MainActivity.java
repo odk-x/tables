@@ -17,10 +17,10 @@ package org.opendatakit.tables.activities;
 
 import android.app.ActionBar;
 import android.app.Activity;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentManager.BackStackEntry;
-import android.support.v4.app.FragmentTransaction;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentManager.BackStackEntry;
+import androidx.fragment.app.FragmentTransaction;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;

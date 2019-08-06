@@ -1,26 +1,28 @@
 package org.opendatakit.util;
 
 import android.content.Intent;
-import android.support.annotation.StringRes;
-import android.support.test.espresso.Espresso;
-import android.support.test.espresso.contrib.RecyclerViewActions;
-import android.support.test.espresso.matcher.BoundedMatcher;
-import android.support.test.espresso.matcher.ViewMatchers;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.ListView;
+
+import androidx.annotation.StringRes;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.test.espresso.Espresso;
+import androidx.test.espresso.contrib.RecyclerViewActions;
+import androidx.test.espresso.matcher.BoundedMatcher;
+import androidx.test.espresso.matcher.ViewMatchers;
+
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.opendatakit.data.ColorRule;
 import org.opendatakit.tables.utils.TableNameStruct;
 
-import static android.support.test.espresso.intent.matcher.IntentMatchers.hasAction;
-import static android.support.test.espresso.intent.matcher.IntentMatchers.hasData;
-import static android.support.test.espresso.intent.matcher.IntentMatchers.toPackage;
-import static android.support.test.espresso.intent.matcher.UriMatchers.hasHost;
-import static android.support.test.espresso.intent.matcher.UriMatchers.hasPath;
+import static androidx.test.espresso.intent.matcher.IntentMatchers.hasAction;
+import static androidx.test.espresso.intent.matcher.IntentMatchers.hasData;
+import static androidx.test.espresso.intent.matcher.IntentMatchers.toPackage;
+import static androidx.test.espresso.intent.matcher.UriMatchers.hasHost;
+import static androidx.test.espresso.intent.matcher.UriMatchers.hasPath;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.opendatakit.util.TestConstants.APP_NAME;
 import static org.opendatakit.util.TestConstants.SURVEY_PKG_NAME;
