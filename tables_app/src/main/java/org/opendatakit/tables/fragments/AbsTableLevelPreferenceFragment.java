@@ -16,9 +16,9 @@
 package org.opendatakit.tables.fragments;
 
 import android.os.Bundle;
-import android.support.v7.preference.EditTextPreference;
-import android.support.v7.preference.ListPreference;
-import android.support.v7.preference.PreferenceFragmentCompat ;
+import androidx.preference.EditTextPreference;
+import androidx.preference.ListPreference;
+import androidx.preference.PreferenceFragmentCompat ;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.database.data.OrderedColumns;
 import org.opendatakit.tables.activities.AbsTableActivity;

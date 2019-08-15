@@ -15,7 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.view.View;
 import org.opendatakit.activities.IOdkCommonActivity;
 import org.opendatakit.database.data.BaseTable;

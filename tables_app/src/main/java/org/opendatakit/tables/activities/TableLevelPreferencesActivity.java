@@ -14,7 +14,7 @@
 
 package org.opendatakit.tables.activities;
 
-import android.support.v4.app.FragmentTransaction;
+import androidx.fragment.app.FragmentTransaction;
 import android.os.Bundle;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.tables.fragments.ColorRuleListFragment;
