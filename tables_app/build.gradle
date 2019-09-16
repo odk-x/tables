@@ -29,6 +29,8 @@ android {
 
         testApplicationId(groupId + tablesName + testNameSuffix)
         testInstrumentationRunner(instrumentationRunner)
+
+        multiDexEnabled true
     }
 
     flavorDimensions "stage", "testing"
@@ -133,6 +135,8 @@ dependencies {
     implementation ('com.crashlytics.sdk.android:crashlytics:2.10.1@aar') {
         transitive =true;
     }
+
+    implementation 'androidx.multidex:multidex:2.0.1'
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         implementation project(libraryProjectName)
