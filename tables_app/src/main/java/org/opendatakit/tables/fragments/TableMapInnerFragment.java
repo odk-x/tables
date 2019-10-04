@@ -538,7 +538,7 @@ public class TableMapInnerFragment extends SupportMapFragment implements OnMapRe
         b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
         LocationDialogFragment dialog = new LocationDialogFragment();
         dialog.setArguments(b);
-        dialog.show(getFragmentManager(), "LocationDialogFragment");
+        dialog.show(getParentFragmentManager(), "LocationDialogFragment");
       }
     };
   }
