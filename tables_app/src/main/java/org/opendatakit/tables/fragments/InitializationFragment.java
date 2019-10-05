@@ -122,7 +122,7 @@ public class InitializationFragment extends AbsTablesFragment
          initState = InitializationState.IN_PROGRESS;
       } else {
 
-         msgManager.restoreDialog(getFragmentManager(), getId());
+         msgManager.restoreDialog(getParentFragmentManager(), getId());
 
          // re-attach to the task for task notifications...
          getCommonApplication().establishInitializationListener(this);
@@ -134,7 +134,7 @@ public class InitializationFragment extends AbsTablesFragment
     */
    @Override public void onPause() {
       WebLogger.getLogger(appName).d(TAG, "in public void onPause() {");
-      msgManager.clearDialogsAndRetainCurrentState(getFragmentManager());
+      msgManager.clearDialogsAndRetainCurrentState(getParentFragmentManager());
       super.onPause();
    }
 
@@ -171,7 +171,7 @@ public class InitializationFragment extends AbsTablesFragment
       if (overallSuccess && result.isEmpty()) {
          // do not require an OK if everything went well
          if (msgManager != null) {
-            msgManager.dismissProgressDialog(getFragmentManager());
+            msgManager.dismissProgressDialog(getParentFragmentManager());
          }
 
          ((IInitResumeActivity) getActivity()).initializationCompleted();
@@ -189,7 +189,7 @@ public class InitializationFragment extends AbsTablesFragment
              getString(R.string.initialization_complete) :
              getString(R.string.initialization_failed);
          msgManager
-             .createAlertDialog(revisedTitle, b.toString().trim(), getFragmentManager(), getId());
+             .createAlertDialog(revisedTitle, b.toString().trim(), getParentFragmentManager(), getId());
       }
    }
 
@@ -240,10 +240,10 @@ public class InitializationFragment extends AbsTablesFragment
    private void updateProgressDialog(String displayString) {
       if (!msgManager.displayingProgressDialog()) {
          msgManager.createProgressDialog(mainDialogTitle, getString(R.string.please_wait),
-             getFragmentManager());
+                 getParentFragmentManager());
       } else {
          if (msgManager.hasDialogBeenCreated()) {
-            msgManager.updateProgressDialogMessage(displayString, getFragmentManager());
+            msgManager.updateProgressDialogMessage(displayString,getParentFragmentManager());
          }
       }
    }
