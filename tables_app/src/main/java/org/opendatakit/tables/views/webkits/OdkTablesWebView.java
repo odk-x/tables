@@ -58,7 +58,7 @@ public class OdkTablesWebView extends ODKWebView {
    @Override public void reloadPage() {
 
       log.i(TAG, "reloadPage: current loadPageUrl: " + getLoadPageUrl());
-      String baseUrl = ((IOdkTablesActivity) getContext())
+      String baseUrl = ((IOdkTablesActivity) getOdkContext())
           .getUrlBaseLocation(false, getContainerFragmentID());
 
       if (baseUrl != null) {
