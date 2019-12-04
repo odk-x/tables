@@ -274,7 +274,27 @@ public class MainActivity extends AbsBaseWebActivity
 
   @Override
   public void initializationCompleted() {
-    popBackStack();
+    File newHome = getHomeScreen(null);
+
+    if ((newHome == null && webFileToDisplay == null) ||
+            (newHome != null && webFileToDisplay != null)) {
+      // no change to existence of custom home, return to the previous fragment
+      popBackStack();
+    } else {
+      // swap to webview if custom home was added
+      // swap to table manager if custom home was removed
+
+      webFileToDisplay = newHome;
+      // immediate because swapScreens operates on the back stack
+      getSupportFragmentManager().popBackStackImmediate(
+              null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+      if (newHome != null) {
+        swapScreens(ScreenType.WEBVIEW_SCREEN);
+      } else {
+        swapScreens(ScreenType.TABLE_MANAGER_SCREEN);
+      }
+    }
   }
 
   @Override
