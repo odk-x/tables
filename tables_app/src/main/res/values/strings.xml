@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
-    <string name="app_name">ODK-X Tables</string>
+    <string name="app_name">EverFlow</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="set">Set</string>
