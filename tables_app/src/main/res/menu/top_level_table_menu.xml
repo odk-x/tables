@@ -3,11 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <!-- Add a row -->
-    <item
+    <!--<item
         android:id="@+id/top_level_table_menu_add"
         android:icon="@drawable/ic_add_black_24dp"
         android:title="@string/add_row"
-        app:showAsAction="always" />
+        app:showAsAction="always" />-->
+
+    <item
+            android:id="@+id/menu_table_manager_sync"
+            android:icon="@drawable/ic_cached_black_24dp"
+            android:title="@string/sync"
+            app:showAsAction="ifRoom" />
 
     <!-- Select a view -->
     <item
@@ -35,17 +41,18 @@
         </menu>
     </item>
 
-    <item
+<!--    <item
         android:id="@+id/top_level_table_menu_table_properties"
         android:icon="@drawable/ic_settings_black_24dp"
-        android:title="@string/preferences"
-        app:showAsAction="always" />
+        android:title="Table Settings"
+        app:showAsAction="always" />-->
 
     <item
-        android:id="@+id/menu_table_manager_sync"
-        android:icon="@drawable/ic_cached_black_24dp"
-        android:title="@string/sync"
-        app:showAsAction="ifRoom" />
+            android:id="@+id/menu_open_maintenance_form"
+            android:icon="@drawable/ic_settings_black_24dp"
+            android:title="@string/open_maintenance"
+            app:showAsAction="never" />
+
     <item
         android:id="@+id/menu_table_manager_preferences"
         android:icon="@drawable/ic_settings_black_24dp"

@@ -29,6 +29,7 @@
     <string name="export">Export</string>
     <string name="sync">Sync</string>
     <string name="preferences">Preferences</string>
+    <string name="open_maintenance">Open Maintenance Form</string>
     <!-- For color rule things -->
     <string name="color_rule_for_map">Color Rule for Map</string>
     <string name="comparison_type">Comparison Type</string>

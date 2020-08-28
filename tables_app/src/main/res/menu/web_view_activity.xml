@@ -2,11 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item
+  <!--  <item
         android:id="@+id/menu_web_view_activity_table_manager"
         android:icon="@drawable/ic_sort_black_24dp"
         android:title="@string/table_manager_title"
-        app:showAsAction="always" />
+        app:showAsAction="always" />-->
 
     <item
         android:id="@+id/menu_table_manager_sync"
@@ -19,11 +19,11 @@
         android:title="@string/preferences"
         app:showAsAction="ifRoom" />
 
-
+<!--
     <item
         android:id="@+id/menu_table_about"
         android:icon="@drawable/ic_info_outline_black_24dp"
         android:title="@string/about"
-        app:showAsAction="never" />
+        app:showAsAction="never" />-->
 
 </menu>

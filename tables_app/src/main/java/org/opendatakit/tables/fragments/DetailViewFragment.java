@@ -69,11 +69,11 @@ public class DetailViewFragment extends AbsWebTableFragment {
     } catch (Exception e) {
       WebLogger.getLogger(getAppName()).printStackTrace(e);
     }
-    if (!can_edit) {
+  /*  if (!can_edit) {
       View edit_button = getActivity().findViewById(R.id.menu_edit_row);
       if (edit_button != null) {
         edit_button.setVisibility(View.GONE);
       }
-    }
+    }*/
   }
 }

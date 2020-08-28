@@ -71,7 +71,9 @@ import org.opendatakit.views.OdkData;
 import org.opendatakit.webkitserver.utilities.UrlUtils;
 
 import java.lang.reflect.Array;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Displays information about a table. List, Map, and Detail views are all
@@ -720,12 +722,34 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return super.onCreateOptionsMenu(menu);
   }
 
+  private Map<String, Object> myMap = createMap();
+
+  private static Map<String, Object> createMap() {
+    Map<String,Object> myMap = new HashMap<String,Object>();
+    //myMap.put("a", "b");
+    //myMap.put("c", "d");
+    return myMap;
+  }
+
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     String filename = null;
     Bundle bundle = new Bundle();
     IntentUtil.addAppNameToBundle(bundle, getAppName());
     switch (item.getItemId()) {
+      case R.id.menu_table_manager_sync:
+        try {
+          Intent syncIntent = new Intent();
+          syncIntent.setComponent(
+                  new ComponentName(IntentConsts.Sync.APPLICATION_NAME, IntentConsts.Sync.ACTIVITY_NAME));
+          syncIntent.setAction(Intent.ACTION_DEFAULT);
+          syncIntent.putExtras(bundle);
+          this.startActivityForResult(syncIntent, RequestCodeConsts.RequestCodes.LAUNCH_SYNC);
+        } catch (ActivityNotFoundException e) {
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
+          Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
+        }
+        return true;
     case R.id.top_level_table_menu_view_spreadsheet_view:
       setCurrentFragmentType(ViewFragmentType.SPREADSHEET, null, null);
       return true;
@@ -754,16 +778,18 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     case R.id.top_level_table_menu_view_navigate_view:
       setCurrentFragmentType(ViewFragmentType.NAVIGATE, filename, null);
       return true;
-    case R.id.top_level_table_menu_add:
+    case R.id.menu_open_maintenance_form:
       WebLogger.getLogger(getAppName()).d(TAG, "[onOptionsItemSelected] add selected");
       try {
-        ActivityUtil.addRow(this, this.getAppName(), this.getTableId(), null);
+        ActivityUtil.addRow(this, getAppName(), "monthly_maintenance",  myMap);
       } catch (ServicesAvailabilityException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
-        Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
+        WebLogger.getLogger(getAppName()).e(TAG, "Error while accessing database");
+        Toast.makeText(this, "Error while accessing database", Toast.LENGTH_LONG).show();
+        return true;
       }
       return true;
-    case R.id.top_level_table_menu_table_properties:
+   /* case R.id.top_level_table_menu_table_properties:
       ActivityUtil.launchTableLevelPreferencesActivity(this, this.getAppName(), this.getTableId(),
           TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
       return true;
@@ -784,20 +810,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       }
-      return true;
-    case R.id.menu_table_manager_sync:
-      try {
-        Intent syncIntent = new Intent();
-        syncIntent.setComponent(
-            new ComponentName(IntentConsts.Sync.APPLICATION_NAME, IntentConsts.Sync.ACTIVITY_NAME));
-        syncIntent.setAction(Intent.ACTION_DEFAULT);
-        syncIntent.putExtras(bundle);
-        this.startActivityForResult(syncIntent, RequestCodeConsts.RequestCodes.LAUNCH_SYNC);
-      } catch (ActivityNotFoundException e) {
-        WebLogger.getLogger(getAppName()).printStackTrace(e);
-        Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
-      }
-      return true;
+      return true;*/
     case R.id.menu_table_manager_preferences:
       Intent preferenceIntent = new Intent();
       preferenceIntent.setComponent(new ComponentName(IntentConsts.AppProperties.APPLICATION_NAME,

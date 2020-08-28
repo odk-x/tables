@@ -452,12 +452,25 @@ public class MainActivity extends AbsBaseWebActivity
     Bundle bundle = new Bundle();
     IntentUtil.addAppNameToBundle(bundle, appName);
     switch (item.getItemId()) {
-    case R.id.menu_web_view_activity_table_manager:
+      case R.id.menu_table_manager_sync:
+        try {
+          Intent syncIntent = new Intent();
+          syncIntent.setComponent(
+                  new ComponentName(IntentConsts.Sync.APPLICATION_NAME, IntentConsts.Sync.ACTIVITY_NAME));
+          syncIntent.setAction(Intent.ACTION_DEFAULT);
+          syncIntent.putExtras(bundle);
+          this.startActivityForResult(syncIntent, RequestCodeConsts.RequestCodes.LAUNCH_SYNC);
+        } catch (ActivityNotFoundException e) {
+          WebLogger.getLogger(appName).printStackTrace(e);
+          Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
+        }
+        return true;
+    /*case R.id.menu_web_view_activity_table_manager:
       swapScreens(ScreenType.TABLE_MANAGER_SCREEN);
       return true;
     case R.id.menu_table_about:
       swapScreens(ScreenType.ABOUT_SCREEN);
-      return true;
+      return true;*/
     case R.id.menu_table_manager_preferences:
       Intent preferenceIntent = new Intent();
       preferenceIntent.setComponent(new ComponentName(IntentConsts.AppProperties.APPLICATION_NAME,
@@ -475,19 +488,6 @@ public class MainActivity extends AbsBaseWebActivity
       Intent exportIntent = new Intent(this, ExportCSVActivity.class);
       exportIntent.putExtras(bundle);
       this.startActivityForResult(exportIntent, RequestCodeConsts.RequestCodes.LAUNCH_EXPORT);
-      return true;
-    case R.id.menu_table_manager_sync:
-      try {
-        Intent syncIntent = new Intent();
-        syncIntent.setComponent(
-            new ComponentName(IntentConsts.Sync.APPLICATION_NAME, IntentConsts.Sync.ACTIVITY_NAME));
-        syncIntent.setAction(Intent.ACTION_DEFAULT);
-        syncIntent.putExtras(bundle);
-        this.startActivityForResult(syncIntent, RequestCodeConsts.RequestCodes.LAUNCH_SYNC);
-      } catch (ActivityNotFoundException e) {
-        WebLogger.getLogger(appName).printStackTrace(e);
-        Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
-      }
       return true;
     case R.id.menu_sort_name_asc:
       mPropSingleton.setProperties( Collections.singletonMap(

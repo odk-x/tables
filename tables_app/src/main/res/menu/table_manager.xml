@@ -36,9 +36,9 @@
             </group>
         </menu>
     </item>
-    <item
+ <!--   <item
         android:id="@+id/menu_table_about"
         android:icon="@drawable/ic_info_outline_black_24dp"
         android:title="@string/about"
-        app:showAsAction="never" />
+        app:showAsAction="never" />-->
 </menu>
