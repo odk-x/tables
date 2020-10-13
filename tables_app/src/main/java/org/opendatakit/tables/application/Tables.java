@@ -18,9 +18,7 @@ import android.content.Context;
 
 import androidx.multidex.MultiDex;
 
-import com.crashlytics.android.Crashlytics;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import io.fabric.sdk.android.Fabric;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.tables.R;
 
@@ -80,7 +78,6 @@ public class Tables extends CommonApplication {
     ref = new WeakReference<>(this);
     super.onCreate();
 
-    Fabric.with(this, new Crashlytics());
     analytics = FirebaseAnalytics.getInstance(this);
     analytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null);
   }
