@@ -130,7 +130,6 @@ dependencies {
     implementation 'androidx.preference:preference:1.1.1'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
-    implementation 'androidx.fragment:fragment:1.3.1'
     implementation 'com.github.wbrunette:ProgressWheel:3.4'
 
     implementation 'com.google.firebase:firebase-analytics:18.0.2'
