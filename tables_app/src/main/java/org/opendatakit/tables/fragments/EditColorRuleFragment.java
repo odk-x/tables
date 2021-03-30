@@ -361,14 +361,14 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
   }
 
   private void initializeTextColor() {
-    EditColorPreference pref = (EditColorPreference) this
+    EditColorPreference pref = this
         .findPreference(Constants.PreferenceKeys.ColorRule.TEXT_COLOR);
     pref.initColorPickerListener(this, COLOR_PREF_KEY_TEXT,
         getActivity().getString(R.string.text_color), this.mTextColor);
   }
 
   private void initializeBackgroundColor() {
-    EditColorPreference pref = (EditColorPreference) this
+    EditColorPreference pref = this
         .findPreference(Constants.PreferenceKeys.ColorRule.BACKGROUND_COLOR);
     pref.initColorPickerListener(this, COLOR_PREF_KEY_BACKGROUND,
         getActivity().getString(R.string.background_color), this.mBackgroundColor);
