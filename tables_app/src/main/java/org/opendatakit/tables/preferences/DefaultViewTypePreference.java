@@ -18,7 +18,6 @@ package org.opendatakit.tables.preferences;
 import android.content.Context;
 import androidx.preference.ListPreference;
 import android.util.AttributeSet;
-import android.view.ContextThemeWrapper;
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.data.TableViewType;
 import org.opendatakit.data.utilities.TableUtil;
