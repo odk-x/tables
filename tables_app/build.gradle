@@ -124,9 +124,9 @@ allprojects {
 }
 
 dependencies {
-    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'androidx.annotation:annotation:1.2.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.fragment:fragment:1.3.1'
+    implementation 'androidx.fragment:fragment:1.3.2'
     implementation 'androidx.preference:preference:1.1.1'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
@@ -134,7 +134,7 @@ dependencies {
     implementation 'com.github.wbrunette:ProgressWheel:3.4'
 
     implementation 'com.google.firebase:firebase-analytics:18.0.2'
-    implementation 'com.google.firebase:firebase-crashlytics:17.4.0'
+    implementation 'com.google.firebase:firebase-crashlytics:17.4.1'
 
     implementation 'androidx.multidex:multidex:2.0.1'
 
@@ -169,7 +169,7 @@ dependencies {
     androidTestUitestImplementation 'androidx.test.espresso:espresso-intents:3.3.0'
     androidTestUitestImplementation 'androidx.test.espresso:espresso-web:3.3.0'
     androidTestUitestImplementation 'androidx.test.espresso:espresso-contrib:3.3.0'
-    androidTestUitestImplementation 'androidx.annotation:annotation:1.1.0'
+    androidTestUitestImplementation 'androidx.annotation:annotation:1.2.0'
 
     //for UI Automator
     androidTestUitestImplementation 'androidx.test.uiautomator:uiautomator:2.2.0'
