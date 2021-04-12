@@ -86,15 +86,14 @@ public class HTMLSelectTest {
         int numOfMsToSleep = 0;
         for (int i = 0; i < numOfTimesToRun; i++) {
             boolean found = false;
-            Atom<ElementReference> elementFound = findElement(DriverAtoms.findElement(Locator.SELECT, "select"));
             while (!found) {
                 found = true;
                 try {
                     Thread.sleep(numOfMsToSleep);
                     onWebView()
-                            // Find the input element by ID
-                            .withElement(DriverAtoms.findElement(Locator.TAG_NAME, "select"))
-                            // Launch into teahouses
+                            // Find the input element by tag name
+                            .withElement(findElement(Locator.TAG_NAME, "select"))
+                            // click on the select tag
                             .perform(webClick());
                 } catch (RuntimeException e) {
                     //e.printStackTrace();
