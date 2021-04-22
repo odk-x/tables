@@ -396,7 +396,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    * Sets EditTextPreference for Survey form
    */
   private void initializeDefaultForm() {
-    EditTextPreference editFormPref = (EditTextPreference) this
+    EditTextPreference editFormPref = this
         .findPreference(Constants.PreferenceKeys.Table.DEFAULT_FORM);
     final AbsTableActivity mActivity = ((AbsTableActivity) getActivity());
 
@@ -492,7 +492,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    * @throws ServicesAvailabilityException if the database is down
    */
   private void initializeListFile(DbHandle db) throws ServicesAvailabilityException {
-    FileSelectorPreference listPref = (FileSelectorPreference) this
+    FileSelectorPreference listPref = this
         .findPreference(Constants.PreferenceKeys.Table.LIST_FILE);
     listPref.setFields(this, RequestCodeConsts.RequestCodes.CHOOSE_LIST_FILE,
         ((IAppAwareActivity) getActivity()).getAppName());
@@ -508,7 +508,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    * @throws ServicesAvailabilityException if the database is down
    */
   private void initializeMapListFile(DbHandle db) throws ServicesAvailabilityException {
-    FileSelectorPreference mapListPref = (FileSelectorPreference) this
+    FileSelectorPreference mapListPref = this
         .findPreference(Constants.PreferenceKeys.Table.MAP_LIST_FILE);
     mapListPref.setFields(this, RequestCodeConsts.RequestCodes.CHOOSE_MAP_FILE,
         ((IAppAwareActivity) getActivity()).getAppName());
@@ -527,7 +527,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    * @throws ServicesAvailabilityException if the database is down
    */
   private void initializeDetailFile(DbHandle db) throws ServicesAvailabilityException {
-    FileSelectorPreference detailPref = (FileSelectorPreference) this
+    FileSelectorPreference detailPref = this
         .findPreference(Constants.PreferenceKeys.Table.DETAIL_FILE);
     detailPref.setFields(this, RequestCodeConsts.RequestCodes.CHOOSE_DETAIL_FILE,
         ((IAppAwareActivity) getActivity()).getAppName());
