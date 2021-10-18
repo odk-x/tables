@@ -16,8 +16,6 @@ package org.opendatakit.tables.application;
 
 import android.content.Context;
 
-import androidx.multidex.MultiDex;
-
 import com.google.firebase.analytics.FirebaseAnalytics;
 import org.opendatakit.application.CommonApplication;
 import org.opendatakit.tables.R;
@@ -45,14 +43,7 @@ public class Tables extends CommonApplication {
       throw new IllegalStateException("not possible");
     return ref.get();
   }
-
-  @Override
-  protected void attachBaseContext(Context base) {
-    super.attachBaseContext(base);
-    MultiDex.install(this);
-  }
-
-
+  
   @Override
   public int getApkDisplayNameResourceId() {
     return R.string.app_name;
