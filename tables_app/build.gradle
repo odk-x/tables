@@ -131,8 +131,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'com.github.wbrunette:ProgressWheel:3.4'
 
-    implementation 'com.google.firebase:firebase-analytics:19.0.1'
-    implementation 'com.google.firebase:firebase-crashlytics:18.2.1'
+    implementation 'com.google.firebase:firebase-analytics:19.0.2'
+    implementation 'com.google.firebase:firebase-crashlytics:18.2.3'
 
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
