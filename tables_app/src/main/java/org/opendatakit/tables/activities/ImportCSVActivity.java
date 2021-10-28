@@ -56,6 +56,7 @@ import java.io.File;
 public class ImportCSVActivity extends AbsBaseActivity {
   // Used for logging
   private static final String TAG = ImportCSVActivity.class.getSimpleName();
+  public static final String IMPORT_FILE_MUST_RESIDE_IN_OPENDATAKIT_FOLDER = "Import file must reside in opendatakit folder";
 
   // the appName context within which we are running
   private String appName;
@@ -236,7 +237,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
           filenameValField.setText(csvUri.getPath());
         }
       } else {
-        Toast.makeText(this, "Import file must reside in opendatakit folder",
+        Toast.makeText(this, IMPORT_FILE_MUST_RESIDE_IN_OPENDATAKIT_FOLDER,
                 Toast.LENGTH_LONG).show();
       }
 

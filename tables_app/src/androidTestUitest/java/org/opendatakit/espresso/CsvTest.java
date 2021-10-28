@@ -1,38 +1,5 @@
 package org.opendatakit.espresso;
 
-import android.Manifest;
-import android.app.Activity;
-import android.app.Instrumentation;
-import android.content.Intent;
-import android.net.Uri;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-
-import androidx.test.espresso.Espresso;
-import androidx.test.espresso.intent.rule.IntentsTestRule;
-import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.rule.GrantPermissionRule;
-import androidx.test.uiautomator.UiDevice;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.util.EspressoUtils;
-import org.opendatakit.util.ODKMatchers;
-import org.opendatakit.util.UAUtils;
-import org.opendatakit.utilities.ODKFileUtils;
-
-import java.io.File;
-import java.io.FilenameFilter;
-
 import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
@@ -50,9 +17,41 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.opendatakit.util.TestConstants.APP_NAME;
-import static org.opendatakit.util.TestConstants.OI_PICK_FILE;
 import static org.opendatakit.util.TestConstants.T_HOUSE_DISPLAY_NAME;
 import static org.opendatakit.util.TestConstants.T_HOUSE_TABLE_ID;
+
+import android.Manifest;
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.content.Intent;
+import android.net.Uri;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
+
+import androidx.test.espresso.intent.rule.IntentsTestRule;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.uiautomator.UiDevice;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.ImportCSVActivity;
+import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.util.EspressoUtils;
+import org.opendatakit.util.ODKMatchers;
+import org.opendatakit.util.UAUtils;
+import org.opendatakit.utilities.ODKFileUtils;
+
+import java.io.File;
+import java.io.FilenameFilter;
 
 
 @LargeTest
@@ -215,7 +214,7 @@ public class CsvTest {
   @Test
   public void importCsv_fileOutOfAppDir() {
     //stub intent
-    intending(hasAction(OI_PICK_FILE)).respondWith(
+    intending(hasAction(Intent.ACTION_OPEN_DOCUMENT)).respondWith(
         new Instrumentation.ActivityResult(Activity.RESULT_OK,
             new Intent().setData(Uri.fromFile(new File("/file")))));
 
@@ -224,8 +223,6 @@ public class CsvTest {
     onView(withText(R.string.import_choose_csv_file)).perform(click());
 
     //check toast
-    EspressoUtils.toastMsgMatcher(mIntentsRule, is(EspressoUtils
-        .getString(mIntentsRule, R.string.file_not_under_app_dir,
-            ODKFileUtils.getAppFolder(APP_NAME))));
+    EspressoUtils.toastMsgMatcher(mIntentsRule, is(ImportCSVActivity.IMPORT_FILE_MUST_RESIDE_IN_OPENDATAKIT_FOLDER));
   }
 }

@@ -147,70 +147,44 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     // temp
     //WebLogger.getLogger(getAppName()).i(TAG, String.format(Locale.getDefault(), "%d", requestCode));
 
-    switch (requestCode) {
-    case RequestCodeConsts.RequestCodes.CHOOSE_LIST_FILE:
-      if (data != null) {
-        try {
-          Uri resultUri = FilePickerUtil.getUri(data);
-          if(resultUri != null) {
-            relativePath = ODKXFileUriUtils.ODKXRemainingPath(getAppName(), resultUri);
-            //WebLogger.getLogger(getAppName()).i(TAG, "Setting list file to " + relativePath);
-            this.setListViewFileName(relativePath);
-          }
-          //WebLogger.getLogger(getAppName()).i(TAG, "success");
-        } catch (IllegalArgumentException e) {
-          //WebLogger.getLogger(getAppName()).e(TAG, "failure");
-          WebLogger.getLogger(getAppName()).printStackTrace(e);
-          Toast.makeText(getActivity(),
-              getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
-              Toast.LENGTH_LONG).show();
-        }
-      }
-      break;
-    case RequestCodeConsts.RequestCodes.CHOOSE_DETAIL_FILE:
-      if (data != null) {
-        try {
-          Uri resultUri = FilePickerUtil.getUri(data);
-          if(resultUri != null) {
-            relativePath = ODKXFileUriUtils.ODKXRemainingPath(getAppName(), resultUri);
-            this.setDetailViewFileName(relativePath);
-          }
-        } catch (IllegalArgumentException e) {
-          WebLogger.getLogger(getAppName()).printStackTrace(e);
-          Toast.makeText(getActivity(),
-              getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
-              Toast.LENGTH_LONG).show();
-        }
-      }
-      break;
-    case RequestCodeConsts.RequestCodes.CHOOSE_MAP_FILE:
-      if (data != null) {
-        try {
-          Uri resultUri = FilePickerUtil.getUri(data);
-          if(resultUri != null) {
-            relativePath = ODKXFileUriUtils.ODKXRemainingPath(getAppName(), resultUri);
-            this.setMapListViewFileName(relativePath);
-          }
-        } catch (IllegalArgumentException e) {
-          WebLogger.getLogger(getAppName()).printStackTrace(e);
-          Toast.makeText(getActivity(),
-              getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
-              Toast.LENGTH_LONG).show();
-        }
-      }
-      break;
-    default:
+    if (data == null ||
+            ((RequestCodeConsts.RequestCodes.CHOOSE_LIST_FILE != requestCode)
+                    && (RequestCodeConsts.RequestCodes.CHOOSE_DETAIL_FILE != requestCode)
+                    && (RequestCodeConsts.RequestCodes.CHOOSE_MAP_FILE != requestCode))
+      ) {
       super.onActivityResult(requestCode, resultCode, data);
-    }
-    try {
-      WebLogger.getLogger(getAppName()).i(TAG, "Attempting to reinit prefs");
-      this.initializeAllPreferences();
-    } catch (ServicesAvailabilityException e) {
-      WebLogger.getLogger(getAppName()).e(TAG, "failed");
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
+      return;
     }
 
+    Uri resultUri = FilePickerUtil.getUri(data);
+    if(resultUri != null) {
+      relativePath = ODKXFileUriUtils.ODKXRemainingPath(getAppName(), resultUri);
+      if (relativePath != null) {
+        switch (requestCode) {
+          case RequestCodeConsts.RequestCodes.CHOOSE_LIST_FILE:
+            this.setListViewFileName(relativePath);
+            break;
+          case RequestCodeConsts.RequestCodes.CHOOSE_DETAIL_FILE:
+            this.setDetailViewFileName(relativePath);
+            break;
+          case RequestCodeConsts.RequestCodes.CHOOSE_MAP_FILE:
+            this.setMapListViewFileName(relativePath);
+            break;
+        }
+        try {
+          WebLogger.getLogger(getAppName()).i(TAG, "Attempting to reinit prefs");
+          this.initializeAllPreferences();
+        } catch (ServicesAvailabilityException e) {
+          WebLogger.getLogger(getAppName()).e(TAG, "failed");
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
+          Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
+        }
+      } else {
+        Toast.makeText(getActivity(),
+                getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
+                Toast.LENGTH_LONG).show();
+      }
+    }
   }
 
   /**
