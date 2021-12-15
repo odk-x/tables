@@ -37,6 +37,7 @@ import org.opendatakit.util.EspressoUtils;
 import org.opendatakit.util.ODKMatchers;
 import org.opendatakit.util.UAUtils;
 import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.utilities.ODKXFileUriUtils;
 
 import java.io.File;
 
@@ -72,7 +73,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.opendatakit.tables.utils.Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE;
 import static org.opendatakit.util.TestConstants.APP_NAME;
-import static org.opendatakit.util.TestConstants.OI_PICK_FILE;
 import static org.opendatakit.util.TestConstants.T_HOUSE_E_DISPLAY_NAME;
 import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 import static org.opendatakit.util.TestConstants.T_HOUSE_TABLE_ID;
@@ -237,24 +237,24 @@ public class TablePrefTest extends AbsBaseTest {
   }
 
   @Test
-  public void intents_launchOIFileManager() {
+  public void intents_launchFilePicker() {
     //Check intent on "List View File"
     EspressoUtils
         .onRecyclerViewText(R.string.list_view_file)
         .perform(click());
-    intended(hasAction(OI_PICK_FILE), Intents.times(1));
+    intended(hasAction(Intent.ACTION_OPEN_DOCUMENT), Intents.times(1));
 
     //Check intent on "Detail View File"
     EspressoUtils
         .onRecyclerViewText(R.string.detail_view_file)
         .perform(click());
-    intended(hasAction(OI_PICK_FILE), Intents.times(2));
+    intended(hasAction(Intent.ACTION_OPEN_DOCUMENT), Intents.times(2));
 
     //Check intent on "Map List View File"
     EspressoUtils
         .onRecyclerViewText(R.string.map_list_view_file)
         .perform(click());
-    intended(hasAction(OI_PICK_FILE), Intents.times(3));
+    intended(hasAction(Intent.ACTION_OPEN_DOCUMENT), Intents.times(3));
   }
 
   @Test
@@ -375,16 +375,15 @@ public class TablePrefTest extends AbsBaseTest {
 
   @Test
   public void intents_listView() {
-    final String listViewPath =
-        "/" + APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_list.html";
+    String listViewPath = "tables/Tea_houses/html/Tea_houses_list.html";
+    Uri listViewUri = ODKXFileUriUtils.getConfigUri(APP_NAME).buildUpon().appendPath(listViewPath).build();
 
     //backup current config
     String currFile = getListViewFile();
 
     //stub response
-    intending(hasAction(OI_PICK_FILE)).respondWith(
-        new Instrumentation.ActivityResult(Activity.RESULT_OK, new Intent()
-            .setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + listViewPath)))));
+    intending(hasAction(Intent.ACTION_OPEN_DOCUMENT)).respondWith(
+        new Instrumentation.ActivityResult(Activity.RESULT_OK, new Intent().setData(listViewUri)));
 
     //edit list view path
     EspressoUtils
@@ -410,28 +409,28 @@ public class TablePrefTest extends AbsBaseTest {
 
   @Test
   public void intents_detailView() {
-    final String detailViewPath =
-        "/" + APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_detail.html";
-    final String listViewPath =
-        "/" + APP_NAME + "/config/tables/Tea_houses/html/Tea_houses_list.html";
+    String detailViewPath = "tables/Tea_houses/html/Tea_houses_detail.html";
+    String listViewPath = "tables/Tea_houses/html/Tea_houses_list.html";
+    Uri detailViewUri = ODKXFileUriUtils.getConfigUri(APP_NAME).buildUpon().appendPath(detailViewPath).build();
+    Uri listViewUri = ODKXFileUriUtils.getConfigUri(APP_NAME).buildUpon().appendPath(listViewPath).build();
 
     //back up current config
     String currDetailFile = getDetailViewFile();
     String currListFile = getListViewFile();
 
     //stub response
-    intending(hasAction(OI_PICK_FILE)).respondWith(
+    intending(hasAction(Intent.ACTION_OPEN_DOCUMENT)).respondWith(
         new Instrumentation.ActivityResult(Activity.RESULT_OK, new Intent()
-            .setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + detailViewPath)))));
+            .setData(detailViewUri)));
 
     //edit detail view path
     EspressoUtils
         .onRecyclerViewText(R.string.detail_view_file)
         .perform(click());
 
-    intending(hasAction(OI_PICK_FILE)).respondWith(
+    intending(hasAction(Intent.ACTION_OPEN_DOCUMENT)).respondWith(
         new Instrumentation.ActivityResult(Activity.RESULT_OK, new Intent()
-            .setData(Uri.fromFile(new File(ODKFileUtils.getOdkFolder() + listViewPath)))));
+            .setData(listViewUri)));
 
     //edit list view path
     EspressoUtils
@@ -455,8 +454,7 @@ public class TablePrefTest extends AbsBaseTest {
               allOf(withId(R.id.webkit), isDescendantOfA(withId(R.id.top_pane)));
 
       //check url
-      onView(topWebViewMatcher)
-              .check(matches(ODKMatchers.withUrl(endsWith(detailViewPath))));
+      onView(topWebViewMatcher).check(matches(ODKMatchers.withUrl(endsWith(detailViewPath))));
 
       EspressoUtils
               .delayedFindElement(topWebViewMatcher, Locator.ID, "TITLE", WEB_WAIT_TIMEOUT)
@@ -528,7 +526,7 @@ public class TablePrefTest extends AbsBaseTest {
 
     try {
       //stub intent
-      intending(hasAction(OI_PICK_FILE)).respondWith(
+      intending(hasAction(Intent.ACTION_OPEN_DOCUMENT)).respondWith(
           new Instrumentation.ActivityResult(Activity.RESULT_OK,
               new Intent().setData(Uri.fromFile(new File("/test.html")))));
 
