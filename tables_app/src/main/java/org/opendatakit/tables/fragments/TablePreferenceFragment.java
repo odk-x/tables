@@ -28,6 +28,7 @@ import android.widget.Toast;
 
 import org.opendatakit.activities.BaseActivity;
 import org.opendatakit.activities.IAppAwareActivity;
+import org.opendatakit.activities.utils.FilePickerUtil;
 import org.opendatakit.consts.RequestCodeConsts;
 import org.opendatakit.data.ColorRuleGroup;
 import org.opendatakit.data.TableViewType;
@@ -50,6 +51,7 @@ import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.PreferenceUtil;
 import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.utilities.ODKXFileUriUtils;
 
 import java.io.File;
 
@@ -116,20 +118,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
    */
   @Override
   public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-    // If the database isn't up, defer handling of the result until later because
-    // setListViewFileName calls atomicSetListViewFilename which needs the database to be up to work
-    /* this is the old way to do it, which sucked
-    if (!dbUp) {
-      if (savedIntent != null) {
-        // crash tables :(
-        throw new IllegalStateException("only queueing one activity result at a time");
-      }
-      savedReq = requestCode; savedRes = resultCode; savedIntent = data;
-      return;
-    } else {
-      savedIntent = null;
-    }
-    */
+
     // this way still sucks, just slightly less
     if (Tables.getInstance().getDatabase() == null) {
       //WebLogger.getLogger(getAppName()).i(TAG, "Database not up yet! Sleeping");
@@ -154,69 +143,48 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
       return;
     }
     //WebLogger.getLogger(getAppName()).i(TAG, "Database now up, attempting");
-    String fullPath;
     String relativePath;
     // temp
     //WebLogger.getLogger(getAppName()).i(TAG, String.format(Locale.getDefault(), "%d", requestCode));
 
-    switch (requestCode) {
-    case RequestCodeConsts.RequestCodes.CHOOSE_LIST_FILE:
-      if (data != null) {
-        try {
-          fullPath = getFullPathFromIntent(data);
-          relativePath = getRelativePathOfFile(fullPath);
-          //WebLogger.getLogger(getAppName()).i(TAG, "Setting list file to " + relativePath);
-          this.setListViewFileName(relativePath);
-          //WebLogger.getLogger(getAppName()).i(TAG, "success");
-        } catch (IllegalArgumentException e) {
-          //WebLogger.getLogger(getAppName()).e(TAG, "failure");
-          WebLogger.getLogger(getAppName()).printStackTrace(e);
-          Toast.makeText(getActivity(),
-              getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
-              Toast.LENGTH_LONG).show();
-        }
-      }
-      break;
-    case RequestCodeConsts.RequestCodes.CHOOSE_DETAIL_FILE:
-      if (data != null) {
-        try {
-          fullPath = getFullPathFromIntent(data);
-          relativePath = getRelativePathOfFile(fullPath);
-          this.setDetailViewFileName(relativePath);
-        } catch (IllegalArgumentException e) {
-          WebLogger.getLogger(getAppName()).printStackTrace(e);
-          Toast.makeText(getActivity(),
-              getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
-              Toast.LENGTH_LONG).show();
-        }
-      }
-      break;
-    case RequestCodeConsts.RequestCodes.CHOOSE_MAP_FILE:
-      if (data != null) {
-        try {
-          fullPath = getFullPathFromIntent(data);
-          relativePath = getRelativePathOfFile(fullPath);
-          this.setMapListViewFileName(relativePath);
-        } catch (IllegalArgumentException e) {
-          WebLogger.getLogger(getAppName()).printStackTrace(e);
-          Toast.makeText(getActivity(),
-              getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
-              Toast.LENGTH_LONG).show();
-        }
-      }
-      break;
-    default:
+    if (data == null ||
+            ((RequestCodeConsts.RequestCodes.CHOOSE_LIST_FILE != requestCode)
+                    && (RequestCodeConsts.RequestCodes.CHOOSE_DETAIL_FILE != requestCode)
+                    && (RequestCodeConsts.RequestCodes.CHOOSE_MAP_FILE != requestCode))
+      ) {
       super.onActivityResult(requestCode, resultCode, data);
-    }
-    try {
-      WebLogger.getLogger(getAppName()).i(TAG, "Attempting to reinit prefs");
-      this.initializeAllPreferences();
-    } catch (ServicesAvailabilityException e) {
-      WebLogger.getLogger(getAppName()).e(TAG, "failed");
-      WebLogger.getLogger(getAppName()).printStackTrace(e);
-      Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
+      return;
     }
 
+    Uri resultUri = FilePickerUtil.getUri(data);
+    if(resultUri != null) {
+      relativePath = ODKXFileUriUtils.ODKXRemainingPath(getAppName(), resultUri);
+      if (relativePath != null) {
+        switch (requestCode) {
+          case RequestCodeConsts.RequestCodes.CHOOSE_LIST_FILE:
+            this.setListViewFileName(relativePath);
+            break;
+          case RequestCodeConsts.RequestCodes.CHOOSE_DETAIL_FILE:
+            this.setDetailViewFileName(relativePath);
+            break;
+          case RequestCodeConsts.RequestCodes.CHOOSE_MAP_FILE:
+            this.setMapListViewFileName(relativePath);
+            break;
+        }
+        try {
+          WebLogger.getLogger(getAppName()).i(TAG, "Attempting to reinit prefs");
+          this.initializeAllPreferences();
+        } catch (ServicesAvailabilityException e) {
+          WebLogger.getLogger(getAppName()).e(TAG, "failed");
+          WebLogger.getLogger(getAppName()).printStackTrace(e);
+          Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
+        }
+      } else {
+        Toast.makeText(getActivity(),
+                getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
+                Toast.LENGTH_LONG).show();
+      }
+    }
   }
 
   /**
@@ -658,16 +626,6 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment
     });
   }
 
-  /**
-   * Helper method to get the relative path of a file from the full path
-   *
-   * @param fullPath the path to the file
-   * @return the relative path to fullPath
-   */
-  private String getRelativePathOfFile(String fullPath) {
-    return ODKFileUtils
-        .asRelativePath(((IAppAwareActivity) getActivity()).getAppName(), new File(fullPath));
-  }
 
   //private boolean dbUp;
   //private int savedReq, savedRes; private Intent savedIntent = null;

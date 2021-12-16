@@ -18,8 +18,13 @@ package org.opendatakit.tables.activities;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+
+import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
+
+import android.provider.DocumentsContract;
 import android.text.InputType;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -30,6 +35,8 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.opendatakit.activities.utils.FilePickerUtil;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
@@ -39,6 +46,7 @@ import org.opendatakit.tables.tasks.ImportRequest;
 import org.opendatakit.tables.tasks.ImportTask;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.utilities.ODKXFileUriUtils;
 
 import java.io.File;
 
@@ -48,6 +56,7 @@ import java.io.File;
 public class ImportCSVActivity extends AbsBaseActivity {
   // Used for logging
   private static final String TAG = ImportCSVActivity.class.getSimpleName();
+  public static final String IMPORT_FILE_MUST_RESIDE_IN_OPENDATAKIT_FOLDER = "Import file must reside in opendatakit folder";
 
   // the appName context within which we are running
   private String appName;
@@ -56,6 +65,8 @@ public class ImportCSVActivity extends AbsBaseActivity {
   // The button to import a table.
   private Button mImportButton;
 
+  private Uri csvUri;
+
   /**
    * Sets the app name and sets the view (what clicking the buttons should do, etc..)
    *
@@ -63,6 +74,7 @@ public class ImportCSVActivity extends AbsBaseActivity {
    *                           this classes parents
    */
   public void onCreate(Bundle savedInstanceState) {
+    csvUri = null;
     ImportExportDialogFragment.fragman = getSupportFragmentManager();
     super.onCreate(savedInstanceState);
     appName = getIntent().getStringExtra(IntentConsts.INTENT_KEY_APP_NAME);
@@ -137,13 +149,15 @@ public class ImportCSVActivity extends AbsBaseActivity {
    */
   private void importSubmission() {
 
-    String filenamePath = filenameValField.getText().toString().trim();
+    if (csvUri == null) {
+      Toast.makeText(this, "Invalid csv filename: " + filenameValField.getText(), Toast.LENGTH_LONG)
+              .show();
+      return;
+    }
 
     ImportRequest request = null;
-    String assetsCsvRelativePath = ODKFileUtils
-            .asRelativePath(appName, new File(ODKFileUtils.getAssetsCsvFolder(appName)));
-    if (filenamePath.startsWith(assetsCsvRelativePath)) {
-      String remainingPath = filenamePath.substring(assetsCsvRelativePath.length() + 1);
+
+      String remainingPath = ODKXFileUriUtils.ODKXRemainingPath(appName, csvUri);
       String[] terms = remainingPath.split("\\.");
       if (terms.length == 2 && terms[1].equals("csv")) {
         String tableId = terms[0];
@@ -164,7 +178,6 @@ public class ImportCSVActivity extends AbsBaseActivity {
         String fileQualifier = terms[1];
         request = new ImportRequest(tableId, fileQualifier);
       }
-    }
 
     if (request == null) {
       Toast.makeText(this, "Invalid csv filename: " + filenameValField.getText(), Toast.LENGTH_LONG)
@@ -194,53 +207,45 @@ public class ImportCSVActivity extends AbsBaseActivity {
 
     if (resultCode == RESULT_CANCELED) {
       return;
-    }
-    Uri fileUri = data.getData();
-    String filepath = fileUri.getPath();
-    File csvFile = new File(filepath);
-    // We have to first hand this off to account for the difference in
-    // external storage directories on different versions of android.
-    String relativePath;
-    try {
-      relativePath = ODKFileUtils.asRelativePath(appName, csvFile);
-    } catch (IllegalArgumentException iae) {
-      WebLogger.getLogger(getAppName()).printStackTrace(iae);
-      Toast.makeText(this,
-          getString(R.string.file_not_under_app_dir, ODKFileUtils.getAppFolder(getAppName())),
-          Toast.LENGTH_LONG).show();
-      return;
+    } else if (FilePickerUtil.isSuccessfulFilePickerResponse(requestCode, resultCode)) {
+      Uri resultUri = FilePickerUtil.getUri(data);
+
+      WebLogger.getLogger(appName).d(TAG, "uri of CSV import file: " + resultUri);
+      String remainingCSVPath = ODKXFileUriUtils.ODKXRemainingPath(appName, resultUri);
+      if (remainingCSVPath != null) {
+        String[] terms = remainingCSVPath.split("\\.");
+        if (terms.length < 2 || terms.length > 4) {
+          Toast.makeText(this,
+                  "Import filename must be of the form tableId.csv, tableId.definition.csv, tableId.properties.csv or tableId.qualifier.csv",
+                  Toast.LENGTH_LONG).show();
+          return;
+        } else {
+          if (!"csv".equals(terms[terms.length - 1])) {
+            Toast.makeText(this, "Import filename must end in .csv", Toast.LENGTH_LONG).show();
+            return;
+          }
+          if (terms.length == 4 && !("properties".equals(terms[2]) || "definition"
+                  .equals(terms[2]))) {
+            Toast.makeText(this,
+                    "Import filename must be of the form tableId.qualifier.properties.csv or tableId.qualifier.definition.csv",
+                    Toast.LENGTH_LONG).show();
+            return;
+          }
+        }
+        csvUri = resultUri;
+        if(csvUri != null) {
+          filenameValField.setText(csvUri.getPath());
+        }
+      } else {
+        Toast.makeText(this, IMPORT_FILE_MUST_RESIDE_IN_OPENDATAKIT_FOLDER,
+                Toast.LENGTH_LONG).show();
+      }
+
 
     }
-    WebLogger.getLogger(appName).d(TAG, "relative path of import file: " + relativePath);
-    File assetCsv = new File(ODKFileUtils.getAssetsCsvFolder(appName));
-    String assetRelativePath = ODKFileUtils.asRelativePath(appName, assetCsv);
-    if (relativePath.startsWith(assetRelativePath)) {
-      String name = csvFile.getName();
-      String[] terms = name.split("\\.");
-      if (terms.length < 2 || terms.length > 4) {
-        Toast.makeText(this,
-            "Import filename must be of the form tableId.csv, tableId.definition.csv, tableId.properties.csv or tableId.qualifier.csv",
-            Toast.LENGTH_LONG).show();
-        return;
-      } else {
-        if (!"csv".equals(terms[terms.length - 1])) {
-          Toast.makeText(this, "Import filename must end in .csv", Toast.LENGTH_LONG).show();
-          return;
-        }
-        if (terms.length == 4 && !("properties".equals(terms[2]) || "definition"
-            .equals(terms[2]))) {
-          Toast.makeText(this,
-              "Import filename must be of the form tableId.qualifier.properties.csv or tableId.qualifier.definition.csv",
-              Toast.LENGTH_LONG).show();
-          return;
-        }
-      }
-      filenameValField.setText(relativePath);
-    } else {
-      Toast.makeText(this, "Import file must reside in " + assetRelativePath + File.separator,
-          Toast.LENGTH_LONG).show();
-    }
+
   }
+
 
   /**
    * enables the import button if the database is available
@@ -280,11 +285,10 @@ public class ImportCSVActivity extends AbsBaseActivity {
      */
     @Override
     public void onClick(View v) {
-      Intent intent = new Intent("org.openintents.action.PICK_FILE");
-      intent.putExtra("org.openintents.extra.TITLE_KEY", title);
-      intent.putExtra("org.openintents.extra.DIR_PATH", ODKFileUtils.getAssetsCsvFolder(appName));
+      String startingDirectory = ODKFileUtils.getAssetsCsvFolder(appName);
+      Intent intent = FilePickerUtil.createFilePickerIntent(title, "*/*", startingDirectory);
       try {
-        startActivityForResult(intent, 1);
+        startActivityForResult(intent, FilePickerUtil.FILE_PICKER_CODE);
       } catch (ActivityNotFoundException e) {
         WebLogger.getLogger(getAppName()).printStackTrace(e);
         Toast.makeText(ImportCSVActivity.this, getString(R.string.file_picker_not_found),

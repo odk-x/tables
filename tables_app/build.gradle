@@ -30,8 +30,6 @@ android {
 
         testApplicationId(groupId + tablesName + testNameSuffix)
         testInstrumentationRunner(instrumentationRunner)
-
-        multiDexEnabled true
     }
 
     flavorDimensions "stage", "testing"
@@ -126,17 +124,16 @@ allprojects {
 dependencies {
     implementation 'androidx.annotation:annotation:1.2.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.fragment:fragment:1.3.2'
+    implementation 'androidx.fragment:fragment:1.3.6'
     implementation 'androidx.preference:preference:1.1.1'
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0'
-    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'com.google.android.material:material:1.4.0'
     implementation 'com.github.wbrunette:ProgressWheel:3.4'
 
-    implementation 'com.google.firebase:firebase-analytics:18.0.2'
-    implementation 'com.google.firebase:firebase-crashlytics:17.4.1'
+    implementation 'com.google.firebase:firebase-analytics:19.0.2'
+    implementation 'com.google.firebase:firebase-crashlytics:18.2.3'
 
-    implementation 'androidx.multidex:multidex:2.0.1'
 
     if (libraryProjectPath.exists() && gradle.useLocal) { // Local project is favoured
         implementation project(libraryProjectName)
@@ -160,15 +157,15 @@ dependencies {
                 classifier: snapshotRelease, version: latestVersion, ext: 'aar')
     }
 
-    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+    implementation 'com.google.android.gms:play-services-maps:17.0.1'
 
     //for Espresso
-    androidTestUitestImplementation 'androidx.test:runner:1.3.0'
-    androidTestUitestImplementation 'androidx.test:rules:1.3.0'
-    androidTestUitestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-    androidTestUitestImplementation 'androidx.test.espresso:espresso-intents:3.3.0'
-    androidTestUitestImplementation 'androidx.test.espresso:espresso-web:3.3.0'
-    androidTestUitestImplementation 'androidx.test.espresso:espresso-contrib:3.3.0'
+    androidTestUitestImplementation 'androidx.test:runner:1.4.0'
+    androidTestUitestImplementation 'androidx.test:rules:1.4.0'
+    androidTestUitestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestUitestImplementation 'androidx.test.espresso:espresso-intents:3.4.0'
+    androidTestUitestImplementation 'androidx.test.espresso:espresso-web:3.4.0'
+    androidTestUitestImplementation 'androidx.test.espresso:espresso-contrib:3.4.0'
     androidTestUitestImplementation 'androidx.annotation:annotation:1.2.0'
 
     //for UI Automator

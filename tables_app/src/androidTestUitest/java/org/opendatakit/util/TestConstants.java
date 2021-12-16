@@ -22,7 +22,6 @@ public class TestConstants {
   public static final String GEO_TAB_ID = "geotaggerTab";
   public static final String HOPE_TAB_ID = "hopeTab";
   //Misc.
-  public static final String OI_PICK_FILE = "org.openintents.action.PICK_FILE";
   public static final String APP_NAME = "default";
   //ODK Services menu
   public static final String TABLES_SPECIFIC_SETTINGS = "Tables-specific Settings";

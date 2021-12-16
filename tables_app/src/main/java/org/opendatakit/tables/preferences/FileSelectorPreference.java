@@ -25,6 +25,8 @@ import android.net.Uri;
 import androidx.preference.EditTextPreference;
 import android.util.AttributeSet;
 import android.widget.Toast;
+
+import org.opendatakit.activities.utils.FilePickerUtil;
 import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
 import org.opendatakit.utilities.ODKFileUtils;
@@ -87,19 +89,12 @@ public class FileSelectorPreference extends EditTextPreference {
 
   @Override
   protected void onClick() {
-    if (hasFilePicker()) {
-      Intent intent = new Intent("org.openintents.action.PICK_FILE");
+      String startingDirectory = null;
       if (getText() != null) {
         File fullFile = ODKFileUtils.asAppFile(this.mAppName, getText());
-        try {
-          intent.setData(Uri.parse("file://" + fullFile.getCanonicalPath()));
-        } catch (IOException e) {
-          WebLogger.getLogger(mAppName).printStackTrace(e);
-          Toast.makeText(mFragment.getActivity(),
-              this.mFragment.getString(R.string.file_not_found, fullFile.getAbsolutePath()),
-              Toast.LENGTH_LONG).show();
-        }
+        startingDirectory = fullFile.getAbsolutePath();
       }
+      Intent intent = FilePickerUtil.createFilePickerIntent(null, "*/*", startingDirectory);
       try {
         this.helperStartActivityForResult(intent);
       } catch (ActivityNotFoundException e) {
@@ -107,22 +102,8 @@ public class FileSelectorPreference extends EditTextPreference {
         Toast.makeText(mFragment.getActivity(), mFragment.getString(R.string.file_picker_not_found),
             Toast.LENGTH_LONG).show();
       }
-    } else {
-      super.onClick();
-      Toast.makeText(mFragment.getActivity(), mFragment.getString(R.string.file_picker_not_found),
-          Toast.LENGTH_LONG).show();
-    }
+
   }
 
-  /**
-   * @return True if the phone has a file picker installed, false otherwise.
-   */
-  private boolean hasFilePicker() {
-    PackageManager packageManager = mFragment.getActivity().getPackageManager();
-    Intent intent = new Intent("org.openintents.action.PICK_FILE");
-    List<ResolveInfo> list = packageManager
-        .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-    return !list.isEmpty();
-  }
 
 }
