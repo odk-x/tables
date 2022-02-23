@@ -144,7 +144,7 @@ public class InteropTest extends AbsBaseTest {
     UAUtils.longPressSpreadsheetRow(mDevice, 3);
 
     //Edit the row
-    onView(withText(EspressoUtils.getString(mIntentsRule, R.string.edit_row))).perform(click());
+    onView(withText(EspressoUtils.getString(R.string.edit_row))).perform(click());
 
     intended(ODKMatchers
         .hasTable(T_HOUSE_E_TABLE_ID, T_HOUSE_E_TABLE_ID, "1ed5404f-c501-4308-ac0f-a080c13ae5c4"));

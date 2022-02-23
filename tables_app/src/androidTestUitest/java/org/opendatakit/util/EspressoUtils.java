@@ -1,23 +1,5 @@
 package org.opendatakit.util;
 
-import android.app.Activity;
-import android.app.Instrumentation;
-import android.view.View;
-
-import androidx.annotation.StringRes;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.test.espresso.NoMatchingViewException;
-import androidx.test.espresso.ViewAssertion;
-import androidx.test.espresso.ViewInteraction;
-import androidx.test.espresso.contrib.RecyclerViewActions;
-import androidx.test.espresso.intent.rule.IntentsTestRule;
-import androidx.test.espresso.web.sugar.Web;
-import androidx.test.espresso.web.webdriver.Locator;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
-
-import org.hamcrest.Matcher;
-import org.opendatakit.tables.R;
-
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -34,40 +16,42 @@ import static androidx.test.espresso.web.webdriver.DriverAtoms.findElement;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
-import java.util.concurrent.atomic.AtomicReference;
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.content.Context;
+import android.view.View;
+
+import androidx.annotation.StringRes;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.test.espresso.ViewInteraction;
+import androidx.test.espresso.contrib.RecyclerViewActions;
+import androidx.test.espresso.intent.rule.IntentsTestRule;
+import androidx.test.espresso.web.sugar.Web;
+import androidx.test.espresso.web.webdriver.Locator;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.hamcrest.Matcher;
+import org.opendatakit.tables.R;
 
 public class EspressoUtils {
   /**
-   * Returns the String with Id id using an ActivityTestRule
+   * Returns the String with Id id using targetContext
    *
-   * @param rule ActivityTestRule to get String from
    * @param id   Id of String to retrieve
    * @return Returns the String
    */
 
-  public static String getString(ActivityScenarioRule rule, int id, Object... formatArgs) {
-      AtomicReference<String> string = new AtomicReference<>("");
-      rule.getScenario().onActivity(activity -> {
-          string.set(activity.getResources().getString(id, formatArgs));
-      });
-      return string.get();
+  final static Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+    public static String getString(int id, Object... formatArgs) {
+
+      return context.getResources().getString(id, formatArgs);
 }
 
-public static String getString(ActivityScenarioRule rule, int id) {
-      AtomicReference<String> string = new AtomicReference<>("");
-      rule.getScenario().onActivity(activity -> {
-          string.set(activity.getResources().getString(id));
-      });
-      return string.get();
-  }
+public static String getString(int id) {
+    return context.getResources().getString(id);
 
-  public static String getString(IntentsTestRule rule, int id, Object... formatArgs) {
-    return rule.getActivity().getResources().getString(id, formatArgs);
-  }
-
-  public static String getString(IntentsTestRule rule, int id) {
-    return rule.getActivity().getResources().getString(id);
-  }
+}
 
   public static Web.WebInteraction<Void> delayedFindElement(Locator locator,
                                                             String value,
@@ -122,12 +106,7 @@ public static String getString(ActivityScenarioRule rule, int id) {
   public static boolean viewExists(Matcher<View> view) {
     final boolean[] exists = new boolean[1];
 
-    onView(view).check(new ViewAssertion() {
-      @Override
-      public void check(View view, NoMatchingViewException noViewFoundException) {
-        exists[0] = noViewFoundException == null;
-      }
-    });
+    onView(view).check((view1, noViewFoundException) -> exists[0] = noViewFoundException == null);
 
     return exists[0];
   }
@@ -135,14 +114,11 @@ public static String getString(ActivityScenarioRule rule, int id) {
   public static int getColor(Matcher<View> matcher, final int x, final int y) {
     final int[] color = new int[1];
 
-    onView(matcher).check(new ViewAssertion() {
-      @Override
-      public void check(View view, NoMatchingViewException noViewFoundException) {
-        view.setDrawingCacheEnabled(true);
-        view.buildDrawingCache(true);
+    onView(matcher).check((view, noViewFoundException) -> {
+      view.setDrawingCacheEnabled(true);
+      view.buildDrawingCache(true);
 
-        color[0] = view.getDrawingCache().getPixel(x, y);
-      }
+      color[0] = view.getDrawingCache().getPixel(x, y);
     });
 
     return color[0];

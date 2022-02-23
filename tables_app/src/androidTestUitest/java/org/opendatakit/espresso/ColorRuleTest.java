@@ -1,41 +1,5 @@
 package org.opendatakit.espresso;
 
-import android.Manifest;
-import android.graphics.Rect;
-import android.view.View;
-import android.widget.ScrollView;
-
-import androidx.test.core.app.ActivityScenario;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
-import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.rule.GrantPermissionRule;
-import androidx.test.uiautomator.By;
-import androidx.test.uiautomator.UiDevice;
-
-import org.hamcrest.Matcher;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
-import org.opendatakit.data.ColorRule;
-import org.opendatakit.data.ColorRuleGroup;
-import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.util.EspressoUtils;
-import org.opendatakit.util.ODKMatchers;
-import org.opendatakit.util.UAUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-
 import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.Espresso.pressBack;
@@ -53,6 +17,42 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.opendatakit.util.TestConstants.APP_NAME;
 import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 
+import android.Manifest;
+import android.graphics.Rect;
+import android.view.View;
+import android.widget.ScrollView;
+
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.filters.LargeTest;
+import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiDevice;
+
+import org.hamcrest.Matcher;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.opendatakit.data.ColorRule;
+import org.opendatakit.data.ColorRuleGroup;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.util.EspressoUtils;
+import org.opendatakit.util.ODKMatchers;
+import org.opendatakit.util.UAUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+@RunWith(AndroidJUnit4ClassRunner.class)
 @LargeTest
 public class ColorRuleTest extends AbsBaseTest {
   private final String tableId = T_HOUSE_E_TABLE_ID;
@@ -63,9 +63,8 @@ public class ColorRuleTest extends AbsBaseTest {
   private UiDevice mDevice;
   private DbHandle db;
   private String[] adminColumns;
+  private ActivityScenario<MainActivity> scenario;
 
-  // don't annotate used in chain rule
-  private ActivityScenarioRule<MainActivity> mActivityRule = new ActivityScenarioRule<MainActivity>(MainActivity.class);
 
   private void afterActivityLaunch(){
       try {
@@ -98,22 +97,19 @@ public class ColorRuleTest extends AbsBaseTest {
       }
   }
 
-  // don't annotate used in chain rule
-  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+  @Rule
+  public GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
       Manifest.permission.WRITE_EXTERNAL_STORAGE,
       Manifest.permission.READ_EXTERNAL_STORAGE,
       Manifest.permission.ACCESS_FINE_LOCATION
   );
 
-  @Rule
-  public TestRule chainedRules = RuleChain
-      .outerRule(grantPermissionRule)
-      .around(mActivityRule);
 
   @Before
   public void setup() {
       beforeActivityLaunch();
-    UAUtils.assertInitSucess(initSuccess);
+      scenario = ActivityScenario.launch(MainActivity.class);
+      UAUtils.assertInitSucess(initSuccess);
     assertThat("Failed to obtain db", db, notNullValue(DbHandle.class));
 
     EspressoUtils.openTableManagerFromCustomHome();
@@ -128,11 +124,11 @@ public class ColorRuleTest extends AbsBaseTest {
   @After
   public void cleanUp(){
       afterActivityLaunch();
+      scenario.close();
   }
 
   @Test
   public void colorRule_addTableRule() throws ServicesAvailabilityException {
-      ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class);
     EspressoUtils
         .onRecyclerViewText(R.string.edit_table_color_rules)
         .perform(click());
@@ -183,7 +179,7 @@ public class ColorRuleTest extends AbsBaseTest {
       //delete all rules
       onView(withId(R.id.menu_color_rule_list_revert)).perform(click());
       onView(withId(android.R.id.button1)).perform(click());
-      CRGCheck(new ArrayList<ColorRule>(), ColorRuleGroup.Type.TABLE);
+      CRGCheck(new ArrayList<>(), ColorRuleGroup.Type.TABLE);
     } finally {
       if (currentRules != null) {
         ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.TABLE, db, adminColumns);
@@ -255,7 +251,7 @@ public class ColorRuleTest extends AbsBaseTest {
       //delete all rules
       onView(withId(R.id.menu_color_rule_list_revert)).perform(click());
       onView(withId(android.R.id.button1)).perform(click());
-      CRGCheck(new ArrayList<ColorRule>(), ColorRuleGroup.Type.COLUMN);
+      CRGCheck(new ArrayList<>(), ColorRuleGroup.Type.COLUMN);
     } finally {
       if (currentRules != null) {
         ColorRuleGroup crg = getCRG(ColorRuleGroup.Type.COLUMN, db, adminColumns);
@@ -293,7 +289,7 @@ public class ColorRuleTest extends AbsBaseTest {
               cr.getForeground(), cr.getBackground()));
     }
 
-    crg.replaceColorRuleList(new ArrayList<ColorRule>());
+    crg.replaceColorRuleList(new ArrayList<>());
     crg.saveRuleList(c.getDatabase());
 
     return rules;
@@ -342,7 +338,7 @@ public class ColorRuleTest extends AbsBaseTest {
 
     //start with a default rule
     ColorRule rule = new ColorRule(elementKeyId, null,
-        EspressoUtils.getString(mActivityRule, R.string.compared_to_value),
+        EspressoUtils.getString(R.string.compared_to_value),
         Constants.DEFAULT_TEXT_COLOR, Constants.DEFAULT_BACKGROUND_COLOR);
 
     //this option doesn't exist for column color rules
@@ -385,7 +381,7 @@ public class ColorRuleTest extends AbsBaseTest {
     onView(withId(R.id.menu_color_rule_list_new)).check(matches(isCompletelyDisplayed()));
 
     onData(ODKMatchers.withColorRule(cr)).perform(longClick());
-    onView(withText(is(EspressoUtils.getString(mActivityRule, R.string.delete_color_rule))))
+    onView(withText(is(EspressoUtils.getString(R.string.delete_color_rule))))
         .perform(click());
     onView(withId(android.R.id.button1)).perform(click());
   }

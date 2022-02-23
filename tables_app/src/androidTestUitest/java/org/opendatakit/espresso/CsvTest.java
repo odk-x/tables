@@ -192,7 +192,7 @@ public class CsvTest {
 
     try {
       //Check that error message is shown
-      onView(withText(EspressoUtils.getString(mIntentsRule, R.string.export_failure)))
+      onView(withText(EspressoUtils.getString(R.string.export_failure)))
           .check(matches(isCompletelyDisplayed()));
 
       //Check that csv was not exported
