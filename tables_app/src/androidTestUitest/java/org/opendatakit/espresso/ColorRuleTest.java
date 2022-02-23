@@ -5,14 +5,16 @@ import android.graphics.Rect;
 import android.view.View;
 import android.widget.ScrollView;
 
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.rule.ActivityTestRule;
 import androidx.test.rule.GrantPermissionRule;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 
 import org.hamcrest.Matcher;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,44 +65,38 @@ public class ColorRuleTest extends AbsBaseTest {
   private String[] adminColumns;
 
   // don't annotate used in chain rule
-  private ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
-      MainActivity.class) {
-    @Override
-    protected void beforeActivityLaunched() {
-      super.beforeActivityLaunched();
+  private ActivityScenarioRule<MainActivity> mActivityRule = new ActivityScenarioRule<MainActivity>(MainActivity.class);
+
+  private void afterActivityLaunch(){
+      try {
+          c.getDatabase().closeDatabase(APP_NAME, db);
+      } catch (ServicesAvailabilityException e) {
+          e.printStackTrace();
+      }
+  }
+
+  private void beforeActivityLaunch(){
 
       if (c == null) {
-        try {
-          new AbsBaseTest()._setUpC();
-        } catch (Exception ignored) {}
+          try {
+              new AbsBaseTest()._setUpC();
+          } catch (Exception ignored) {}
       }
 
       if (initSuccess == null) {
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        initSuccess = UAUtils.turnOnCustomHome(mDevice);
+          mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+          initSuccess = UAUtils.turnOnCustomHome(mDevice);
       }
 
       try {
-        db = c.getDatabase().openDatabase(APP_NAME);
-        adminColumns = TableUtil.get()
-            .getTableColumns(Locale.US.getCountry(), c.getDatabase(), APP_NAME,
-                db, tableId).adminColumns;
+          db = c.getDatabase().openDatabase(APP_NAME);
+          adminColumns = TableUtil.get()
+                  .getTableColumns(Locale.US.getCountry(), c.getDatabase(), APP_NAME,
+                          db, tableId).adminColumns;
       } catch (ServicesAvailabilityException e) {
-        e.printStackTrace();
+          e.printStackTrace();
       }
-    }
-
-    @Override
-    protected void afterActivityFinished() {
-      super.afterActivityFinished();
-
-      try {
-        c.getDatabase().closeDatabase(APP_NAME, db);
-      } catch (ServicesAvailabilityException e) {
-        e.printStackTrace();
-      }
-    }
-  };
+  }
 
   // don't annotate used in chain rule
   private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
@@ -116,6 +112,7 @@ public class ColorRuleTest extends AbsBaseTest {
 
   @Before
   public void setup() {
+      beforeActivityLaunch();
     UAUtils.assertInitSucess(initSuccess);
     assertThat("Failed to obtain db", db, notNullValue(DbHandle.class));
 
@@ -128,8 +125,14 @@ public class ColorRuleTest extends AbsBaseTest {
     onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
   }
 
+  @After
+  public void cleanUp(){
+      afterActivityLaunch();
+  }
+
   @Test
   public void colorRule_addTableRule() throws ServicesAvailabilityException {
+      ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class);
     EspressoUtils
         .onRecyclerViewText(R.string.edit_table_color_rules)
         .perform(click());

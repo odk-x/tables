@@ -13,7 +13,7 @@ import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.intent.rule.IntentsTestRule;
 import androidx.test.espresso.web.sugar.Web;
 import androidx.test.espresso.web.webdriver.Locator;
-import androidx.test.rule.ActivityTestRule;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import org.hamcrest.Matcher;
 import org.opendatakit.tables.R;
@@ -34,6 +34,8 @@ import static androidx.test.espresso.web.webdriver.DriverAtoms.findElement;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class EspressoUtils {
   /**
    * Returns the String with Id id using an ActivityTestRule
@@ -42,12 +44,21 @@ public class EspressoUtils {
    * @param id   Id of String to retrieve
    * @return Returns the String
    */
-  public static String getString(ActivityTestRule rule, int id, Object... formatArgs) {
-    return rule.getActivity().getResources().getString(id, formatArgs);
-  }
 
-  public static String getString(ActivityTestRule rule, int id) {
-    return rule.getActivity().getResources().getString(id);
+  public static String getString(ActivityScenarioRule rule, int id, Object... formatArgs) {
+      AtomicReference<String> string = new AtomicReference<>("");
+      rule.getScenario().onActivity(activity -> {
+          string.set(activity.getResources().getString(id, formatArgs));
+      });
+      return string.get();
+}
+
+public static String getString(ActivityScenarioRule rule, int id) {
+      AtomicReference<String> string = new AtomicReference<>("");
+      rule.getScenario().onActivity(activity -> {
+          string.set(activity.getResources().getString(id));
+      });
+      return string.get();
   }
 
   public static String getString(IntentsTestRule rule, int id, Object... formatArgs) {
