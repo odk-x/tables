@@ -536,7 +536,7 @@ public class TablePrefTest extends AbsBaseTest {
 
       //check toast message
       EspressoUtils.toastMsgMatcher(mIntentsRule, is(EspressoUtils
-          .getString(mIntentsRule, R.string.file_not_under_app_dir,
+          .getString(R.string.file_not_under_app_dir,
               ODKFileUtils.getAppFolder(APP_NAME))));
     } finally {
       //restore
@@ -570,7 +570,7 @@ public class TablePrefTest extends AbsBaseTest {
       EspressoUtils
               .toastMsgMatcher(
                   mIntentsRule,
-                      is(EspressoUtils.getString(mIntentsRule, R.string.invalid_form))
+                      is(EspressoUtils.getString(R.string.invalid_form))
               );
     } finally {
       if (currFormId != null) {
