@@ -28,10 +28,13 @@ import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.intent.rule.IntentsTestRule;
 import androidx.test.espresso.web.sugar.Web;
 import androidx.test.espresso.web.webdriver.Locator;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.hamcrest.Matcher;
 import org.opendatakit.tables.R;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public class EspressoUtils {
   /**
@@ -124,9 +127,9 @@ public static String getString(int id) {
     return color[0];
   }
 
-  public static ViewInteraction toastMsgMatcher(IntentsTestRule rule, Matcher<String> matcher) {
+  public static ViewInteraction toastMsgMatcher(ActivityScenarioRule rule, Matcher<String> matcher) {
     return onView(withText(matcher))
-        .inRoot(withDecorView(not(is(rule.getActivity().getWindow().getDecorView()))))
+        .inRoot(withDecorView(not(is(getActivity(rule).getWindow().getDecorView()))))
         .check(matches(isDisplayed()));
   }
 
@@ -155,4 +158,10 @@ public static String getString(int id) {
 
     return onView(withText(textId));
   }
+
+    private static <T extends Activity> T getActivity(ActivityScenarioRule<T> activityScenarioRule) {
+        AtomicReference<T> activityRef = new AtomicReference<>();
+        activityScenarioRule.getScenario().onActivity(activityRef::set);
+        return activityRef.get();
+    }
 }
