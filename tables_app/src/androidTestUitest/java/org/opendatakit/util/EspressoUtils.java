@@ -31,8 +31,11 @@ import androidx.test.espresso.web.webdriver.Locator;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.todddavies.components.progressbar.Main;
+
 import org.hamcrest.Matcher;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.MainActivity;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -159,8 +162,8 @@ public static String getString(int id) {
     return onView(withText(textId));
   }
 
-    private static <T extends Activity> T getActivity(ActivityScenarioRule<T> activityScenarioRule) {
-        AtomicReference<T> activityRef = new AtomicReference<>();
+    private static MainActivity getActivity(ActivityScenarioRule<MainActivity> activityScenarioRule) {
+        AtomicReference<MainActivity> activityRef = new AtomicReference<>();
         activityScenarioRule.getScenario().onActivity(activityRef::set);
         return activityRef.get();
     }

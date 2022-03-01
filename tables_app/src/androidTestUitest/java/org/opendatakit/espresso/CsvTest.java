@@ -30,6 +30,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.intent.Intents;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -106,6 +107,7 @@ public class CsvTest {
   public void setup() {
     beforeActivityLaunched();
     scenario = ActivityScenario.launch(MainActivity.class);
+      Intents.init();
     UAUtils.assertInitSucess(initSuccess);
     EspressoUtils.openTableManagerFromCustomHome();
 
@@ -126,6 +128,7 @@ public class CsvTest {
     new File(ODKFileUtils
         .getOutputTableCsvFile(TableFileUtils.getDefaultAppName(), T_HOUSE_TABLE_ID,
             VALID_QUALIFIER)).delete();
+      Intents.release();
       scenario.close();
   }
 
