@@ -67,7 +67,7 @@ public class CsvTest {
   private ActivityScenario<MainActivity> scenario;
 
   // don't annotate used in chain rule
-  private ActivityScenarioRule<MainActivity> mIntentsRule = new ActivityScenarioRule<MainActivity>(MainActivity.class);
+  private ActivityScenarioRule<MainActivity> mIntentsRule = new ActivityScenarioRule<>(MainActivity.class);
 
 
     private void beforeActivityLaunched(){

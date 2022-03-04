@@ -25,13 +25,10 @@ import androidx.annotation.StringRes;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.espresso.contrib.RecyclerViewActions;
-import androidx.test.espresso.intent.rule.IntentsTestRule;
 import androidx.test.espresso.web.sugar.Web;
 import androidx.test.espresso.web.webdriver.Locator;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.todddavies.components.progressbar.Main;
 
 import org.hamcrest.Matcher;
 import org.opendatakit.tables.R;
@@ -130,10 +127,12 @@ public static String getString(int id) {
     return color[0];
   }
 
-  public static ViewInteraction toastMsgMatcher(ActivityScenarioRule rule, Matcher<String> matcher) {
-    return onView(withText(matcher))
-        .inRoot(withDecorView(not(is(getActivity(rule).getWindow().getDecorView()))))
-        .check(matches(isDisplayed()));
+  public static void toastMsgMatcher(ActivityScenarioRule<MainActivity> rule, Matcher<String> matcher) {
+      rule.getScenario().onActivity(activity -> {
+          onView(withText(matcher))
+                  .inRoot(withDecorView(not(is(activity.getWindow().getDecorView()))))
+                  .check(matches(isDisplayed()));
+      });
   }
 
   public static void openTableManagerFromCustomHome() {
@@ -161,10 +160,4 @@ public static String getString(int id) {
 
     return onView(withText(textId));
   }
-
-    private static MainActivity getActivity(ActivityScenarioRule<MainActivity> activityScenarioRule) {
-        AtomicReference<MainActivity> activityRef = new AtomicReference<>();
-        activityScenarioRule.getScenario().onActivity(activityRef::set);
-        return activityRef.get();
-    }
 }
