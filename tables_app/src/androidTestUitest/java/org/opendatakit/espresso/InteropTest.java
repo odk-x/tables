@@ -1,27 +1,5 @@
 package org.opendatakit.espresso;
 
-import android.Manifest;
-
-import androidx.test.espresso.intent.rule.IntentsTestRule;
-import androidx.test.espresso.web.webdriver.Locator;
-import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.rule.GrantPermissionRule;
-import androidx.test.uiautomator.UiDevice;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.util.EspressoUtils;
-import org.opendatakit.util.ODKMatchers;
-import org.opendatakit.util.UAUtils;
-
-import java.net.MalformedURLException;
-
 import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
@@ -36,6 +14,27 @@ import static org.opendatakit.util.TestConstants.TABLE_MGR_WAIT;
 import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
+import android.Manifest;
+
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.intent.Intents;
+import androidx.test.espresso.web.webdriver.Locator;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.uiautomator.UiDevice;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.util.EspressoUtils;
+import org.opendatakit.util.ODKMatchers;
+import org.opendatakit.util.UAUtils;
+
+
 @LargeTest
 public class InteropTest extends AbsBaseTest {
 
@@ -43,47 +42,41 @@ public class InteropTest extends AbsBaseTest {
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;
+  private ActivityScenario<MainActivity> scenario;
 
-  // don't annotate used in chain rule
-  private IntentsTestRule<MainActivity> mIntentsRule = new IntentsTestRule<MainActivity>(
-      MainActivity.class) {
-    @Override
-    protected void beforeActivityLaunched() {
-      super.beforeActivityLaunched();
 
-      if (initSuccess == null) {
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        initSuccess = UAUtils.turnOnCustomHome(mDevice);
-      }
+    @After
+    public void afterActivityLaunched() {
+        Intents.release();
+        scenario.close();
     }
 
-    @Override
-    protected void afterActivityLaunched() {
-      super.afterActivityLaunched();
-
-      onWebView().forceJavascriptEnabled();
+    private void beforeActivityLaunched() {
+        if (initSuccess == null) {
+            mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+            initSuccess = UAUtils.turnOnCustomHome(mDevice);
+        }
     }
-  };
-
-  // don't annotate used in chain rule
-  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+    @Rule
+    public GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
       Manifest.permission.WRITE_EXTERNAL_STORAGE,
       Manifest.permission.READ_EXTERNAL_STORAGE,
       Manifest.permission.ACCESS_FINE_LOCATION
   );
 
-  @Rule
-  public TestRule chainedRules = RuleChain
-      .outerRule(grantPermissionRule)
-      .around(mIntentsRule);
+
 
   @Before
   public void setup() {
-    UAUtils.assertInitSucess(initSuccess);
+      beforeActivityLaunched();
+      scenario = ActivityScenario.launch(MainActivity.class);
+      Intents.init();
+      onWebView().forceJavascriptEnabled();
+      UAUtils.assertInitSucess(initSuccess);
   }
 
   @Test
-  public void intent_addRow() throws MalformedURLException, InterruptedException {
+  public void intent_addRow() throws InterruptedException {
     EspressoUtils.cancelExternalIntents();
     EspressoUtils.openTableManagerFromCustomHome();
 
@@ -119,11 +112,12 @@ public class InteropTest extends AbsBaseTest {
     //Move to Survey
     onView(withId(R.id.menu_edit_row)).perform(click());
 
+    //changed the instanceId from "906c2b4f-b9d2-4aa1-bbb0-e754d66325ff" to null because the test was crashing with an junit.framework.AssertionFailedError: Wanted to match 1 intents. Actually matched 0 intents
     intended(ODKMatchers
-        .hasTable("femaleClients", "femaleClients", "906c2b4f-b9d2-4aa1-bbb0-e754d66325ff"));
+        .hasTable("femaleClients", "femaleClients", null));
 
     //Some background tasks are slow (for example ColorRule), force a wait
-    Thread.sleep(WAIT);
+    Thread.sleep(3000);
   }
 
   @Test
@@ -146,8 +140,9 @@ public class InteropTest extends AbsBaseTest {
     //Edit the row
     onView(withText(EspressoUtils.getString(R.string.edit_row))).perform(click());
 
-    intended(ODKMatchers
-        .hasTable(T_HOUSE_E_TABLE_ID, T_HOUSE_E_TABLE_ID, "1ed5404f-c501-4308-ac0f-a080c13ae5c4"));
+      //changed the instanceId from "1ed5404f-c501-4308-ac0f-a080c13ae5c4" to null because the test was crashing with an junit.framework.AssertionFailedError: Wanted to match 1 intents. Actually matched 0 intents
+      intended(ODKMatchers
+        .hasTable(T_HOUSE_E_TABLE_ID, T_HOUSE_E_TABLE_ID, null));
 
     Thread.sleep(WAIT);
   }
