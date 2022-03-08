@@ -1,27 +1,5 @@
 package org.opendatakit.espresso;
 
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.os.Build;
-
-import androidx.test.espresso.web.webdriver.DriverAtoms;
-import androidx.test.espresso.web.webdriver.Locator;
-import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.rule.GrantPermissionRule;
-import androidx.test.uiautomator.UiDevice;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
-import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.util.UAUtils;
-
 import static androidx.test.espresso.web.assertion.WebViewAssertions.webMatches;
 import static androidx.test.espresso.web.sugar.Web.onWebView;
 import static androidx.test.espresso.web.webdriver.DriverAtoms.findElement;
@@ -29,6 +7,27 @@ import static androidx.test.espresso.web.webdriver.DriverAtoms.getText;
 import static androidx.test.espresso.web.webdriver.DriverAtoms.webClick;
 import static junit.framework.Assert.fail;
 import static org.hamcrest.Matchers.containsString;
+
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
+
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.web.webdriver.DriverAtoms;
+import androidx.test.espresso.web.webdriver.Locator;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.uiautomator.UiDevice;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.util.UAUtils;
 
 /**
  * This test can only be used with the index from the large
@@ -53,39 +52,15 @@ public class WebViewPerfTest {
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;
+  private ActivityScenario<MainActivity> scenario;
 
-  // don't annotate used in chain rule
-  private ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
-      MainActivity.class, false, true) {
-    @Override
-    protected void beforeActivityLaunched() {
-      super.beforeActivityLaunched();
-
-      if (initSuccess == null) {
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        initSuccess = UAUtils.turnOnCustomHome(mDevice);
-      }
-    }
-
-    @Override
-    protected void afterActivityLaunched() {
-      super.afterActivityLaunched();
-
-      onWebView().forceJavascriptEnabled();
-    }
-  };
-
-  // don't annotate used in chain rule
-  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+  @Rule
+  public GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
       Manifest.permission.WRITE_EXTERNAL_STORAGE,
       Manifest.permission.READ_EXTERNAL_STORAGE,
       Manifest.permission.ACCESS_FINE_LOCATION
   );
 
-  @Rule
-  public TestRule chainedRules = RuleChain
-      .outerRule(grantPermissionRule)
-      .around(mActivityRule);
 
   private static String getOsToUse() {
     return Build.VERSION.RELEASE;
@@ -154,11 +129,24 @@ public class WebViewPerfTest {
       return TEST_DB_TYPE.CUSTOM;
     }
   }
+    public void beforeActivityLaunched() {
+        if (initSuccess == null) {
+            mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+            initSuccess = UAUtils.turnOnCustomHome(mDevice);
+        }
+  }
 
   @Before
   public void setup() {
+    beforeActivityLaunched();
+    scenario = ActivityScenario.launch(MainActivity.class);
+    onWebView().forceJavascriptEnabled();
     UAUtils.assertInitSucess(initSuccess);
   }
+    @After
+    public void cleanUp(){
+        scenario.close();
+    }
 
   @Test
   public void performanceTestForLargeDataSet() {
