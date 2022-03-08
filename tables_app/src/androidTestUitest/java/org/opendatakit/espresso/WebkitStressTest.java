@@ -1,28 +1,5 @@
 package org.opendatakit.espresso;
 
-import android.Manifest;
-import android.webkit.WebView;
-
-import androidx.test.espresso.web.webdriver.Locator;
-import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.rule.GrantPermissionRule;
-import androidx.test.uiautomator.By;
-import androidx.test.uiautomator.UiDevice;
-import androidx.test.uiautomator.UiObject2;
-import androidx.test.uiautomator.Until;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.util.EspressoUtils;
-import org.opendatakit.util.UAUtils;
-
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
@@ -35,49 +12,61 @@ import static org.opendatakit.util.TestConstants.OBJ_WAIT_TIMEOUT;
 import static org.opendatakit.util.TestConstants.TABLES_PKG_NAME;
 import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
+import android.Manifest;
+import android.webkit.WebView;
+
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.web.webdriver.Locator;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.Until;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.util.EspressoUtils;
+import org.opendatakit.util.UAUtils;
+
 
 @LargeTest
 public class WebkitStressTest {
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;
+  private ActivityScenario<MainActivity> scenario;
 
-  // don't annotate used in chain rule
-  private ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
-      MainActivity.class) {
-    @Override
-    protected void beforeActivityLaunched() {
-      super.beforeActivityLaunched();
-
-      if (initSuccess == null) {
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        initSuccess = UAUtils.turnOnCustomHome(mDevice);
-      }
-    }
-
-    @Override
-    protected void afterActivityLaunched() {
-      super.afterActivityLaunched();
-
-      onWebView().forceJavascriptEnabled();
-    }
-  };
-
-  // don't annotate used in chain rule
-  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+  @Rule
+  public GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
       Manifest.permission.WRITE_EXTERNAL_STORAGE,
       Manifest.permission.READ_EXTERNAL_STORAGE,
       Manifest.permission.ACCESS_FINE_LOCATION
   );
 
-  @Rule
-  public TestRule chainedRules = RuleChain
-      .outerRule(grantPermissionRule)
-      .around(mActivityRule);
+    private void beforeActivityLaunched() {
+        if (initSuccess == null) {
+            mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+            initSuccess = UAUtils.turnOnCustomHome(mDevice);
+        }
+    }
 
   @Before
   public void setup() {
-    UAUtils.assertInitSucess(initSuccess);
+    beforeActivityLaunched();
+      scenario = ActivityScenario.launch(MainActivity.class);
+      onWebView().forceJavascriptEnabled();
+      UAUtils.assertInitSucess(initSuccess);
+  }
+
+  @After
+  public void cleanUp(){
+      scenario.close();
   }
 
   @Test
