@@ -27,14 +27,10 @@ import androidx.test.espresso.ViewInteraction;
 import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.web.sugar.Web;
 import androidx.test.espresso.web.webdriver.Locator;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.hamcrest.Matcher;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.MainActivity;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 public class EspressoUtils {
   /**
@@ -127,12 +123,10 @@ public static String getString(int id) {
     return color[0];
   }
 
-  public static void toastMsgMatcher(ActivityScenarioRule<MainActivity> rule, Matcher<String> matcher) {
-      rule.getScenario().onActivity(activity -> {
+  public static void toastMsgMatcher(View decorView, Matcher<String> matcher) {
           onView(withText(matcher))
-                  .inRoot(withDecorView(not(is(activity.getWindow().getDecorView()))))
+                  .inRoot(withDecorView(not(is(decorView))))
                   .check(matches(isDisplayed()));
-      });
   }
 
   public static void openTableManagerFromCustomHome() {

@@ -46,7 +46,7 @@ public class InteropTest extends AbsBaseTest {
 
 
     @After
-    public void afterActivityLaunched() {
+    public void cleanUp() {
         Intents.release();
         scenario.close();
     }

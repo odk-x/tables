@@ -1,46 +1,5 @@
 package org.opendatakit.espresso;
 
-import android.Manifest;
-import android.app.Activity;
-import android.app.Instrumentation;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.RemoteException;
-import android.view.View;
-
-import androidx.appcompat.widget.AppCompatEditText;
-import androidx.test.espresso.Espresso;
-import androidx.test.espresso.intent.Intents;
-import androidx.test.espresso.intent.rule.IntentsTestRule;
-import androidx.test.espresso.web.webdriver.Locator;
-import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.rule.GrantPermissionRule;
-import androidx.test.uiautomator.UiDevice;
-
-import org.hamcrest.Matcher;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
-import org.opendatakit.consts.IntentConsts;
-import org.opendatakit.data.utilities.TableUtil;
-import org.opendatakit.database.service.DbHandle;
-import org.opendatakit.exception.ServicesAvailabilityException;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
-import org.opendatakit.tables.types.FormType;
-import org.opendatakit.tables.views.SpreadsheetView;
-import org.opendatakit.util.EspressoUtils;
-import org.opendatakit.util.ODKMatchers;
-import org.opendatakit.util.UAUtils;
-import org.opendatakit.utilities.ODKFileUtils;
-import org.opendatakit.utilities.ODKXFileUriUtils;
-
-import java.io.File;
-
 import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.Espresso.pressBack;
@@ -78,44 +37,60 @@ import static org.opendatakit.util.TestConstants.T_HOUSE_E_TABLE_ID;
 import static org.opendatakit.util.TestConstants.T_HOUSE_TABLE_ID;
 import static org.opendatakit.util.TestConstants.WEB_WAIT_TIMEOUT;
 
+import android.Manifest;
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.RemoteException;
+import android.view.View;
+
+import androidx.appcompat.widget.AppCompatEditText;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.Espresso;
+import androidx.test.espresso.intent.Intents;
+import androidx.test.espresso.web.webdriver.Locator;
+import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.GrantPermissionRule;
+import androidx.test.uiautomator.UiDevice;
+
+import org.hamcrest.Matcher;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.opendatakit.consts.IntentConsts;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.types.FormType;
+import org.opendatakit.tables.views.SpreadsheetView;
+import org.opendatakit.util.EspressoUtils;
+import org.opendatakit.util.ODKMatchers;
+import org.opendatakit.util.UAUtils;
+import org.opendatakit.utilities.ODKFileUtils;
+import org.opendatakit.utilities.ODKXFileUriUtils;
+
+import java.io.File;
+
 @LargeTest
 public class TablePrefTest extends AbsBaseTest {
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;
+  private ActivityScenario<MainActivity> scenario;
+  private View decorView;
 
-  // don't annotate used in chain rule
-  private IntentsTestRule<MainActivity> mIntentsRule = new IntentsTestRule<MainActivity>(
-      MainActivity.class) {
-    @Override
-    protected void beforeActivityLaunched() {
-      super.beforeActivityLaunched();
-
-      if (initSuccess == null) {
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        initSuccess = UAUtils.turnOnCustomHome(mDevice);
-      }
-    }
-
-    @Override
-    protected void afterActivityLaunched() {
-      super.afterActivityLaunched();
-
-      onWebView().forceJavascriptEnabled();
-    }
-  };
-
-  // don't annotate used in chain rule
-  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+  @Rule
+  public GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
       Manifest.permission.WRITE_EXTERNAL_STORAGE,
       Manifest.permission.READ_EXTERNAL_STORAGE,
       Manifest.permission.ACCESS_FINE_LOCATION
   );
-
-  @Rule
-  public TestRule chainedRules = RuleChain
-      .outerRule(grantPermissionRule)
-      .around(mIntentsRule);
 
   private static String getListViewFile() {
     DbHandle db = null;
@@ -145,7 +120,7 @@ public class TablePrefTest extends AbsBaseTest {
 
   private static void setListViewFile(String filename) {
     try {
-      TableUtil.get().atomicSetListViewFilename(c.getDatabase(), APP_NAME,
+       TableUtil.get().atomicSetListViewFilename(c.getDatabase(), APP_NAME,
           T_HOUSE_E_TABLE_ID, filename);
     } catch (ServicesAvailabilityException e) {
       e.printStackTrace();
@@ -223,8 +198,21 @@ public class TablePrefTest extends AbsBaseTest {
     }
   }
 
+    protected void beforeActivityLaunched() {
+        if (initSuccess == null) {
+            mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+            initSuccess = UAUtils.turnOnCustomHome(mDevice);
+        }
+    }
+
   @Before
   public void setup() {
+    beforeActivityLaunched();
+    scenario = ActivityScenario.launch(MainActivity.class);
+    Intents.init();
+    onWebView().forceJavascriptEnabled();
+    scenario.onActivity(activity ->
+            decorView = activity.getWindow().getDecorView());
     UAUtils.assertInitSucess(initSuccess);
     EspressoUtils.cancelExternalIntents();
     EspressoUtils.openTableManagerFromCustomHome();
@@ -235,6 +223,13 @@ public class TablePrefTest extends AbsBaseTest {
     //go to table pref
     onView(withId(R.id.top_level_table_menu_table_properties)).perform(click());
   }
+
+
+    @After
+    public void cleanup() {
+        Intents.release();
+        scenario.close();
+    }
 
   @Test
   public void intents_launchFilePicker() {
@@ -535,9 +530,9 @@ public class TablePrefTest extends AbsBaseTest {
           .perform(click());
 
       //check toast message
-//      EspressoUtils.toastMsgMatcher(mIntentsRule, is(EspressoUtils
-//          .getString(R.string.file_not_under_app_dir,
-//              ODKFileUtils.getAppFolder(APP_NAME))));
+      EspressoUtils.toastMsgMatcher(decorView, is(EspressoUtils
+          .getString(R.string.file_not_under_app_dir,
+              ODKFileUtils.getAppFolder(APP_NAME))));
     } finally {
       //restore
       setListViewFile(currListFile);
@@ -545,21 +540,28 @@ public class TablePrefTest extends AbsBaseTest {
   }
 
   @Test
-  public void display_badFormId() throws ServicesAvailabilityException {
+  public void display_badFormId() {
     // backup
-    String currFormId = null;
+      final String[] currFormId = {null};
 
-    try {
-      currFormId = FormType
-              .constructFormType(mIntentsRule.getActivity(), APP_NAME, T_HOUSE_E_TABLE_ID)
-              .getFormId();
+    try{
+      scenario.onActivity(activity -> {
 
-      assertThat(currFormId, notNullValue(String.class));
+          try {
+              currFormId[0] = FormType
+                      .constructFormType(activity, APP_NAME, T_HOUSE_E_TABLE_ID)
+                      .getFormId();
+          } catch (ServicesAvailabilityException e) {
+              e.printStackTrace();
+          }
+      });
+
+      assertThat(currFormId[0], notNullValue(String.class));
 
       //change form id to something invalid
       EspressoUtils
-          .onRecyclerViewText(R.string.default_form)
-          .perform(click());
+              .onRecyclerViewText(R.string.default_form)
+              .perform(click());
       onView(isAssignableFrom(AppCompatEditText.class))
               .perform(click())
               .perform(clearText())
@@ -567,16 +569,23 @@ public class TablePrefTest extends AbsBaseTest {
       onView(withId(android.R.id.button1))
               .perform(click());
 
-//      EspressoUtils
-//              .toastMsgMatcher(
-//                  mIntentsRule,
-//                      is(EspressoUtils.getString(R.string.invalid_form))
-//              );
+      EspressoUtils
+              .toastMsgMatcher(
+                      decorView,
+                      is(EspressoUtils.getString(R.string.invalid_form))
+              );
     } finally {
-      if (currFormId != null) {
-        FormType
-            .constructFormType(mIntentsRule.getActivity(), APP_NAME, T_HOUSE_E_TABLE_ID)
-            .setFormId(currFormId);
+      if (currFormId[0] != null) {
+          scenario.onActivity(activity -> {
+              try {
+                  FormType
+                      .constructFormType(activity, APP_NAME, T_HOUSE_E_TABLE_ID)
+                      .setFormId(currFormId[0]);
+              } catch (ServicesAvailabilityException e) {
+                  e.printStackTrace();
+              }
+          });
+          scenario.close();
       }
     }
   }
