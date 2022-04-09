@@ -21,8 +21,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentManager.BackStackEntry;
 import androidx.fragment.app.FragmentTransaction;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -299,7 +301,21 @@ public class MainActivity extends AbsBaseWebActivity
 
   @Override
   public void onBackPressed() {
-    popBackStack();
+    new AlertDialog.Builder(this)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .setTitle("Closing Application")
+            .setMessage("Are you sure you want to close this application?")
+            .setPositiveButton("Yes", new DialogInterface.OnClickListener()
+            {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                finish();
+              }
+
+            })
+            .setNegativeButton("No", null)
+            .show();
+    //popBackStack();
   }
 
   /**

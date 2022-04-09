@@ -1,5 +1,6 @@
 package org.opendatakit.tables.activities;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
@@ -83,7 +84,7 @@ public abstract class AbsBaseWebActivity extends AbsTableActivity implements IOd
   // no need to preserve
   private PropertyManager mPropertyManager;
 
-  public abstract String getInstanceId();
+    public abstract String getInstanceId();
 
   /**
    * Gets the active webkit view
