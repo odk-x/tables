@@ -267,7 +267,20 @@ public class MainActivity extends AbsBaseWebActivity
     if (idxLast < 0) {
       Intent result = new Intent();
       this.setResult(RESULT_OK, result);
-      finish();
+       new AlertDialog.Builder(this)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .setTitle("Closing Application")
+            .setMessage("Are you sure you want to close this application?")
+            .setPositiveButton("Yes", new DialogInterface.OnClickListener()
+            {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                finish();
+              }
+
+            })
+            .setNegativeButton("No", null)
+            .show();
     } else {
       BackStackEntry entry = mgr.getBackStackEntryAt(idxLast);
       swapScreens(ScreenType.valueOf(entry.getName()));
@@ -301,21 +314,7 @@ public class MainActivity extends AbsBaseWebActivity
 
   @Override
   public void onBackPressed() {
-    new AlertDialog.Builder(this)
-            .setIcon(android.R.drawable.ic_dialog_alert)
-            .setTitle("Closing Application")
-            .setMessage("Are you sure you want to close this application?")
-            .setPositiveButton("Yes", new DialogInterface.OnClickListener()
-            {
-              @Override
-              public void onClick(DialogInterface dialog, int which) {
-                finish();
-              }
-
-            })
-            .setNegativeButton("No", null)
-            .show();
-    //popBackStack();
+    popBackStack();
   }
 
   /**
