@@ -125,6 +125,10 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    */
   private static final int LOCATION_PERM_REQ_CODE = 0;
   /**
+   * Request code for requesting camera permission
+   */
+  private static final int CAMERA_PERM_REQ_CODE = 100;
+  /**
    * Keep references to all queries used to populate all fragments. Use the array index as the
    * viewID.
    */
@@ -1397,6 +1401,16 @@ public class TableDisplayActivity extends AbsBaseWebActivity
                       Manifest.permission.ACCESS_COARSE_LOCATION
               },
               LOCATION_PERM_REQ_CODE
+      );
+    }
+    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED) {
+      ActivityCompat.requestPermissions(
+              this,
+              new String[] {
+                      Manifest.permission.CAMERA
+              },
+              CAMERA_PERM_REQ_CODE
       );
     }
   }
