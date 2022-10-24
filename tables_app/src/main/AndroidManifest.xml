@@ -15,6 +15,10 @@
     <!-- this is defined in org.opendatakit.services -->
     <uses-permission android:name="org.opendatakit.database.RUN_DATABASE"/>
 
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
     <uses-feature
             android:glEsVersion="0x00020000"
             android:required="true"/>
