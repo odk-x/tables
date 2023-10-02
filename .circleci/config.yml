@@ -125,6 +125,7 @@ commands:
 
                   echo "current job status is $JOB_STATUS"
                   echo "current job type is $JOB_TYPE"
+                  echo "current job name is $JOB_NAME"
             
             
                   if [ "$JOB_STATUS" = "success" ] && [ "$JOB_TYPE" = "build" ] && [ "$JOB_NAME" = "build" ]; then
@@ -172,11 +173,6 @@ commands:
     description: Clone and push the necessary ODK-X App Designer files to the emulator prior to testing Tables
     steps:
       - node/install
-      # - run:
-      #     name: Run node --version & npm --version
-      #     command: |
-      #       node --version
-      #       npm --version
       - run:
           name: Install grunt
           command: |
@@ -224,13 +220,7 @@ jobs:
       - run:
           name: Chmod Permissions
           command: sudo chmod +x gradlew
-      - run:
-          name: Update Package list
-          command: sudo apt-get update
-      - run:
-          name: Install the latest Android SDK
-          command: |
-            sdkmanager --update
+
       - get-artifacts:
           description: Get artifacts from the 'Services' repository
           circleci-token: $API_TOKEN
@@ -256,6 +246,11 @@ jobs:
           avd-name: customavd
           no-window: false
           post-emulator-launch-assemble-command: ''
+
+      # Runs command to push the ODK-X App Designer files to the emulator
+      - push-appdesigner-files-to-device
+
+      # Install Dependencies to emulator
       - run:
           name: Install 'Services' app from downloaded artifacts to emulator
           command: |
@@ -263,10 +258,7 @@ jobs:
             # Install Services App on emulator, Will use the `services_app-demo-basic-debug.apk` artifact downloaded from the get artifact jobs
             adb install services_app-demo-basic-debug.apk
             adb shell pm list packages
-      # Runs command to push the ODK-X App Designer files to the emulator
-      - push-appdesigner-files-to-device
 
-      # Install Dependencies to emulator
       - run:
           name: Install 'Survey' app from downloaded artifacts to emulator
           command: |
@@ -280,7 +272,7 @@ jobs:
           command: ./gradlew connectedAndroidTest
 
       - android/run-tests:
-          test-command: ./gradlew grantPermissionForODKApp connectedAndroidTest
+          test-command: ./gradlew grantPermissionForODKApp connectedAndroidTest --info
           max-tries: 1
 
       - store_artifacts:
@@ -333,7 +325,7 @@ workflows:
   build-test-workflow:
     jobs:
       - test
-      # - build
+      - build
       # - test:
       #     requires:
       #       - build
