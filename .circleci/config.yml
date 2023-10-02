@@ -272,7 +272,7 @@ jobs:
           command: ./gradlew connectedAndroidTest
 
       - android/run-tests:
-          test-command: ./gradlew grantPermissionForODKApp connectedAndroidTest --info
+          test-command: ./gradlew grantPermissionForODKApp connectedSnapshotUitestDebugAndroidTest --info > tables_app/build/outputs/androidTest-results/testlog.log
           max-tries: 1
 
       - store_artifacts:
