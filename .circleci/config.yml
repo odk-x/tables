@@ -120,12 +120,14 @@ commands:
 
                   JOB_STATUS=$(echo "$job" | jq -r '.status')
                   JOB_TYPE=$(echo "$job" | jq -r '.type') 
+                  JOB_NAME=$(echo "$job" | jq -r '.name')
+                
 
                   echo "current job status is $JOB_STATUS"
                   echo "current job type is $JOB_TYPE"
             
             
-                  if [ "$JOB_STATUS" = "success" ] && [ "$JOB_TYPE" = "build" ]; then
+                  if [ "$JOB_STATUS" = "success" ] && [ "$JOB_TYPE" = "build" ] && ["$JOB_NAME" = "build"]; then
                         echo "Found a successful 'Build' job"
                         echo "Status: $status, Type: $type"
 
