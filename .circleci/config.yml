@@ -268,7 +268,7 @@ jobs:
             adb shell pm list packages
 
       - android/run-tests:
-          test-command: ./gradlew grantPermissionForODKApp connectedSnapshotUitestDebugAndroidTest --info \\> tables_app/build/outputs/androidTest-results/testlog.log
+          test-command: ./gradlew grantPermissionForODKApp connectedSnapshotUitestDebugAndroidTest --info
           max-tries: 1
 
       - store_artifacts:
