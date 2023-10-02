@@ -32,7 +32,7 @@ commands:
             REPO_NAME=<<parameters.repo-name>>
             BRANCH=<<parameters.branch-name>>
 
-            # Variables to hold successfule job details
+            # Variables to hold successful job details
             SUCCESSFUL_JOB_ID=""
             SUCCESSFUL_JOB_NAME=""
             SUCCESSFUL_JOB_NUMBER=""
@@ -233,13 +233,15 @@ jobs:
           description: Get artifacts from the 'Services' repository
           circleci-token: $API_TOKEN
           repo-name: 'services'
-          branch-name: $CIRCLE_BRANCH
+         # branch-name: $CIRCLE_BRANCH
+          branch-name: circleci
 
       - get-artifacts:
           description: Get artifacts from the 'Survey' repository
           circleci-token: $API_TOKEN
           repo-name: 'survey'
-          branch-name: $CIRCLE_BRANCH
+        #  branch-name: $CIRCLE_BRANCH
+          branch-name: circleci
 
       - android/create-avd:
           avd-name: customavd
