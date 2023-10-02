@@ -267,10 +267,6 @@ jobs:
             adb install survey_app-demo-basic-debug.apk
             adb shell pm list packages
 
-      - run:
-          name: Run Instrumented Tables test
-          command: ./gradlew connectedAndroidTest
-
       - android/run-tests:
           test-command: ./gradlew grantPermissionForODKApp connectedSnapshotUitestDebugAndroidTest --info > tables_app/build/outputs/androidTest-results/testlog.log
           max-tries: 1
