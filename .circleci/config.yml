@@ -127,7 +127,7 @@ commands:
                   echo "current job type is $JOB_TYPE"
             
             
-                  if [ "$JOB_STATUS" = "success" ] && [ "$JOB_TYPE" = "build" ] && ["$JOB_NAME" = "build"]; then
+                  if [ "$JOB_STATUS" = "success" ] && [ "$JOB_TYPE" = "build" ] && [ "$JOB_NAME" = "build" ]; then
                         echo "Found a successful 'Build' job"
                         echo "Status: $status, Type: $type"
 
@@ -333,7 +333,6 @@ workflows:
   build-test-workflow:
     jobs:
       - test
-      - build
       # - build
       # - test:
       #     requires:
