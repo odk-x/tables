@@ -233,15 +233,16 @@ jobs:
           description: Get artifacts from the 'Services' repository
           circleci-token: $API_TOKEN
           repo-name: 'services'
+          # Replace branch name with a variable that gets from circleci
          # branch-name: $CIRCLE_BRANCH
-          branch-name: circleci
+          branch-name: circleci-demo-2
 
       - get-artifacts:
           description: Get artifacts from the 'Survey' repository
           circleci-token: $API_TOKEN
           repo-name: 'survey'
         #  branch-name: $CIRCLE_BRANCH
-          branch-name: circleci
+          branch-name: circleci-demo
 
       - android/create-avd:
           avd-name: customavd
