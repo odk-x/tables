@@ -279,11 +279,14 @@ jobs:
 
             # Start video recording
             
+            echo "starting screen record"
             # adb shell screenrecord --bit-rate 4000000 --time-limit 180 /sdcard/video.mp4 &
-            adb shell screenrecord --bit-rate 4000000 --time-limit 0 --verbose /sdcard/video.mp4 --verbode --size 1280x720 --fps 15 &
+            adb shell screenrecord --bit-rate 4000000 --verbose /sdcard/video.mp4 --verbode --size 1280x720 --fps 15 &
+        
             
             # Wait for video recording to start
             sleep 5
+            echo "started screen record"
 
             # Run your tests
             ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest || true
