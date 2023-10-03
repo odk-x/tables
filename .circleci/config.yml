@@ -278,10 +278,17 @@ jobs:
           command: |
 
             # Start video recording
+
+            # install FFmpeg
+
+            sudo apt update
+            sudo apt install ffmpeg
+            ffmpeg -version
             
             echo "starting screen record"
-            # adb shell screenrecord --bit-rate 4000000 --time-limit 180 /sdcard/video.mp4 &
-            adb shell screenrecord --bit-rate 4000000 --verbose /sdcard/video.mp4 &
+            # adb shell screenrecord --bit-rate 4000000 --verbose /sdcard/video.mp4 &
+
+            adb shell "while true; do screenrecord --bit-rate 4000000 --verbose ; done" | ffmpeg -i - /sdcard/video.mp4 &
         
             
             # Wait for video recording to start
