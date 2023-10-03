@@ -272,10 +272,39 @@ jobs:
             # Install Survey App on emulator, Will use the `survey_app-demo-basic-debug.apk` artifact downloaded from the get artifact jobs
             adb install survey_app-demo-basic-debug.apk
             adb shell pm list packages
+            
+      - run:
+          name: Run tests and record video
+          command: |
 
-      - android/run-tests:
-          test-command: ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest --info
-          max-tries: 1
+            # Start video recording
+            
+            # adb shell screenrecord --bit-rate 4000000 --time-limit 180 /sdcard/video.mp4 &
+            adb shell screenrecord --bit-rate 4000000 --time-limit 0 --verbose /sdcard/video.mp4 --verbode --size 1280x720 --fps 15 &
+            
+            # Wait for video recording to start
+            sleep 5
+
+            # Run your tests
+            ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest --info || true
+
+            # Stop video recording (cleanup function)
+            function stopVideoRecording {
+              adb shell pkill -l SIGINT screenrecord
+              adb pull /sdcard/video.mp4 $CIRCLE_WORKING_DIRECTORY/video.mp4
+            }
+
+            # Call the cleanup function
+            trap stopVideoRecording EXIT
+
+      # - android/run-tests:
+      #     test-command: ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest --info
+      #     max-tries: 1
+
+      - store_artifacts:
+          name: Store recorded video as an artifact
+          path: $CIRCLE_WORKING_DIRECTORY/video.mp4
+          destination: videos
 
       - store_artifacts:
           name: Store Test Results
