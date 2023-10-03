@@ -281,7 +281,7 @@ jobs:
             
             echo "starting screen record"
             # adb shell screenrecord --bit-rate 4000000 --time-limit 180 /sdcard/video.mp4 &
-            adb shell screenrecord --bit-rate 4000000 --verbose /sdcard/video.mp4 --size 1280x720 &
+            adb shell screenrecord --bit-rate 4000000 --verbose /sdcard/video.mp4 &
         
             
             # Wait for video recording to start
@@ -293,7 +293,9 @@ jobs:
 
             echo "Saving recorded video"
             adb shell pkill -l SIGINT screenrecord
-            adb pull /sdcard/video.mp4 $CIRCLE_WORKING_DIRECTORY/video.mp4
+            adb pull /sdcard/video.mp4 /video.mp4
+            echo "saved video"
+
 
             # Stop video recording (cleanup function)
             # function stopVideoRecording {
