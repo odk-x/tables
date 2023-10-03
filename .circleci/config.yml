@@ -291,15 +291,19 @@ jobs:
             # Run your tests
             ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest || true
 
+            echo "Saving recorded video"
+            adb shell pkill -l SIGINT screenrecord
+            adb pull /sdcard/video.mp4 $CIRCLE_WORKING_DIRECTORY/video.mp4
+
             # Stop video recording (cleanup function)
-            function stopVideoRecording {
-              echo "Saving recorded video"
-              adb shell pkill -l SIGINT screenrecord
-              adb pull /sdcard/video.mp4 $CIRCLE_WORKING_DIRECTORY/video.mp4
-            }
+            # function stopVideoRecording {
+            #   echo "Saving recorded video"
+            #   adb shell pkill -l SIGINT screenrecord
+            #   adb pull /sdcard/video.mp4 $CIRCLE_WORKING_DIRECTORY/video.mp4
+            # }
 
             # Call the cleanup function
-            trap stopVideoRecording EXIT
+            # trap stopVideoRecording EXIT
 
       # - android/run-tests:
       #     test-command: ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest --info
