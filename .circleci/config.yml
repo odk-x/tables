@@ -240,7 +240,7 @@ jobs:
           avd-name: customavd
           install: true
           system-image: system-images;android-29;default;x86
-          additional-args: --sdcard 4096M
+          additional-args: --sdcard 2048M
 
       - android/start-emulator:
           avd-name: customavd
@@ -286,10 +286,11 @@ jobs:
             sleep 5
 
             # Run your tests
-            ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest --info || true
+            ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest || true
 
             # Stop video recording (cleanup function)
             function stopVideoRecording {
+              echo "Saving recorded video"
               adb shell pkill -l SIGINT screenrecord
               adb pull /sdcard/video.mp4 $CIRCLE_WORKING_DIRECTORY/video.mp4
             }
@@ -303,7 +304,7 @@ jobs:
 
       - store_artifacts:
           name: Store recorded video as an artifact
-          path: $CIRCLE_WORKING_DIRECTORY/video.mp4
+          path: video.mp4
           destination: videos
 
       - store_artifacts:
