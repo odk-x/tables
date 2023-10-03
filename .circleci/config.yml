@@ -246,6 +246,14 @@ jobs:
           avd-name: customavd
           no-window: false
           post-emulator-launch-assemble-command: ''
+          
+      - run:
+          command: |
+            # wait for it to have booted
+            circle-android wait-for-boot
+            # unlock the emulator screen
+            sleep 30
+            adb shell input keyevent 82
 
       # Runs command to push the ODK-X App Designer files to the emulator
       - push-appdesigner-files-to-device
@@ -321,7 +329,7 @@ workflows:
   build-test-workflow:
     jobs:
       - test
-      - build
-      # - test:
+      # - build
+      # # - test:
       #     requires:
       #       - build
