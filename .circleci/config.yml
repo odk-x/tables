@@ -248,10 +248,8 @@ jobs:
           post-emulator-launch-assemble-command: ''
           
       - run:
-          name: Wait for emulator to boot and unlock device
+          name: Unlock device
           command: |
-    
-            circle-android wait-for-boot
             sleep 30
             adb shell input keyevent 82
 
