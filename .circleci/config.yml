@@ -274,7 +274,7 @@ jobs:
             adb shell pm list packages
             
       - run:
-          name: Run tests and record video
+          name: Run UI tests on Tables
           command: |
 
             # Start video recording
@@ -298,7 +298,7 @@ jobs:
             # Run your tests
             # ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest || true
 
-            ./gradlew grantPermissionForODKApp connectedAndroidTest
+            ./gradlew grantPermissionForODKApp connectedAndroidTest --info
 
             # Stop video recording (cleanup function)
             # function stopVideoRecording {
