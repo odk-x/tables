@@ -62,6 +62,8 @@ public class ColorRuleTest extends AbsBaseTest {
   private DbHandle db;
   private String[] adminColumns;
 
+  public static String APP_NAME = "default";
+
   // don't annotate used in chain rule
   private ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<MainActivity>(
       MainActivity.class) {
