@@ -298,7 +298,7 @@ jobs:
             # Run your tests
             # ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest || true
 
-            ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTes --info
+            ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest --info
 
             # Stop video recording (cleanup function)
             # function stopVideoRecording {
