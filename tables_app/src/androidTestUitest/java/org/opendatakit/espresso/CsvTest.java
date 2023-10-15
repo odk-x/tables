@@ -225,4 +225,24 @@ public class CsvTest {
     //check toast
     EspressoUtils.toastMsgMatcher(mIntentsRule, is(ImportCSVActivity.IMPORT_FILE_MUST_RESIDE_IN_OPENDATAKIT_FOLDER));
   }
+
+  @Test
+  public void importCsv_checkOdkxFolder() {
+    // Check if the /opendatakit/default/config/assets/csv directory exists
+    File odkxFolder = new File("/opendatakit/default/config/assets/csv");
+    boolean odkxFolderExists = odkxFolder.exists() && odkxFolder.isDirectory();
+
+    // Check if there are any .csv files within the /csv folder
+    File[] csvFiles = odkxFolder.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.endsWith(".csv");
+        }
+    });
+    boolean csvFilesExist = csvFiles != null && csvFiles.length > 0;
+
+    // Assert that the directory exists and contains .csv files
+    assertThat("/opendatakit/default/config/assets/csv directory does not exist or is not a directory", odkxFolderExists, is(true));
+    assertThat("No .csv files found in the /csv folder", csvFilesExist, is(true));
+  }
 }
