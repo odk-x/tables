@@ -14,6 +14,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -227,26 +228,6 @@ public class CsvTest {
     EspressoUtils.toastMsgMatcher(mIntentsRule, is(ImportCSVActivity.IMPORT_FILE_MUST_RESIDE_IN_OPENDATAKIT_FOLDER));
   }
 
-  // @Test
-  // public void importCsv_checkOdkxFolder() {
-  //   // Check if the /opendatakit/default/config/assets/csv directory exists
-  //   File odkxFolder = new File("/opendatakit/default/config/assets/csv");
-  //   boolean odkxFolderExists = odkxFolder.exists() && odkxFolder.isDirectory();
-
-  //   // Check if there are any .csv files within the /csv folder
-  //   File[] csvFiles = odkxFolder.listFiles(new FilenameFilter() {
-  //       @Override
-  //       public boolean accept(File dir, String name) {
-  //           return name.endsWith(".csv");
-  //       }
-  //   });
-  //   boolean csvFilesExist = csvFiles != null && csvFiles.length > 0;
-
-  //   // Assert that the directory exists and contains .csv files
-  //   assertThat("/opendatakit/default/config/assets/csv directory does not exist or is not a directory", odkxFolderExists, is(true));
-  //   assertThat("No .csv files found in the /csv folder", csvFilesExist, is(true));
-  // }
-
   @Test
   public void importCsv_checkOdkxFolder() {
     // Define the source CSV file (a test CSV file to be copied)
@@ -267,6 +248,9 @@ public class CsvTest {
         // Assert that the directory exists and contains .csv files
         assertThat("/opendatakit/default/config/assets/csv directory does not exist or is not a directory", odkxFolderExists, is(true));
         assertThat("properties.csv file does not exist in the /csv folder", csvFileExists, is(true));
+    } catch (IOException e) {
+        // Handle the exception that might occur during the file copy operation
+        fail("An exception occurred during the file copy operation: " + e.getMessage());
     } finally {
         // Clean up: Delete the properties CSV file after the test is complete
         File testCsvFile = new File(odkxFolder, "properties.csv");
