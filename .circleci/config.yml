@@ -1,0 +1,343 @@
+version: 2.1
+
+##--------Command to download Artifacts with optional parameters-----------##
+commands:
+  get-artifacts:
+    parameters:
+      description:
+        type: string
+      circleci-token:
+        type: string
+        default: $API_TOKEN
+      repo-name:
+        type: string
+      branch-name:
+        type: string
+        default: $CIRCLE_BRANCH
+    description: <<parameters.description>>
+
+    steps:
+      - run:
+          name: Get Artifacts
+          command: |
+            
+            # Install jq for json parsing
+            sudo apt-get update
+            sudo apt-get install jq
+
+            # Set your CircleCI API token
+            CIRCLECI_TOKEN=<<parameters.circleci-token>>
+
+            # Set the repository and branch
+            REPO_NAME=<<parameters.repo-name>>
+            BRANCH=<<parameters.branch-name>>
+
+            # Variables to hold successful job details
+            SUCCESSFUL_JOB_ID=""
+            SUCCESSFUL_JOB_NAME=""
+            SUCCESSFUL_JOB_NUMBER=""
+            SUCCESSFUL_JOB_STATUS=""
+            SUCCESSFUL_JOB_TYPE="" 
+
+
+
+            # Make the API request to get the pipelines of the repository
+            PIPELINES_RESPONSE=$(
+            curl --location --request GET "https://circleci.com/api/v2/project/github/${CIRCLE_USERNAME}/${REPO_NAME}/pipeline?branch=${BRANCH}&status=success" \
+             --header 'Content-Type: application/json' \
+              -u "${CIRCLECI_TOKEN}:" \
+            ) 
+
+            # Plan --
+            # get list of all pipelines
+            # run a for loop for each pipeline and get its workflows
+            # use the workflows to get the job numbers and job ids
+            # run a request to get the job details for each job
+            # check if the job is of type 'build' and status is 'successful'
+            # set that job id as the successful job id, and job number
+            # break from the loop
+            # use that job id and job number to now get the artifact
+
+            # Parse pipeline list into a list of strings
+            # Use a while loop, to loop over each pipeline object in the 'items' list from the response json,
+            # and we then encode the pipeline objects in Base64 format using the @base64 filter to avoid bash error with parsing certain characters that cannot be properly escaped for the shell.
+            # Then, we decode each Base64-encoded object using the base64 -d command in the for loop.
+            PIPELINES_LIST=()
+
+            while IFS= read -r -d $'\n' line; do
+              PIPELINES_LIST+=("$line")
+            done < <(echo "$PIPELINES_RESPONSE" | jq -r '.items[]' | jq -r '@base64')
+
+            for pipeline_base64 in "${PIPELINES_LIST[@]}"; do
+
+              echo "pipeline as base64 structure is $pipeline "
+              pipeline=$(echo "$pipeline_base64" | base64 -d)
+
+              echo "Running pipeline for loop"
+              echo "Decoded pipeline as json structure is $pipeline"
+
+              PIPELINE_ID=$(echo "$pipeline" | jq -r '.id')
+              PIPELINE_NUMBER=$(echo "$pipeline" | jq -r '.number')
+
+              echo "Current pipeline id is $PIPELINE_ID"
+              echo "Current pipeline number is $PIPELINE_NUMBER"
+
+              # Make the API request to get Workflow using Pipeline ID for each pipeline
+              WORKFLOWS=$( 
+              curl --location --request GET "https://circleci.com/api/v2/pipeline/${PIPELINE_ID}/workflow" \
+                --header 'Content-Type: application/json' \
+                -u "${CIRCLECI_TOKEN}:" \
+                )
+            
+              WORKFLOW_ID=$(echo "$WORKFLOWS" | jq -r '.items[0].id')  
+              WORKFLOW_NAME=$(echo "$WORKFLOWS" | jq -r '.items[0].name')
+              WORKFLOW_STATUS=$(echo "$WORKFLOWS" | jq -r '.items[0].status')    
+              echo "workflow id is $WORKFLOW_ID"
+              echo "workflow name is $WORKFLOW_NAME"
+              echo "workflow status is $WORKFLOW_STATUS"
+
+              # Make the API request to get Jobs from workflows for each pipeline
+              JOBS_RESPONSE=$( 
+              curl --location --request GET "https://circleci.com/api/v2/workflow/${WORKFLOW_ID}/job" \
+                --header 'Content-Type: application/json' \
+                -u "${CIRCLECI_TOKEN}:" \
+                )
+
+                JOBS_LIST=()
+
+                while IFS= read -r -d $'\n' line; do
+                  JOBS_LIST+=("$line")
+                done < <(echo "$JOBS_RESPONSE" | jq -r '.items[]' | jq -r '@base64')
+
+                # Run another for loop in the jobs to get only the build jobs, since we have multiple jobs, but most often have only one workflow
+                for job_base64 in "${JOBS_LIST[@]}"; do
+
+                  echo "job as base64 structure is $job"
+                  job=$(echo "$job_base64" | base64 -d)
+
+                  echo "Running job for loop"
+                  echo "Decoded job as json structure is $job"
+
+                  JOB_STATUS=$(echo "$job" | jq -r '.status')
+                  JOB_TYPE=$(echo "$job" | jq -r '.type') 
+                  JOB_NAME=$(echo "$job" | jq -r '.name')
+                
+
+                  echo "current job status is $JOB_STATUS"
+                  echo "current job type is $JOB_TYPE"
+                  echo "current job name is $JOB_NAME"
+            
+            
+                  if [ "$JOB_STATUS" = "success" ] && [ "$JOB_TYPE" = "build" ] && [ "$JOB_NAME" = "build" ]; then
+                        echo "Found a successful 'Build' job"
+                        echo "Status: $status, Type: $type"
+
+                        SUCCESSFUL_JOB_ID=$(echo "$job" | jq -r '.id')  
+                        SUCCESSFUL_JOB_NAME=$(echo "$job" | jq -r '.name')
+                        SUCCESSFUL_JOB_NUMBER=$(echo "$job" | jq -r '.job_number')
+                        SUCCESSFUL_JOB_STATUS=$(echo "$job" | jq -r '.status')
+                        SUCCESSFUL_JOB_TYPE=$(echo "$job" | jq -r '.type') 
+
+                        echo "Successful job id is $SUCCESSFUL_JOB_ID"
+                        echo "Successful job name is $SUCCESSFUL_JOB_NAME"
+                        echo "Successful job number is $SUCCESSFUL_JOB_NUMBER"
+                        echo "Successful job status is $SUCCESSFUL_JOB_STATUS"
+                        echo "Successful job type is $SUCCESSFUL_JOB_TYPE"
+                        break 2
+                  else
+                     echo "job is unsucesseful, check next job the next"    
+                  fi
+                  done
+            done
+            
+            
+            # Make the API request to get the artifacts from job
+            ARTIFACTS=$( 
+            curl --location --request GET "https://circleci.com/api/v2/project/github/$CIRCLE_USERNAME/$REPO_NAME/$SUCCESSFUL_JOB_NUMBER/artifacts" \
+              --header 'Content-Type: application/json' \
+              -u "${CIRCLECI_TOKEN}:" \
+              )
+            ARTIFACT_PATHS=$(echo "$ARTIFACTS" | jq -r '.items[].path')  
+            ARTIFACT_URLS=$(echo "$ARTIFACTS" | jq -r '.items[].url')
+            
+            echo "artifact path is $ARTIFACT_PATHS"
+            echo "artifact url is $ARTIFACT_URLS"
+
+            # Download artifacts
+            for artifact_url in $ARTIFACT_URLS; do
+              # Split the given string and extract only the string after the last forward slash ("/") and use as a filename to save
+              filename=$(basename $artifact_url)
+              curl -sSL -o $filename $artifact_url
+            done
+  push-appdesigner-files-to-device:
+    description: Clone and push the necessary ODK-X App Designer files to the emulator prior to testing Tables
+    steps:
+      - node/install
+      - run:
+          name: Install grunt
+          command: |
+            npm install -g grunt-cli
+            grunt --version
+      - run:
+          name: clone app designer repository to environment
+          command: |
+            git clone -b "$CIRCLE_BRANCH" "https://github.com/$GITHUB_ACTOR/app-designer.git"
+            ls -d */
+            cd app-designer/
+            ls -d */
+            npm install grunt --save-dev
+            # echo "git clone -b "$CIRCLE_BRANCH" "https://$GITHUB_TOKEN@github.com/$GITHUB_ACTOR/app-designer.git""
+      - run:
+          name: Push Files to Emulator
+          command: |
+            cd ~
+            ls -d */
+            cd project/app-designer/
+            grunt adbpush -f
+
+
+orbs:
+  android: circleci/android@2.3.0
+  node: circleci/node@5.1.0
+jobs:
+  test:
+    description: Runs unit tests and instrumented tests on the Tables app
+    executor:
+      name: android/android-machine
+      resource-class: large
+      tag: 2021.10.1
+
+    steps:
+      - checkout
+      - run:
+          name: Install OpenJDK 8
+          command: |
+            sudo apt-get update && sudo apt-get install -y openjdk-8-jdk
+            sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+            sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
+            echo 'export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"' >> $BASH_ENV
+            java -version
+      - run:
+          name: Chmod Permissions
+          command: sudo chmod +x gradlew
+
+      - get-artifacts:
+          description: Get artifacts from the 'Services' repository
+          circleci-token: $API_TOKEN
+          repo-name: 'services'
+          # Replace branch name with a variable that gets from circleci
+         # branch-name: $CIRCLE_BRANCH
+          branch-name: circleci-demo-2
+
+      - get-artifacts:
+          description: Get artifacts from the 'Survey' repository
+          circleci-token: $API_TOKEN
+          repo-name: 'survey'
+        #  branch-name: $CIRCLE_BRANCH
+          branch-name: circleci-demo
+
+      - android/create-avd:
+          avd-name: customavd
+          install: true
+          system-image: system-images;android-29;default;x86
+          additional-args: --sdcard 2048M
+
+      - android/start-emulator:
+          avd-name: customavd
+          no-window: false
+          post-emulator-launch-assemble-command: ''
+          
+      - run:
+          name: Unlock device
+          command: |
+            sleep 30
+            adb shell input keyevent 82
+
+      # Runs command to push the ODK-X App Designer files to the emulator
+      - push-appdesigner-files-to-device
+
+      # Install Dependencies to emulator
+      - run:
+          name: Install 'Services' app from downloaded artifacts to emulator
+          command: |
+
+            # Install Services App on emulator, Will use the `services_app-demo-basic-debug.apk` artifact downloaded from the get artifact jobs
+            adb install services_app-demo-basic-debug.apk
+            adb shell pm list packages
+
+      - run:
+          name: Install 'Survey' app from downloaded artifacts to emulator
+          command: |
+
+            # Install Survey App on emulator, Will use the `survey_app-demo-basic-debug.apk` artifact downloaded from the get artifact jobs
+            adb install survey_app-demo-basic-debug.apk
+            adb shell pm list packages
+            
+      - run:
+          name: Run UI tests on Tables
+          command: |
+            ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest --info
+
+      # - android/run-tests:
+      #     test-command: ./gradlew grantPermissionForODKApp connectedDemoUitestDebugAndroidTest --info
+      #     max-tries: 1
+
+      - store_artifacts:
+          name: Store recorded video as an artifact
+          path: video.mp4
+          destination: videos
+
+      - store_artifacts:
+          name: Store Test Results
+          path: tables_app/build/outputs/androidTest-results
+      - store_artifacts:
+          name: Store Test Reports
+          path: tables_app/build/reports
+
+  build:
+    docker:
+      - image: cimg/android:2023.06
+    steps:
+      - checkout
+      - run:
+          name: Install OpenJDK 8
+          command: |
+            sudo apt-get update && sudo apt-get install -y openjdk-8-jdk
+            sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+            sudo update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
+            echo 'export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"' >> $BASH_ENV
+            java -version
+
+      - run:
+          name: Chmod Permissions
+          command: sudo chmod +x gradlew
+      - android/restore-gradle-cache:
+          cache-prefix: v1
+
+      - run:
+          name: Echo Java home
+          command: |
+            echo $JAVA_HOME  
+
+      - run:
+          name: Download Dependencies
+          command: ./gradlew androidDependencies
+      - android/save-gradle-cache:
+          cache-prefix: v1
+      - run:
+          name: Build Tables
+          command: ./gradlew assemble
+
+      - store_artifacts:
+          name: Store Build Artifacts
+          path: tables_app/build/outputs/apk
+
+
+workflows:
+  build-test-workflow:
+    jobs:
+      - test
+      # - build
+      # # - test:
+      #     requires:
+      #       - build
