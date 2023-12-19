@@ -25,7 +25,6 @@ import androidx.annotation.StringRes;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.espresso.contrib.RecyclerViewActions;
-import androidx.test.espresso.intent.rule.IntentsTestRule;
 import androidx.test.espresso.web.sugar.Web;
 import androidx.test.espresso.web.webdriver.Locator;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -124,10 +123,10 @@ public static String getString(int id) {
     return color[0];
   }
 
-  public static ViewInteraction toastMsgMatcher(IntentsTestRule rule, Matcher<String> matcher) {
-    return onView(withText(matcher))
-        .inRoot(withDecorView(not(is(rule.getActivity().getWindow().getDecorView()))))
-        .check(matches(isDisplayed()));
+  public static void toastMsgMatcher(View decorView, Matcher<String> matcher) {
+          onView(withText(matcher))
+                  .inRoot(withDecorView(not(is(decorView))))
+                  .check(matches(isDisplayed()));
   }
 
   public static void openTableManagerFromCustomHome() {

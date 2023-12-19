@@ -27,11 +27,13 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.net.Uri;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 
-import androidx.test.espresso.intent.rule.IntentsTestRule;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.intent.Intents;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.GrantPermissionRule;
@@ -41,8 +43,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.ImportCSVActivity;
 import org.opendatakit.tables.activities.MainActivity;
@@ -64,32 +64,25 @@ public class CsvTest {
 
   private Boolean initSuccess = null;
   private UiDevice mDevice;
+  private ActivityScenario<MainActivity> scenario;
+  private View decorView;
 
-  // don't annotate used in chain rule
-  private IntentsTestRule<MainActivity> mIntentsRule = new IntentsTestRule<MainActivity>(
-      MainActivity.class) {
-    @Override
-    protected void beforeActivityLaunched() {
-      super.beforeActivityLaunched();
 
+
+    private void beforeActivityLaunched(){
       if (initSuccess == null) {
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        initSuccess = UAUtils.turnOnCustomHome(mDevice);
+          mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+          initSuccess = UAUtils.turnOnCustomHome(mDevice);
       }
-    }
-  };
+  }
 
-  // don't annotate used in chain rule
-  private GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
+  @Rule
+  public GrantPermissionRule grantPermissionRule = GrantPermissionRule.grant(
       Manifest.permission.WRITE_EXTERNAL_STORAGE,
       Manifest.permission.READ_EXTERNAL_STORAGE,
       Manifest.permission.ACCESS_FINE_LOCATION
   );
 
-  @Rule
-  public TestRule chainedRules = RuleChain
-      .outerRule(grantPermissionRule)
-      .around(mIntentsRule);
 
   private static int getTableCount() {
     return new File(ODKFileUtils.getTablesFolder(TableFileUtils.getDefaultAppName()))
@@ -107,6 +100,11 @@ public class CsvTest {
 
   @Before
   public void setup() {
+    beforeActivityLaunched();
+    scenario = ActivityScenario.launch(MainActivity.class);
+    Intents.init();
+    scenario.onActivity(activity ->
+              decorView = activity.getWindow().getDecorView());
     UAUtils.assertInitSucess(initSuccess);
     EspressoUtils.openTableManagerFromCustomHome();
 
@@ -127,6 +125,8 @@ public class CsvTest {
     new File(ODKFileUtils
         .getOutputTableCsvFile(TableFileUtils.getDefaultAppName(), T_HOUSE_TABLE_ID,
             VALID_QUALIFIER)).delete();
+      Intents.release();
+      scenario.close();
   }
 
   @Test
@@ -225,7 +225,7 @@ public class CsvTest {
     onView(withText(R.string.import_choose_csv_file)).perform(click());
 
     //check toast
-    EspressoUtils.toastMsgMatcher(mIntentsRule, is(ImportCSVActivity.IMPORT_FILE_MUST_RESIDE_IN_OPENDATAKIT_FOLDER));
+    EspressoUtils.toastMsgMatcher(decorView, is(ImportCSVActivity.IMPORT_FILE_MUST_RESIDE_IN_OPENDATAKIT_FOLDER));
   }
 
   @Test
