@@ -65,4 +65,13 @@ public class AbsWebTableFragmentStub extends AbsWebTableFragment {
     // we assume the service connection is mocked and does not require any of these calls
   }
 
+  @Override
+  public void onBackPressed() {
+    if (ODKWebView.canGoBack()) {
+      ODKWebView.goBack();
+    } else {
+      super.onBackPressed();
+    }
+  }
+
 }
