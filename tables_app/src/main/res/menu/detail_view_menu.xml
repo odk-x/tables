@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/menu_edit_row"
-        android:icon="@drawable/ic_mode_edit_black_24dp"
+        android:icon="@drawable/ic_mode_edit_24dp"
         android:title="@string/edit_row"
         app:showAsAction="always" />
 

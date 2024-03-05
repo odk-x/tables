@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/menu_color_rule_list_new"
-        android:icon="@drawable/ic_add_black_24dp"
+        android:icon="@drawable/ic_add_24dp"
         android:title="@string/add_color_rule"
         app:showAsAction="always" />
 
