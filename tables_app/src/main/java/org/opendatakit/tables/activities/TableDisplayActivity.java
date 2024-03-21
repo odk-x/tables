@@ -19,6 +19,8 @@ import android.Manifest;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+
+import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -720,41 +722,43 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     return super.onCreateOptionsMenu(menu);
   }
 
+  @SuppressLint("NonConstantResourceId")
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     String filename = null;
     Bundle bundle = new Bundle();
     IntentUtil.addAppNameToBundle(bundle, getAppName());
-    switch (item.getItemId()) {
-    case R.id.top_level_table_menu_view_spreadsheet_view:
+    int itemId = item.getItemId();
+
+    if (itemId == R.id.top_level_table_menu_view_spreadsheet_view) {
       setCurrentFragmentType(ViewFragmentType.SPREADSHEET, null, null);
       return true;
-    case R.id.top_level_table_menu_view_list_view:
+    } else if (itemId == R.id.top_level_table_menu_view_list_view) {
       if (mOriginalFragmentType != null && mOriginalFragmentType == ViewFragmentType.LIST) {
         filename = mOriginalFileName;
       }
       if (filename == null) {
         filename = mPossibleTableViewTypes != null ?
-            mPossibleTableViewTypes.getDefaultListViewFileName() :
-            null;
+                mPossibleTableViewTypes.getDefaultListViewFileName() :
+                null;
       }
       setCurrentFragmentType(ViewFragmentType.LIST, filename, null);
       return true;
-    case R.id.top_level_table_menu_view_map_view:
+    } else if (itemId == R.id.top_level_table_menu_view_map_view) {
       if (mOriginalFragmentType != null && mOriginalFragmentType == ViewFragmentType.MAP) {
         filename = mOriginalFileName;
       }
       if (filename == null) {
         filename = mPossibleTableViewTypes != null ?
-            mPossibleTableViewTypes.getDefaultMapListViewFileName() :
-            null;
+                mPossibleTableViewTypes.getDefaultMapListViewFileName() :
+                null;
       }
       setCurrentFragmentType(ViewFragmentType.MAP, filename, null);
       return true;
-    case R.id.top_level_table_menu_view_navigate_view:
+    } else if (itemId == R.id.top_level_table_menu_view_navigate_view) {
       setCurrentFragmentType(ViewFragmentType.NAVIGATE, filename, null);
       return true;
-    case R.id.top_level_table_menu_add:
+    } else if (itemId == R.id.top_level_table_menu_add) {
       WebLogger.getLogger(getAppName()).d(TAG, "[onOptionsItemSelected] add selected");
       try {
         ActivityUtil.addRow(this, this.getAppName(), this.getTableId(), null);
@@ -763,19 +767,19 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       }
       return true;
-    case R.id.top_level_table_menu_table_properties:
+    } else if (itemId == R.id.top_level_table_menu_table_properties) {
       ActivityUtil.launchTableLevelPreferencesActivity(this, this.getAppName(), this.getTableId(),
-          TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
+              TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
       return true;
-    case R.id.menu_edit_row:
+    } else if (itemId == R.id.menu_edit_row) {
       // We need to retrieve the row id.
       String rowId = getInstanceId();
       if (rowId == null) {
         WebLogger.getLogger(getAppName())
-            .e(TAG, "[onOptionsItemSelected trying to edit row, but row id is null");
+                .e(TAG, "[onOptionsItemSelected trying to edit row, but row id is null");
         Toast
-            .makeText(this, getString(R.string.cannot_edit_row_please_try_again), Toast.LENGTH_LONG)
-            .show();
+                .makeText(this, getString(R.string.cannot_edit_row_please_try_again), Toast.LENGTH_LONG)
+                .show();
         return true;
       }
       try {
@@ -785,11 +789,11 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         Toast.makeText(this, "Unable to access database", Toast.LENGTH_LONG).show();
       }
       return true;
-    case R.id.menu_table_manager_sync:
+    } else if (itemId == R.id.menu_table_manager_sync) {
       try {
         Intent syncIntent = new Intent();
         syncIntent.setComponent(
-            new ComponentName(IntentConsts.Sync.APPLICATION_NAME, IntentConsts.Sync.ACTIVITY_NAME));
+                new ComponentName(IntentConsts.Sync.APPLICATION_NAME, IntentConsts.Sync.ACTIVITY_NAME));
         syncIntent.setAction(Intent.ACTION_DEFAULT);
         syncIntent.putExtras(bundle);
         this.startActivityForResult(syncIntent, RequestCodeConsts.RequestCodes.LAUNCH_SYNC);
@@ -798,18 +802,19 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
       }
       return true;
-    case R.id.menu_table_manager_preferences:
+    } else if (itemId == R.id.menu_table_manager_preferences) {
       Intent preferenceIntent = new Intent();
       preferenceIntent.setComponent(new ComponentName(IntentConsts.AppProperties.APPLICATION_NAME,
-          IntentConsts.AppProperties.ACTIVITY_NAME));
+              IntentConsts.AppProperties.ACTIVITY_NAME));
       preferenceIntent.setAction(Intent.ACTION_DEFAULT);
       preferenceIntent.putExtras(bundle);
       this.startActivityForResult(preferenceIntent, RequestCodeConsts.RequestCodes.LAUNCH_DISPLAY_PREFS);
       return true;
-    default:
+    } else {
       return super.onOptionsItemSelected(item);
     }
   }
+
 
   /**
    * Called when an activity returns to this activity.

@@ -10,7 +10,7 @@
 
     <item
         android:id="@+id/menu_table_manager_sync"
-        android:icon="@drawable/ic_cached_black_24dp"
+        android:icon="@drawable/ic_sync"
         android:title="@string/sync"
         app:showAsAction="ifRoom" />
     <item

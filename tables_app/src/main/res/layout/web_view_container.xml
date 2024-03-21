@@ -1,22 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical">
 
-    <org.opendatakit.tables.views.webkits.OdkTablesWebView
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <org.opendatakit.tables.views.webkits.OdkTablesWebView
             android:id="@+id/webkit"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/black"
             android:visibility="gone"/>
 
-    <!-- empty view -->
-    <TextView
+        <!-- empty view -->
+        <TextView
             android:id="@android:id/empty"
             android:gravity="center"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:text="@string/database_unavailable"/>
 
-</LinearLayout>
+    </LinearLayout>
+
+

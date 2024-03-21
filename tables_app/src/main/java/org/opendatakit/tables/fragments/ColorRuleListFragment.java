@@ -186,19 +186,19 @@ public class ColorRuleListFragment extends ListFragment {
   public boolean onOptionsItemSelected(MenuItem item) {
     ColorRuleGroup.Type colorRuleGroupType = this.retrieveColorRuleType();
     TableLevelPreferencesActivity activity = this.retrieveTableLevelPreferencesActivity();
-    switch (item.getItemId()) {
-    case R.id.menu_color_rule_list_new:
-      // This is the same in every case.
+
+    int itemId = item.getItemId();
+
+    if (itemId == R.id.menu_color_rule_list_new) {
       activity.showEditColorRuleFragmentForNewRule(colorRuleGroupType, activity.getElementKey());
       return true;
-    case R.id.menu_color_rule_list_revert:
+    } else if (itemId == R.id.menu_color_rule_list_revert) {
       AlertDialog confirmRevertAlert;
       AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
       alert.setTitle(getString(R.string.color_rule_confirm_revert_status_column));
       alert.setMessage(getString(R.string.color_rule_revert_are_you_sure));
-      // OK action will be to revert to defaults.
-      alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
 
+      alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
           try {
@@ -206,25 +206,26 @@ public class ColorRuleListFragment extends ListFragment {
           } catch (ServicesAvailabilityException e) {
             WebLogger.getLogger(getAppName()).printStackTrace(e);
             WebLogger.getLogger(getAppName()).e(TAG, "Error while restoring color rules");
-            Toast.makeText(getActivity(), "Error while restoring color rules", Toast.LENGTH_LONG)
-                .show();
+            Toast.makeText(getActivity(), "Error while restoring color rules", Toast.LENGTH_LONG).show();
           }
         }
       });
-      alert.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
 
+      alert.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
           // canceled, so do nothing!
         }
       });
+
       confirmRevertAlert = alert.create();
       confirmRevertAlert.show();
-    default:
+      return true;
+    } else {
       return super.onOptionsItemSelected(item);
     }
-
   }
+
 
   @Override
   public boolean onContextItemSelected(MenuItem item) {

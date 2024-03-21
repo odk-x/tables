@@ -25,10 +25,14 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
+
+import com.google.android.material.appbar.MaterialToolbar;
+
 import org.opendatakit.activities.IInitResumeActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
@@ -180,6 +184,32 @@ public class MainActivity extends AbsBaseWebActivity
           activeScreenType.name());
     }
     mPropSingleton = CommonToolProperties.get( this ,mAppName);
+
+    findViewsAndAttachListeners();
+
+    // Set the toolbar as the action bar
+    setSupportActionBar(toolbar);
+
+    // Ensure that the action bar is not null before modifying it
+    androidx.appcompat.app.ActionBar actionBar = getSupportActionBar();
+    if (actionBar != null) {
+      // Disable the default title display
+      actionBar.setDisplayShowTitleEnabled(false);
+
+      // Enable logo display
+      actionBar.setDisplayUseLogoEnabled(false);
+      actionBar.setDisplayShowHomeEnabled(false);
+    } else {
+      Log.e(TAG, "Action bar is null");
+    }
+  }
+
+  MaterialToolbar toolbar;
+  private void findViewsAndAttachListeners() {
+    toolbar = findViewById(R.id.toolbarMainActivity);
+
+    setSupportActionBar(toolbar);
+
   }
 
   @Override
@@ -447,62 +477,64 @@ public class MainActivity extends AbsBaseWebActivity
    */
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    String appName = getAppName();
-    WebLogger.getLogger(appName).d(TAG, "[onOptionsItemSelected] selecting an item");
-    Bundle bundle = new Bundle();
-    IntentUtil.addAppNameToBundle(bundle, appName);
-    switch (item.getItemId()) {
-    case R.id.menu_web_view_activity_table_manager:
-      swapScreens(ScreenType.TABLE_MANAGER_SCREEN);
-      return true;
-    case R.id.menu_table_about:
-      swapScreens(ScreenType.ABOUT_SCREEN);
-      return true;
-    case R.id.menu_table_manager_preferences:
-      Intent preferenceIntent = new Intent();
-      preferenceIntent.setComponent(new ComponentName(IntentConsts.AppProperties.APPLICATION_NAME,
-          IntentConsts.AppProperties.ACTIVITY_NAME));
-      preferenceIntent.setAction(Intent.ACTION_DEFAULT);
-      preferenceIntent.putExtras(bundle);
-      this.startActivityForResult(preferenceIntent, RequestCodeConsts.RequestCodes.LAUNCH_DISPLAY_PREFS);
-      return true;
-    case R.id.menu_table_manager_import:
-      Intent importIntent = new Intent(this, ImportCSVActivity.class);
-      importIntent.putExtras(bundle);
-      this.startActivityForResult(importIntent, RequestCodeConsts.RequestCodes.LAUNCH_IMPORT);
-      return true;
-    case R.id.menu_table_manager_export:
-      Intent exportIntent = new Intent(this, ExportCSVActivity.class);
-      exportIntent.putExtras(bundle);
-      this.startActivityForResult(exportIntent, RequestCodeConsts.RequestCodes.LAUNCH_EXPORT);
-      return true;
-    case R.id.menu_table_manager_sync:
-      try {
-        Intent syncIntent = new Intent();
-        syncIntent.setComponent(
-            new ComponentName(IntentConsts.Sync.APPLICATION_NAME, IntentConsts.Sync.ACTIVITY_NAME));
-        syncIntent.setAction(Intent.ACTION_DEFAULT);
-        syncIntent.putExtras(bundle);
-        this.startActivityForResult(syncIntent, RequestCodeConsts.RequestCodes.LAUNCH_SYNC);
-      } catch (ActivityNotFoundException e) {
-        WebLogger.getLogger(appName).printStackTrace(e);
-        Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
+      String appName = getAppName();
+      WebLogger.getLogger(appName).d(TAG, "[onOptionsItemSelected] selecting an item");
+      Bundle bundle = new Bundle();
+      IntentUtil.addAppNameToBundle(bundle, appName);
+
+      int itemId = item.getItemId();
+
+      if (itemId == R.id.menu_web_view_activity_table_manager) {
+          swapScreens(ScreenType.TABLE_MANAGER_SCREEN);
+          return true;
+      } else if (itemId == R.id.menu_table_about) {
+          swapScreens(ScreenType.ABOUT_SCREEN);
+          return true;
+      } else if (itemId == R.id.menu_table_manager_preferences) {
+          Intent preferenceIntent = new Intent();
+          preferenceIntent.setComponent(new ComponentName(IntentConsts.AppProperties.APPLICATION_NAME,
+                  IntentConsts.AppProperties.ACTIVITY_NAME));
+          preferenceIntent.setAction(Intent.ACTION_DEFAULT);
+          preferenceIntent.putExtras(bundle);
+          this.startActivityForResult(preferenceIntent, RequestCodeConsts.RequestCodes.LAUNCH_DISPLAY_PREFS);
+          return true;
+      } else if (itemId == R.id.menu_table_manager_import) {
+          Intent importIntent = new Intent(this, ImportCSVActivity.class);
+          importIntent.putExtras(bundle);
+          this.startActivityForResult(importIntent, RequestCodeConsts.RequestCodes.LAUNCH_IMPORT);
+          return true;
+      } else if (itemId == R.id.menu_table_manager_export) {
+          Intent exportIntent = new Intent(this, ExportCSVActivity.class);
+          exportIntent.putExtras(bundle);
+          this.startActivityForResult(exportIntent, RequestCodeConsts.RequestCodes.LAUNCH_EXPORT);
+          return true;
+      } else if (itemId == R.id.menu_table_manager_sync) {
+          try {
+              Intent syncIntent = new Intent();
+              syncIntent.setComponent(
+                      new ComponentName(IntentConsts.Sync.APPLICATION_NAME, IntentConsts.Sync.ACTIVITY_NAME));
+              syncIntent.setAction(Intent.ACTION_DEFAULT);
+              syncIntent.putExtras(bundle);
+              this.startActivityForResult(syncIntent, RequestCodeConsts.RequestCodes.LAUNCH_SYNC);
+          } catch (ActivityNotFoundException e) {
+              WebLogger.getLogger(appName).printStackTrace(e);
+              Toast.makeText(this, R.string.sync_not_found, Toast.LENGTH_LONG).show();
+          }
+          return true;
+      } else if (itemId == R.id.menu_sort_name_asc || itemId == R.id.menu_sort_name_desc) {
+          Constants.TABLE_SORT_ORDER sortOrder = Constants.TABLE_SORT_ORDER.SORT_ASC;
+          if (itemId == R.id.menu_sort_name_desc) {
+              sortOrder = Constants.TABLE_SORT_ORDER.SORT_DESC;
+          }
+          mPropSingleton.setProperties(Collections.singletonMap(
+                  CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER, sortOrder.name()));
+          swapScreens(activeScreenType);
+          return true;
+      } else {
+          return super.onOptionsItemSelected(item);
       }
-      return true;
-    case R.id.menu_sort_name_asc:
-      mPropSingleton.setProperties( Collections.singletonMap(
-                CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER, Constants.TABLE_SORT_ORDER.SORT_ASC.name() ));
-      swapScreens(activeScreenType);
-      return true;
-    case R.id.menu_sort_name_desc:
-      mPropSingleton.setProperties( Collections.singletonMap(
-                CommonToolProperties.KEY_PREF_TABLES_SORT_BY_ORDER, Constants.TABLE_SORT_ORDER.SORT_DESC.name() ));
-      swapScreens(activeScreenType);
-      return true;
-    default:
-      return super.onOptionsItemSelected(item);
-    }
   }
+
 
   /**
    * Callbacks for WebFragment activities
