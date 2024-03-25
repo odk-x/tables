@@ -14,14 +14,16 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:orientation="vertical">
 
-    <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Content here -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:background="@color/white"
             android:gravity="center"
             android:paddingLeft="20dp"
@@ -30,4 +32,5 @@ the License.
             android:textColor="@color/black"
             android:textSize="21sp"/>
 
-</LinearLayout>
+    </LinearLayout>
+

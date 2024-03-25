@@ -3,7 +3,7 @@
 
     <color name="Avanda">#f0f8ff</color>
     <color name="black">#ff000000</color>
-    <color name="white">#ffffffff</color>
+    <color name="white">#ffffffff</color>`
     <color name="Beige">#f5f5dc</color>
     <color name="header_data">#87CEEB</color>
     <color name="header_index">#F4A460</color>
@@ -31,4 +31,6 @@
     <color name="spinner_text_color_red">#FF0000</color>
     <color name="spinner_text_color_black">#000000</color>
 
+
+    <color name="zxing_transparent">#00FFFFFF</color>
 </resources>

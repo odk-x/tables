@@ -1,7 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:id="@+id/activity_main_activity"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
 
-</FrameLayout>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="org.opendatakit.tables.activities.MainActivity">
+
+    <!-- Include the app bar layout -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:elevation="0dp"
+        style="@style/AppBarStyle">
+
+        <!-- Material toolbar for the app bar -->
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarMainActivity"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/zxing_transparent"
+            android:minWidth="48dp"
+            android:minHeight="?attr/actionBarSize"
+            android:fitsSystemWindows="true"
+            app:menu="@menu/web_view_activity">
+
+            <!-- Logo -->
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="start">
+                <ImageView
+                    android:id="@+id/imgAppBarLogo"
+                    android:layout_width="120dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/logo"
+                    android:layout_gravity="center"
+                    tools:ignore="ImageContrast1Check"/>
+            </FrameLayout>
+
+        </com.google.android.material.appbar.MaterialToolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:id="@+id/activity_main_activity"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -12,7 +12,7 @@
     <!-- Select a view -->
     <item
         android:id="@+id/top_level_table_menu_select_view"
-        android:icon="@drawable/ic_view_headline_black_24dp"
+        android:icon="@drawable/ic_menu"
         android:title="@string/select_view"
         app:showAsAction="always">
 
@@ -37,7 +37,7 @@
 
     <item
         android:id="@+id/top_level_table_menu_table_properties"
-        android:icon="@drawable/ic_settings_black_24dp"
+        android:icon="@drawable/ic_settings"
         android:title="@string/preferences"
         app:showAsAction="always" />
 

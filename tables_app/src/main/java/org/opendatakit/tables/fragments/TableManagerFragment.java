@@ -214,8 +214,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
 
   @Override
   public boolean onContextItemSelected(MenuItem item) {
-    AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo) item
-        .getMenuInfo();
+    AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
     TableNameStruct selectedStruct = this.mTpAdapter.getItem(menuInfo.position);
     if (selectedStruct == null) {
       return super.onContextItemSelected(item);
@@ -223,60 +222,53 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
     final String tableIdOfSelectedItem = selectedStruct.getTableId();
     final AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
     final String appName = baseActivity.getAppName();
-
     String localizedDisplayName = selectedStruct.getLocalizedDisplayName();
 
-    switch (item.getItemId()) {
-    case R.id.table_manager_delete_table:
+    int itemId = item.getItemId();
+
+    if (itemId == R.id.table_manager_delete_table) {
       AlertDialog confirmDeleteAlert;
-      // Prompt an alert box
       AlertDialog.Builder alert = new AlertDialog.Builder(this.getActivity());
       alert.setTitle(getString(R.string.confirm_remove_table))
-          .setMessage(getString(R.string.are_you_sure_remove_table, localizedDisplayName));
-      // OK Action => delete the table
+              .setMessage(getString(R.string.are_you_sure_remove_table, localizedDisplayName));
       alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
-          // treat delete as a local removal -- not a server side deletion
           DbHandle db = null;
           try {
             try {
               db = Tables.getInstance().getDatabase().openDatabase(appName);
-              Tables.getInstance().getDatabase()
-                  .deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
+              Tables.getInstance().getDatabase().deleteTableAndAllData(appName, db, tableIdOfSelectedItem);
             } finally {
               if (db != null) {
                 Tables.getInstance().getDatabase().closeDatabase(appName, db);
               }
             }
-            // Now update the list.
             updateTableIdList();
           } catch (ServicesAvailabilityException e) {
-            WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName())
-                .printStackTrace(e);
+            WebLogger.getLogger(((IAppAwareActivity) getActivity()).getAppName()).printStackTrace(e);
             Toast.makeText(getActivity(), "Unable to access database", Toast.LENGTH_LONG).show();
           }
         }
       });
 
-      // Cancel Action
       alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           // Canceled.
         }
       });
-      // show the dialog
+
       confirmDeleteAlert = alert.create();
       confirmDeleteAlert.show();
       return true;
-    case R.id.table_manager_edit_table_properties:
+    } else if (itemId == R.id.table_manager_edit_table_properties) {
       ActivityUtil.launchTableLevelPreferencesActivity(baseActivity, baseActivity.getAppName(),
-          tableIdOfSelectedItem, TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
+              tableIdOfSelectedItem, TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
       return true;
-    default:
-      break;
+    } else {
+      return super.onContextItemSelected(item);
     }
-    return super.onContextItemSelected(item);
   }
+
 
   @Override
   public void databaseAvailable() {
