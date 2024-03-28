@@ -15,7 +15,7 @@
  */
 package org.opendatakit.tables.fragments;
 
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.ListFragment;
 import android.content.ComponentName;
 import android.content.DialogInterface;
@@ -31,6 +31,9 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.opendatakit.activities.IAppAwareActivity;
 import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.consts.RequestCodeConsts;
@@ -228,7 +231,7 @@ public class TableManagerFragment extends ListFragment implements DatabaseConnec
 
     if (itemId == R.id.table_manager_delete_table) {
       AlertDialog confirmDeleteAlert;
-      AlertDialog.Builder alert = new AlertDialog.Builder(this.getActivity());
+      MaterialAlertDialogBuilder alert = new MaterialAlertDialogBuilder(this.getActivity());
       alert.setTitle(getString(R.string.confirm_remove_table))
               .setMessage(getString(R.string.are_you_sure_remove_table, localizedDisplayName));
       alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
