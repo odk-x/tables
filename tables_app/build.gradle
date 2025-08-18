@@ -113,6 +113,7 @@ allprojects {
 dependencies {
     implementation 'org.opendatakit:odkx-rest-interface:2.2.0-SNAPSHOT'
 
+    implementation 'androidx.core:core-splashscreen:1.0.1'
     implementation 'androidx.annotation:annotation:1.7.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.fragment:fragment:1.5.7'

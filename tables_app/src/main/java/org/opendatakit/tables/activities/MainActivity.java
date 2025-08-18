@@ -17,6 +17,8 @@ package org.opendatakit.tables.activities;
 
 import android.app.ActionBar;
 import android.app.Activity;
+
+import androidx.core.splashscreen.SplashScreen;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentManager.BackStackEntry;
@@ -168,6 +170,7 @@ public class MainActivity extends AbsBaseWebActivity
    */
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    SplashScreen.installSplashScreen(this);
     super.onCreate(savedInstanceState);
     this.setContentView(R.layout.activity_main_activity);
 
