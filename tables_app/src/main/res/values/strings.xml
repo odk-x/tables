@@ -448,4 +448,5 @@
     <string name="sort_order_name_asc">Name (Alphabetical)</string>
     <string name="sort_order_name_desc">Name (Reverse Alphabetical)</string>
     <string name="sort_order_title">Sort By</string>
+    <string name="table_gif">Table GIF Animationn\n</string>
 </resources>
