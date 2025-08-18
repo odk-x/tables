@@ -11,6 +11,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:textSize="20sp"
+            android:fontFamily="@font/montserrat"
             android:textStyle="bold"
             android:textColor="#000000"/>
 
@@ -19,6 +20,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textColor="#000000"
+            android:fontFamily="@font/montserrat"
             android:text="@string/read_access_control_group"/>
 
     <Spinner
@@ -31,6 +33,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textColor="#000000"
+            android:fontFamily="@font/montserrat"
             android:text="@string/write_access_control_group"/>
 
     <Spinner

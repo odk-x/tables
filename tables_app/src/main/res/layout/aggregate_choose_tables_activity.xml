@@ -15,6 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
+            android:fontFamily="@font/montserrat"
             android:text="@string/sync_no_tables_ready"/>
 
 </RelativeLayout>

@@ -7,6 +7,7 @@
     <EditText
             android:id="@+id/edit_view_name"
             android:inputType="text"
+            android:fontFamily="@font/sourcesanspro_regular"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"/>
 

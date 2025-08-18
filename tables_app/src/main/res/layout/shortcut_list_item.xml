@@ -9,10 +9,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="20sp"
+            android:fontFamily="@font/montserrat"
             android:id="@+id/sc_item_name"/>
 
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/montserrat"
             android:id="@+id/sc_item_desc"/>
 </LinearLayout>

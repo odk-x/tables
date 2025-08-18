@@ -10,12 +10,13 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="@string/open_new_spreadsheet"
-            />
+            android:fontFamily="@font/montserrat"/>
 
     <TextView
             android:id="@+id/file_manager_path"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/montserrat"/>
 
     <ListView
             android:id="@+id/file_manager_list"

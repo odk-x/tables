@@ -29,6 +29,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="6dip"
                 android:layout_marginTop="6dip"
+                android:fontFamily="@font/montserrat"
                 android:textAppearance="?android:attr/textAppearanceLarge"/>
 
         <TextView
@@ -37,6 +38,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignLeft="@+id/row_label"
                 android:layout_below="@+id/row_label"
+                android:fontFamily="@font/montserrat"
                 android:text="@string/edit"
                 android:textAppearance="?android:attr/textAppearanceSmall"/>
     </TwoLineListItem>

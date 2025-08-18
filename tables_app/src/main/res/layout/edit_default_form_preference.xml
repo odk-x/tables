@@ -8,12 +8,14 @@
             android:text="@string/use_survey_form"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+        android:fontFamily="@font/montserrat"
             />
 
     <TextView
             android:text="@string/title_form_id"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/montserrat"
             />
 
     <EditText
@@ -22,6 +24,7 @@
             android:layout_height="wrap_content"
             android:paddingRight="35dip"
             android:inputType="textNoSuggestions"
+            android:fontFamily="@font/sourcesanspro_regular"
             android:autoText="false"
             android:capitalize="none"
             android:enabled="false"

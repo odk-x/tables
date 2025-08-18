@@ -8,35 +8,41 @@
     <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/montserrat"
             android:text="@string/sms_shortcut_name"/>
 
     <EditText
             android:id="@+id/scedit_dialog_name"
             android:inputType="text"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/sourcesanspro_regular"/>
 
     <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="@string/sms_shortcut_input"/>
+            android:text="@string/sms_shortcut_input"
+            android:fontFamily="@font/montserrat"/>
 
     <EditText
             android:id="@+id/scedit_dialog_input"
             android:inputType="text"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/sourcesanspro_regular"/>
 
     <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="@string/sms_shortcut_output"/>
+            android:text="@string/sms_shortcut_output"
+            android:fontFamily="@font/montserrat"/>
 
     <EditText
             android:id="@+id/scedit_dialog_output"
             android:inputType="text"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/sourcesanspro_regular"/>
 
     <LinearLayout
             android:layout_width="fill_parent"

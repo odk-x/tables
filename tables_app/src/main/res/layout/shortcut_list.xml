@@ -14,5 +14,6 @@
             android:id="@id/android:empty"
             android:layout_width="match_parent"
             android:layout_height="fill_parent"
+            android:fontFamily="@font/montserrat"
             android:text="@string/no_shortcuts"/>
 </LinearLayout>

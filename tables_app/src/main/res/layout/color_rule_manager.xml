@@ -27,5 +27,6 @@
             android:layout_marginTop="6dip"
             android:layout_marginLeft="6dip"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/montserrat"
             android:text="@string/press_to_add_color_rule"/>
 </RelativeLayout>

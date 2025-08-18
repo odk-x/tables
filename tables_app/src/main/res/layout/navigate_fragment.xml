@@ -52,6 +52,7 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/dark_blue"
                     android:textSize="@dimen/nav_text_size"
+                    android:fontFamily="@font/montserrat"
                     android:textStyle="bold"/>
 
         </LinearLayout>
@@ -92,6 +93,7 @@
                         android:layout_height="wrap_content"
                         android:textColor="@color/dark_blue"
                         android:textSize="@dimen/nav_text_size_small"
+                        android:fontFamily="@font/montserrat"
                         android:textStyle="bold"/>
 
                 <TextView
@@ -100,6 +102,7 @@
                         android:layout_height="wrap_content"
                         android:textColor="@color/dark_blue"
                         android:textSize="@dimen/nav_text_size_small"
+                        android:fontFamily="@font/montserrat"
                         android:textStyle="bold"/>
             </LinearLayout>
 

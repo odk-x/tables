@@ -14,6 +14,7 @@
             android:id="@android:id/empty"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:fontFamily="@font/montserrat"
             android:text="@string/no_color_rules"/>
 
 
